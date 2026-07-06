@@ -25,7 +25,9 @@ class DomainEventD20Tests(unittest.TestCase):
             server = GameServer(str(Path(tmp) / "mud.db"))
             char = Character("tester")
             start_room = char.room_id
-            direction = next(iter(server.world.get_location(start_room).exits))
+            start_location = server.world.get_location(start_room)
+            assert start_location is not None
+            direction = next(iter(start_location.exits))
             server.move_direct(char, direction)
             events = [event for event in server.services.event_bus.history if event.type == DomainEventType.CHARACTER_MOVED.value]
             self.assertEqual(len(events), 1)
@@ -41,6 +43,7 @@ class DomainEventD20Tests(unittest.TestCase):
                 server = GameServer(str(Path(tmp) / "mud.db"))
                 char = Character("tester")
                 loc = server.world.get_location(char.room_id)
+                assert loc is not None
                 loc.items.append(Item("żelazny klucz", "Ciężki klucz.", 0.1, 1, "iron_key"))
                 ctx = server.make_context(char)
                 response = await server.dispatcher.execute_line(ctx, "wez klucz")

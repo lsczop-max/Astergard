@@ -39,8 +39,9 @@ class PersistenceTests(unittest.TestCase):
             self.assertEqual(loaded.reputation["MEEKHAN"], -600)
             self.assertIn("wolf_pelt", loaded.active_quests)
             self.assertIn("intro", loaded.completed_quests)
-            self.assertIsNotNone(loaded.equipment["prawa_reka"])
-            self.assertEqual(loaded.equipment["prawa_reka"].vnum, "simple_sword")
+            equipped = loaded.equipment["prawa_reka"]
+            assert equipped is not None
+            self.assertEqual(equipped.vnum, "simple_sword")
             loaded_pack = next(item for item in loaded.inventory if item.vnum == "backpack")
             self.assertEqual(loaded_pack.contains[0].vnum, "flint")
             self.assertEqual(loaded.active_effects[0].name, "Wzmocnienie")

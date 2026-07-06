@@ -16,9 +16,9 @@ class D17BalanceTuningTests(unittest.TestCase):
     def test_troll_has_real_offensive_equipment(self) -> None:
         troll = NPCFactory().create("mountain_troll", room_id=1)
         weapon = troll.character.weapon()
-        self.assertIsNotNone(weapon)
+        assert weapon is not None
         self.assertEqual(weapon.vnum, "troll_club")
-        self.assertGreaterEqual(weapon.base_damage, 8)  # type: ignore[union-attr]
+        self.assertGreaterEqual(weapon.base_damage, 8)
 
     def test_soldier_has_full_combat_loadout(self) -> None:
         soldier = NPCFactory().create("meekhan_soldier", room_id=1)
