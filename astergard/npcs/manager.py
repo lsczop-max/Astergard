@@ -3,7 +3,7 @@ from __future__ import annotations
 import random
 import time
 from dataclasses import dataclass
-from typing import Protocol
+from typing import Any, Protocol, cast
 
 from astergard.characters.models import Character
 from astergard.combat.manager import CombatManager
@@ -83,16 +83,20 @@ class NPCManager:
         pending = list(self.world.respawn_queue)
         self.world.respawn_queue.clear()
         for item in pending:
-            delay = self.rules.normalized_delay(item.get("delay", self.rules.default_delay_seconds))
-            room_id = int(item.get("room_id", item.get("death_room_id", 0)))
-            if current_time - float(item["time"]) < delay:
+            delay_value = cast(float | int | None, item.get("delay", self.rules.default_delay_seconds))
+            room_id_value = cast(float | int | str, item.get("room_id", item.get("death_room_id", 0)))
+            time_value = cast(float | int | str, item["time"])
+
+            delay = self.rules.normalized_delay(delay_value)
+            room_id = int(room_id_value)
+            if current_time - float(time_value) < delay:
                 self.world.respawn_queue.append(item)
                 continue
             if not self.can_spawn_at(room_id):
                 item["time"] = current_time
                 self.world.respawn_queue.append(item)
                 continue
-            npc = self.spawn(str(item["vnum"]), room_id)
+            npc = self.spawn(str(cast(Any, item["vnum"])), room_id)
             if npc is not None:
                 event = NPCActionEvent("respawn", npc.id, room_id, f"{npc.name} wraca do świata.")
                 events.append(event)
