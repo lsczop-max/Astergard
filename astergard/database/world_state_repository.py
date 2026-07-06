@@ -111,9 +111,10 @@ class WorldStateRepository:
             for raw_id, loc_payload in locations.items():
                 if not isinstance(loc_payload, dict):
                     continue
-                loc = world.get_location(int(raw_id))
-                if loc is None:
+                location = world.get_location(int(raw_id))
+                if location is None:
                     continue
+                loc = location
                 loc.items = [Item.from_dict(item) for item in loc_payload.get("items", []) if isinstance(item, dict)]
                 loc.npc_ids = [str(npc_id) for npc_id in loc_payload.get("npc_ids", [])]
                 loc.hidden_elements = [self._hydrate_hidden(item) for item in loc_payload.get("hidden_elements", []) if isinstance(item, dict)]

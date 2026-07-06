@@ -46,7 +46,10 @@ class SaveManifestRepository:
                     manifest.error,
                 ),
             )
-            return int(cur.lastrowid)
+            lastrowid = cur.lastrowid
+            if lastrowid is None:
+                raise RuntimeError("SQLite nie zwrócił lastrowid.")
+            return int(lastrowid)
 
     def latest(self, scope: str | None = None) -> SaveManifest | None:
         query = (
