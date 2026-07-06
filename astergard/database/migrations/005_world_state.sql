@@ -1,0 +1,6 @@
+CREATE TABLE IF NOT EXISTS world_snapshots(
+  id INTEGER PRIMARY KEY CHECK(id = 1),
+  world_json TEXT NOT NULL,
+  save_version INTEGER NOT NULL DEFAULT 1,
+  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
