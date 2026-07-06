@@ -690,8 +690,67 @@ def _make_d351f_content() -> tuple[LocationContent, ...]:
     cave_content = tuple(_d351f_cave_content(room_id, index, name) for index, (room_id, name) in enumerate(zip(range(455, 475), _D351F_CAVE_NAMES)))
     return mine_content + cave_content
 
+
+_D351G_RUINS_NAMES = (
+    "Zarośnięta Droga do Karshold", "Kamień Dawnej Granicy", "Przewrócony Obelisk", "Przedpole Spalonej Bramy", "Zawalona Brama Karshold",
+    "Dziedziniec Popękanych Płyt", "Strażnica Bez Dachu", "Mur Zachodni Ruin", "Mur Wschodni Ruin", "Baszta Kruczych Gniazd",
+    "Koszary pod Czarnym Stropem", "Stara Kuźnia Zamkowa", "Studnia Milczącej Wody", "Stajnia Złamanych Żłobów", "Spichlerz Bez Ziarna",
+    "Dom Zarządcy Twierdzy", "Plac Broni Karshold", "Kaplica Pękniętego Progu", "Schody do Górnej Sali", "Wielka Sala Bez Chorągwi",
+    "Sala Narad Przy Zawalonym Kominie", "Komnaty Wypalonych Belek", "Korytarz Zwęglonych Haków", "Biblioteka Pustych Półek", "Zbrojownia Zakleszczonych Drzwi",
+    "Ogród Wewnętrzny pod Popiołem", "Zejście do Krypt", "Piwnice Zimnego Kamienia", "Tunel pod Murem", "Zawalona Komora Ostatniego Wyjścia",
+)
+
+_D351G_RUINS_ATMOSPHERE = (
+    "Wiatr przechodzi przez puste okna i szczeliny tak, jakby nadal szukał ludzi, którzy dawno stąd uciekli.",
+    "Kamień nosi ślady ognia głębiej niż deszcz zdołał je wypłukać.",
+    "Każdy krok porusza drobny popiół, zmieszany z ziemią, igliwiem i skruszonym wapnem.",
+    "Ruiny nie są martwe. Są cierpliwe, ciężkie i pełne miejsc, w których coś mogło przetrwać.",
+    "Milczenie Karshold jest inne niż cisza lasu; tutaj brzmi jak rozkaz, którego nikt już nie wykonuje.",
+)
+
+_D351G_RUINS_FEATURES = (
+    ("kamien kamień mur mury", "Kamienie są osmalone i popękane. Niektóre noszą ślady narzędzi, inne uderzeń z czasu oblężenia."),
+    ("popiol popiół sadza ogien ogień", "Sadza weszła głęboko w szczeliny. Nawet po latach zostawia czarny ślad na palcach."),
+    ("znak herb rzezba rzeźba", "Znak Karshold jest prawie starty: tarcza, trzy pionowe nacięcia i ptak o rozpostartych skrzydłach."),
+    ("korzenie pnacza pnącza mech", "Korzenie wchodzą między kamienie cierpliwiej niż wojsko. Mur pęka tam, gdzie zieleń znalazła wodę."),
+    ("kosci kości szczatki szczątki", "To głównie kości zwierząt, ale kilka fragmentów jest zbyt prostych i białych, by dało się je zignorować."),
+    ("drzwi zawiasy belki", "Zawiasy zardzewiały w pozycji otwartej. Drewno pociemniało od wilgoci i dawnych płomieni."),
+    ("slady ślady tropy", "Na ziemi mieszają się tropy lisów, wilków i ludzi, którzy najwyraźniej nie chcieli zostawiać wyraźnych śladów."),
+    ("studnia woda wilgoc wilgoć", "Z głębi czuć zimną wilgoć. Dźwięk wrzuconego kamienia wróciłby późno, jeśli w ogóle."),
+)
+
+def _d351g_ruins_content(room_id: int, index: int, name: str) -> LocationContent:
+    feature_a = _D351G_RUINS_FEATURES[index % len(_D351G_RUINS_FEATURES)]
+    feature_b = _D351G_RUINS_FEATURES[(index + 3) % len(_D351G_RUINS_FEATURES)]
+    feature_c = _D351G_RUINS_FEATURES[(index + 5) % len(_D351G_RUINS_FEATURES)]
+    description = (
+        f"{name} należy do Ruin Karshold, dawnej twierdzy granicznej spalonej podczas wojny, "
+        f"o której miejscowi mówią tylko wtedy, gdy ogień w palenisku jest już niski. "
+        f"{_D351G_RUINS_ATMOSPHERE[index % len(_D351G_RUINS_ATMOSPHERE)]} "
+        "To miejsce nie służy już obronie granicy; teraz broni tylko własnych sekretów."
+    )
+    inspectables = {
+        feature_a[0]: feature_a[1],
+        feature_b[0]: feature_b[1],
+        feature_c[0]: feature_c[1],
+    }
+    items: tuple[Item, ...] = ()
+    hidden_items: tuple[tuple[Item, int], ...] = ()
+    if room_id in {425, 436, 443, 454}:
+        items = (Item("odłamek osmalonego kamienia", "Czarny od sadzy fragment muru z Karshold.", 0.4, 2, f"karshold_burnt_stone_{room_id}"),)
+    if room_id in {432, 441, 447, 452}:
+        hidden_items = ((Item("zardzewiały znak Karshold", "Mały metalowy znak z niemal startym herbem dawnej twierdzy.", 0.05, 8, f"karshold_rusted_badge_{room_id}"), 13),)
+    return LocationContent(room_id=room_id, name=name, description=description, inspectables=inspectables, items=items, hidden_items=hidden_items)
+
+
+def _make_d351g_content() -> tuple[LocationContent, ...]:
+    return tuple(
+        _d351g_ruins_content(room_id, index, name)
+        for index, (room_id, name) in enumerate(zip(range(425, 455), _D351G_RUINS_NAMES))
+    )
+
 def make_content_pack() -> tuple[LocationContent, ...]:
-    return START_CONTENT + _make_district_content() + _make_d351b_content() + _make_d351c_content() + _make_d351d_content() + _make_d351e_content() + _make_d351f_content()
+    return START_CONTENT + _make_district_content() + _make_d351b_content() + _make_d351c_content() + _make_d351d_content() + _make_d351e_content() + _make_d351f_content() + _make_d351g_content()
 
 
 def apply_content_pack(locations: dict[int, Location], content_pack: tuple[LocationContent, ...] | None = None) -> None:
