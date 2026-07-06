@@ -24,7 +24,7 @@ class Quest:
     title: str
     description: str
     objectives: list[QuestObjective]
-    rewards: QuestRewards = field(default_factory=dict)
+    rewards: QuestRewards = field(default_factory=QuestRewards)
 
 
 QUESTS: dict[str, Quest] = {
