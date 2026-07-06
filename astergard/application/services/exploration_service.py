@@ -7,6 +7,7 @@ from astergard.characters.models import Character
 from astergard.commands.helpers import find_item, find_npc_in_manager
 from astergard.commands.polish import normalize_phrase, split_relation, tokens_match
 from astergard.items.models import Item
+from typing import cast
 from astergard.engine.events import DomainEventType
 from astergard.rules.movement import MovementRules, SearchRules, default_movement_rules, default_search_rules
 
@@ -147,11 +148,13 @@ class ExplorationService:
         ctx.character.stats.kondycja -= 15
         score = random.randint(1, 10) + ctx.character.stats.percepcja + ctx.character.skills.values["spostrzegawczosc"]["level"] // 10
         for hidden in list(loc.hidden_elements):
-            if score >= int(hidden["difficulty"]):
+            difficulty = cast(int | str, hidden["difficulty"])
+            if score >= int(difficulty):
                 item = hidden["data"]
-                if isinstance(item, Item):
-                    loc.items.append(item)
+                if not isinstance(item, Item):
+                    continue
+                loc.items.append(item)
                 loc.hidden_elements.remove(hidden)
-                ctx.event_bus.emit("world.hidden_element_discovered", username=ctx.character.username, room_id=loc.id, element=getattr(item, "vnum", None) or getattr(item, "name", "unknown"))
+                ctx.event_bus.emit("world.hidden_element_discovered", username=ctx.character.username, room_id=loc.id, element=item.vnum or item.name)
                 return f"<green>Odkrywasz: {item.name}!</green>"
         return "Nie znajdujesz niczego nowego."
