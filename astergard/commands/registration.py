@@ -14,7 +14,9 @@ from astergard.commands.social_systems import build_social_handlers
 from astergard.commands.system import build_system_handlers
 from astergard.commands.engine import PermissionLevel
 
-COMMAND_DEFINITIONS = {
+CommandDefinitionTuple = tuple[str, list[str], str, str, float, bool, str] | tuple[str, list[str], str, str, float, bool, str, PermissionLevel]
+
+COMMAND_DEFINITIONS: dict[str, CommandDefinitionTuple] = {
     "look": ("Eksploracja", ["look", "l", "ob", "sp", "spojrz", "spójrz", "obejrzyj", "popatrz", "patrz", "zobacz"], "Opisuje obecną lokację albo wskazany cel.", "spojrz [cel]", 0.0, False, "cel"),
     "move": ("Eksploracja", [], "Przemieszcza postać.", "polnoc", 0.2, False, "kierunek"),
     "search": ("Eksploracja", ["szukaj", "przeszukaj", "szperaj"], "Przeszukuje lokację kosztem kondycji.", "szukaj", 2.0, False, ""),
@@ -45,7 +47,7 @@ COMMAND_DEFINITIONS = {
     "cast": ("Magia", ["czaruj", "rzuc", "rzuć"], "Rzuca czar.", "czaruj <czar>", 1.0, True, "czar"),
     "craft": ("Crafting", ["craft", "stworz", "stwórz", "wykonaj", "zrob", "zrób"], "Tworzy przedmiot według receptury.", "craft <receptura>", 1.0, True, "receptura"),
     "ranking": ("System", ["ranking"], "Pokazuje ranking graczy.", "ranking [kategoria]", 5.0, False, "kategoria"),
-    "save": ("System", ["zapisz", "save"], "Zapisuje postać.", "zapisz", "save", 3.0, False, ""),
+    "save": ("System", ["zapisz", "save"], "Zapisuje postać.", "zapisz", 3.0, False, ""),
     "quit": ("System", ["quit", "exit", "wyjdz", "wyjdź", "koniec"], "Kończy sesję gry.", "quit", 0.0, False, ""),
     "inspect": ("Administracja", ["inspect"], "Pokazuje stan gracza.", "inspect [gracz]", 0.0, False, "gracz", PermissionLevel.GM),
     "teleport": ("Administracja", ["teleport"], "Przenosi wskazanego gracza do lokacji.", "teleport <gracz> <lokacja>", 0.0, True, "gracz lokacja", PermissionLevel.GM),
