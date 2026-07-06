@@ -124,6 +124,13 @@ def make_npc_character(vnum: str, style: str | None = None) -> Character:
     return c
 
 
+
+def _make_player_duelist_factory(style: str) -> CharacterFactory:
+    def factory() -> Character:
+        return make_player_duelist(style)
+
+    return factory
+
 def default_balance_scenarios(iterations: int = 1000) -> list[CombatScenario]:
     scenarios: list[CombatScenario] = [
         CombatScenario(
@@ -152,7 +159,7 @@ def default_balance_scenarios(iterations: int = 1000) -> list[CombatScenario]:
         scenarios.append(
             CombatScenario(
                 f"style_{style}_vs_balanced",
-                lambda s=style: make_player_duelist(s),
+                _make_player_duelist_factory(style),
                 lambda: make_player_duelist("zrownowazony"),
                 iterations=iterations,
                 seed=4000 + len(scenarios),
