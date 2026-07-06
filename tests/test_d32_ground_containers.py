@@ -14,6 +14,7 @@ class D32GroundContainerTests(unittest.TestCase):
                 server = harness.require_server()
                 char = harness.create_character("d32_index")
                 loc = server.world.get_location(char.room_id)
+                assert loc is not None
                 chest = Item("drewniana skrzynia", "Stara skrzynia.", 3.0, 5, "wooden_chest", is_container=True, capacity=20)
                 chest.contains.append(Item("krótki miecz", "Pierwszy miecz.", 1.0, 3, "short_sword"))
                 chest.contains.append(Item("krótki miecz", "Drugi miecz.", 1.0, 3, "short_sword"))
@@ -30,6 +31,7 @@ class D32GroundContainerTests(unittest.TestCase):
                 server = harness.require_server()
                 char = harness.create_character("d32_search")
                 loc = server.world.get_location(char.room_id)
+                assert loc is not None
                 chest = Item("żelazna skrzynia", "Ciężka skrzynia.", 4.0, 10, "iron_chest", is_container=True, capacity=20)
                 chest.contains.append(Item("zardzewiały klucz", "Klucz z plamami rdzy.", 0.1, 1, "rusty_key"))
                 loc.items.append(chest)
@@ -44,6 +46,7 @@ class D32GroundContainerTests(unittest.TestCase):
                 server = harness.require_server()
                 char = harness.create_character("d32_transfer")
                 loc = server.world.get_location(char.room_id)
+                assert loc is not None
                 backpack = Item("skórzany plecak", "Pojemny plecak.", 0.8, 8, "leather_backpack", is_container=True, capacity=20)
                 chest = Item("skrzynia", "Skrzynia przy ścianie.", 2.0, 3, "chest", is_container=True, capacity=20)
                 key = Item("mosiężny klucz", "Żółtawy klucz.", 0.1, 1, "brass_key")
@@ -62,6 +65,7 @@ class D32GroundContainerTests(unittest.TestCase):
                 server = harness.require_server()
                 char = harness.create_character("d32_put_ground")
                 loc = server.world.get_location(char.room_id)
+                assert loc is not None
                 chest = Item("skrzynia", "Skrzynia.", 2.0, 3, "chest", is_container=True, capacity=20)
                 ring = Item("srebrny pierścień", "Prosty pierścień.", 0.1, 4, "silver_ring")
                 loc.items.append(chest)
