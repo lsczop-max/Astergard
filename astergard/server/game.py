@@ -18,6 +18,34 @@ from astergard.server.context import GameContext
 
 
 class GameServer:
+    cmd_look: CommandFunc
+    cmd_move: CommandFunc
+    cmd_say: CommandFunc
+    cmd_emote: CommandFunc
+    cmd_shout: CommandFunc
+    cmd_score: CommandFunc
+    cmd_skills: CommandFunc
+    cmd_inventory: CommandFunc
+    cmd_get: CommandFunc
+    cmd_drop: CommandFunc
+    cmd_wear: CommandFunc
+    cmd_remove: CommandFunc
+    cmd_kill: CommandFunc
+    cmd_flee: CommandFunc
+    cmd_talk: CommandFunc
+    cmd_quests: CommandFunc
+    cmd_offer: CommandFunc
+    cmd_buy: CommandFunc
+    cmd_sell: CommandFunc
+    cmd_search: CommandFunc
+    cmd_consume: CommandFunc
+    cmd_cast: CommandFunc
+    cmd_craft: CommandFunc
+    cmd_reputation: CommandFunc
+    cmd_ranking: CommandFunc
+    cmd_save: CommandFunc
+    cmd_quit: CommandFunc
+
     """Network-facing orchestration layer.
 
     D8 keeps command construction inside the bootstrap/CommandBus path. The
