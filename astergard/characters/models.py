@@ -106,6 +106,7 @@ class Character:
     combat_style: str = "zrownowazony"
     combat_events: list[str] = field(default_factory=list)
     state: str = CharacterState.ALIVE.value
+    admin_role: str | None = None
 
 
     def sync_flags_from_state(self) -> None:
