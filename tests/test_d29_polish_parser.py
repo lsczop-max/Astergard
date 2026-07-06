@@ -42,6 +42,7 @@ class D29PolishParserTests(unittest.TestCase):
             server = self.make_server()
             char = Character("declension")
             loc = server.world.get_location(char.room_id)
+            assert loc is not None
             loc.items.append(Item("żelazny klucz", "Ciężki klucz.", 0.1, 1, "iron_key"))
             ctx = server.make_context(char)
             out = await server.dispatcher.execute_line(ctx, "podnieś klucza")

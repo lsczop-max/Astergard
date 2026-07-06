@@ -8,7 +8,7 @@ from astergard.combat.balance import CombatBalanceSimulator, threat_balance_scen
 from astergard.database.connections import SQLiteConnectionFactory
 from astergard.database.world_state_repository import WorldStateRepository
 from astergard.npcs.manager import NPCManager
-from astergard.npcs.models import NPCFactory
+from astergard.npcs.models import NPC, NPCFactory
 from astergard.npcs.threat import THREAT_PROFILES, threat_for_vnum
 from astergard.world.manager import WorldManager
 
@@ -57,7 +57,7 @@ class D18NPCThreatTierTests(unittest.TestCase):
 
             loaded_world = WorldManager()
             loaded_world.generate_world()
-            loaded_npcs = {}
+            loaded_npcs: dict[str, NPC] = {}
             self.assertTrue(repo.load_into(loaded_world, loaded_npcs, NPCFactory()))
             loaded = next(npc for npc in loaded_npcs.values() if npc.vnum == "warband_captain")
             self.assertEqual(loaded.threat_tier, "boss")
