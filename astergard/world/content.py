@@ -749,8 +749,65 @@ def _make_d351g_content() -> tuple[LocationContent, ...]:
         for index, (room_id, name) in enumerate(zip(range(425, 455), _D351G_RUINS_NAMES))
     )
 
+
+_D351H_SWAMP_NAMES = (
+    "Błotna Ścieżka Hookri", "Trzcinowy Próg", "Rozlewisko Szarej Wody", "Sucha Kępa pod Wierzbą", "Stara Grobla",
+    "Powalone Drzewo nad Topielą", "Grzęzawisko Cichych Bąbli", "Czarna Woda", "Mglista Polana", "Martwy Las",
+    "Wyspa Torfowa", "Zarośla Ostrych Trzcin", "Martwe Wierzby", "Kanał Zimnego Mułu", "Chwiejąca się Kładka",
+    "Błotny Krąg", "Mokradła Bez Ścieżki", "Zarośnięty Brzeg", "Zapadnięta Chata", "Kamienny Krąg w Mule",
+    "Stary Ołtarz Hookri", "Serce Bagien", "Wyspa Mgieł", "Zawalona Grobla", "Wyjście ku Głębokiemu Lasowi",
+)
+
+_D351H_SWAMP_ATMOSPHERE = (
+    "Mgła nie leży tu nad wodą, lecz zdaje się wyrastać z niej powoli, jak oddech czegoś ukrytego pod torfem.",
+    "Każdy krok brzmi miękko i niepewnie; ziemia ustępuje trochę za łatwo, a potem niechętnie oddaje but.",
+    "Powietrze pachnie gnijącą trzciną, zimną wodą i drewnem, które dawno przestało pamiętać ogień.",
+    "Nie ma tu prawdziwej ciszy. Są tylko pluski, szelesty, dalekie bulgotanie i nagłe milczenie ptaków.",
+    "Bagno nie grozi otwarcie. Ono czeka, aż człowiek sam pomyli ścieżkę z powierzchnią wody.",
+)
+
+_D351H_SWAMP_FEATURES = (
+    ("mgla mgła opar opary", "Mgła ogranicza widzenie do kilku kroków. Dalej wszystko rozpływa się w szarych, wilgotnych plamach."),
+    ("torf bloto błoto mul muł", "Torf ugina się pod stopą i wypuszcza ciemną wodę o zapachu starego żelaza i zgnilizny."),
+    ("trzciny sitowie zielsko", "Trzciny są wysokie, ostre i mokre. Poruszają się nawet wtedy, gdy nie czuć wiatru."),
+    ("woda rozlewisko topiel", "Woda wygląda płytko, ale jej ciemny kolor nie pozwala odgadnąć dna."),
+    ("groble kladka kładka deski", "Deski i groble są śliskie od porostów. Niektóre trzymają się bardziej pamięcią niż gwoździami."),
+    ("wierzby drzewa korzenie", "Wierzby stoją pochylone, z korzeniami odsłoniętymi jak palce wyciągnięte z błota."),
+    ("slady ślady tropy", "Ślady urywają się nagle przy wodzie. Nie wiadomo, czy ktoś skręcił, czy po prostu zniknął niżej."),
+    ("kamienie krag krąg oltarz ołtarz", "Kamienie są niskie i omszałe. Ustawiono je dawno temu, zanim bagno zabrało resztę znaków."),
+)
+
+def _d351h_swamp_content(room_id: int, index: int, name: str) -> LocationContent:
+    feature_a = _D351H_SWAMP_FEATURES[index % len(_D351H_SWAMP_FEATURES)]
+    feature_b = _D351H_SWAMP_FEATURES[(index + 2) % len(_D351H_SWAMP_FEATURES)]
+    feature_c = _D351H_SWAMP_FEATURES[(index + 5) % len(_D351H_SWAMP_FEATURES)]
+    description = (
+        f"{name} należy do Bagien Hookri, rozległego mokradła na skraju starych traktów i zapomnianych ruin. "
+        f"{_D351H_SWAMP_ATMOSPHERE[index % len(_D351H_SWAMP_ATMOSPHERE)]} "
+        "To teren, który nie potrzebuje murów ani straży; sam wybiera, kogo przepuści dalej."
+    )
+    inspectables = {
+        feature_a[0]: feature_a[1],
+        feature_b[0]: feature_b[1],
+        feature_c[0]: feature_c[1],
+    }
+    items: tuple[Item, ...] = ()
+    hidden_items: tuple[tuple[Item, int], ...] = ()
+    if room_id in {475, 482, 490, 497}:
+        items = (Item("garść torfowego ziela", "Wilgotne, ostro pachnące ziele zebrane na krawędzi mokradła.", 0.05, 3, f"hookri_bog_herb_{room_id}"),)
+    if room_id in {481, 488, 495, 499}:
+        hidden_items = ((Item("czarny kamyk z bagna", "Gładki, ciemny kamyk zimny nawet w dłoni.", 0.03, 5, f"hookri_black_stone_{room_id}"), 14),)
+    return LocationContent(room_id=room_id, name=name, description=description, inspectables=inspectables, items=items, hidden_items=hidden_items)
+
+
+def _make_d351h_content() -> tuple[LocationContent, ...]:
+    return tuple(
+        _d351h_swamp_content(room_id, index, name)
+        for index, (room_id, name) in enumerate(zip(range(475, 500), _D351H_SWAMP_NAMES))
+    )
+
 def make_content_pack() -> tuple[LocationContent, ...]:
-    return START_CONTENT + _make_district_content() + _make_d351b_content() + _make_d351c_content() + _make_d351d_content() + _make_d351e_content() + _make_d351f_content() + _make_d351g_content()
+    return START_CONTENT + _make_district_content() + _make_d351b_content() + _make_d351c_content() + _make_d351d_content() + _make_d351e_content() + _make_d351f_content() + _make_d351g_content() + _make_d351h_content()
 
 
 def apply_content_pack(locations: dict[int, Location], content_pack: tuple[LocationContent, ...] | None = None) -> None:
