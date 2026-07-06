@@ -1,5 +1,7 @@
 from __future__ import annotations
-import asyncio, tempfile, unittest
+import asyncio
+from typing import Any, Coroutine, cast
+import tempfile, unittest
 from astergard.commands.parser import CommandParser
 from astergard.server.game import GameContext, GameServer
 from astergard.combat.manager import CombatManager
@@ -31,7 +33,7 @@ class AstergardCoreTests(unittest.TestCase):
     def test_inventory_equipment_and_weight(self) -> None:
         srv = self.make_server(); char = Character("tester")
         ctx = srv.make_context(char)
-        out = asyncio.run(srv.cmd_wear(ctx, "miecz", 1))
+        out: str = asyncio.run(cast(Coroutine[Any, Any, str], srv.cmd_wear(ctx, "miecz", 1)))
         self.assertIn("Zakładasz", out)
         self.assertIsNotNone(char.equipment["prawa_reka"])
 
@@ -45,9 +47,9 @@ class AstergardCoreTests(unittest.TestCase):
     def test_quest_trade_and_commands(self) -> None:
         srv = self.make_server(); char = Character("tester")
         ctx = srv.make_context(char)
-        talk = asyncio.run(srv.cmd_talk(ctx, "kupiec o wilki", 1))
+        talk: str = asyncio.run(cast(Coroutine[Any, Any, str], srv.cmd_talk(ctx, "kupiec o wilki", 1)))
         self.assertIn("Otrzymujesz", talk)
-        offer = asyncio.run(srv.cmd_offer(ctx, None, 1))
+        offer: str = asyncio.run(cast(Coroutine[Any, Any, str], srv.cmd_offer(ctx, None, 1)))
         self.assertIn("mikstura", offer)
 
 if __name__ == "__main__":

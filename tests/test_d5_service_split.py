@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+from typing import Any, Coroutine, cast
 import tempfile
 import unittest
 from pathlib import Path
@@ -26,14 +27,14 @@ class D5ServiceSplitTests(unittest.TestCase):
         server = self.make_server()
         char = Character("look")
         ctx = server.make_context(char)
-        result = asyncio.run(server.cmd_look(ctx, None, 1))
+        result: str = asyncio.run(cast(Coroutine[Any, Any, str], server.cmd_look(ctx, None, 1)))
         self.assertIn("Widoczne wyjścia", result)
 
     def test_communication_handler_delegates_to_service(self) -> None:
         server = self.make_server()
         char = Character("speaker")
         ctx = server.make_context(char)
-        result = asyncio.run(server.cmd_say(ctx, "test", 1))
+        result: str = asyncio.run(cast(Coroutine[Any, Any, str], server.cmd_say(ctx, "test", 1)))
         self.assertEqual(result, "Mówisz: test")
 
     def test_system_handler_delegates_to_service(self) -> None:
@@ -41,7 +42,7 @@ class D5ServiceSplitTests(unittest.TestCase):
         server.repo.register("saver", "pw")
         char = server.repo.load("saver")
         ctx = server.make_context(char)
-        result = asyncio.run(server.cmd_save(ctx, None, 1))
+        result: str = asyncio.run(cast(Coroutine[Any, Any, str], server.cmd_save(ctx, None, 1)))
         self.assertEqual(result, "Zapisano postać.")
 
     def test_remaining_command_handlers_are_thin_after_d5(self) -> None:

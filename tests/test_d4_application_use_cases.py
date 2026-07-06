@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+from typing import Any, Coroutine, cast
 import tempfile
 import unittest
 from pathlib import Path
@@ -19,7 +20,7 @@ class D4ApplicationUseCaseTests(unittest.TestCase):
         server = self.make_server()
         char = Character("inv")
         ctx = server.make_context(char)
-        result = asyncio.run(server.cmd_inventory(ctx, None, 1))
+        result: str = asyncio.run(cast(Coroutine[Any, Any, str], server.cmd_inventory(ctx, None, 1)))
         self.assertIn("Wyposażenie", result)
         self.assertIs(server.services.inventory_service, server.services.inventory_service)
 

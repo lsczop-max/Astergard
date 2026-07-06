@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+from typing import Any, Coroutine, cast
 import tempfile
 import unittest
 
@@ -22,7 +23,7 @@ class D2ModularityTests(unittest.TestCase):
         server = self.make_server()
         char = server.repo.load("missing") if False else __import__("astergard.characters.models", fromlist=["Character"]).Character("tester")
         ctx = server.make_context(char)
-        result = asyncio.run(server.cmd_inventory(ctx, None, 1))
+        result: str = asyncio.run(cast(Coroutine[Any, Any, str], server.cmd_inventory(ctx, None, 1)))
         self.assertIn("Wyposażenie", result)
 
     def test_server_game_is_orchestration_layer(self) -> None:
