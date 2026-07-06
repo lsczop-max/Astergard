@@ -30,7 +30,7 @@ class ContextPortTests(unittest.TestCase):
         char = Character("tester")
         char.room_id = 0
         ctx = server.make_context(char)
-        server.clients[object()] = char  # type: ignore[assignment]
+        server.clients[object()] = char  # type: ignore[index]
         self.assertEqual(ctx.players_in_room(0), [char])
 
 

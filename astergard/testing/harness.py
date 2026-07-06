@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import cast
 
 import tempfile
 from dataclasses import dataclass, field
@@ -65,7 +66,7 @@ class TestGameHarness:
         character.room_id = room_id
         writer = FakeWriter()
         self.writers[username] = writer
-        server.clients[writer] = character
+        server.clients[cast(object, writer)] = character  # type: ignore[index]
         return character
 
     def context_for(self, character: Character):
