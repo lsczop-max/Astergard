@@ -146,6 +146,7 @@ class WorldManager:
         self._build_d351d_deep_forest_graph()
         self._build_d351e_mountains_pass_graph()
         self._build_d351f_mines_caves_graph()
+        self._build_d351g_ruins_graph()
         self._build_placeholder_region_graphs()
         self._build_inter_region_roads()
 
@@ -439,6 +440,25 @@ class WorldManager:
             (457, 462, "poludnie"), (462, 468, "poludniowy-wschod"),
             (466, 472, "poludniowy-zachod"), (470, 474, "poludniowy-wschod"),
             (424, 455, "zachod"),
+        ]
+        for a, b, direction in links:
+            self._link(a, b, direction)
+
+    def _build_d351g_ruins_graph(self) -> None:
+        # D35.1G: Ruiny Karshold are a linear traversal through the old fort:
+        # approach road, ruined outer wall, inner keep, crypt access and the
+        # collapsed exit toward the swamp.
+        links = [
+            (425, 426, "wschod"), (426, 427, "poludnie"), (427, 428, "wschod"),
+            (428, 429, "poludnie"), (429, 430, "wschod"), (430, 431, "poludnie"),
+            (431, 432, "wschod"), (432, 433, "poludnie"), (433, 434, "wschod"),
+            (434, 435, "poludnie"), (435, 436, "wschod"), (436, 437, "poludnie"),
+            (437, 438, "wschod"), (438, 439, "poludnie"), (439, 440, "wschod"),
+            (440, 441, "poludnie"), (441, 442, "wschod"), (442, 443, "poludnie"),
+            (443, 444, "wschod"), (444, 445, "poludnie"), (445, 446, "wschod"),
+            (446, 447, "poludnie"), (447, 448, "wschod"), (448, 449, "poludnie"),
+            (449, 450, "wschod"), (450, 451, "poludnie"), (451, 452, "wschod"),
+            (452, 453, "poludnie"), (453, 454, "wschod"),
         ]
         for a, b, direction in links:
             self._link(a, b, direction)
