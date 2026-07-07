@@ -56,7 +56,7 @@ class AstergardCoreTests(unittest.TestCase):
         talk: str = asyncio.run(cast(Coroutine[Any, Any, str], srv.cmd_talk(ctx, "kupiec o wilki", 1)))
         self.assertIn("Otrzymujesz", talk)
         offer: str = asyncio.run(cast(Coroutine[Any, Any, str], srv.cmd_offer(ctx, None, 1)))
-        self.assertIn("mikstura", offer)
+        self.assertIn("krzesiwo", offer)
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 from astergard.application.use_case_contexts import EconomyContext
-from astergard.economy.services import EconomyService
-from astergard.npcs.models import NPC
 from astergard.engine.events import DomainEventType
+from astergard.economy.services import EconomyService
+from astergard.items.models import Item, innkeeper_favor_item
+from astergard.npcs.models import NPC
 
 
 class EconomyApplicationService:
@@ -14,7 +15,8 @@ class EconomyApplicationService:
         merchant = self._merchant(ctx)
         if merchant is None:
             return "Nie ma tu kupca."
-        return "\n".join(f"{item.name} - {self.economy.buy_price(item, ctx.character.reputation.get(merchant.faction, 0))} monet" for item in merchant.shop_inventory) or "Kupiec nie ma towaru."
+        items = self._offer_items(ctx, merchant)
+        return "\n".join(f"{item.name} - {self.economy.buy_price(item, ctx.character.reputation.get(merchant.faction, 0))} monet" for item in items) or "Kupiec nie ma towaru."
 
     def buy(self, ctx: EconomyContext, item_name: str | None) -> str:
         if not item_name:
@@ -22,6 +24,11 @@ class EconomyApplicationService:
         merchant = self._merchant(ctx)
         if merchant is None:
             return "Nie ma tu kupca."
+        item = self._offered_item(ctx, merchant, item_name)
+        if item is None:
+            return "Kupiec nie ma takiego towaru."
+        if item not in merchant.shop_inventory:
+            merchant.shop_inventory.append(item)
         before_gold = ctx.character.gold
         result = self.economy.buy(ctx.character, merchant, item_name)
         if ctx.character.gold < before_gold:
@@ -42,3 +49,12 @@ class EconomyApplicationService:
 
     def _merchant(self, ctx: EconomyContext) -> NPC | None:
         return next((npc for npc in ctx.npcs.by_room(ctx.character.room_id) if npc.is_merchant), None)
+
+    def _offer_items(self, ctx: EconomyContext, merchant: NPC) -> list[Item]:
+        items = list(merchant.shop_inventory)
+        if merchant.vnum == "innkeeper" and "market_delivery" in ctx.character.completed_quests:
+            items.append(innkeeper_favor_item())
+        return items
+
+    def _offered_item(self, ctx: EconomyContext, merchant: NPC, item_name: str) -> Item | None:
+        return next((item for item in self._offer_items(ctx, merchant) if item_name in item.name), None)

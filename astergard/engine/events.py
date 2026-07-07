@@ -44,6 +44,7 @@ class DomainEventType(StrEnum):
 
     QUEST_ACCEPTED = "quest.accepted"
     QUEST_PROGRESS_UPDATED = "quest.progress_updated"
+    QUEST_COMPLETED = "quest.completed"
     REPUTATION_CHANGED = "reputation.changed"
 
     ECONOMY_ITEM_BOUGHT = "economy.item_bought"

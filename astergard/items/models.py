@@ -101,3 +101,63 @@ def starter_items() -> list[Item]:
         Item("skórzana kurtka", "Utwardzana kurtka podróżna.", 3.0, 20, "leather_jacket", "armor", "korpus", protection=1),
         Item("chleb", "Twardy bochen podróżny.", 0.4, 2, "bread", "food", is_consumable=True, effects_on_consume={"restore_stamina": 12}),
     ]
+
+
+def innkeeper_shop_inventory() -> list[Item]:
+    return [
+        Item("woda źródlana", "Dzban czystej wody na drogę.", 1.0, 1, "innkeeper_spring_water", "food", is_consumable=True, effects_on_consume={"restore_stamina": 4}),
+        Item("napój ziołowy", "Lekki napój z ziół i miodu.", 0.5, 2, "innkeeper_herbal_drink", "food", is_consumable=True, effects_on_consume={"restore_stamina": 6}),
+        Item("chleb", "Twardy bochen z pieca.", 0.4, 2, "innkeeper_bread", "food", is_consumable=True, effects_on_consume={"restore_stamina": 12}),
+        Item("racja podróżna", "Sucha racja na marsz i nocleg w drodze.", 0.7, 4, "innkeeper_travel_ration", "food", is_consumable=True, effects_on_consume={"restore_stamina": 10}),
+    ]
+
+
+def baker_shop_inventory() -> list[Item]:
+    return [
+        Item("chleb", "Jeszcze ciepły bochen z miejskiego pieca.", 0.4, 2, "baker_bread", "food", is_consumable=True, effects_on_consume={"restore_stamina": 12}),
+        Item("podpłomyk", "Cienki placek na szybki posiłek.", 0.2, 1, "baker_flatbread", "food", is_consumable=True, effects_on_consume={"restore_stamina": 6}),
+        Item("mąka", "Sakwa drobno mielonej mąki.", 1.0, 2, "baker_flour", "misc"),
+        Item("bułka", "Miękka bułka na śniadanie.", 0.2, 1, "baker_roll", "food", is_consumable=True, effects_on_consume={"restore_stamina": 4}),
+    ]
+
+
+def blacksmith_shop_inventory() -> list[Item]:
+    return [
+        Item("pilnik", "Pilnik do ostrzenia i wygładzania metalu.", 0.4, 3, "smith_file", "tool"),
+        Item("młotek warsztatowy", "Niewielki młotek do drobnych napraw.", 1.2, 5, "smith_work_hammer", "tool"),
+        Item("naprawione ostrze", "Stare ostrze po naprawie, dobre do lekkiej służby.", 1.6, 9, "smith_reforged_blade", "weapon", "prawa_reka", damage_type="cieta", base_damage=3, reach=1, initiative_modifier=0, parry_bonus=1),
+        Item("krótki nóż", "Krótki nóż do cięcia sznurów i skóry.", 0.3, 4, "smith_knife", "weapon", "prawa_reka", damage_type="kluta", base_damage=2, reach=1, initiative_modifier=1, parry_bonus=0),
+    ]
+
+
+def merchant_shop_inventory() -> list[Item]:
+    return [
+        Item("krzesiwo", "Krzesiwo i krzemień w skórzanym woreczku.", 0.2, 2, "merchant_flint", "tool"),
+        Item("bukłak", "Mały bukłak na wodę.", 0.6, 3, "merchant_waterskin", "tool"),
+        Item("latarnia podróżna", "Prosta latarnia z grubym szkłem.", 1.4, 6, "merchant_lantern", "tool"),
+        Item("sakwa podróżna", "Sakwa z jedną dużą przegródką i mocnym paskiem.", 1.0, 5, "merchant_travel_sack", is_container=True, capacity=12),
+        Item("zwój liny", "Zwój grubej liny, przydatny przy drodze.", 2.8, 4, "merchant_rope", "tool"),
+    ]
+
+
+def fisher_shop_inventory() -> list[Item]:
+    return [
+        Item("świeża ryba", "Świeżo złowiona ryba z lokalnego nurtu.", 0.6, 2, "fisher_fresh_fish", "food", is_consumable=True, effects_on_consume={"restore_stamina": 6}),
+        Item("sieć rybacka", "Mokra sieć do połowu i napraw.", 2.2, 9, "fisher_net", "tool"),
+        Item("haczyk", "Mały haczyk do lin i sieci.", 0.1, 1, "fisher_hook", "tool"),
+        Item("sznur do sieci", "Krótki sznur do łatania sieci.", 0.2, 2, "fisher_net_cord", "tool"),
+    ]
+
+
+def vendor_shop_inventory() -> list[Item]:
+    return [
+        Item("cebula", "Cebula z chłodnego składu.", 0.1, 1, "vendor_onion", "food", is_consumable=True, effects_on_consume={"restore_stamina": 2}),
+        Item("marchew", "Twarda, świeża marchew.", 0.1, 1, "vendor_carrot", "food", is_consumable=True, effects_on_consume={"restore_stamina": 2}),
+        Item("łatana koszula", "Tania koszula połatana na łokciach.", 0.8, 3, "vendor_patched_shirt", "armor", "korpus", protection=0),
+        Item("lniana chusta", "Lekka chusta chroniąca przed kurzem.", 0.2, 2, "vendor_linen_scarf", "armor", "glowa", protection=0),
+        Item("guziki", "Pęk drewnianych guzików do prostych napraw.", 0.05, 1, "vendor_buttons", "misc"),
+    ]
+
+
+def innkeeper_favor_item() -> Item:
+    return Item("gorący posiłek", "Ciepły, prosty posiłek dla zaufanego gościa.", 0.8, 5, "innkeeper_favor_meal", "food", is_consumable=True, effects_on_consume={"restore_stamina": 14})

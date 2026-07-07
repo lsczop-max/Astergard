@@ -8,6 +8,7 @@ from astergard.commands.polish import is_all_phrase, split_relation, tokens_matc
 from astergard.engine.events import DomainEventType
 from astergard.items.models import Item
 from astergard.npcs.manager import NPCManager
+from astergard.quests.manager import QuestManager, QUESTS
 from astergard.world.models import Location
 
 
@@ -68,7 +69,7 @@ class InventoryService:
         location.items.remove(item)
         character.inventory.append(item)
         if event_bus is not None:
-            event_bus.emit(DomainEventType.ITEM_PICKED_UP, username=character.username, room_id=getattr(location, "id", None), item=item.vnum or item.name)
+            event_bus.emit(DomainEventType.ITEM_PICKED_UP, username=character.username, character=character, room_id=getattr(location, "id", None), item=item.vnum or item.name)
         return f"Podnosisz {item.name}."
 
     def get_all_items(self, character: Character, location: Location, event_bus=None) -> str:
@@ -82,7 +83,7 @@ class InventoryService:
                 character.inventory.append(item)
                 taken.append(item)
                 if event_bus is not None:
-                    event_bus.emit(DomainEventType.ITEM_PICKED_UP, username=character.username, room_id=getattr(location, "id", None), item=item.vnum or item.name)
+                    event_bus.emit(DomainEventType.ITEM_PICKED_UP, username=character.username, character=character, room_id=getattr(location, "id", None), item=item.vnum or item.name)
             else:
                 skipped.append(item)
         if not taken:
@@ -164,7 +165,7 @@ class InventoryService:
             event_bus.emit("item.transferred_between_containers", username=character.username, item=item.vnum or item.name, source=source_ref.item.vnum or source_ref.item.name, target=target_ref.item.vnum or target_ref.item.name)
         return f"Przekładasz {item.name} z {source_ref.item.name} do {target_ref.item.name}."
 
-    def give_item(self, character: Character, npcs: NPCManager, phrase: str | None, index: int, event_bus=None) -> str:
+    def give_item(self, character: Character, npcs: NPCManager, quests: QuestManager, phrase: str | None, index: int, event_bus=None) -> str:
         item_name, npc_name = split_relation(phrase, {"npc", "recipient", "komu", "dla"})
         if not item_name or not npc_name:
             return "Użycie: daj <przedmiot> <osobie>."
@@ -178,8 +179,19 @@ class InventoryService:
         npc.character.inventory.append(item)
         if item.vnum == "wolf_pelt" and "wolf_pelt" in character.active_quests:
             character.active_quests["wolf_pelt"]["current"] = 1
-        if event_bus is not None:
-            event_bus.emit("item.given_to_npc", username=character.username, item=item.vnum or item.name, npc=npc.vnum)
+        for quest in QUESTS.values():
+            if quest.id not in character.active_quests:
+                continue
+            if not any(obj["type"] == "give" and obj["target"] == (item.vnum or item.name) for obj in quest.objectives):
+                continue
+            quests.progress(character, "give", item.vnum or item.name)
+            if event_bus is not None:
+                event_bus.emit("item.given_to_npc", username=character.username, item=item.vnum or item.name, npc=npc.vnum)
+            if quest.auto_complete_on_delivery and quest.completion_npc == npc.vnum and quests.is_ready(character, quest.id):
+                completion = quests.complete_if_ready(character, quest.id, event_bus)
+                if event_bus is not None:
+                    event_bus.emit("quest.progress_updated", username=character.username, quest_id=quest.id, target=item.vnum or item.name, npc=npc.vnum)
+                return f"Dajesz {item.name} postaci {npc.name}.\n{completion}"
         return f"Dajesz {item.name} postaci {npc.name}."
 
     def take_from_container(self, character: Character, phrase: str | None, index: int, event_bus=None, location: Location | None = None) -> str:

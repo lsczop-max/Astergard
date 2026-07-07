@@ -79,7 +79,10 @@ START_CONTENT: tuple[LocationContent, ...] = (
             "łańcuch wiadro": "Łańcuch jest posmarowany świeżym tłuszczem, żeby nie zjadała go wilgoć.",
             "kamień cembrowina": "Kamień na obrzeżu jest chłodny, twardy i wiecznie mokry od rozchlapywanej wody.",
         },
-        items=(Item("wiadro studzienne", "Proste wiadro do noszenia wody.", 1.2, 3, "city_well_bucket_21", item_type="tool"),),
+        items=(
+            Item("wiadro studzienne", "Proste wiadro do noszenia wody.", 1.2, 3, "city_well_bucket_21", item_type="tool"),
+            Item("zgubione szczypce", "Szczypce pozostawione przy studni przez roztargnienie albo pośpiech.", 1.1, 6, "smith_tongs_lost_21", item_type="tool"),
+        ),
     ),
     LocationContent(
         room_id=22,
@@ -266,6 +269,7 @@ _DISTRICT_OVERRIDES: dict[int, LocationContent] = {
         items=(
             Item("woskowa świeca", "Gruba świeca, jeszcze nieodpalona.", 0.2, 1, "wax_candle_37"),
             Item("drewniana ławka", "Prosta ławka dla modlących się lub czekających.", 4.0, 6, "chapel_bench_37", item_type="furniture"),
+            Item("wiązka ziół", "Świeżo zebrana wiązka ziół leczniczych.", 0.2, 3, "priest_herb_bundle_37"),
         ),
     ),
     38: LocationContent(
@@ -284,6 +288,7 @@ _DISTRICT_OVERRIDES: dict[int, LocationContent] = {
             Item("sieć rybacka", "Mokra sieć z ciężarkami z ołowiu.", 2.2, 9, "fishing_net_38", item_type="tool"),
             Item("beczka śledzi", "Beczka z solonymi śledziami. Ciężka, ale cenniejsza niż wygląda.", 18.0, 18, "herring_barrel_38", is_container=True, capacity=70),
             Item("skrzynia portowa", "Skrzynia po towarach rzecznych, z popękanym wiekiem.", 4.8, 7, "river_crate_38", is_container=True, capacity=30),
+            Item("zwinięta sieć", "Sieć zwinięta w ciasny pakunek, odłożona przy brzegu po nocnym połowie.", 2.0, 8, "podgrodzie_fishing_net_39", item_type="tool"),
         ),
     ),
     39: LocationContent(
@@ -320,6 +325,7 @@ _DISTRICT_OVERRIDES: dict[int, LocationContent] = {
         items=(
             Item("odważnik targowy", "Mały odważnik z wybitym znakiem rynku.", 0.7, 5, "market_weight_47"),
             Item("skrzynka na przyprawy", "Niska skrzynka po cennych przyprawach i ziołach.", 1.5, 9, "spice_crate_47", is_container=True, capacity=12),
+            Item("kosz targowy", "Kosz pełen warzyw i chleba, przygotowany do dostawy.", 2.0, 9, "market_delivery_basket_47", is_container=True, capacity=12),
         ),
     ),
     54: LocationContent(
@@ -488,6 +494,7 @@ _DISTRICT_OVERRIDES: dict[int, LocationContent] = {
         items=(
             Item("ognisko podróżnych", "Kiedyś rozpalone ognisko, dziś tylko kamienny ślad i garść popiołu.", 9.0, 3, "podgrodzie_road_fire_75", item_type="furniture"),
             Item("ława przydrożna", "Krótka ława do odpoczynku przed dalszą drogą.", 4.5, 3, "podgrodzie_road_bench_75", item_type="furniture"),
+            Item("zwinięta sieć", "Sieć zwinięta w ciasny pakunek, odłożona przy drodze po nocnym połowie.", 2.0, 8, "podgrodzie_fishing_net_75", item_type="tool"),
         ),
     ),
     76: LocationContent(

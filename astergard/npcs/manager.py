@@ -58,7 +58,7 @@ class NPCManager:
         self.spawn("podgrodzie_pielgrzym", 62)
         self.spawn("podgrodzie_piekarz", 63)
         self.spawn("podgrodzie_handlarz", 63)
-        self.spawn("podgrodzie_przekupka", 63)
+        self.spawn("podgrodzie_przekupka", 76)
         self.spawn("podgrodzie_kowal", 66)
         self.spawn("podgrodzie_pomocnik_kowala", 66)
         self.spawn("podgrodzie_straznik_miejski", 66)

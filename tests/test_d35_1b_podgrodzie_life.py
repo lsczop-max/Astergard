@@ -17,7 +17,7 @@ PODGRODZIE_SPAWNS: dict[str, int] = {
     "podgrodzie_pielgrzym": 62,
     "podgrodzie_piekarz": 63,
     "podgrodzie_handlarz": 63,
-    "podgrodzie_przekupka": 63,
+    "podgrodzie_przekupka": 76,
     "podgrodzie_kowal": 66,
     "podgrodzie_pomocnik_kowala": 66,
     "podgrodzie_straznik_miejski": 66,

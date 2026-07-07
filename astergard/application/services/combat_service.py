@@ -28,7 +28,7 @@ class CombatApplicationService:
         if npc is None:
             return "Nie widzisz takiego celu."
         result = ctx.combat.attack(ctx.character, npc.character)
-        ctx.event_bus.emit(DomainEventType.COMBAT_ATTACKED, username=ctx.character.username, target=npc.vnum, room_id=ctx.character.room_id, defender_dead=result.defender_dead, message=result.message)
+        ctx.event_bus.emit(DomainEventType.COMBAT_ATTACKED, username=ctx.character.username, character=ctx.character, target=npc.vnum, room_id=ctx.character.room_id, defender_dead=result.defender_dead, message=result.message)
         message = result.message
         if result.defender_dead:
             self._spawn_corpse(ctx, ctx.character.room_id, npc.name, npc.vnum, npc.character.inventory)

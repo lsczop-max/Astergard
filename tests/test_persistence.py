@@ -6,6 +6,8 @@ import unittest
 from astergard.characters.models import Effect
 from astergard.database.repository import PlayerRepository
 from astergard.items.models import Item
+from astergard.npcs.manager import NPCManager
+from astergard.world.manager import WorldManager
 
 
 class PersistenceTests(unittest.TestCase):
@@ -21,7 +23,9 @@ class PersistenceTests(unittest.TestCase):
             char.wounds["prawa_noga"] = 3
             char.reputation["MEEKHAN"] = -600
             char.active_quests["wolf_pelt"] = {"current": 1}
+            char.active_quests["market_delivery"] = {"current": 1}
             char.completed_quests.append("intro")
+            char.completed_quests.append("priest_herbs")
             sword = next(item for item in char.inventory if item.vnum == "simple_sword")
             char.inventory.remove(sword)
             char.equipment["prawa_reka"] = sword
@@ -38,7 +42,9 @@ class PersistenceTests(unittest.TestCase):
             self.assertEqual(loaded.wounds["prawa_noga"], 3)
             self.assertEqual(loaded.reputation["MEEKHAN"], -600)
             self.assertIn("wolf_pelt", loaded.active_quests)
+            self.assertIn("market_delivery", loaded.active_quests)
             self.assertIn("intro", loaded.completed_quests)
+            self.assertIn("priest_herbs", loaded.completed_quests)
             equipped = loaded.equipment["prawa_reka"]
             assert equipped is not None
             self.assertEqual(equipped.vnum, "simple_sword")
@@ -53,6 +59,30 @@ class PersistenceTests(unittest.TestCase):
             self.assertTrue(repo.verify("clean", "secret"))
             char = repo.load("clean")
             repo.save(char)
+
+    def test_world_state_roundtrip_keeps_merchant_shop_data(self) -> None:
+        with tempfile.NamedTemporaryFile() as tmp:
+            repo = PlayerRepository(tmp.name)
+            world = WorldManager()
+            world.generate_world()
+            npcs = NPCManager(world)
+            npcs.populate()
+
+            merchant = next(npc for npc in npcs.npcs.values() if npc.vnum == "podgrodzie_przekupka")
+            stock_names = [item.name for item in merchant.shop_inventory]
+            stock_gold = merchant.merchant_gold
+
+            repo.world_state.save(world, npcs.npcs)
+
+            loaded_world = WorldManager()
+            loaded_world.generate_world()
+            loaded_npcs = NPCManager(loaded_world)
+            self.assertTrue(repo.world_state.load_into(loaded_world, loaded_npcs.npcs, loaded_npcs.factory))
+
+            loaded_merchant = next(npc for npc in loaded_npcs.npcs.values() if npc.vnum == "podgrodzie_przekupka")
+            self.assertTrue(loaded_merchant.is_merchant)
+            self.assertEqual([item.name for item in loaded_merchant.shop_inventory], stock_names)
+            self.assertEqual(loaded_merchant.merchant_gold, stock_gold)
 
 
 if __name__ == "__main__":

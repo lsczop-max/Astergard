@@ -24,6 +24,7 @@ from astergard.application.services.system_service import SystemCommandService
 from astergard.application.services.combat_service import CombatApplicationService
 from astergard.application.services.quest_service import QuestApplicationService
 from astergard.application.services.economy_application_service import EconomyApplicationService
+from astergard.application.services.world_reaction_service import WorldReactionService
 from astergard.world.manager import WorldManager
 from astergard.engine.events import EventBus
 from astergard.engine.scheduler import Scheduler
@@ -91,6 +92,8 @@ class GameBootstrapper:
         observability = ObservabilityService(event_bus, scheduler)
         admin_audit = AdminAuditLogger(repo, event_bus)
         admin_service = AdminService(admin_audit)
+        world_reactions = WorldReactionService(event_bus, factions, npcs, lambda: [])
+        world_reactions.subscribe(event_bus)
         services = GameServices(
             rules=rules,
             event_bus=event_bus,

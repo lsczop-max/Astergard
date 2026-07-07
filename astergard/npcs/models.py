@@ -4,7 +4,15 @@ from dataclasses import dataclass, field
 from uuid import uuid4
 
 from astergard.characters.models import Character, CharacterStats
-from astergard.items.models import Item
+from astergard.items.models import (
+    Item,
+    baker_shop_inventory,
+    blacksmith_shop_inventory,
+    fisher_shop_inventory,
+    innkeeper_shop_inventory,
+    merchant_shop_inventory,
+    vendor_shop_inventory,
+)
 from astergard.npcs.combat_profiles import combat_style_for_vnum
 from astergard.npcs.threat import apply_threat_profile, threat_for_vnum
 from astergard.state import NPC_STATE_MACHINE, NPCState, parse_npc_state
@@ -39,8 +47,10 @@ class NPC:
         next_state = parse_npc_state(target)
         self.ai_state = NPC_STATE_MACHINE.validate(current, next_state).value
 
-    def dialogue(self, topic: str = "default") -> str:
+    def dialogue(self, topic: str = "default", reputation: int = 0) -> str:
         lines = self.dialogue_tree.get(topic) or self.dialogue_tree.get("default") or ["Milczy."]
+        if reputation < 0 and len(lines) > 1:
+            return lines[1]
         return lines[0]
 
     def scene_line(self) -> str:
@@ -59,6 +69,24 @@ class NPCFactory:
         apply_threat_profile(npc.character, profile)
         return npc
 
+    def _social_dialogue(
+        self,
+        default: str,
+        praca: str,
+        miejsce: str,
+        plotki: str,
+        **extra: str,
+    ) -> dict[str, list[str]]:
+        tree = {
+            "default": [default],
+            "praca": [praca],
+            "miejsce": [miejsce],
+            "plotki": [plotki],
+        }
+        for topic, line in extra.items():
+            tree[topic] = [line]
+        return tree
+
     def _basic_npc(
         self,
         *,
@@ -76,6 +104,7 @@ class NPCFactory:
         dialogue_tree: dict[str, list[str]] | None = None,
         is_merchant: bool = False,
         shop_inventory: list[Item] | None = None,
+        merchant_gold: int = 100,
     ) -> NPC:
         character = Character(name.capitalize())
         if stats is not None:
@@ -97,6 +126,7 @@ class NPCFactory:
             character=character,
             is_merchant=is_merchant,
             shop_inventory=list(shop_inventory or []),
+            merchant_gold=merchant_gold,
             home_room_id=room_id,
         )
         npc.character.combat_style = combat_style_for_vnum(npc.vnum)
@@ -121,10 +151,13 @@ class NPCFactory:
                     "lewa_reka": Item("mniejsza tarcza", "Tarcza służbowa z wybitym herbem miasta.", 2.7, 14, "city_guard_shield", "shield", "lewa_reka", protection=1, shield_block=2),
                     "korpus": Item("płaszcz straży", "Wzmacniany płaszcz miejskiej straży.", 4.8, 22, "city_guard_cloak", "armor", "korpus", protection=1),
                 },
-                dialogue_tree={
-                    "default": ["Pilnuj drogi i nie zawracaj ludziom głowy."],
-                    "brama": ["Przy bramie najłatwiej o kłopoty, więc patrzymy tu podwójnie uważnie."],
-                },
+                dialogue_tree=self._social_dialogue(
+                    "Pilnuj drogi i nie zawracaj ludziom głowy.",
+                    "Służba jest prosta: patrzeć, słuchać i nie mrugać za często.",
+                    "Stoję tam, gdzie mi każą. Zwykle przy bramie albo tam, gdzie ruch jest największy.",
+                    "Włóczędzy zdradzają się butami, nie słowami. Na to patrzę najpierw.",
+                    brama="Przy bramie najłatwiej o kłopoty, więc patrzymy tu podwójnie uważnie.",
+                ),
             )
         if vnum == "innkeeper":
             return self._basic_npc(
@@ -136,10 +169,17 @@ class NPCFactory:
                 faction="MEEKHAN",
                 room_id=room_id,
                 stats=CharacterStats(9, 9, 10, 11, 11, 100),
-                dialogue_tree={
-                    "default": ["Siadaj albo idź dalej, ale nie blokuj przejścia."],
-                    "piwo": ["Piwo jest ciemne, bo ludzie chcą zapomnieć, nie błyszczeć."],
-                },
+                is_merchant=True,
+                merchant_gold=55,
+                shop_inventory=innkeeper_shop_inventory(),
+                dialogue_tree=self._social_dialogue(
+                    "Siadaj albo idź dalej, ale nie blokuj przejścia.",
+                    "Praca przy ladzie nie kończy się nigdy. Kubki same się nie myją.",
+                    "Karczma stoi tam, gdzie wszyscy muszą przejść choć raz.",
+                    "Plotki przychodzą szybciej niż dostawy. Dwa kufle i już wiem za dużo.",
+                    piwo="Piwo jest ciemne, bo ludzie chcą zapomnieć, nie błyszczeć.",
+                    gość="Z twarzy widzę, czy ktoś zasługuje na ciepły stół.",
+                ),
             )
         if vnum == "podgrodzie_woznica":
             return self._basic_npc(
@@ -171,10 +211,13 @@ class NPCFactory:
                     "korpus": Item("karczemny fartuch", "Gruby fartuch z kieszeniami na łyżki, klucze i drobne rachunki.", 1.0, 5, "podgrodzie_inn_apron", "armor", "korpus", protection=1),
                 },
                 inventory=[Item("księga rachunków", "Zeszyt z zapisami należności, poplamiony tłuszczem i winem.", 0.4, 4, "podgrodzie_inn_ledger", item_type="tool")],
-                dialogue_tree={
-                    "default": ["Siadaj, jedz, pij i nie wchodź za ladę."],
-                    "gość": ["Dach nad głową kosztuje mniej niż kłótnia przy drzwiach."],
-                },
+                dialogue_tree=self._social_dialogue(
+                    "Siadaj, jedz, pij i nie wchodź za ladę.",
+                    "Praca jest przy stole, w kuchni i przy rachunkach. Nigdy nie brakuje roboty.",
+                    "Karczma stoi przy drodze, więc obcy trafiają tu sami.",
+                    "Plotki znam z pierwszej ręki. Goście mówią więcej niż powinni.",
+                    gość="Dach nad głową kosztuje mniej niż kłótnia przy drzwiach.",
+                ),
             )
         if vnum == "podgrodzie_karczmarka":
             return self._basic_npc(
@@ -191,6 +234,12 @@ class NPCFactory:
                     "prawa_reka": Item("taca z blachy", "Niewielka taca do noszenia kubków i talerzy.", 0.8, 4, "podgrodzie_inn_tray", "weapon", "prawa_reka", damage_type="obuchowa", base_damage=1, reach=1, initiative_modifier=1, parry_bonus=0),
                 },
                 inventory=[Item("ściereczka kelnerska", "Ściereczka do ścierania stołów i cudzych śladów.", 0.1, 1, "podgrodzie_inn_cloth", item_type="tool")],
+                dialogue_tree=self._social_dialogue(
+                    "Jeśli masz chwilę, to powiedz ją szybko. Mam gości do obsłużenia.",
+                    "Praca? Tace, kufle i sprzątanie cudzych śladów po nocy.",
+                    "Karczma stoi przy drodze, więc zawsze ktoś tu trafia.",
+                    "Plotki przychodzą z każdym zamówieniem. Ja tylko udaję, że nie słucham.",
+                ),
             )
         if vnum == "podgrodzie_piekarz":
             return self._basic_npc(
@@ -202,6 +251,9 @@ class NPCFactory:
                 faction="MEEKHAN",
                 room_id=room_id,
                 stats=CharacterStats(9, 9, 10, 9, 10, 90),
+                is_merchant=True,
+                merchant_gold=45,
+                shop_inventory=baker_shop_inventory(),
                 equipment={
                     "korpus": Item("piekarski fartuch", "Szorstki fartuch z mąką w zagięciach.", 0.8, 4, "podgrodzie_baker_apron", "armor", "korpus", protection=1),
                     "prawa_reka": Item("łopata piekarska", "Krótka łopata do wsuwania bochenków do pieca.", 1.4, 7, "podgrodzie_baker_peel", "weapon", "prawa_reka", damage_type="obuchowa", base_damage=2, reach=1, initiative_modifier=0, parry_bonus=0),
@@ -218,11 +270,20 @@ class NPCFactory:
                 faction="MEEKHAN",
                 room_id=room_id,
                 stats=CharacterStats(9, 10, 9, 11, 11, 95),
+                is_merchant=True,
+                merchant_gold=65,
+                shop_inventory=merchant_shop_inventory(),
                 equipment={
                     "korpus": Item("handlarski płaszcz", "Płaszcz z wieloma kieszeniami, odpowiedni do targowania się i ukrywania monet.", 1.1, 6, "podgrodzie_merchant_cloak", "armor", "korpus", protection=0),
                     "prawa_reka": Item("kijek do ważenia", "Krótki kij i miarka, które pomagają pilnować uczciwej wagi.", 0.5, 4, "podgrodzie_merchant_staff", "tool", "prawa_reka"),
                 },
                 inventory=[Item("tabliczka cen", "Tabliczka z kilkoma wyświechtanymi cenami.", 0.2, 2, "podgrodzie_merchant_priceboard", item_type="tool")],
+                dialogue_tree=self._social_dialogue(
+                    "Handluję, liczę i nie daję się oszukać dwa razy tego samego dnia.",
+                    "Praca handlarza to waga, ceny i dobry wzrok.",
+                    "Stoję tam, gdzie targ ma najgłośniejszy róg.",
+                    "Plotki krążą po stoiskach szybciej niż monety.",
+                ),
             )
         if vnum == "podgrodzie_przekupka":
             return self._basic_npc(
@@ -234,10 +295,19 @@ class NPCFactory:
                 faction="MEEKHAN",
                 room_id=room_id,
                 stats=CharacterStats(8, 10, 8, 11, 10, 85),
+                is_merchant=True,
+                merchant_gold=42,
+                shop_inventory=vendor_shop_inventory(),
                 equipment={
                     "korpus": Item("targowy kaftan", "Kaftan wzmocniony łatami i kieszeniami na monety.", 0.9, 4, "podgrodzie_vendor_apron", "armor", "korpus", protection=0),
                 },
                 inventory=[Item("kosz z towarem", "Kosz z drobnym handlem, gotowy do ustawienia na straganie.", 2.0, 8, "podgrodzie_vendor_basket", is_container=True, capacity=18)],
+                dialogue_tree=self._social_dialogue(
+                    "Nie gap się, tylko wybieraj. Towar sam się nie sprzeda.",
+                    "Praca przy kramie to ciężkie ręce i szybki język.",
+                    "Na targu stoję tam, gdzie najlepiej widać klientów i straż.",
+                    "Plotki? Jeśli wiem, kto z kim się pokłócił, to znam też cenę cebuli.",
+                ),
             )
         if vnum == "blacksmith":
             return self._basic_npc(
@@ -250,6 +320,12 @@ class NPCFactory:
                 room_id=room_id,
                 stats=CharacterStats(13, 9, 12, 10, 10, 110),
                 inventory=[Item("młot kowalski", "Praktyczny młot do codziennej pracy.", 2.0, 10, "npc_blacksmith_hammer", item_type="tool")],
+                dialogue_tree=self._social_dialogue(
+                    "Jak chcesz gadać, to krótko. Mam ogień do pilnowania.",
+                    "Praca? Młot, żar i stal. Nic więcej nie trzeba.",
+                    "Kuźnia stoi przy murze, bo tam nikt nie marudzi na hałas.",
+                    "Plotki? Słyszę je od pomocników, zanim jeszcze ostygnie żelazo.",
+                ),
             )
         if vnum == "podgrodzie_kowal":
             return self._basic_npc(
@@ -261,11 +337,20 @@ class NPCFactory:
                 faction="MEEKHAN",
                 room_id=room_id,
                 stats=CharacterStats(13, 9, 12, 10, 10, 110),
+                is_merchant=True,
+                merchant_gold=75,
+                shop_inventory=blacksmith_shop_inventory(),
                 equipment={
                     "korpus": Item("okopcony fartuch", "Skórzany fartuch chroniący przed iskrą i żarem.", 2.4, 12, "podgrodzie_smith_apron", "armor", "korpus", protection=1),
                     "prawa_reka": Item("młot kowalski", "Ciężki młot, którym da się zarówno kuć, jak i odstraszyć natrętów.", 2.2, 11, "podgrodzie_smith_hammer", "weapon", "prawa_reka", damage_type="obuchowa", base_damage=4, reach=1, initiative_modifier=0, parry_bonus=1),
                 },
                 inventory=[Item("szczypce kowalskie", "Długie szczypce do rozgrzanych prętów i podków.", 1.0, 5, "podgrodzie_smith_tongs", item_type="tool")],
+                dialogue_tree=self._social_dialogue(
+                    "Młot nie robi się lżejszy od gadania, ale mam chwilę.",
+                    "Praca kowala zaczyna się od ognia, a kończy na odciskach.",
+                    "Stoję tu, gdzie muszę, żeby iskry nie poszły na cudze dachy.",
+                    "Plotki przychodzą od pomocnika szybciej niż nowe podkowy.",
+                ),
             )
         if vnum == "podgrodzie_pomocnik_kowala":
             return self._basic_npc(
@@ -282,6 +367,12 @@ class NPCFactory:
                     "prawa_reka": Item("szczypce pomocnika", "Lżejsze szczypce do trzymania rozgrzanych elementów.", 0.8, 3, "podgrodzie_smith_helper_tongs", "tool", "prawa_reka"),
                 },
                 inventory=[Item("pudełko gwoździ", "Pudełko z posortowanymi gwoździami i nitami.", 0.9, 4, "podgrodzie_smith_nails", item_type="tool")],
+                dialogue_tree=self._social_dialogue(
+                    "Jeszcze uczę się, ale i tak wszystko muszę podać zanim mistrz mruknie.",
+                    "Praca pomocnika to węgiel, szczypce i pilnowanie żaru.",
+                    "Najczęściej jestem przy palenisku albo po drewno biegnę.",
+                    "Plotki? W kuźni szybciej lecą iskry niż słowa, ale i tak coś się usłyszy.",
+                ),
             )
         if vnum == "podgrodzie_straznik_miejski":
             return self._basic_npc(
@@ -299,10 +390,13 @@ class NPCFactory:
                     "lewa_reka": Item("okrągła tarcza", "Tarcza z miejskim znakiem, solidna i już dobrze przeżyta.", 3.0, 16, "podgrodzie_guard_shield", "shield", "lewa_reka", protection=1, shield_block=2),
                     "korpus": Item("płaszcz straży", "Gruby płaszcz na służbę w deszczu i błocie.", 4.5, 20, "podgrodzie_guard_cloak", "armor", "korpus", protection=1),
                 },
-                dialogue_tree={
-                    "default": ["Stój spokojnie i nie utrudniaj służby."],
-                    "brama": ["Brama to nie targ. Tu się wjeżdża, a nie błądzi."],
-                },
+                dialogue_tree=self._social_dialogue(
+                    "Stój spokojnie i nie utrudniaj służby.",
+                    "Patrol, wpisy i wypatrywanie błędu. To moja robota.",
+                    "Na bramie widzę większość ludzi, którzy wchodzą do Podgrodzia.",
+                    "Plotki? Najgorsze są te, które zaczynają się od 'na chwilę tylko'.",
+                    brama="Brama to nie targ. Tu się wjeżdża, a nie błądzi.",
+                ),
             )
         if vnum == "farmer":
             return self._basic_npc(
@@ -359,6 +453,12 @@ class NPCFactory:
                 room_id=room_id,
                 stats=CharacterStats(9, 10, 10, 11, 9, 92),
                 inventory=[Item("hak do sieci", "Mały hak do naprawy sieci i lin.", 0.3, 2, "npc_fishhook", item_type="tool")],
+                dialogue_tree=self._social_dialogue(
+                    "Mam ręce zajęte rybami i liną, ale mogę chwilę pogadać.",
+                    "Praca rybaka zaczyna się przed świtem i kończy, gdy zniknie ostatnia łódź.",
+                    "Jestem tam, gdzie nurt jest spokojny i sieci nie plączą się o deski.",
+                    "Plotki? Na nabrzeżu wszystko niesie woda: i wieści, i kłamstwa.",
+                ),
             )
         if vnum == "podgrodzie_rybak":
             return self._basic_npc(
@@ -370,11 +470,20 @@ class NPCFactory:
                 faction="MEEKHAN",
                 room_id=room_id,
                 stats=CharacterStats(9, 10, 10, 11, 9, 92),
+                is_merchant=True,
+                merchant_gold=60,
+                shop_inventory=fisher_shop_inventory(),
                 equipment={
                     "korpus": Item("mokry kaftan", "Kaftan impregnowany smołą i rybim tłuszczem.", 1.2, 5, "podgrodzie_fisher_coat", "armor", "korpus", protection=0),
                     "prawa_reka": Item("hak rybacki", "Krótki hak do sieci, lin i nieproszonych palców.", 0.3, 3, "podgrodzie_fisher_hook", "tool", "prawa_reka"),
                 },
                 inventory=[Item("zwinięta sieć", "Sieć gotowa do rzutu albo naprawy.", 2.0, 10, "podgrodzie_fisher_net", item_type="tool")],
+                dialogue_tree=self._social_dialogue(
+                    "Sieć sama się nie naprawi, ale mogę odpowiedzieć na jedno pytanie.",
+                    "Praca rybaka to mokre buty, zimne dłonie i cierpliwość.",
+                    "Stoję przy rzece albo na pomoście, zależnie od pogody.",
+                    "Plotki płyną szybciej niż łódź, jeśli ktoś je dobrze rozdmucha.",
+                ),
             )
         if vnum == "traveler":
             return self._basic_npc(
@@ -387,6 +496,12 @@ class NPCFactory:
                 room_id=room_id,
                 stats=CharacterStats(10, 10, 10, 10, 10, 100),
                 inventory=[Item("podróżna sakwa", "Niewielka sakwa z najpotrzebniejszymi rzeczami.", 1.0, 5, "npc_travel_sack", is_container=True, capacity=10)],
+                dialogue_tree=self._social_dialogue(
+                    "Mam tylko drogę i kilka historii, ale to wystarczy na rozmowę.",
+                    "Praca podróżnego to iść, obserwować i nie ufać pierwszej gospodzie.",
+                    "Stoję tam, gdzie droga przecina miasto albo gdzie mogę je opuścić.",
+                    "Plotki? Na trakcie każdy niesie cudzą opowieść w sakwie.",
+                ),
             )
         if vnum == "podgrodzie_pielgrzym":
             return self._basic_npc(
@@ -403,6 +518,12 @@ class NPCFactory:
                     "prawa_reka": Item("kij pielgrzyma", "Prosty kij do marszu i podpierania się na długiej drodze.", 1.2, 4, "podgrodzie_pilgrim_staff", "weapon", "prawa_reka", damage_type="obuchowa", base_damage=1, reach=2, initiative_modifier=0, parry_bonus=0),
                 },
                 inventory=[Item("woreczek ofiarny", "Woreczek z monetami i pamiątkami z modlitw.", 0.2, 2, "podgrodzie_pilgrim_pouch", is_container=True, capacity=6)],
+                dialogue_tree=self._social_dialogue(
+                    "Idę do świętego miejsca, ale mogę zamienić parę słów.",
+                    "Praca pielgrzyma to droga, modlitwa i twarde stopy.",
+                    "Stoję tam, gdzie trzeba odpocząć przed kolejnym odcinkiem szlaku.",
+                    "Plotki mijają mnie codziennie, ale nie wszystkie warto nosić dalej.",
+                ),
             )
         if vnum == "beggar":
             return self._basic_npc(
@@ -415,6 +536,12 @@ class NPCFactory:
                 room_id=room_id,
                 stats=CharacterStats(7, 8, 8, 10, 8, 75),
                 inventory=[Item("miska na jałmużnę", "Mała miska na monety i okruchy.", 0.4, 1, "beggar_bowl", item_type="misc")],
+                dialogue_tree=self._social_dialogue(
+                    "Masz chwilę? To już dużo.",
+                    "Praca? Tu się prosi, pamięta twarze i szuka cienia.",
+                    "Stoję tam, gdzie nikt nie kopie zbyt mocno.",
+                    "Plotki krążą po ulicach szybciej niż ja.",
+                ),
             )
         if vnum == "podgrodzie_zebrak":
             return self._basic_npc(
@@ -431,6 +558,12 @@ class NPCFactory:
                     "prawa_reka": Item("kij żebraka", "Krótki kij do podpierania się i odganiania psów.", 0.7, 1, "podgrodzie_beggar_staff", "weapon", "prawa_reka", damage_type="obuchowa", base_damage=1, reach=1, initiative_modifier=0, parry_bonus=0),
                 },
                 inventory=[Item("miska na jałmużnę", "Miska na drobne monety i czasem okruch chleba.", 0.4, 1, "podgrodzie_beggar_bowl", item_type="misc")],
+                dialogue_tree=self._social_dialogue(
+                    "Nie mam wiele, ale mam czas na słowo.",
+                    "Praca? Pilnuję kąta, żeby ktoś nie zajął go przede mną.",
+                    "Stoję tu, gdzie błoto jest najgłębsze, a wiatr najmniej wredny.",
+                    "Plotki w Podgrodziu są jak błoto: przyczepiają się do butów.",
+                ),
             )
         if vnum == "child":
             return self._basic_npc(
@@ -629,8 +762,14 @@ class NPCFactory:
                     "lewa_reka": Item("sierżancka tarcza", "Cięższa tarcza dla starszego straży.", 3.1, 18, "watch_sergeant_shield", "shield", "lewa_reka", protection=1, shield_block=3),
                 },
                 dialogue_tree={
-                    "default": ["Ruch szybko. Zatrzymasz się, jeśli ja powiem."],
-                    "brama": ["Bramy pilnuje się przed świtem i po zmroku. W środku dnia też, jeśli trzeba."],
+                    "default": [
+                        "Ruch szybko. Zatrzymasz się, jeśli ja powiem.",
+                        "Ruch szybko. Z taką reputacją nie będę udawał gościnności.",
+                    ],
+                    "brama": [
+                        "Bramy pilnuje się przed świtem i po zmroku. W środku dnia też, jeśli trzeba.",
+                        "Bramy pilnuje się też przed tobą, bo z taką reputacją nie ma dyskusji.",
+                    ],
                 },
             )
         if vnum == "customs_clerk":
@@ -735,34 +874,26 @@ class NPCFactory:
             npc.character.equipment["prawa_reka"] = Item("nóż kupiecki", "Krótki nóż do cięcia sznurów i odstraszania desperatów.", 0.4, 8, "merchant_knife", "weapon", "prawa_reka", damage_type="kluta", base_damage=2, reach=1, initiative_modifier=2, parry_bonus=0)
             npc.shop_inventory = [
                 Item(
-                    "mikstura",
-                    "Gorzki napar regenerujący.",
+                    "krzesiwo",
+                    "Krzesiwo i krzemień w skórzanym woreczku.",
                     0.2,
-                    15,
-                    "potion",
-                    "potion",
-                    is_consumable=True,
-                    effects_on_consume={"restore_stamina": 30},
+                    2,
+                    "merchant_flint",
+                    "tool",
                 ),
-                Item(
-                    "włócznia",
-                    "Prosta włócznia strażnicza.",
-                    2.2,
-                    30,
-                    "spear",
-                    "weapon",
-                    "prawa_reka",
-                    damage_type="kluta",
-                    base_damage=5,
-                    reach=2,
-                    initiative_modifier=-1,
-                    parry_bonus=0,
-                ),
+                Item("bukłak", "Mały bukłak na wodę.", 0.6, 3, "merchant_waterskin", "tool"),
+                Item("latarnia podróżna", "Prosta latarnia z grubym szkłem.", 1.4, 6, "merchant_lantern", "tool"),
+                Item("sakwa podróżna", "Sakwa z jedną dużą przegródką i mocnym paskiem.", 1.0, 5, "merchant_travel_sack", is_container=True, capacity=12),
+                Item("zwój liny", "Zwój grubej liny, przydatny przy drodze.", 2.8, 4, "merchant_rope", "tool"),
             ]
-            npc.dialogue_tree = {
-                "default": ["Kupuj szybko albo odejdź od lady."],
-                "wilki": ["Wilki schodzą blisko traktu. Przynieś mi jedną skórę, a zapłacę."],
-            }
+            npc.merchant_gold = 65
+            npc.dialogue_tree = self._social_dialogue(
+                "Kupuj szybko albo odejdź od lady.",
+                "Praca kupca to ważenie, liczenie i pilnowanie, by nikt nie skrócił mnie o grosz.",
+                "Stoję tam, gdzie droga z miasta krzyżuje się z ludzką chciwością.",
+                "Plotki? Jeśli są warte grosza, to już są towarem.",
+                wilki="Wilki schodzą blisko traktu. Przynieś mi jedną skórę, a zapłacę.",
+            )
             return self._finalize(npc)
         if vnum == "mountain_troll":
             c = Character("Troll")

@@ -25,3 +25,8 @@ def find_npc_in_manager(npcs, room_id: int, name: str):
         if any_token_matches(name, f"{npc.name} {npc.vnum}"):
             return npc
     return None
+
+
+def give_item_with_quests(service, inv, ctx, arg: str | None, index: int) -> str:
+    quest_ctx = ctx.quest_context()
+    return service.give_item(inv.character, quest_ctx.npcs, quest_ctx.quests, arg, index, inv.event_bus)

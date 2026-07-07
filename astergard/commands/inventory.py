@@ -3,14 +3,13 @@ from __future__ import annotations
 from collections.abc import Awaitable, Callable
 from typing import TYPE_CHECKING, Any
 
+from astergard.commands.helpers import give_item_with_quests
 from astergard.server.context import GameContext
 
 if TYPE_CHECKING:
     from astergard.application.services.inventory_service import InventoryService
 
 CommandHandler = Callable[[GameContext, str | None, int], Awaitable[str]]
-
-
 def build_inventory_handlers(service: InventoryService) -> dict[str, CommandHandler]:
     def loc(ctx: GameContext):
         inv = ctx.inventory()
@@ -40,5 +39,5 @@ def build_inventory_handlers(service: InventoryService) -> dict[str, CommandHand
         "consume": with_inventory(lambda inv, ctx, arg, index: service.consume_item(inv.character, arg, index, inv.event_bus)),
         "put": with_location(lambda inv, room, ctx, arg, index: service.put_item(inv.character, arg, index, inv.event_bus, room)),
         "transfer": with_location(lambda inv, room, ctx, arg, index: service.transfer_item(inv.character, arg, index, inv.event_bus, room)),
-        "give_item": with_inventory(lambda inv, ctx, arg, index: service.give_item(inv.character, ctx.quest_context().npcs, arg, index, inv.event_bus)),
+        "give_item": with_inventory(lambda inv, ctx, arg, index: give_item_with_quests(service, inv, ctx, arg, index)),
     }
