@@ -1024,7 +1024,7 @@ _D351B_ZONE_DATA: dict[str, tuple[range, tuple[str, ...], str, str, tuple[str, s
             "Ślepa Miedza", "Lisza Ścieżka", "Niski Przesmyk", "Dawna Droga Drwali", "Stary Pień z Nacięciem",
             "Przepust pod Korzeniami", "Zejście ku Kniei", "Sucha Polana", "Rów Graniczny", "Zanikający Dukt",
         ),
-        "Boczne drogi i rozstaje",
+        "Przedpola Astergardu",
         "boczny trakt",
         ("sciezka ścieżka dukt droga", "Ścieżka jest wąska i kapryśna; miejscami znika pod trawą, żeby wrócić kilka kroków dalej."),
         ("krzaki leszczyny korzenie", "Krzaki łapią za nogawki, a korzenie wystają z ziemi jak stare, zaciśnięte palce."),
@@ -1647,6 +1647,14 @@ def _d351b_content(room_id: int, index: int, name: str, label: str, terrain: str
         items += (Item("worek zboża", "Worek z ziarnem, ciężki i dobrze zawiązany.", 7.5, 11, "podgrodzie_grain_sack_63", is_container=True, capacity=24),)
     if room_id == 64:
         items += (Item("drewno opałowe", "Porąbane drewno czekające na palenisko albo piec.", 14.0, 6, "podgrodzie_firewood_64"),)
+    if room_id == 185:
+        items += (Item("mały obóz myśliwych", "Niski obóz przy starej drodze, z trzema kołkami i zwiniętą płachtą.", 2.1, 5, "boczny_hunter_camp_185", item_type="furniture"),)
+    if room_id == 190:
+        items += (Item("palenisko przy rozstajach", "Niewielkie palenisko rozstawione tuż przy bocznym obejściu.", 1.4, 4, "boczny_firepit_190", item_type="furniture"),)
+    if room_id == 203:
+        items += (Item("obóz drwali przy drodze", "Prosty obóz z kłodą do siedzenia, wiązką chrustu i hakami na narzędzia.", 2.6, 5, "boczny_lumber_camp_203", item_type="furniture"),)
+    if room_id == 206:
+        items += (Item("wygaszone ognisko", "Kamienny krąg po ognisku, które zgasło dawno temu.", 1.0, 2, "boczny_dead_fire_206", item_type="furniture"),)
     if room_id in {69, 91, 107, 121, 151, 176, 188, 205}:
         hidden_items = ((Item("miedziana moneta", "Brudna miedziana moneta zgubiona przy drodze.", 0.01, 1, f"road_copper_{room_id}"), 10),)
     return LocationContent(room_id=room_id, name=name, description=description, inspectables=inspectables, items=items, hidden_items=hidden_items)
@@ -1771,12 +1779,27 @@ def _d351c_forest_content(room_id: int, index: int, name: str) -> LocationConten
     hidden_items: tuple[tuple[Item, int], ...] = ()
     if room_id in {216, 223, 241, 252, 267}:
         items = (Item("wiązka suchego chrustu", "Lekka wiązka chrustu, dobra na ognisko albo do prostych prac obozowych.", 0.4, 1, f"dry_brushwood_{room_id}"),)
+    if room_id == 216:
+        items = (
+            Item("wiązka suchego chrustu", "Lekka wiązka chrustu, dobra na ognisko albo do prostych prac obozowych.", 0.4, 1, "dry_brushwood_216"),
+            Item("mały obóz myśliwski", "Niski obóz z trzema kołkami, mokrą płachtą i resztką popiołu. Ktoś wraca tu tylko po odpoczynek.", 2.0, 4, "forest_hunter_camp_216", item_type="furniture"),
+        )
+    if room_id == 223:
+        items = (
+            Item("wiązka suchego chrustu", "Lekka wiązka chrustu, dobra na ognisko albo do prostych prac obozowych.", 0.4, 1, "dry_brushwood_223"),
+            Item("pachnące palenisko", "Niewielkie palenisko dla tych, którzy zatrzymują się na chwilę po zioła i tropy.", 1.4, 3, "forest_firepit_223", item_type="furniture"),
+        )
+    if room_id == 230:
+        items = (
+            Item("wygaszone ognisko", "Mały kamienny krąg po ognisku, dziś prawie zimny.", 1.0, 2, "forest_dead_fire_230", item_type="furniture"),
+        )
     if room_id in {230, 246, 258, 272}:
         hidden_items = ((Item("garść leśnych ziół", "Gorzko pachnące zioła zebrane z miejsc, których nie widać z duktu.", 0.05, 3, f"forest_herbs_{room_id}"), 11),)
     if room_id == 246:
         items = (
             Item("złamany klin", "Pęknięty klin znaleziony przy obozowisku drwali.", 0.4, 2, "forest_broken_wedge_246", "tool"),
             Item("wiązka suchego chrustu", "Lekka wiązka chrustu, dobra na ognisko albo do prostych prac obozowych.", 0.4, 1, "dry_brushwood_246"),
+            Item("małe obozowisko drwali", "Trzy kołki, zawieszony kociołek i mokra płachta. To bardziej postój niż prawdziwy obóz.", 2.2, 5, "forest_lumber_camp_246", item_type="furniture"),
         )
     if room_id == 252:
         items = (
@@ -1790,12 +1813,41 @@ def _d351c_forest_content(room_id: int, index: int, name: str) -> LocationConten
         items = (
             Item("zardzewiały garnek", "Garnek porzucony przy dawnym obozie.", 1.2, 3, "forest_abandoned_pot_267", "tool"),
             Item("stary rzemień", "Krótki, stary rzemień od sakwy lub pułapki.", 0.1, 1, "forest_old_strap_267", "tool"),
+            Item("opuszczony obóz łowców", "Niski obóz przyciśnięty do ziemi, z gałęziami zamiast ścian i starym popiołem w środku.", 2.8, 4, "forest_hunter_camp_267", item_type="furniture"),
         )
     if room_id == 272:
         hidden_items = ((Item("garść leśnych ziół", "Gorzko pachnące zioła zebrane z miejsc, których nie widać z duktu.", 0.05, 3, "forest_herbs_272"), 11),)
     if room_id == 230:
         hidden_items = ((Item("garść leśnych ziół", "Gorzko pachnące zioła zebrane z miejsc, których nie widać z duktu.", 0.05, 3, "forest_herbs_230"), 11),)
+    if room_id in {218, 234, 248, 259, 273}:
+        hidden_items = (
+            (
+                Item(
+                    "ukryta skrzynka",
+                    "Mała skrzynka wciśnięta między korzenie i przykryta mchem. W środku leży drobny łup, który łatwo przeoczyć.",
+                    1.4,
+                    14,
+                    f"forest_hidden_chest_{room_id}",
+                    is_container=True,
+                    capacity=6.0,
+                    contains=[
+                        Item(
+                            "zawiniątko łupów",
+                            "Przewiązany sznurkiem pakiet drobnych rzeczy znalezionych w lesie.",
+                            0.2,
+                            6,
+                            f"forest_hidden_loot_{room_id}",
+                        )
+                    ],
+                ),
+                12,
+            ),
+        )
     if room_id == 274:
+        items = (
+            Item("zgaszone palenisko", "Kamienny krąg po niedawnym ognisku. Widać, że ktoś odszedł w pośpiechu.", 1.0, 2, "forest_camp_fire_274", item_type="furniture"),
+            Item("zgięty kołek namiotu", "Zgięty kołek wbity w ziemię po prowizorycznym szałasie.", 0.4, 1, "forest_camp_stake_274", item_type="tool"),
+        )
         hidden_items = ((Item("znacznik obozu", "Zardzewiały znak pozostawiony przez dawne obozowisko banitów.", 0.1, 5, "forest_camp_token_274", "tool"), 13),)
     return LocationContent(room_id=room_id, name=name, description=description, inspectables=inspectables, items=items, hidden_items=hidden_items)
 

@@ -3,23 +3,26 @@ from __future__ import annotations
 import random
 
 from astergard.application.use_case_contexts import CombatContext
+from astergard.application.services.animal_loot_service import AnimalLootService
 from astergard.characters.models import Character
 from astergard.commands.helpers import find_npc_in_manager
 from astergard.items.models import Item
 from astergard.engine.events import DomainEventType
+from astergard.npcs.models import NPC
 from astergard.rules.movement import MovementRules, default_movement_rules
 
 
 class CombatApplicationService:
     """Combat use cases that coordinate combat, corpses, quests and factions."""
 
-    def __init__(self, world=None, npcs=None, combat=None, factions=None, quests=None, movement_rules: MovementRules | None = None) -> None:
+    def __init__(self, world=None, npcs=None, combat=None, factions=None, quests=None, movement_rules: MovementRules | None = None, loot_service: AnimalLootService | None = None) -> None:
         self.world = world
         self.npcs = npcs
         self.combat = combat
         self.factions = factions
         self.quests = quests
         self.movement_rules = movement_rules or default_movement_rules()
+        self.loot_service = loot_service or AnimalLootService()
 
     def attack_npc(self, ctx: CombatContext, target_name: str | None, index: int) -> str:
         if not target_name:
@@ -31,7 +34,7 @@ class CombatApplicationService:
         ctx.event_bus.emit(DomainEventType.COMBAT_ATTACKED, username=ctx.character.username, character=ctx.character, target=npc.vnum, room_id=ctx.character.room_id, defender_dead=result.defender_dead, message=result.message)
         message = result.message
         if result.defender_dead:
-            self._spawn_corpse(ctx, ctx.character.room_id, npc.name, npc.vnum, npc.character.inventory)
+            self._spawn_corpse(ctx, ctx.character.room_id, npc)
             ctx.factions.register_kill(ctx.character, npc.faction)
             location = ctx.world.get_location(ctx.character.room_id)
             if npc.faction == ctx.factions.MEEKHAN:
@@ -61,20 +64,21 @@ class CombatApplicationService:
         ctx.event_bus.emit(DomainEventType.COMBAT_FLED, username=ctx.character.username, from_room_id=old_room_id, to_room_id=ctx.character.room_id, direction=direction, success=True)
         return message
 
-    def _spawn_corpse(self, ctx: CombatContext, room_id: int, name: str, vnum: str, inventory: list[Item]) -> None:
+    def _spawn_corpse(self, ctx: CombatContext, room_id: int, npc: NPC) -> None:
         loc = ctx.world.get_location(room_id)
         if loc is None:
             return
+        loot = self.loot_service.build_loot(npc)
         loc.items.append(
             Item(
-                f"zwłoki {name}",
+                f"zwłoki {npc.name}",
                 "Ciało pokonanego przeciwnika.",
                 5.0,
                 0,
-                f"corpse_{vnum}",
+                f"corpse_{npc.vnum}",
                 is_container=True,
                 capacity=999,
-                contains=list(inventory),
+                contains=[*npc.character.inventory, *loot],
             )
         )
 

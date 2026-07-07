@@ -52,7 +52,7 @@ class ExplorationService:
         items = "\n".join(f"Leży tu: {item.display_name()}." for item in loc.items)
         inspectables = self._render_inspectables(loc)
         others = "\n".join(
-            f"<yellow>{player.username} stoi tutaj.</yellow>"
+            f"<yellow>{player.username} stoi tutaj.</yellow> {player.equipment_summary()}"
             for player in ctx.players_in_room(loc.id)
             if player is not ctx.character
         )
@@ -132,6 +132,7 @@ class ExplorationService:
         old_room_id = char.room_id
         char.stats.kondycja = max(0, char.stats.kondycja - cost)
         char.room_id = ex.target_room
+        char.visit_current_room()
         ctx.event_bus.emit(DomainEventType.CHARACTER_MOVED, username=char.username, from_room_id=old_room_id, to_room_id=char.room_id, direction=direction, stamina_cost=cost)
         return f"Wychodzisz na {direction}."
 

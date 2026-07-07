@@ -19,6 +19,7 @@ from astergard.weather.time_weather import TimeAndWeatherManager
 from astergard.application.services.inventory_service import InventoryService
 from astergard.application.services.exploration_service import ExplorationService
 from astergard.application.services.communication_service import CommunicationService
+from astergard.application.services.minimap_service import MinimapService
 from astergard.application.services.magic_crafting_service import MagicCraftingApplicationService
 from astergard.application.services.system_service import SystemCommandService
 from astergard.application.services.combat_service import CombatApplicationService
@@ -58,6 +59,7 @@ class GameServices:
     economy_service: EconomyApplicationService
     exploration_service: ExplorationService
     communication_service: CommunicationService
+    minimap_service: MinimapService
     magic_crafting_service: MagicCraftingApplicationService
     system_service: SystemCommandService
     save_load: SaveLoadEngine
@@ -118,6 +120,7 @@ class GameBootstrapper:
             economy_service=EconomyApplicationService(economy, factions),
             exploration_service=ExplorationService(rules.movement, rules.search),
             communication_service=CommunicationService(),
+            minimap_service=MinimapService(),
             magic_crafting_service=MagicCraftingApplicationService(),
             system_service=SystemCommandService(),
             save_load=None,  # type: ignore[arg-type]

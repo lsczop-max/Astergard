@@ -223,6 +223,7 @@ class WorldStateRepository:
 
     def _hydrate_npc_character(self, npc: NPC, data: dict[str, Any]) -> None:
         from astergard.characters.models import CharacterSkills, CharacterStats
+        from astergard.items.models import EquipmentSet
 
         stats = data.get("stats")
         if isinstance(stats, dict):
@@ -234,7 +235,7 @@ class WorldStateRepository:
         npc.character.inventory = [Item.from_dict(item) for item in inventory if isinstance(item, dict)]
         equipment = data.get("equipment", {})
         if isinstance(equipment, dict):
-            npc.character.equipment = {slot: Item.from_dict(item) if isinstance(item, dict) else None for slot, item in equipment.items()}
+            npc.character.equipment = EquipmentSet.from_dict({slot: Item.from_dict(item) if isinstance(item, dict) else None for slot, item in equipment.items()})
         wounds = data.get("wounds")
         if isinstance(wounds, dict):
             npc.character.wounds = {str(part): int(level) for part, level in wounds.items()}

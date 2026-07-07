@@ -48,9 +48,7 @@ def build_character_sheet_handlers() -> dict[str, CommandHandler]:
         origin = ORIGIN_DEFINITIONS.get(ctx.character.origin)
         origin_name = origin.label if origin is not None else (ctx.character.origin or "brak")
         starter_inventory = ", ".join(item.display_name() for item in ctx.character.inventory) or "brak"
-        equipment = ", ".join(
-            f"{slot}: {item.display_name()}" for slot, item in ctx.character.equipment.items() if item is not None
-        ) or "brak"
+        equipment = ctx.character.equipment_summary()
         return (
             f"Imię: {ctx.character.name or ctx.character.username}\n"
             f"Opis postaci: {ctx.character.gender_description or 'brak'}\n"

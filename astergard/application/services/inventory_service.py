@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from astergard.characters.models import Character
 from astergard.commands.helpers import find_item
 from astergard.commands.polish import is_all_phrase, split_relation, tokens_match
+from astergard.items.models import EQUIPMENT_SLOTS, equipment_slot_label
 from astergard.engine.events import DomainEventType
 from astergard.items.models import Item
 from astergard.npcs.manager import NPCManager
@@ -39,11 +40,7 @@ class InventoryService:
 
     def render_inventory(self, character: Character) -> str:
         inventory = ", ".join(self._render_item_with_contents(item) for item in character.inventory) or "nic"
-        equipment = ", ".join(
-            f"{slot}: {item.display_name()}"
-            for slot, item in character.equipment.items()
-            if item is not None
-        ) or "brak"
+        equipment = self._render_equipment(character)
         return InventoryView(
             equipment=equipment,
             backpack=inventory,
@@ -271,21 +268,25 @@ class InventoryService:
         if not name:
             return "Co chcesz założyć?"
         item = find_item(character.inventory, name, index)
-        if item is None or item.slot is None:
+        if item is None or not item.is_wearable():
             return "Nie możesz tego założyć."
-        old = character.equipment.get(item.slot)
+        slot = item.normalized_slot()
+        if slot is None:
+            return "Nie możesz tego założyć."
+        old = character.equipment.get(slot)
         if old is not None:
-            character.inventory.append(old)
+            return f"Masz już coś na slocie {equipment_slot_label(slot)}."
         character.inventory.remove(item)
-        character.equipment[item.slot] = item
+        character.equipment[slot] = item
         if event_bus is not None:
-            event_bus.emit(DomainEventType.ITEM_EQUIPPED, username=character.username, slot=item.slot, item=item.vnum or item.name)
+            event_bus.emit(DomainEventType.ITEM_EQUIPPED, username=character.username, slot=slot, item=item.vnum or item.name)
         return f"Zakładasz {item.name}."
 
     def remove_item(self, character: Character, name: str | None, event_bus=None) -> str:
         if not name:
             return "Co chcesz zdjąć?"
-        for slot, item in character.equipment.items():
+        for slot in EQUIPMENT_SLOTS:
+            item = character.equipment.get(slot)
             if item is not None and tokens_match(name, f"{item.name} {item.vnum}"):
                 character.equipment[slot] = None
                 character.inventory.append(item)
@@ -363,6 +364,13 @@ class InventoryService:
                 return f"{item.display_name()} (w środku: {inside})"
             return f"{item.display_name()} (pusty)"
         return item.display_name()
+
+    def _render_equipment(self, character: Character) -> str:
+        parts = []
+        for slot in EQUIPMENT_SLOTS:
+            item = character.equipment.get(slot)
+            parts.append(f"{equipment_slot_label(slot)}: {item.display_name() if item is not None else 'brak'}")
+        return "; ".join(parts)
 
     def _apply_consumable_effects(self, character: Character, item: Item) -> None:
         stamina = int(item.effects_on_consume.get("restore_stamina", 0))

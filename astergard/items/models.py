@@ -1,8 +1,120 @@
 from __future__ import annotations
 
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
 from typing import Any
 from uuid import uuid4
+
+
+EQUIPMENT_SLOTS: tuple[str, ...] = (
+    "glowa",
+    "szyja",
+    "korpus",
+    "plecy",
+    "rece",
+    "dlonie",
+    "pas",
+    "nogi",
+    "stopy",
+    "bron_glowna",
+    "bron_pomocnicza",
+    "tarcza",
+    "pierscien_1",
+    "pierscien_2",
+    "amulet",
+)
+
+EQUIPMENT_SLOT_LABELS: dict[str, str] = {
+    "glowa": "głowa",
+    "szyja": "szyja",
+    "korpus": "korpus",
+    "plecy": "plecy",
+    "rece": "ręce",
+    "dlonie": "dłonie",
+    "pas": "pas",
+    "nogi": "nogi",
+    "stopy": "stopy",
+    "bron_glowna": "broń główna",
+    "bron_pomocnicza": "broń pomocnicza",
+    "tarcza": "tarcza",
+    "pierscien_1": "pierścień 1",
+    "pierscien_2": "pierścień 2",
+    "amulet": "amulet",
+}
+
+EQUIPMENT_SLOT_ALIASES: dict[str, str] = {
+    "prawa_reka": "bron_glowna",
+    "lewa_reka": "bron_pomocnicza",
+}
+
+
+def normalize_equipment_slot(slot: str | None) -> str | None:
+    if slot is None:
+        return None
+    return EQUIPMENT_SLOT_ALIASES.get(slot, slot)
+
+
+def equipment_slot_label(slot: str) -> str:
+    return EQUIPMENT_SLOT_LABELS.get(slot, slot)
+
+
+class EquipmentSet(dict[str, "Item | None"]):
+    def __init__(self, initial: Mapping[str, "Item | None"] | None = None) -> None:
+        super().__init__()
+        for slot in EQUIPMENT_SLOTS:
+            super().__setitem__(slot, None)
+        if initial:
+            self.update(initial)
+
+    @classmethod
+    def default(cls) -> "EquipmentSet":
+        return cls()
+
+    @classmethod
+    def from_dict(cls, data: Mapping[str, "Item | None"]) -> "EquipmentSet":
+        return cls(data)
+
+    def _canonical(self, slot: str) -> str:
+        return normalize_equipment_slot(slot) or slot
+
+    def __setitem__(self, slot: str, item: "Item | None") -> None:
+        super().__setitem__(self._canonical(slot), item)
+
+    def __getitem__(self, slot: str) -> "Item | None":
+        return super().__getitem__(self._canonical(slot))
+
+    def __delitem__(self, slot: str) -> None:
+        super().__delitem__(self._canonical(slot))
+
+    def __contains__(self, slot: object) -> bool:
+        if not isinstance(slot, str):
+            return super().__contains__(slot)
+        return super().__contains__(self._canonical(slot))
+
+    def get(self, slot: str, default: "Item | None" = None) -> "Item | None":  # type: ignore[override]
+        return super().get(self._canonical(slot), default)
+
+    def setdefault(self, slot: str, default: "Item | None" = None) -> "Item | None":
+        return super().setdefault(self._canonical(slot), default)
+
+    def pop(self, slot: str, default: "Item | None" = None) -> "Item | None":  # type: ignore[override]
+        canonical = self._canonical(slot)
+        if default is None:
+            return super().pop(canonical)
+        return super().pop(canonical, default)
+
+    def update(self, other: Mapping[str, "Item | None"] | Iterable[tuple[str, "Item | None"]] = (), /, **kwargs: "Item | None") -> None:  # type: ignore[override]
+        items: list[tuple[str, "Item | None"]] = []
+        if isinstance(other, Mapping):
+            items.extend(other.items())
+        else:
+            items.extend(other)
+        items.extend(kwargs.items())
+        for slot, item in items:
+            super().__setitem__(self._canonical(slot), item)
+
+    def copy(self) -> "EquipmentSet":
+        return EquipmentSet(self)
 
 
 @dataclass
@@ -17,6 +129,9 @@ class Item:
     is_container: bool = False
     capacity: float = 0.0
     contains: list["Item"] = field(default_factory=list)
+    wearable: bool | None = None
+    armor_value: int = 0
+    weapon_type: str | None = None
     damage_type: str | None = None
     base_damage: int = 0
     protection: int = 0
@@ -24,6 +139,7 @@ class Item:
     max_durability: float = 10.0
     is_consumable: bool = False
     effects_on_consume: dict[str, int | str] = field(default_factory=dict)
+    can_be_sold_to_merchants: bool = True
     reach: int = 1
     initiative_modifier: int = 0
     parry_bonus: int = 0
@@ -38,6 +154,21 @@ class Item:
             return f"{self.name} (zniszczony)"
         return self.name
 
+    def is_wearable(self) -> bool:
+        if self.wearable is not None:
+            return self.wearable
+        return self.slot is not None or self.item_type in {"weapon", "armor", "shield"}
+
+    def normalized_slot(self) -> str | None:
+        slot = normalize_equipment_slot(self.slot)
+        if slot is not None:
+            return slot
+        if self.weapon_type == "tarcza" or self.item_type == "shield":
+            return "tarcza"
+        if self.item_type == "weapon":
+            return "bron_glowna"
+        return None
+
     def to_dict(self) -> dict[str, Any]:
         return {
             "name": self.name,
@@ -50,6 +181,9 @@ class Item:
             "is_container": self.is_container,
             "capacity": self.capacity,
             "contains": [item.to_dict() for item in self.contains],
+            "wearable": self.wearable,
+            "armor_value": self.armor_value,
+            "weapon_type": self.weapon_type,
             "damage_type": self.damage_type,
             "base_damage": self.base_damage,
             "protection": self.protection,
@@ -57,6 +191,7 @@ class Item:
             "max_durability": self.max_durability,
             "is_consumable": self.is_consumable,
             "effects_on_consume": dict(self.effects_on_consume),
+            "can_be_sold_to_merchants": self.can_be_sold_to_merchants,
             "reach": self.reach,
             "initiative_modifier": self.initiative_modifier,
             "parry_bonus": self.parry_bonus,
@@ -79,6 +214,9 @@ class Item:
             is_container=bool(data.get("is_container", False)),
             capacity=float(data.get("capacity", 0.0)),
             contains=contains,
+            wearable=data.get("wearable"),
+            armor_value=int(data.get("armor_value", data.get("protection", 0))),
+            weapon_type=data.get("weapon_type"),
             damage_type=data.get("damage_type"),
             base_damage=int(data.get("base_damage", 0)),
             protection=int(data.get("protection", 0)),
@@ -86,6 +224,7 @@ class Item:
             max_durability=float(data.get("max_durability", 10.0)),
             is_consumable=bool(data.get("is_consumable", False)),
             effects_on_consume=dict(data.get("effects_on_consume", {})),
+            can_be_sold_to_merchants=bool(data.get("can_be_sold_to_merchants", True)),
             reach=int(data.get("reach", 1)),
             initiative_modifier=int(data.get("initiative_modifier", 0)),
             parry_bonus=int(data.get("parry_bonus", 0)),
@@ -96,31 +235,31 @@ class Item:
 
 def starter_items() -> list[Item]:
     return [
-        Item("prosty miecz", "Krótki miecz o zużytej rękojeści.", 1.8, 25, "simple_sword", "weapon", "prawa_reka", damage_type="cieta", base_damage=4, reach=1, initiative_modifier=1, parry_bonus=1),
-        Item("drewniana tarcza", "Tarcza z ciemnego drewna.", 2.5, 15, "wooden_shield", "shield", "lewa_reka", protection=1, shield_block=3),
-        Item("skórzana kurtka", "Utwardzana kurtka podróżna.", 3.0, 20, "leather_jacket", "armor", "korpus", protection=1),
+        Item("prosty miecz", "Krótki miecz o zużytej rękojeści.", 1.8, 25, "simple_sword", "weapon", "bron_glowna", wearable=True, weapon_type="miecz", damage_type="cieta", base_damage=4, reach=1, initiative_modifier=1, parry_bonus=1),
+        Item("drewniana tarcza", "Tarcza z ciemnego drewna.", 2.5, 15, "wooden_shield", "shield", "tarcza", wearable=True, weapon_type="tarcza", protection=1, shield_block=3),
+        Item("skórzana kurtka", "Utwardzana kurtka podróżna.", 3.0, 20, "leather_jacket", "armor", "korpus", wearable=True, armor_value=1, protection=1),
         Item("chleb", "Twardy bochen podróżny.", 0.4, 2, "bread", "food", is_consumable=True, effects_on_consume={"restore_stamina": 12}),
     ]
 
 
 def dueling_blade() -> Item:
-    return Item("szpada ćwiczebna", "Lekka broń do nauki fechtunku.", 1.4, 18, "dueling_blade", "weapon", "prawa_reka", damage_type="cieta", base_damage=4, reach=1, initiative_modifier=2, parry_bonus=2)
+    return Item("szpada ćwiczebna", "Lekka broń do nauki fechtunku.", 1.4, 18, "dueling_blade", "weapon", "bron_glowna", wearable=True, weapon_type="szpada", damage_type="cieta", base_damage=4, reach=1, initiative_modifier=2, parry_bonus=2)
 
 
 def training_spear() -> Item:
-    return Item("włócznia treningowa", "Prosta włócznia do nauki dystansu i kontroli przestrzeni.", 2.4, 16, "training_spear", "weapon", "prawa_reka", damage_type="kluta", base_damage=4, reach=2, initiative_modifier=0, parry_bonus=0)
+    return Item("włócznia treningowa", "Prosta włócznia do nauki dystansu i kontroli przestrzeni.", 2.4, 16, "training_spear", "weapon", "bron_glowna", wearable=True, weapon_type="włócznia", damage_type="kluta", base_damage=4, reach=2, initiative_modifier=0, parry_bonus=0)
 
 
 def battle_axe() -> Item:
-    return Item("topór bojowy", "Cięższy topór do bezpośredniego starcia.", 3.4, 22, "battle_axe", "weapon", "prawa_reka", damage_type="obuchowa", base_damage=5, reach=1, initiative_modifier=0, parry_bonus=0)
+    return Item("topór bojowy", "Cięższy topór do bezpośredniego starcia.", 3.4, 22, "battle_axe", "weapon", "bron_glowna", wearable=True, weapon_type="topór", damage_type="obuchowa", base_damage=5, reach=1, initiative_modifier=0, parry_bonus=0)
 
 
 def hunting_bow() -> Item:
-    return Item("łuk myśliwski", "Lekki łuk do polowań i szkolenia z dystansu.", 1.2, 18, "hunting_bow", "weapon", "prawa_reka", damage_type="pociskowa", base_damage=4, reach=2, initiative_modifier=1, parry_bonus=0)
+    return Item("łuk myśliwski", "Lekki łuk do polowań i szkolenia z dystansu.", 1.2, 18, "hunting_bow", "weapon", "bron_glowna", wearable=True, weapon_type="łuk", damage_type="pociskowa", base_damage=4, reach=2, initiative_modifier=1, parry_bonus=0)
 
 
 def light_crossbow() -> Item:
-    return Item("kusza lekka", "Prosta kusza o umiarkowanym naciągu.", 2.8, 22, "light_crossbow", "weapon", "prawa_reka", damage_type="pociskowa", base_damage=5, reach=2, initiative_modifier=0, parry_bonus=0)
+    return Item("kusza lekka", "Prosta kusza o umiarkowanym naciągu.", 2.8, 22, "light_crossbow", "weapon", "bron_glowna", wearable=True, weapon_type="kusza", damage_type="pociskowa", base_damage=5, reach=2, initiative_modifier=0, parry_bonus=0)
 
 
 def command_whistle() -> Item:
@@ -217,6 +356,36 @@ def merchant_shop_inventory() -> list[Item]:
         Item("sól w worku", "Niewielki worek soli do drogi i kuchni.", 1.2, 3, "merchant_salt_bag", "food", is_consumable=False),
         Item("świeca łojowa", "Zwykła świeca na wieczorne postoje.", 0.1, 1, "merchant_tallow_candle", "tool"),
         Item("igła i nitka", "Zestaw do prostych napraw odzieży.", 0.1, 2, "merchant_needle_thread", "tool"),
+    ]
+
+
+def tanner_shop_inventory() -> list[Item]:
+    return [
+        Item("garbarski garnek", "Pojemnik do mieszania garbników i wody.", 1.4, 6, "tanner_tub", "tool"),
+        Item("sól do skór", "Worek soli do konserwowania świeżych skór.", 1.0, 4, "tanner_hide_salt", "tool"),
+        Item("sznur do suszenia", "Mocny sznur do wieszania wyprawionych skór.", 0.4, 3, "tanner_drying_line", "tool"),
+        Item("wyprawiona skóra", "Dobrze przygotowana skóra gotowa do szycia.", 1.2, 9, "tanner_cured_hide", "tool"),
+        Item("futrzana podszewka", "Miękka podszewka do zimowych ubrań.", 0.8, 8, "tanner_fur_lining", "armor", "korpus", protection=0),
+    ]
+
+
+def butcher_shop_inventory() -> list[Item]:
+    return [
+        Item("topór rzeźnicki", "Krótki topór do rozbijania kości i porcjowania mięsa.", 1.8, 8, "butcher_cleaver", "weapon", "prawa_reka", damage_type="obuchowa", base_damage=3, reach=1, initiative_modifier=0, parry_bonus=0),
+        Item("hak rzeźnicki", "Metalowy hak do wieszania tusz.", 0.6, 4, "butcher_hook", "tool"),
+        Item("sól peklowa", "Sól do konserwacji mięsa i skór.", 1.2, 5, "butcher_curing_salt", "food", is_consumable=False),
+        Item("surowe mięso", "Porcja świeżego mięsa z dziennego uboju.", 0.7, 6, "butcher_raw_meat", "food", is_consumable=True, effects_on_consume={"restore_stamina": 9}),
+        Item("wędzonka", "Paski mięsa uwędzone na zapas.", 0.5, 7, "butcher_smoked_meat", "food", is_consumable=True, effects_on_consume={"restore_stamina": 11}),
+    ]
+
+
+def skin_trader_shop_inventory() -> list[Item]:
+    return [
+        Item("skóra wilka", "Szorstka skóra z wilka, dobra na rękawice albo kaptur.", 1.0, 8, "skin_trader_wolf_pelt", "tool"),
+        Item("skóra jelenia", "Wytrzymała skóra z jelenia, ceniona przez rzemieślników.", 1.2, 10, "skin_trader_deer_hide", "tool"),
+        Item("futro leśne", "Grube futro odporne na chłód i wilgoć.", 1.4, 11, "skin_trader_forest_fur", "armor", "korpus", protection=1),
+        Item("pióra ozdobne", "Garść lekkich piór na ozdoby i groty.", 0.1, 3, "skin_trader_ornamental_feathers", "tool"),
+        Item("rogi szlachetne", "Ozdobne rogi przydatne do prostych wyrobów.", 0.9, 9, "skin_trader_horns", "tool"),
     ]
 
 

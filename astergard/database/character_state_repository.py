@@ -18,8 +18,8 @@ class CharacterStateRepository:
                 INSERT INTO players(
                     username,password_hash,salt,room_id,gold,stats_json,skills_json,wounds_json,
                     reputation_json,global_reputation,local_reputation_json,renown,title,crimes_json,wanted_level,wanted_posts_json,
-                    quests_json,completed_json,inventory_json,equipment_json,effects_json,combat_style,creator_json
-                ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                    quests_json,completed_json,inventory_json,equipment_json,effects_json,combat_style,creator_json,visited_room_ids_json
+                ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
                 """,
                 (username, password_hash, salt, *payload),
             )
@@ -29,7 +29,7 @@ class CharacterStateRepository:
             row = con.execute(
                 """
                 SELECT room_id,gold,stats_json,skills_json,wounds_json,reputation_json,global_reputation,local_reputation_json,
-                       renown,title,crimes_json,wanted_level,wanted_posts_json,quests_json,completed_json,inventory_json,equipment_json,effects_json,combat_style,creator_json
+                       renown,title,crimes_json,wanted_level,wanted_posts_json,quests_json,completed_json,inventory_json,equipment_json,effects_json,combat_style,creator_json,visited_room_ids_json
                 FROM players WHERE username=?
                 """,
                 (username,),
@@ -45,7 +45,7 @@ class CharacterStateRepository:
                 """
                 UPDATE players
                 SET room_id=?,gold=?,stats_json=?,skills_json=?,wounds_json=?,reputation_json=?,global_reputation=?,local_reputation_json=?,
-                    renown=?,title=?,crimes_json=?,wanted_level=?,wanted_posts_json=?,quests_json=?,completed_json=?,inventory_json=?,equipment_json=?,effects_json=?,combat_style=?,creator_json=?,
+                    renown=?,title=?,crimes_json=?,wanted_level=?,wanted_posts_json=?,quests_json=?,completed_json=?,inventory_json=?,equipment_json=?,effects_json=?,combat_style=?,creator_json=?,visited_room_ids_json=?,
                     updated_at=CURRENT_TIMESTAMP,save_version=save_version+1
                 WHERE username=?
                 """,

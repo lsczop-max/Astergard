@@ -4,7 +4,7 @@ import json
 from typing import Any
 
 from astergard.characters.models import Character, CharacterSkills, CharacterStats, Effect
-from astergard.items.models import Item
+from astergard.items.models import EquipmentSet, Item, EQUIPMENT_SLOTS
 
 
 class CharacterStateSerializer:
@@ -50,6 +50,7 @@ class CharacterStateSerializer:
             json.dumps(effects, ensure_ascii=False),
             char.combat_style,
             json.dumps(creator_profile, ensure_ascii=False),
+            json.dumps(sorted(char.visited_room_ids), ensure_ascii=False),
         )
 
     @staticmethod
@@ -71,12 +72,13 @@ class CharacterStateSerializer:
         char.active_quests = dict(json.loads(row[13]))
         char.completed_quests = list(json.loads(row[14]))
         char.inventory = [Item.from_dict(item) for item in json.loads(row[15])]
-        equipment_raw = json.loads(row[16])
-        char.equipment = {
+        equipment_raw = json.loads(row[16]) if len(row) > 16 and row[16] else {}
+        equipment_items = {
             slot: Item.from_dict(item) if isinstance(item, dict) else None
             for slot, item in equipment_raw.items()
         }
-        for slot in ["prawa_reka", "lewa_reka", "glowa", "korpus", "nogi"]:
+        char.equipment = EquipmentSet.from_dict(equipment_items)
+        for slot in EQUIPMENT_SLOTS:
             char.equipment.setdefault(slot, None)
         char.active_effects = [Effect.from_dict(effect) for effect in json.loads(row[17])]
         if len(row) > 18 and row[18]:
@@ -95,5 +97,10 @@ class CharacterStateSerializer:
             char.appearance = str(profile_raw.get("appearance", ""))
             char.history = str(profile_raw.get("history", ""))
             char.starting_reputation = int(profile_raw.get("starting_reputation", 0) or 0)
+        visited_raw = json.loads(row[20]) if len(row) > 20 and row[20] else []
+        if isinstance(visited_raw, list):
+            char.visited_room_ids = {int(room_id) for room_id in visited_raw}
+        else:
+            char.visited_room_ids = set()
         char.sync_state_from_flags()
         return char

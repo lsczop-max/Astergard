@@ -21,6 +21,9 @@ from astergard.items.models import (
     fisher_shop_inventory,
     innkeeper_shop_inventory,
     merchant_shop_inventory,
+    butcher_shop_inventory,
+    skin_trader_shop_inventory,
+    tanner_shop_inventory,
     bagna_herbal_inventory,
     bagna_hermit_inventory,
     puszcza_herbal_inventory,
@@ -230,6 +233,42 @@ class NPCFactory:
                 "wieczór": "Zamyka robotę i wraca z ostrzem pod pachą.",
                 "noc": "Siedzi przy stercie pni i ostrzy topór.",
             },
+            "puszcza_szczur": {
+                "świt": "Przemyka przy korzeniach i wraca do ściółki.",
+                "dzień": "Szuka resztek przy obozach i wraca pod zwalone gałęzie.",
+                "wieczór": "Krąży przy kamieniach i wraca do kryjówki przed zmrokiem.",
+                "noc": "Siedzi cicho pod korzeniem i czeka na ciszę.",
+            },
+            "puszcza_kruk": {
+                "świt": "Zrywa się z gałęzi i wraca na wyższy konar.",
+                "dzień": "Obserwuje polanę i wraca tam, gdzie widać więcej niż ludziom.",
+                "wieczór": "Kracze nad ścieżką i wraca do gniazda.",
+                "noc": "Kuli pióra i drzemiąc czeka na świt.",
+            },
+            "puszcza_lis": {
+                "świt": "Obchodzi skraj polany i wraca do nory.",
+                "dzień": "Poluje na drobne zwierzęta i wraca do gęstwiny.",
+                "wieczór": "Krąży przy śladach ludzi i wraca przed nocą.",
+                "noc": "Leży w bezpiecznej jamie i słucha lasu.",
+            },
+            "puszcza_pies_dziki": {
+                "świt": "Obwąchuje ścieżkę i wraca do pniaka.",
+                "dzień": "Węszy przy obozie i wraca na krótki postój.",
+                "wieczór": "Warczy na obcych i wraca pod osłonę drzew.",
+                "noc": "Krąży niespokojnie i szuka słabszego zapachu.",
+            },
+            "puszcza_wilk_mlody": {
+                "świt": "Wychodzi ostrożnie na ślad i wraca do stada.",
+                "dzień": "Próbuje podchodzić bliżej zwierzyny i wraca pod osłonę krzewów.",
+                "wieczór": "Krąży po znanym kręgu i wraca przed nocą.",
+                "noc": "Słucha odgłosów lasu i czeka na ruch starszych wilków.",
+            },
+            "puszcza_wilk": {
+                "świt": "Sprawdza granice terenu i wraca do swojej drogi.",
+                "dzień": "Poluje, obwąchuje tropy i wraca bliżej starych śladów.",
+                "wieczór": "Przechodzi przez cień polany i wraca w las.",
+                "noc": "Krąży bezszelestnie i poluje wtedy, gdy inni śpią.",
+            },
             "podgrodzie_woznica": {
                 "świt": "Sprawdza wóz na skraju Podgrodzia i wraca do szopy z uprzężą.",
                 "dzień": "Jedzie do rynku i wraca z towarem przy osi.",
@@ -386,7 +425,7 @@ class NPCFactory:
                 "wieczór": "Wraca do ognia albo kapliczki, zanim zapadnie pełna ciemność.",
                 "noc": "Słucha lasu, bagna i tego, czego w ciemności nie warto nazywać.",
             }
-        if vnum in {"puszcza_jelen", "puszcza_dzik", "bagna_zaba"}:
+        if vnum in {"puszcza_szczur", "puszcza_kruk", "puszcza_lis", "puszcza_pies_dziki", "puszcza_wilk_mlody", "puszcza_wilk", "puszcza_jelen", "puszcza_dzik", "puszcza_pajak", "puszcza_pajak_lesny", "puszcza_pajak_duzy", "puszcza_wilk_stary", "puszcza_wataha_wilkow", "puszcza_niedzwiedz", "puszcza_niedzwiedzica", "puszcza_bandyta", "puszcza_bandyta_lucznik", "puszcza_bandyta_zwiadowca", "puszcza_lowca", "puszcza_lowczy", "puszcza_bandycki_naczelnik", "puszcza_niedzwiedzi_olbrzym", "puszcza_troll", "bagna_zaba"}:
             return {
                 "świt": "Wychodzi z ukrycia i szuka spokojnego miejsca.",
                 "dzień": "Przemieszcza się ostrożnie po własnym terenie.",
@@ -1365,6 +1404,35 @@ class NPCFactory:
                 "korpus": Item("roboczy kaftan", "Kaftan odporny na żywicę i pył z kory.", 1.4, 6, "puszcza_lumber_coat", "armor", "korpus", protection=0),
                 "prawa_reka": Item("topór drwala", "Ciężki topór do zwalonych pni.", 3.0, 10, "puszcza_lumber_axe", "weapon", "prawa_reka", damage_type="obuchowa", base_damage=4, reach=1, initiative_modifier=0, parry_bonus=0),
             }
+        if vnum == "puszcza_szczur":
+            return {
+                "korpus": Item("szara szczecina", "Cienka, matowa osłona zwykłego leśnego szczura.", 0.0, 0, "puszcza_rat_hide", "armor", "korpus", protection=0),
+            }
+        if vnum == "puszcza_kruk":
+            return {
+                "korpus": Item("czarne pióra", "Warstwa piór i cienia, która pomaga krukowi wtopić się w konary.", 0.0, 0, "puszcza_raven_feathers", "armor", "korpus", protection=0),
+                "prawa_reka": Item("krucze szpony", "Naturalne szpony do wspinaczki i obrony.", 0.0, 0, "puszcza_raven_claws", "weapon", "prawa_reka", damage_type="kluta", base_damage=1, reach=1, initiative_modifier=2, parry_bonus=0),
+            }
+        if vnum == "puszcza_lis":
+            return {
+                "korpus": Item("rudawa skóra", "Miękka skóra lisa, zwinna i ciepła.", 0.0, 0, "puszcza_fox_hide", "armor", "korpus", protection=0),
+                "prawa_reka": Item("lisie zęby", "Drobne, lecz ostre kły i zęby lisa.", 0.0, 0, "puszcza_fox_fangs", "weapon", "prawa_reka", damage_type="kluta", base_damage=1, reach=1, initiative_modifier=2, parry_bonus=0),
+            }
+        if vnum == "puszcza_pies_dziki":
+            return {
+                "korpus": Item("szorstkie futro", "Twarde futro dzikiego psa.", 0.0, 0, "puszcza_wild_dog_fur", "armor", "korpus", protection=0),
+                "prawa_reka": Item("dzikie kły", "Kły dzikiego psa. Małe, ale nieprzyjemne.", 0.0, 0, "puszcza_wild_dog_fangs", "weapon", "prawa_reka", damage_type="kluta", base_damage=2, reach=1, initiative_modifier=1, parry_bonus=0),
+            }
+        if vnum == "puszcza_wilk_mlody":
+            return {
+                "korpus": Item("wilcze futro", "Młode futro wilka, jeszcze niezbyt gęste.", 0.0, 0, "puszcza_young_wolf_fur", "armor", "korpus", protection=0),
+                "prawa_reka": Item("wilcze kły", "Młode, ale już ostre kły wilka.", 0.0, 0, "puszcza_young_wolf_fangs", "weapon", "prawa_reka", damage_type="kluta", base_damage=2, reach=1, initiative_modifier=2, parry_bonus=0),
+            }
+        if vnum == "puszcza_wilk":
+            return {
+                "korpus": Item("wilcze futro", "Grube futro dorosłego wilka.", 0.0, 0, "puszcza_wolf_fur", "armor", "korpus", protection=0),
+                "prawa_reka": Item("wilcze kły", "Twarde kły dorosłego wilka.", 0.0, 0, "puszcza_wolf_fangs", "weapon", "prawa_reka", damage_type="kluta", base_damage=3, reach=1, initiative_modifier=2, parry_bonus=0),
+            }
         if vnum == "puszcza_jelen":
             return {
                 "korpus": Item("sierść jelenia", "Naturalna skóra i poroże tworzące zwykłe, leśne ciało.", 0.0, 0, "puszcza_deer_hide", "armor", "korpus", protection=0),
@@ -1374,6 +1442,81 @@ class NPCFactory:
             return {
                 "korpus": Item("szorstka szczecina", "Naturalna osłona dzika.", 0.0, 0, "puszcza_boar_hide", "armor", "korpus", protection=0),
                 "prawa_reka": Item("kły dzika", "Naturalne kły i ciężki kark.", 0.0, 0, "puszcza_boar_tusks", "weapon", "prawa_reka", damage_type="obuchowa", base_damage=3, reach=1, initiative_modifier=0, parry_bonus=0),
+            }
+        if vnum == "puszcza_pajak":
+            return {
+                "korpus": Item("chitynowy pancerz", "Ciemny pancerz pajęczej skorupy.", 0.0, 0, "puszcza_spider_chitin", "armor", "korpus", protection=0),
+                "prawa_reka": Item("jadowite szczękoczułki", "Ostre szczękoczułki gotowe do ataku.", 0.0, 0, "puszcza_spider_fangs", "weapon", "prawa_reka", damage_type="kluta", base_damage=1, reach=1, initiative_modifier=3, parry_bonus=0),
+            }
+        if vnum == "puszcza_pajak_lesny":
+            return {
+                "korpus": Item("leśny pancerz", "Szorstka osłona pajęczej skrytości.", 0.0, 0, "puszcza_forest_spider_chitin", "armor", "korpus", protection=0),
+                "prawa_reka": Item("leśne szczękoczułki", "Szczękoczułki większego leśnego pająka.", 0.0, 0, "puszcza_forest_spider_fangs", "weapon", "prawa_reka", damage_type="kluta", base_damage=2, reach=1, initiative_modifier=2, parry_bonus=0),
+            }
+        if vnum == "puszcza_pajak_duzy":
+            return {
+                "korpus": Item("gruby pancerz pajęczy", "Cięższy chitynowy pancerz dużego pająka.", 0.0, 0, "puszcza_big_spider_chitin", "armor", "korpus", protection=1),
+                "prawa_reka": Item("mocne szczękoczułki", "Szczękoczułki dużego pająka, zdolne przebić lekką skórę.", 0.0, 0, "puszcza_big_spider_fangs", "weapon", "prawa_reka", damage_type="kluta", base_damage=3, reach=1, initiative_modifier=2, parry_bonus=0),
+            }
+        if vnum == "puszcza_wilk_stary":
+            return {
+                "korpus": Item("poszarzałe futro", "Stare, gęste futro wilka, wytarte od walk.", 0.0, 0, "puszcza_old_wolf_fur", "armor", "korpus", protection=0),
+                "prawa_reka": Item("stępione kły", "Kły starego wilka, nadal groźne.", 0.0, 0, "puszcza_old_wolf_fangs", "weapon", "prawa_reka", damage_type="kluta", base_damage=4, reach=1, initiative_modifier=1, parry_bonus=0),
+            }
+        if vnum == "puszcza_wataha_wilkow":
+            return {
+                "korpus": Item("zszyte futro stada", "Masywna osłona z futra i blizn watahy.", 0.0, 0, "puszcza_wolf_pack_fur", "armor", "korpus", protection=1),
+                "prawa_reka": Item("wilcze zębiska stada", "Wataha gryzie jak jedno zwierzę.", 0.0, 0, "puszcza_wolf_pack_fangs", "weapon", "prawa_reka", damage_type="kluta", base_damage=4, reach=1, initiative_modifier=1, parry_bonus=0),
+            }
+        if vnum == "puszcza_niedzwiedz":
+            return {
+                "korpus": Item("gruba sierść", "Ciężka, gruba sierść niedźwiedzia.", 0.0, 0, "puszcza_bear_fur", "armor", "korpus", protection=1),
+                "prawa_reka": Item("niedźwiedzie łapy", "Potężne łapy zdolne rozszarpać ofiarę.", 0.0, 0, "puszcza_bear_claws", "weapon", "prawa_reka", damage_type="obuchowa", base_damage=5, reach=1, initiative_modifier=0, parry_bonus=0),
+            }
+        if vnum == "puszcza_niedzwiedzica":
+            return {
+                "korpus": Item("matowa sierść", "Gruba sierść niedźwiedzicy chroniąca przed zimnem.", 0.0, 0, "puszcza_bear_mother_fur", "armor", "korpus", protection=1),
+                "prawa_reka": Item("ostre pazury", "Pazury niedźwiedzicy, groźne przy szarży.", 0.0, 0, "puszcza_bear_mother_claws", "weapon", "prawa_reka", damage_type="obuchowa", base_damage=5, reach=1, initiative_modifier=0, parry_bonus=0),
+            }
+        if vnum == "puszcza_bandyta":
+            return {
+                "korpus": Item("skórzana kamizelka", "Porysowana kamizelka bandyty.", 1.2, 8, "puszcza_bandit_vest", "armor", "korpus", protection=1),
+                "prawa_reka": Item("krótki miecz", "Niewygodny, ale skuteczny miecz z rabunku.", 1.8, 12, "puszcza_bandit_sword", "weapon", "prawa_reka", damage_type="cieta", base_damage=4, reach=1, initiative_modifier=1, parry_bonus=0),
+            }
+        if vnum == "puszcza_bandyta_lucznik":
+            return {
+                "korpus": Item("lekka skóra", "Lekka skórzana ochrona bandyty-łucznika.", 1.0, 7, "puszcza_bandit_archer_leather", "armor", "korpus", protection=0),
+                "prawa_reka": Item("naciągnięty łuk", "Łuk do ostrzału z ukrycia.", 1.4, 11, "puszcza_bandit_bow", "weapon", "prawa_reka", damage_type="pociskowa", base_damage=4, reach=2, initiative_modifier=1, parry_bonus=0),
+            }
+        if vnum == "puszcza_bandyta_zwiadowca":
+            return {
+                "korpus": Item("płaszcz zwiadowcy", "Szary płaszcz do znikania w leśnym cieniu.", 1.1, 8, "puszcza_bandit_scout_cloak", "armor", "korpus", protection=0),
+                "prawa_reka": Item("sztylet zwiadowcy", "Cichy sztylet do podchodzenia i ucieczki.", 0.5, 10, "puszcza_bandit_dagger", "weapon", "prawa_reka", damage_type="kluta", base_damage=3, reach=1, initiative_modifier=2, parry_bonus=0),
+            }
+        if vnum == "puszcza_lowca":
+            return {
+                "korpus": Item("łowiecki kaftan", "Wytrzymały kaftan człowieka żyjącego z łowów.", 1.5, 9, "puszcza_hunter_jerkin", "armor", "korpus", protection=1),
+                "prawa_reka": Item("włócznia łowcy", "Długa włócznia do trzymania drapieżników na dystans.", 2.0, 13, "puszcza_hunter_spear", "weapon", "prawa_reka", damage_type="kluta", base_damage=4, reach=2, initiative_modifier=1, parry_bonus=0),
+            }
+        if vnum == "puszcza_lowczy":
+            return {
+                "korpus": Item("płaszcz tropiciela", "Wysłużony płaszcz pokryty śladami błota i żywicy.", 1.2, 8, "puszcza_tracker_cloak", "armor", "korpus", protection=0),
+                "prawa_reka": Item("sidła i hak", "Sprzęt do łapania i unieruchamiania zwierzyny.", 0.8, 9, "puszcza_tracker_hook", "weapon", "prawa_reka", damage_type="obuchowa", base_damage=3, reach=1, initiative_modifier=2, parry_bonus=0),
+            }
+        if vnum == "puszcza_bandycki_naczelnik":
+            return {
+                "korpus": Item("stara kolczuga", "Ciężka kolczuga przejęta po kolejnych ofiarach.", 4.0, 18, "puszcza_bandit_leader_mail", "armor", "korpus", protection=2),
+                "prawa_reka": Item("szabla herszta", "Ostra szabla bandyckiego herszta.", 2.0, 20, "puszcza_bandit_leader_sabre", "weapon", "prawa_reka", damage_type="cieta", base_damage=6, reach=1, initiative_modifier=1, parry_bonus=0),
+            }
+        if vnum == "puszcza_niedzwiedzi_olbrzym":
+            return {
+                "korpus": Item("potężna sierść", "Potężne futro ogromnego niedźwiedzia.", 0.0, 0, "puszcza_giant_bear_fur", "armor", "korpus", protection=2),
+                "prawa_reka": Item("olbrzymie pazury", "Łapy zdolne miażdżyć pancerz i kości.", 0.0, 0, "puszcza_giant_bear_claws", "weapon", "prawa_reka", damage_type="obuchowa", base_damage=7, reach=1, initiative_modifier=0, parry_bonus=0),
+            }
+        if vnum == "puszcza_troll":
+            return {
+                "korpus": Item("twarda skóra trolla", "Gruba, łupliwa skóra starego trolla.", 3.0, 25, "puszcza_troll_hide", "armor", "korpus", protection=2),
+                "prawa_reka": Item("leśna maczuga", "Ciężka gałąź wzmocniona kamieniami i błotem.", 6.0, 18, "puszcza_forest_club", "weapon", "prawa_reka", damage_type="obuchowa", base_damage=8, reach=1, initiative_modifier=-1, parry_bonus=0),
             }
         if vnum == "bagna_zielarz":
             return {
@@ -1451,6 +1594,195 @@ class NPCFactory:
                 "merchant": True,
                 "gold": 26,
                 "shop": "puszcza_herbal_inventory",
+            },
+            "puszcza_szczur": {
+                "name": "szczur",
+                "short_desc": "Szczur przemyka przy korzeniach i znika w ściółce.",
+                "long_desc": "Mały leśny gryzoń, który żyje tam, gdzie zostają resztki po obozach i zapomnianych ścieżkach.",
+                "room_id": 230,
+                "zone": "Puszcza_Ciszy",
+                "stats": CharacterStats(5, 11, 6, 12, 6, 35),
+                "ai_state": "PATROL",
+            },
+            "puszcza_pajak": {
+                "name": "pająk",
+                "short_desc": "Pająk siedzi nieruchomo wśród gałęzi i czeka na ruch ofiary.",
+                "long_desc": "Drobny, ale nieprzyjemny mieszkaniec podszytu, który umie zamienić ciszę w pułapkę.",
+                "room_id": 216,
+                "zone": "Puszcza_Ciszy",
+                "stats": CharacterStats(5, 12, 6, 13, 6, 38),
+                "ai_state": "PATROL",
+            },
+            "puszcza_kruk": {
+                "name": "kruk",
+                "short_desc": "Kruk siedzi nisko na gałęzi i obserwuje okolicę czarnym okiem.",
+                "long_desc": "Sprytne ptaszysko, które zna zapach łatwej zdobyczy i od razu rozumie, kiedy trzeba się przenieść.",
+                "room_id": 223,
+                "zone": "Puszcza_Ciszy",
+                "stats": CharacterStats(5, 13, 5, 12, 6, 40),
+                "ai_state": "PATROL",
+            },
+            "puszcza_lis": {
+                "name": "lis",
+                "short_desc": "Lis przemyka między krzakami i co chwilę zastyga w bezruchu.",
+                "long_desc": "Rude zwierzę lasu, ostrożne, szybkie i trudne do zaskoczenia.",
+                "room_id": 223,
+                "zone": "Puszcza_Ciszy",
+                "stats": CharacterStats(7, 14, 7, 12, 8, 50),
+                "ai_state": "PATROL",
+            },
+            "puszcza_pajak_lesny": {
+                "name": "leśny pająk",
+                "short_desc": "Leśny pająk siedzi w cieniu konarów i pilnuje przejścia.",
+                "long_desc": "Większy od zwykłego pająka, cierpliwy i prawie niewidoczny, dopóki nie ruszy się za szybko.",
+                "room_id": 229,
+                "zone": "Puszcza_Ciszy",
+                "stats": CharacterStats(7, 13, 7, 13, 7, 50),
+                "ai_state": "PATROL",
+            },
+            "puszcza_wilk": {
+                "name": "wilk",
+                "short_desc": "Wilk stoi w półmroku i mierzy wszystko chłodnym spojrzeniem.",
+                "long_desc": "Dorosły drapieżnik z puszczy, przyzwyczajony do samotnego polowania i szybkiego ataku.",
+                "room_id": 234,
+                "zone": "Puszcza_Ciszy",
+                "stats": CharacterStats(10, 14, 9, 12, 8, 85),
+                "ai_state": "AGGRESSIVE",
+            },
+            "puszcza_wilk_stary": {
+                "name": "stary wilk",
+                "short_desc": "Stary wilk porusza się wolniej, ale wciąż wygląda groźnie.",
+                "long_desc": "Blizny na pysku i zgrubiałe łapy zdradzają zwierzę, które przeżyło zbyt wiele zim, by dać się zlekceważyć.",
+                "room_id": 234,
+                "zone": "Puszcza_Ciszy",
+                "stats": CharacterStats(11, 13, 10, 12, 9, 95),
+                "ai_state": "AGGRESSIVE",
+            },
+            "puszcza_wataha_wilkow": {
+                "name": "wataha wilków",
+                "short_desc": "Wataha wilków trzyma się razem, jakby las był jej własnością.",
+                "long_desc": "Kilka wilków porusza się tu niemal jak jedno ciało, zamykając drogę i zmuszając ofiarę do błędu.",
+                "room_id": 234,
+                "zone": "Puszcza_Ciszy",
+                "stats": CharacterStats(11, 14, 10, 13, 9, 105),
+                "ai_state": "AGGRESSIVE",
+            },
+            "puszcza_niedzwiedz": {
+                "name": "niedźwiedź",
+                "short_desc": "Niedźwiedź przechodzi między pniami ciężkim krokiem.",
+                "long_desc": "Maszyna z mięśni, sierści i cierpliwości. Jeśli ruszy, lepiej już nie stać na drodze.",
+                "room_id": 241,
+                "zone": "Puszcza_Ciszy",
+                "stats": CharacterStats(13, 11, 14, 9, 9, 120),
+                "ai_state": "AGGRESSIVE",
+            },
+            "puszcza_niedzwiedzica": {
+                "name": "niedźwiedzica",
+                "short_desc": "Niedźwiedzica stoi przy chaszczach i pilnuje swojego terenu.",
+                "long_desc": "Nawet z dala widać, że nie zamierza ustępować nikomu, kto wszedł za głęboko w jej las.",
+                "room_id": 241,
+                "zone": "Puszcza_Ciszy",
+                "stats": CharacterStats(13, 12, 13, 10, 10, 115),
+                "ai_state": "AGGRESSIVE",
+            },
+            "puszcza_bandyta": {
+                "name": "bandyta",
+                "short_desc": "Bandyta czai się przy drzewach i obserwuje drogę.",
+                "long_desc": "Zwykły leśny opryszek, który woli zasadzić się na słabszego niż walczyć uczciwie.",
+                "room_id": 246,
+                "zone": "Puszcza_Ciszy",
+                "stats": CharacterStats(9, 12, 9, 11, 8, 70),
+                "ai_state": "AGGRESSIVE",
+            },
+            "puszcza_bandyta_lucznik": {
+                "name": "bandyta-łucznik",
+                "short_desc": "Bandyta z łukiem pilnuje przejścia i szuka okazji do strzału.",
+                "long_desc": "Wybiera pozycję, kryje się i strzela, zanim ktokolwiek zdąży podejść zbyt blisko.",
+                "room_id": 246,
+                "zone": "Puszcza_Ciszy",
+                "stats": CharacterStats(8, 13, 8, 12, 8, 72),
+                "ai_state": "PATROL",
+            },
+            "puszcza_bandyta_zwiadowca": {
+                "name": "bandycki zwiadowca",
+                "short_desc": "Zwiadowca bandytów nasłuchuje lasu i sprawdza ślady przy ziemi.",
+                "long_desc": "Porusza się po lesie bezszelestnie i wie, kiedy wezwać resztę bandy.",
+                "room_id": 252,
+                "zone": "Puszcza_Ciszy",
+                "stats": CharacterStats(9, 13, 8, 12, 8, 74),
+                "ai_state": "PATROL",
+            },
+            "puszcza_lowca": {
+                "name": "łowca",
+                "short_desc": "Łowca stał się zbyt pewny, że las należy do niego.",
+                "long_desc": "Nie ufa nikomu, strzela pierwszy i pyta później, przez co sam coraz bardziej przypomina to, na co polował.",
+                "room_id": 252,
+                "zone": "Puszcza_Ciszy",
+                "stats": CharacterStats(10, 12, 10, 11, 9, 80),
+                "ai_state": "PATROL",
+            },
+            "puszcza_lowczy": {
+                "name": "lowczy",
+                "short_desc": "Lowczy zna sidła, tropy i zwyczaje leśnych dróg.",
+                "long_desc": "Węszy za zwierzyną i ludźmi z taką samą uwagą, a jego stary płaszcz znika między drzewami jak cień.",
+                "room_id": 258,
+                "zone": "Puszcza_Ciszy",
+                "stats": CharacterStats(9, 13, 9, 12, 9, 78),
+                "ai_state": "PATROL",
+            },
+            "puszcza_pajak_duzy": {
+                "name": "duży pająk",
+                "short_desc": "Duży pająk zwisa nad ścieżką jak ciemna, cierpliwa pułapka.",
+                "long_desc": "Ma więcej jadu i więcej cierpliwości niż cały kosz leśnych plotek.",
+                "room_id": 258,
+                "zone": "Puszcza_Ciszy",
+                "stats": CharacterStats(8, 13, 8, 13, 8, 60),
+                "ai_state": "PATROL",
+            },
+            "puszcza_bandycki_naczelnik": {
+                "name": "bandycki naczelnik",
+                "short_desc": "Naczelnik bandy stoi twardo przy ciemnym obozie.",
+                "long_desc": "Najbardziej bezwzględny z leśnych zbójów, który trzyma resztę w ryzach tylko strachem i żelazem.",
+                "room_id": 267,
+                "zone": "Puszcza_Ciszy",
+                "stats": CharacterStats(14, 13, 14, 12, 11, 135),
+                "ai_state": "AGGRESSIVE",
+            },
+            "puszcza_niedzwiedzi_olbrzym": {
+                "name": "ogromny niedźwiedź",
+                "short_desc": "Ogromny niedźwiedź ociera się o pnie i blokuje całą ścieżkę.",
+                "long_desc": "To już nie zwykły drapieżnik, tylko żywa przeszkoda, która potrafi zmiażdżyć człowieka samym impetem.",
+                "room_id": 267,
+                "zone": "Puszcza_Ciszy",
+                "stats": CharacterStats(15, 11, 16, 9, 10, 150),
+                "ai_state": "AGGRESSIVE",
+            },
+            "puszcza_troll": {
+                "name": "troll",
+                "short_desc": "Rzadki troll chowa się głębiej w lesie i nie lubi światła.",
+                "long_desc": "Stary, brutalny stwór, którego obecność w Puszczy Ciszy tłumaczy tylko najgorszy przypadek albo cudzą bezmyślność.",
+                "room_id": 274,
+                "zone": "Puszcza_Ciszy",
+                "stats": CharacterStats(17, 9, 16, 8, 8, 160),
+                "ai_state": "AGGRESSIVE",
+            },
+            "puszcza_pies_dziki": {
+                "name": "dziki pies",
+                "short_desc": "Dziki pies warczy przy pniaku i nie spuszcza z oczu ścieżki.",
+                "long_desc": "Zmarniałe zwierzę bez opieki, agresywne i zbyt pewne własnych zębów.",
+                "room_id": 246,
+                "zone": "Puszcza_Ciszy",
+                "stats": CharacterStats(8, 13, 8, 11, 8, 60),
+                "ai_state": "AGGRESSIVE",
+            },
+            "puszcza_wilk_mlody": {
+                "name": "młody wilk",
+                "short_desc": "Młody wilk krąży niepewnie po swojej ścieżce.",
+                "long_desc": "Jeszcze nie dorósł do pełnej zuchwałości, ale już uczy się, jak podchodzić bliżej i uciekać szybciej.",
+                "room_id": 229,
+                "zone": "Puszcza_Ciszy",
+                "stats": CharacterStats(8, 13, 8, 12, 7, 65),
+                "ai_state": "PATROL",
             },
             "puszcza_jelen": {
                 "name": "jeleń",
@@ -2098,6 +2430,21 @@ class NPCFactory:
                     "Plotki? W kuźni szybciej lecą iskry niż słowa, ale i tak coś się usłyszy.",
                 ),
             )
+        if vnum == "podgrodzie_ges":
+            return self._basic_npc(
+                vnum="podgrodzie_ges",
+                name="gęś",
+                short_desc="Gęś syczy na każdego, kto podchodzi zbyt blisko podwórza.",
+                long_desc="Ptak jest głośny, uparty i zupełnie niechętny do rozmowy. Dziobem potrafi przekonać do zachowania dystansu.",
+                zone="Podgrodzie",
+                faction="MEEKHAN",
+                room_id=room_id,
+                stats=CharacterStats(6, 11, 7, 8, 6, 45),
+                ai_state="AGGRESSIVE",
+                equipment={
+                    "prawa_reka": Item("dziób gęsi", "Twardy dziób do szczypania i odstraszania.", 0.0, 0, "goose_beak", "weapon", "prawa_reka", damage_type="kluta", base_damage=1, reach=1, initiative_modifier=2, parry_bonus=0),
+                },
+            )
         if vnum == "podgrodzie_straznik_miejski":
             return self._basic_npc(
                 vnum="podgrodzie_straznik_miejski",
@@ -2446,7 +2793,40 @@ class NPCFactory:
                 faction="MEEKHAN",
                 room_id=room_id,
                 stats=CharacterStats(9, 9, 10, 9, 10, 95),
+                is_merchant=True,
+                merchant_gold=50,
+                shop_inventory=tanner_shop_inventory(),
                 inventory=[Item("garbarski skrobak", "Płaski skrobak do skóry.", 0.5, 3, "tanner_scraper_npc", item_type="tool")],
+            )
+        if vnum == "butcher":
+            return self._basic_npc(
+                vnum="butcher",
+                name="rzeźnik",
+                short_desc="Rzeźnik ostrzy narzędzia i zerka na to, co da się jeszcze pociąć na uczciwe porcje.",
+                long_desc="Zna wagę mięsa, kości i dobrej soli. Przy ladzie mówi krótko, bo woli pracować niż opowiadać.",
+                zone="Centrum_Twierdza",
+                faction="MEEKHAN",
+                room_id=room_id,
+                stats=CharacterStats(10, 10, 11, 9, 10, 100),
+                is_merchant=True,
+                merchant_gold=54,
+                shop_inventory=butcher_shop_inventory(),
+                inventory=[Item("hak rzeźnicki", "Krótki hak do wieszania tusz.", 0.6, 4, "butcher_hook_npc", item_type="tool")],
+            )
+        if vnum == "skin_trader":
+            return self._basic_npc(
+                vnum="skin_trader",
+                name="handlarz skórami",
+                short_desc="Handlarz skórami rozkłada próbki tak, by nawet biedny myślał o dobrym płaszczu.",
+                long_desc="Kupuje i sprzedaje to, co zdjęto z lasu, pola albo zbyt pewnej ręki. Wartość widzi w szorstkości, nie w słowach.",
+                zone="Centrum_Twierdza",
+                faction="MEEKHAN",
+                room_id=room_id,
+                stats=CharacterStats(9, 10, 9, 11, 10, 95),
+                is_merchant=True,
+                merchant_gold=60,
+                shop_inventory=skin_trader_shop_inventory(),
+                inventory=[Item("worek garbarski", "Worek na próbki skór i maści do ich konserwacji.", 0.7, 4, "skin_trader_bag", is_container=True, capacity=12)],
             )
         if vnum == "bowyer":
             return self._basic_npc(
@@ -2676,8 +3056,29 @@ class NPCFactory:
             "puszcza_zielarz",
             "puszcza_pustelnik",
             "puszcza_drwal",
+            "puszcza_szczur",
+            "puszcza_kruk",
+            "puszcza_lis",
+            "puszcza_pies_dziki",
+            "puszcza_wilk_mlody",
+            "puszcza_wilk",
             "puszcza_jelen",
             "puszcza_dzik",
+            "puszcza_pajak",
+            "puszcza_pajak_lesny",
+            "puszcza_pajak_duzy",
+            "puszcza_wilk_stary",
+            "puszcza_wataha_wilkow",
+            "puszcza_niedzwiedz",
+            "puszcza_niedzwiedzica",
+            "puszcza_bandyta",
+            "puszcza_bandyta_lucznik",
+            "puszcza_bandyta_zwiadowca",
+            "puszcza_lowca",
+            "puszcza_lowczy",
+            "puszcza_bandycki_naczelnik",
+            "puszcza_niedzwiedzi_olbrzym",
+            "puszcza_troll",
             "bagna_zielarz",
             "bagna_pustelnik",
             "bagna_mysliwy",
@@ -2739,7 +3140,7 @@ class NPCFactory:
             character=c,
             home_room_id=room_id,
         )
-        wolf.character.inventory.append(Item("wilcza skóra", "Szorstka skóra zdjęta z wilka.", 1.0, 8, "wolf_pelt"))
+        wolf.character.inventory.clear()
         wolf.character.combat_style = combat_style_for_vnum(wolf.vnum)
         wolf.character.equipment["prawa_reka"] = Item("kły wilka", "Naturalna broń drapieżnika.", 0.0, 0, "wolf_bite", "weapon", "prawa_reka", damage_type="kluta", base_damage=3, reach=1, initiative_modifier=2, parry_bonus=0)
         return self._finalize(wolf)

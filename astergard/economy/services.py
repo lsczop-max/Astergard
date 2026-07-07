@@ -44,6 +44,8 @@ class EconomyService:
         if not item:
             return "Nie masz takiego przedmiotu."
         price = self.sell_price(item)
+        if not item.can_be_sold_to_merchants or price <= 0:
+            return "Tego nie da się sprzedać."
         if merchant.merchant_gold < price:
             return "Kupiec nie ma dość monet."
         merchant.merchant_gold -= price

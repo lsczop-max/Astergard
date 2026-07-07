@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import Any
-from astergard.items.models import Item, starter_items
+from astergard.items.models import EQUIPMENT_SLOTS, EquipmentSet, Item, equipment_slot_label, starter_items
 from astergard.rules.skills import (
     apply_skill_use,
     apply_starting_skill_bonus,
@@ -99,6 +99,7 @@ class Effect:
 class Character:
     username: str
     room_id: int = 0
+    visited_room_ids: set[int] = field(default_factory=set)
     name: str = ""
     gender_description: str = ""
     age: int = 0
@@ -114,9 +115,7 @@ class Character:
     stats: CharacterStats = field(default_factory=CharacterStats)
     skills: CharacterSkills = field(default_factory=CharacterSkills)
     inventory: list[Item] = field(default_factory=starter_items)
-    equipment: dict[str, Item | None] = field(default_factory=lambda: {
-        "prawa_reka": None, "lewa_reka": None, "glowa": None, "korpus": None, "nogi": None,
-    })
+    equipment: EquipmentSet = field(default_factory=EquipmentSet.default)
     wounds: dict[str, int] = field(default_factory=lambda: {part: 0 for part in BODY_PARTS})
     gold: int = 25
     reputation: dict[str, int] = field(default_factory=lambda: {"MEEKHAN": 0, "SE_HARIEN": 0, "REBELS": 0})
@@ -138,6 +137,14 @@ class Character:
     combat_events: list[str] = field(default_factory=list)
     state: str = CharacterState.ALIVE.value
     admin_role: str | None = None
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.visited_room_ids, set):
+            self.visited_room_ids = {int(room_id) for room_id in self.visited_room_ids}
+        if not isinstance(self.equipment, EquipmentSet):
+            self.equipment = EquipmentSet.from_dict(self.equipment)
+        for slot in EQUIPMENT_SLOTS:
+            self.equipment.setdefault(slot, None)
 
     def add_local_reputation(self, zone: str, amount: int) -> None:
         self.local_reputation[zone] = self.local_reputation.get(zone, 0) + amount
@@ -165,6 +172,31 @@ class Character:
             self.title = title
         if wanted_level is not None:
             self.wanted_level = wanted_level
+
+    def visit_room(self, room_id: int | None = None) -> None:
+        self.visited_room_ids.add(self.room_id if room_id is None else room_id)
+
+    def visit_current_room(self) -> None:
+        self.visit_room(self.room_id)
+
+    def equipped_items(self) -> dict[str, Item]:
+        return {slot: item for slot, item in self.equipment.items() if item is not None}
+
+    def set_equipment(self, slot: str, item: Item | None) -> None:
+        self.equipment[slot] = item
+
+    def clear_equipment(self, slot: str) -> Item | None:
+        item = self.equipment.get(slot)
+        self.equipment[slot] = None
+        return item
+
+    def equipment_summary(self) -> str:
+        items: list[str] = []
+        for slot in EQUIPMENT_SLOTS:
+            item = self.equipment.get(slot)
+            if item is not None:
+                items.append(f"{equipment_slot_label(slot)}: {item.display_name()}")
+        return ", ".join(items) if items else "brak"
 
 
     def sync_flags_from_state(self) -> None:
@@ -203,20 +235,36 @@ class Character:
         return carried + equipped + coins
 
     def weapon(self) -> Item | None:
-        right = self.equipment.get("prawa_reka")
-        if right and right.item_type == "weapon":
-            return right
+        for slot in ("bron_glowna", "bron_pomocnicza", "prawa_reka", "lewa_reka"):
+            item = self.equipment.get(slot)
+            if item is not None and item.item_type == "weapon" and item.durability > 0:
+                return item
         for item in self.inventory:
-            if item.item_type == "weapon":
+            if item.item_type == "weapon" and item.durability > 0:
                 return item
         return None
 
     def armor_for(self, body_part: str) -> Item | None:
-        slot = "korpus" if body_part == "korpus" else "glowa" if body_part == "glowa" else "nogi" if "noga" in body_part else None
-        return self.equipment.get(slot) if slot else None
+        slots: list[str]
+        if body_part == "glowa":
+            slots = ["glowa", "szyja", "amulet"]
+        elif body_part == "korpus":
+            slots = ["korpus", "plecy", "pas"]
+        elif "reka" in body_part:
+            slots = ["rece", "dlonie", "bron_pomocnicza"]
+        elif "noga" in body_part:
+            slots = ["nogi", "stopy"]
+        else:
+            slots = [body_part]
+        for slot in slots:
+            item = self.equipment.get(slot)
+            if item is not None and item.item_type in {"armor", "shield"} and item.durability > 0:
+                return item
+        return None
 
     def shield(self) -> Item | None:
-        left = self.equipment.get("lewa_reka")
-        if left and left.item_type == "shield" and left.durability > 0:
-            return left
+        for slot in ("tarcza", "bron_pomocnicza", "lewa_reka"):
+            item = self.equipment.get(slot)
+            if item is not None and item.item_type == "shield" and item.durability > 0:
+                return item
         return None
