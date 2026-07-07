@@ -51,6 +51,21 @@ NPC_THREAT_BY_VNUM: dict[str, str] = {
     "woodcutter": "trash",
     "urchin": "trash",
     "vagrant": "trash",
+    "podgrodzie_woznica": "trash",
+    "podgrodzie_karczmarz": "trash",
+    "podgrodzie_karczmarka": "trash",
+    "podgrodzie_piekarz": "trash",
+    "podgrodzie_handlarz": "trash",
+    "podgrodzie_przekupka": "trash",
+    "podgrodzie_kowal": "standard",
+    "podgrodzie_pomocnik_kowala": "trash",
+    "podgrodzie_straznik_miejski": "standard",
+    "podgrodzie_rybak": "trash",
+    "podgrodzie_dziecko": "trash",
+    "podgrodzie_zebrak": "trash",
+    "podgrodzie_pielgrzym": "trash",
+    "podgrodzie_chlop": "trash",
+    "podgrodzie_chlopka": "trash",
 }
 
 

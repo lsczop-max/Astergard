@@ -370,7 +370,72 @@ _DISTRICT_OVERRIDES: dict[int, LocationContent] = {
             "błoto koleiny": "Błoto wypełnia koleiny po kostki. Widać, że drogi nikt tu nie oszczędza.",
             "domy chaty": "Domy są niskie, ciasne i ogrzewane tak oszczędnie, jakby drewno było złotem.",
         },
-        items=(Item("drewniane wiadro", "Wiadro z grubych klepek, dobre do noszenia wody albo zboża.", 1.1, 3, "bucket_60", item_type="tool"),),
+        items=(
+            Item("drewniane wiadro", "Wiadro z grubych klepek, dobre do noszenia wody albo zboża.", 1.1, 3, "bucket_60", item_type="tool"),
+            Item("wóz furmański", "Zniszczony wóz na szerokich kołach, wciąż gotowy do krótkiego kursu przez błoto.", 48.0, 25, "podgrodzie_cart_60", item_type="furniture"),
+        ),
+    ),
+    61: LocationContent(
+        room_id=61,
+        items=(
+            Item("skrzynia tragarzy", "Ciężka skrzynia po towarze, noszona tu częściej niż zamykana.", 5.0, 10, "podgrodzie_porters_crate_61", is_container=True, capacity=24),
+            Item("worek owsa", "Worek z owsem dla koni i wołów.", 6.0, 8, "podgrodzie_oatsack_61", is_container=True, capacity=20),
+        ),
+    ),
+    62: LocationContent(
+        room_id=62,
+        items=(
+            Item("ława karczemna", "Twarda ława ustawiona pod ścianą zajazdu.", 6.0, 7, "podgrodzie_tavern_bench_62", item_type="furniture"),
+            Item("ognisko kuchenne", "Zacienione palenisko rozgrzane przez ciągłe gotowanie.", 12.0, 4, "podgrodzie_tavern_fire_62", item_type="furniture"),
+        ),
+    ),
+    63: LocationContent(
+        room_id=63,
+        items=(
+            Item("stragan płócienny", "Prosty stragan z płóciennym daszkiem, wystawiany na targ w kilka chwil.", 8.0, 9, "podgrodzie_canvas_stall_63", item_type="furniture"),
+            Item("worek zboża", "Worek z ziarnem, ciężki i dobrze zawiązany.", 7.5, 11, "podgrodzie_grain_sack_63", is_container=True, capacity=24),
+        ),
+    ),
+    64: LocationContent(
+        room_id=64,
+        items=(
+            Item("drewno opałowe", "Porąbane drewno czekające na palenisko albo piec.", 14.0, 6, "podgrodzie_firewood_64"),
+            Item("narzędzia kowalskie", "Zestaw szczypiec, pilników i młotków odłożonych po robocie.", 3.0, 12, "podgrodzie_smith_tools_64", item_type="tool"),
+        ),
+    ),
+    65: LocationContent(
+        room_id=65,
+        items=(
+            Item("płot żerdziowy", "Niska bariera z żerdzi, łatana i wielokrotnie poprawiana.", 22.0, 5, "podgrodzie_fence_65", item_type="furniture"),
+        ),
+    ),
+    66: LocationContent(
+        room_id=66,
+        items=(
+            Item("stajnia podwórzowa", "Niewielka stajnia przytwierdzona do skraju zabudowań.", 60.0, 18, "podgrodzie_stable_66", item_type="furniture"),
+            Item("żłób", "Kamienny żłób z resztką siana.", 18.0, 6, "podgrodzie_trough_66", item_type="furniture"),
+        ),
+    ),
+    67: LocationContent(
+        room_id=67,
+        items=(
+            Item("beczka wody", "Beczka z wodą dla ludzi i zwierząt pociągowych.", 22.0, 8, "podgrodzie_water_barrel_67", is_container=True, capacity=55),
+            Item("kamienne ognisko", "Proste ognisko otoczone polnymi kamieniami.", 10.0, 4, "podgrodzie_campfire_67", item_type="furniture"),
+        ),
+    ),
+    68: LocationContent(
+        room_id=68,
+        items=(
+            Item("stragan targowy", "Stragan ustawiany przy każdym większym ruchu ludzi.", 10.0, 10, "podgrodzie_market_stall_68", item_type="furniture"),
+            Item("skrzynia kupiecka", "Skrzynia z grubego drewna, na monety i drobny towar.", 4.5, 12, "podgrodzie_merchant_crate_68", is_container=True, capacity=30),
+        ),
+    ),
+    69: LocationContent(
+        room_id=69,
+        items=(
+            Item("studnia przedmiejska", "Studnia z drewnianą cembrowiną, oblepiona błotem i kredą.", 35.0, 14, "podgrodzie_well_69", item_type="furniture"),
+            Item("wiadro studzienne", "Wiadro do wody, zbyt ciężkie jak na swój wygląd.", 1.0, 3, "podgrodzie_bucket_69", item_type="tool"),
+        ),
     ),
     70: LocationContent(
         room_id=70,
@@ -385,7 +450,73 @@ _DISTRICT_OVERRIDES: dict[int, LocationContent] = {
             "rowy ploty płoty": "Rowy są czyszczone regularnie, żeby wiosenne wody nie zjadły drogi przed żniwami.",
             "wozy snopy": "Ślady wozów i rozsypane źdźbła pokazują, że droga żyje tu od świtu do zmierzchu.",
         },
-        items=(Item("kij mierniczy", "Prosty kij do odmierzania pola i płotu.", 0.8, 2, "measuring_staff_70", item_type="tool"),),
+        items=(
+            Item("kij mierniczy", "Prosty kij do odmierzania pola i płotu.", 0.8, 2, "measuring_staff_70", item_type="tool"),
+            Item("wóz dostawczy", "Wóz z szeroką plandeką, zostawiony tu na chwilę albo na zbyt długo.", 50.0, 22, "podgrodzie_delivery_cart_70", item_type="furniture"),
+        ),
+    ),
+    71: LocationContent(
+        room_id=71,
+        items=(
+            Item("narzędzia garncarskie", "Miski, szpatułki i noże do gliny ustawione na jednym stole.", 2.0, 7, "podgrodzie_potter_tools_71", item_type="tool"),
+            Item("bryła gliny", "Wilgotna bryła gliny gotowa do lepienia naczyń.", 4.0, 4, "podgrodzie_clay_71"),
+        ),
+    ),
+    72: LocationContent(
+        room_id=72,
+        items=(
+            Item("gęsi gospodarskie", "Kilka gęsi kręci się przy zagrodzie i syczy na obcych.", 35.0, 20, "podgrodzie_geese_72", item_type="misc"),
+            Item("koryto karmowe", "Proste koryto na paszę i wodę.", 12.0, 5, "podgrodzie_feed_trough_72", item_type="furniture"),
+        ),
+    ),
+    73: LocationContent(
+        room_id=73,
+        items=(
+            Item("worek zboża", "Worek pełen ziarna, ciężki i dobrze zawiązany.", 7.0, 10, "podgrodzie_grain_sack_73", is_container=True, capacity=24),
+            Item("ławka z desek", "Deski zbite w prostą ławę dla ludzi czekających na transport.", 5.5, 4, "podgrodzie_plank_bench_73", item_type="furniture"),
+        ),
+    ),
+    74: LocationContent(
+        room_id=74,
+        items=(
+            Item("woz podróżny", "Mały wóz podróżny z poobijaną plandeką.", 44.0, 18, "podgrodzie_travel_cart_74", item_type="furniture"),
+            Item("płot drogowy", "Niski płot z żerdzi, ustawiony po to, by pilnować przejazdu.", 16.0, 6, "podgrodzie_road_fence_74", item_type="furniture"),
+        ),
+    ),
+    75: LocationContent(
+        room_id=75,
+        items=(
+            Item("ognisko podróżnych", "Kiedyś rozpalone ognisko, dziś tylko kamienny ślad i garść popiołu.", 9.0, 3, "podgrodzie_road_fire_75", item_type="furniture"),
+            Item("ława przydrożna", "Krótka ława do odpoczynku przed dalszą drogą.", 4.5, 3, "podgrodzie_road_bench_75", item_type="furniture"),
+        ),
+    ),
+    76: LocationContent(
+        room_id=76,
+        items=(
+            Item("stragan z warzywami", "Stragan z cebulą, marchewką i suchym szczypiorem.", 7.0, 7, "podgrodzie_veg_stall_76", item_type="furniture"),
+            Item("skrzynka kupiecka", "Mała skrzynka do codziennego handlu.", 3.2, 5, "podgrodzie_trade_crate_76", is_container=True, capacity=15),
+        ),
+    ),
+    77: LocationContent(
+        room_id=77,
+        items=(
+            Item("drewno opałowe", "Porąbane drewno ułożone przy ogrodzeniu.", 12.0, 5, "podgrodzie_firewood_77"),
+            Item("motyka polna", "Motyka do drobnych robót przy polu i płocie.", 1.3, 4, "podgrodzie_hoe_77", item_type="tool"),
+        ),
+    ),
+    78: LocationContent(
+        room_id=78,
+        items=(
+            Item("stajnia polna", "Prosta stajnia przy skraju pastwiska.", 58.0, 16, "podgrodzie_field_stable_78", item_type="furniture"),
+            Item("koń pociągowy", "Spokojny koń przyzwyczajony do ciężkich wozów.", 380.0, 40, "podgrodzie_cart_horse_78", item_type="misc"),
+        ),
+    ),
+    79: LocationContent(
+        room_id=79,
+        items=(
+            Item("obora", "Niska obora z ciemnymi deskami i zapachem siana.", 46.0, 14, "podgrodzie_barn_79", item_type="furniture"),
+            Item("krowa gospodarska", "Spokojna krowa skubiąca resztki siana przy ścianie.", 420.0, 45, "podgrodzie_cow_79", item_type="misc"),
+        ),
     ),
     80: LocationContent(
         room_id=80,

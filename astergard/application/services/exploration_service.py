@@ -48,7 +48,7 @@ class ExplorationService:
                 return item.description
             return "Nic ciekawego tam nie widzisz."
         exits = ", ".join(loc.exits)
-        npcs = "\n".join(npc.short_desc for npc in ctx.npcs.by_room(loc.id))
+        npcs = "\n".join(npc.scene_line() for npc in ctx.npcs.by_room(loc.id))
         items = "\n".join(f"Leży tu: {item.display_name()}." for item in loc.items)
         inspectables = self._render_inspectables(loc)
         others = "\n".join(

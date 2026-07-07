@@ -149,6 +149,10 @@ class WorldStateRepository:
                 npc.respawn_delay_seconds = int(npc_payload.get("respawn_delay_seconds", npc.respawn_delay_seconds))
                 npc.threat_tier = str(npc_payload.get("threat_tier", npc.threat_tier))
                 npc.threat_label = str(npc_payload.get("threat_label", npc.threat_label))
+                npc.daily_activity = str(npc_payload.get("daily_activity", npc.daily_activity))
+                daily_target = npc_payload.get("daily_target_room_id", npc.daily_target_room_id)
+                npc.daily_target_room_id = int(daily_target) if daily_target is not None else None
+                npc.daily_phase = str(npc_payload.get("daily_phase", npc.daily_phase))
                 npc.is_merchant = bool(npc_payload.get("is_merchant", npc.is_merchant))
                 npc.merchant_gold = int(npc_payload.get("merchant_gold", npc.merchant_gold))
                 npc.shop_inventory = [Item.from_dict(item) for item in npc_payload.get("shop_inventory", []) if isinstance(item, dict)]
@@ -193,6 +197,9 @@ class WorldStateRepository:
             "respawn_delay_seconds": npc.respawn_delay_seconds,
             "threat_tier": npc.threat_tier,
             "threat_label": npc.threat_label,
+            "daily_activity": npc.daily_activity,
+            "daily_target_room_id": npc.daily_target_room_id,
+            "daily_phase": npc.daily_phase,
             "is_merchant": npc.is_merchant,
             "merchant_gold": npc.merchant_gold,
             "shop_inventory": [item.to_dict() for item in npc.shop_inventory],

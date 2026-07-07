@@ -26,6 +26,21 @@ NPC_COMBAT_STYLE_BY_VNUM: dict[str, str] = {
     "woodcutter": "zrownowazony",
     "urchin": "zrownowazony",
     "vagrant": "zrownowazony",
+    "podgrodzie_woznica": "zrownowazony",
+    "podgrodzie_karczmarz": "ostrozny",
+    "podgrodzie_karczmarka": "zrownowazony",
+    "podgrodzie_piekarz": "zrownowazony",
+    "podgrodzie_handlarz": "ostrozny",
+    "podgrodzie_przekupka": "ostrozny",
+    "podgrodzie_kowal": "defensywny",
+    "podgrodzie_pomocnik_kowala": "zrownowazony",
+    "podgrodzie_straznik_miejski": "defensywny",
+    "podgrodzie_rybak": "zrownowazony",
+    "podgrodzie_dziecko": "zrownowazony",
+    "podgrodzie_zebrak": "zrownowazony",
+    "podgrodzie_pielgrzym": "ostrozny",
+    "podgrodzie_chlop": "zrownowazony",
+    "podgrodzie_chlopka": "zrownowazony",
 }
 
 

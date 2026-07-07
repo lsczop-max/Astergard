@@ -23,7 +23,7 @@ class HeartbeatService:
     def tick_once(self) -> None:
         zones = list({loc.zone for loc in self.services.world.locations.values()})
         self.services.weather.tick(zones)
-        self.services.npcs.ai_tick(self.players(), self.services.combat, self.services.factions)
+        self.services.npcs.ai_tick(self.players(), self.services.combat, self.services.factions, hour=self.services.weather.hour)
         self.process_combat_rounds()
         self.services.npcs.respawn_tick()
         self.services.event_bus.emit("world.respawn_tick_completed", npc_count=len(self.services.npcs.npcs))

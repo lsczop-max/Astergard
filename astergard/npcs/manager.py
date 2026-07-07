@@ -3,6 +3,7 @@ from __future__ import annotations
 import random
 import time
 from dataclasses import dataclass
+from collections import deque
 from typing import Any, Protocol, cast
 
 from astergard.characters.models import Character
@@ -27,6 +28,12 @@ class NPCActionEvent:
     target_username: str | None = None
 
 
+@dataclass(frozen=True, slots=True)
+class DailyRoutine:
+    activity_by_phase: dict[str, str]
+    route_depth: int = 2
+
+
 class NPCManager:
     MAX_NPCS_PER_ROOM = 3
 
@@ -45,6 +52,21 @@ class NPCManager:
         self.spawn("blacksmith", 12)
         self.spawn("innkeeper", 14)
         self.spawn("woodcutter", 6)
+        self.spawn("podgrodzie_woznica", 60)
+        self.spawn("podgrodzie_karczmarz", 62)
+        self.spawn("podgrodzie_karczmarka", 62)
+        self.spawn("podgrodzie_pielgrzym", 62)
+        self.spawn("podgrodzie_piekarz", 63)
+        self.spawn("podgrodzie_handlarz", 63)
+        self.spawn("podgrodzie_przekupka", 63)
+        self.spawn("podgrodzie_kowal", 66)
+        self.spawn("podgrodzie_pomocnik_kowala", 66)
+        self.spawn("podgrodzie_straznik_miejski", 66)
+        self.spawn("podgrodzie_rybak", 69)
+        self.spawn("podgrodzie_dziecko", 72)
+        self.spawn("podgrodzie_zebrak", 75)
+        self.spawn("podgrodzie_chlop", 77)
+        self.spawn("podgrodzie_chlopka", 78)
         self.spawn("astergard_guard", 25)
         self.spawn("watch_sergeant", 25)
         self.spawn("astergard_guard", 26)
@@ -88,6 +110,222 @@ class NPCManager:
     def by_room(self, room_id: int) -> list[NPC]:
         loc = self.world.get_location(room_id)
         return [self.npcs[nid] for nid in (loc.npc_ids if loc else []) if nid in self.npcs]
+
+    def _day_phase(self, hour: int) -> str:
+        if 5 <= hour < 8:
+            return "świt"
+        if 8 <= hour < 18:
+            return "dzień"
+        if 18 <= hour < 22:
+            return "wieczór"
+        return "noc"
+
+    def _routine_for(self, npc: NPC) -> DailyRoutine:
+        if npc.vnum in {"astergard_guard", "watch_sergeant", "podgrodzie_straznik_miejski"}:
+            return DailyRoutine(
+                activity_by_phase={
+                    "świt": "Zmienia wartę i rozgląda się po ulicy.",
+                    "dzień": "Patroluje ulicę.",
+                    "wieczór": "Obchodzi posterunek przed nocą.",
+                    "noc": "Zmienia wartę i pilnuje bramy.",
+                },
+                route_depth=3,
+            )
+        if npc.vnum in {"innkeeper", "podgrodzie_karczmarz", "podgrodzie_karczmarka"}:
+            return DailyRoutine(
+                activity_by_phase={
+                    "świt": "Sprząta salę i otrzepuje stoły.",
+                    "dzień": "Obsługuje gości przy ladzie.",
+                    "wieczór": "Wyciera drewniane stoły i liczy kufle.",
+                    "noc": "Zostaje w karczmie po zamknięciu drzwi.",
+                },
+                route_depth=2,
+            )
+        if npc.vnum in {"merchant", "customs_clerk", "fishmonger", "podgrodzie_handlarz", "podgrodzie_przekupka"}:
+            return DailyRoutine(
+                activity_by_phase={
+                    "świt": "Rozstawia towar i sprawdza wagę.",
+                    "dzień": "Handluje na targu i pilnuje cen.",
+                    "wieczór": "Pakuje skrzynki i zwija płótno.",
+                    "noc": "Zamyka stoisko i odkłada klucze.",
+                },
+                route_depth=2,
+            )
+        if npc.vnum in {"blacksmith", "carpenter", "tanner", "bowyer", "armorer", "podgrodzie_kowal", "podgrodzie_pomocnik_kowala"}:
+            return DailyRoutine(
+                activity_by_phase={
+                    "świt": "Otwiera warsztat i przygotowuje narzędzia.",
+                    "dzień": "Uderza młotem w rozgrzane żelazo.",
+                    "wieczór": "Czyści stanowisko i wygasza ogień.",
+                    "noc": "Wraca do domu z zapachem dymu i metalu.",
+                },
+                route_depth=2,
+            )
+        if npc.vnum in {"fisherman", "podgrodzie_rybak", "dockhand"}:
+            return DailyRoutine(
+                activity_by_phase={
+                    "świt": "Idzie nad wodę z sieciami i liną.",
+                    "dzień": "Niesie świeżo złowione ryby.",
+                    "wieczór": "Wraca z połowu ciężkim krokiem.",
+                    "noc": "Odpoczywa od soli i wilgoci.",
+                },
+                route_depth=2,
+            )
+        if npc.vnum == "podgrodzie_woznica":
+            return DailyRoutine(
+                activity_by_phase={
+                    "świt": "Sprawdza uprząż i koła wozu.",
+                    "dzień": "Prowadzi wóz po błotnej drodze.",
+                    "wieczór": "Odprowadza zaprzęg do stajni.",
+                    "noc": "Pilnuje wozu pod płachtą.",
+                },
+                route_depth=3,
+            )
+        if npc.vnum == "podgrodzie_piekarz":
+            return DailyRoutine(
+                activity_by_phase={
+                    "świt": "Rozpala piec i wyrabia ciasto.",
+                    "dzień": "Wyciąga bochenki z pieca.",
+                    "wieczór": "Czyści blaty i liczy bochenki.",
+                    "noc": "Odpoczywa po nocnym wypieku.",
+                },
+                route_depth=2,
+            )
+        if npc.vnum in {"child", "urchin", "podgrodzie_dziecko"}:
+            return DailyRoutine(
+                activity_by_phase={
+                    "świt": "Wysuwa się na podwórko, zanim dorośli skończą poranki.",
+                    "dzień": "Biega między zaułkami i zagląda do cudzych spraw.",
+                    "wieczór": "Wraca do domu przed zmrokiem.",
+                    "noc": "Śpi w bezpiecznym kącie.",
+                },
+                route_depth=2,
+            )
+        if npc.vnum in {"beggar", "vagrant", "podgrodzie_zebrak"}:
+            return DailyRoutine(
+                activity_by_phase={
+                    "świt": "Szuka suchego miejsca przy ścianie.",
+                    "dzień": "Prosi o jałmużnę i wypatruje dobrych twarzy.",
+                    "wieczór": "Szuka schronienia przed nocą.",
+                    "noc": "Drzemie pod murem.",
+                },
+                route_depth=2,
+            )
+        if npc.vnum in {"traveler", "podgrodzie_pielgrzym"}:
+            return DailyRoutine(
+                activity_by_phase={
+                    "świt": "Zbiera sakwy i rusza w drogę.",
+                    "dzień": "Przemierza ulice i szuka traktu.",
+                    "wieczór": "Szuka noclegu przed zmrokiem.",
+                    "noc": "Odpoczywa po długiej drodze.",
+                },
+                route_depth=2,
+            )
+        if npc.vnum in {"farmer", "woodcutter", "miller", "priest_aide", "podgrodzie_chlop", "podgrodzie_chlopka"}:
+            return DailyRoutine(
+                activity_by_phase={
+                    "świt": "Przygotowuje narzędzia i zaczyna dzień pracy.",
+                    "dzień": "Zajmuje się codziennym obowiązkiem.",
+                    "wieczór": "Zamyka robotę i wraca do domu.",
+                    "noc": "Odpoczywa po pracy.",
+                },
+                route_depth=3,
+            )
+        return DailyRoutine(
+            activity_by_phase={
+                "świt": "Rozpoczyna zwykły dzień.",
+                "dzień": "Zajmuje się swoimi sprawami.",
+                "wieczór": "Powoli kończy dzień.",
+                "noc": "Odpoczywa w ciszy.",
+            },
+            route_depth=1,
+        )
+
+    def _local_route(self, npc: NPC, depth: int) -> list[int]:
+        start_room = npc.home_room_id or npc.room_id
+        start = self.world.get_location(start_room)
+        if start is None:
+            return [npc.room_id]
+        route = [start.id]
+        seen = {start.id}
+        queue: deque[int] = deque([start.id])
+        while queue and len(route) < depth + 1:
+            room_id = queue.popleft()
+            loc = self.world.get_location(room_id)
+            if loc is None:
+                continue
+            for exit_ in loc.exits.values():
+                target = self.world.get_location(exit_.target_room)
+                if target is None or target.zone != npc.zone or target.id in seen:
+                    continue
+                seen.add(target.id)
+                route.append(target.id)
+                queue.append(target.id)
+                if len(route) >= depth + 1:
+                    break
+        return route
+
+    def _target_room_for_phase(self, npc: NPC, phase: str) -> int:
+        routine = self._routine_for(npc)
+        route = self._local_route(npc, routine.route_depth)
+        if len(route) == 1:
+            return route[0]
+        if phase == "świt":
+            return route[0]
+        if phase == "dzień":
+            return route[min(1, len(route) - 1)]
+        if phase == "wieczór":
+            return route[min(2, len(route) - 1)]
+        return route[0]
+
+    def _move_npc_towards(self, npc: NPC, target_room_id: int) -> NPCActionEvent | None:
+        if npc.room_id == target_room_id:
+            return None
+        start = self.world.get_location(npc.room_id)
+        target = self.world.get_location(target_room_id)
+        if start is None or target is None or start.zone != npc.zone or target.zone != npc.zone:
+            return None
+        queue: deque[tuple[int, list[int]]] = deque([(start.id, [start.id])])
+        seen = {start.id}
+        while queue:
+            room_id, path = queue.popleft()
+            if room_id == target.id:
+                if len(path) < 2:
+                    return None
+                next_room = path[1]
+                direction = next(
+                    (direction for direction, exit_ in start.exits.items() if exit_.target_room == next_room),
+                    None,
+                )
+                if direction is None:
+                    return None
+                destination = self.world.get_location(next_room)
+                if not self.rules.can_spawn(len(destination.npc_ids) if destination is not None else 0):
+                    return None
+                if npc.id in start.npc_ids:
+                    start.npc_ids.remove(npc.id)
+                if destination is not None and npc.id not in destination.npc_ids:
+                    destination.npc_ids.append(npc.id)
+                npc.room_id = next_room
+                return NPCActionEvent("move", npc.id, next_room, f"{npc.name} przechodzi na {direction}.")
+            current = self.world.get_location(room_id)
+            if current is None:
+                continue
+            for exit_ in current.exits.values():
+                neighbor = self.world.get_location(exit_.target_room)
+                if neighbor is None or neighbor.zone != npc.zone or neighbor.id in seen:
+                    continue
+                seen.add(neighbor.id)
+                queue.append((neighbor.id, path + [neighbor.id]))
+        return None
+
+    def _apply_daily_routine(self, npc: NPC, phase: str) -> NPCActionEvent | None:
+        routine = self._routine_for(npc)
+        npc.daily_phase = phase
+        npc.daily_activity = routine.activity_by_phase.get(phase, routine.activity_by_phase["dzień"])
+        target_room_id = self._target_room_for_phase(npc, phase)
+        npc.daily_target_room_id = target_room_id
+        return self._move_npc_towards(npc, target_room_id)
 
     def remove_dead(self, npc: NPC) -> None:
         loc = self.world.get_location(npc.room_id)
@@ -136,13 +374,19 @@ class NPCManager:
         combat: CombatManager | None = None,
         factions: FactionManager | None = None,
         rng: RandomSource | None = None,
+        hour: int | None = None,
     ) -> list[NPCActionEvent]:
         random_source: RandomSource = rng or random
         events: list[NPCActionEvent] = []
         players = players or []
+        phase = self._day_phase(hour) if hour is not None else None
         for npc in list(self.npcs.values()):
             if not npc.character.is_alive:
                 continue
+            if phase is not None:
+                daily_event = self._apply_daily_routine(npc, phase)
+                if daily_event is not None:
+                    events.append(daily_event)
             if npc.ai_state == "PATROL":
                 event = self._patrol_tick(npc, random_source)
                 if event is not None:
