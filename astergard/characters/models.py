@@ -3,7 +3,15 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 from astergard.items.models import Item, starter_items
-from astergard.rules.skills import default_skill_rules
+from astergard.rules.skills import (
+    apply_skill_use,
+    apply_starting_skill_bonus,
+    canonicalize_skill_values,
+    export_skill_values,
+    default_skill_rules,
+    default_skill_values,
+    resolve_skill,
+)
 from astergard.state import CHARACTER_STATE_MACHINE, CharacterState, parse_character_state
 
 BODY_PARTS = ["glowa", "korpus", "prawa_reka", "lewa_reka", "prawa_noga", "lewa_noga"]
@@ -37,27 +45,29 @@ class CharacterStats:
 
 @dataclass
 class CharacterSkills:
-    values: dict[str, dict[str, int]] = field(default_factory=lambda: {
-        "bron_cieta": {"level": 1, "progress": 0},
-        "bron_obuchowa": {"level": 1, "progress": 0},
-        "wlocznie": {"level": 1, "progress": 0},
-        "uniki": {"level": 1, "progress": 0},
-        "parowanie": {"level": 1, "progress": 0},
-        "spostrzegawczosc": {"level": 1, "progress": 0},
-    })
+    values: dict[str, dict[str, int]] = field(default_factory=default_skill_values)
+
+    def __post_init__(self) -> None:
+        self.values = canonicalize_skill_values(self.values)
+
+    def state(self, name: str) -> dict[str, int]:
+        definition = resolve_skill(name)
+        return self.values.setdefault(definition.key, {"level": 1, "progress": 0})
+
+    def level(self, name: str) -> int:
+        return self.state(name)["level"]
+
+    def progress(self, name: str) -> int:
+        return self.state(name)["progress"]
+
+    def to_dict(self) -> dict[str, dict[str, int]]:
+        return export_skill_values(self.values)
+
+    def grant_starting_bonus(self, name: str, bonus: int, *, cap: int = 3) -> None:
+        apply_starting_skill_bonus(self.values, name, bonus, cap=cap)
 
     def train(self, name: str, amount: int) -> bool:
-        skill = self.values.setdefault(name, {"level": 1, "progress": 0})
-        rules = default_skill_rules()
-        if not rules.can_train(skill["level"]):
-            return False
-        skill["progress"] += amount
-        threshold = rules.threshold(skill["level"])
-        if skill["progress"] >= threshold:
-            skill["level"] += 1
-            skill["progress"] = 0
-            return True
-        return False
+        return apply_skill_use(self.values, name, amount, rules=default_skill_rules())
 
 
 @dataclass
@@ -89,6 +99,18 @@ class Effect:
 class Character:
     username: str
     room_id: int = 0
+    name: str = ""
+    gender_description: str = ""
+    age: int = 0
+    origin: str = ""
+    birth_region: str = ""
+    culture: str = ""
+    religion: str = ""
+    main_profession: str = ""
+    secondary_profession: str = ""
+    appearance: str = ""
+    history: str = ""
+    starting_reputation: int = 0
     stats: CharacterStats = field(default_factory=CharacterStats)
     skills: CharacterSkills = field(default_factory=CharacterSkills)
     inventory: list[Item] = field(default_factory=starter_items)
@@ -111,6 +133,8 @@ class Character:
     is_alive: bool = True
     in_combat: bool = False
     combat_style: str = "zrownowazony"
+    formation: str = "front"
+    battle_morale: int = 10
     combat_events: list[str] = field(default_factory=list)
     state: str = CharacterState.ALIVE.value
     admin_role: str | None = None

@@ -103,6 +103,50 @@ def starter_items() -> list[Item]:
     ]
 
 
+def dueling_blade() -> Item:
+    return Item("szpada ćwiczebna", "Lekka broń do nauki fechtunku.", 1.4, 18, "dueling_blade", "weapon", "prawa_reka", damage_type="cieta", base_damage=4, reach=1, initiative_modifier=2, parry_bonus=2)
+
+
+def training_spear() -> Item:
+    return Item("włócznia treningowa", "Prosta włócznia do nauki dystansu i kontroli przestrzeni.", 2.4, 16, "training_spear", "weapon", "prawa_reka", damage_type="kluta", base_damage=4, reach=2, initiative_modifier=0, parry_bonus=0)
+
+
+def battle_axe() -> Item:
+    return Item("topór bojowy", "Cięższy topór do bezpośredniego starcia.", 3.4, 22, "battle_axe", "weapon", "prawa_reka", damage_type="obuchowa", base_damage=5, reach=1, initiative_modifier=0, parry_bonus=0)
+
+
+def hunting_bow() -> Item:
+    return Item("łuk myśliwski", "Lekki łuk do polowań i szkolenia z dystansu.", 1.2, 18, "hunting_bow", "weapon", "prawa_reka", damage_type="pociskowa", base_damage=4, reach=2, initiative_modifier=1, parry_bonus=0)
+
+
+def light_crossbow() -> Item:
+    return Item("kusza lekka", "Prosta kusza o umiarkowanym naciągu.", 2.8, 22, "light_crossbow", "weapon", "prawa_reka", damage_type="pociskowa", base_damage=5, reach=2, initiative_modifier=0, parry_bonus=0)
+
+
+def command_whistle() -> Item:
+    return Item("gwizdek dowódcy", "Krótkie narzędzie do wydawania sygnałów i porządkowania ludzi.", 0.1, 4, "command_whistle", "tool")
+
+
+def prayer_book() -> Item:
+    return Item("modlitewnik", "Niewielki modlitewnik do rozmyślań i społecznej służby.", 0.2, 4, "prayer_book", "tool")
+
+
+def smith_tools() -> Item:
+    return Item("młotek czeladniczy", "Porządny młotek do warsztatu i prostych napraw.", 1.1, 8, "smith_tools", "tool")
+
+
+def cyrulik_kit() -> Item:
+    return Item("zestaw cyrulika", "Narzędzia do opatrunków, strzyżenia i drobnych zabiegów.", 0.8, 10, "barber_kit", "tool")
+
+
+def lute() -> Item:
+    return Item("lutnia", "Prosta lutnia do śpiewu i opowieści przy ogniu.", 1.5, 12, "lute", "tool")
+
+
+def bowyer_tools() -> Item:
+    return Item("narzędzia łuczarza", "Piła, klej i sznur przydatne przy strzałach i łukach.", 1.0, 9, "bowyer_tools", "tool")
+
+
 def innkeeper_shop_inventory() -> list[Item]:
     return [
         Item("woda źródlana", "Dzban czystej wody na drogę.", 1.0, 1, "innkeeper_spring_water", "food", is_consumable=True, effects_on_consume={"restore_stamina": 4}),

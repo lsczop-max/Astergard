@@ -16,15 +16,15 @@ class PersistenceMigrationTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             db = Path(tmp) / "mud.db"
             repo = PlayerRepository(str(db))
-            self.assertEqual(repo.current_schema_version(), 8)
+            self.assertEqual(repo.current_schema_version(), 9)
             repo.init_db()
             con = sqlite3.connect(db)
             try:
                 rows = con.execute("SELECT version, name FROM schema_migrations ORDER BY version").fetchall()
             finally:
                 con.close()
-            self.assertEqual([row[0] for row in rows], [1, 2, 3, 4, 5, 6, 7, 8])
-            self.assertEqual(len(rows), 8)
+            self.assertEqual([row[0] for row in rows], [1, 2, 3, 4, 5, 6, 7, 8, 9])
+            self.assertEqual(len(rows), 9)
 
     def test_save_increments_save_version_and_preserves_nested_state(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from astergard.characters.creation import CharacterCreationProfile, create_character_from_profile
 from astergard.characters.models import Character
 from astergard.database.account_repository import AccountRepository
 from astergard.database.audit_repository import AuditRepository
@@ -50,11 +51,12 @@ class PlayerRepository:
     def player_exists(self, username: str) -> bool:
         return self.accounts.exists(username)
 
-    def register(self, username: str, password: str) -> bool:
+    def register(self, username: str, password: str, profile: CharacterCreationProfile | None = None) -> bool:
         if self.accounts.exists(username):
             return False
         password_hash, salt = self.accounts.create_credentials(username, password)
-        self.characters.insert_new(username, password_hash, salt, Character(username=username))
+        character = create_character_from_profile(username, profile) if profile is not None else Character(username=username)
+        self.characters.insert_new(username, password_hash, salt, character)
         self.audit.record(username, "account_registered")
         return True
 

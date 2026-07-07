@@ -146,7 +146,7 @@ class ExplorationService:
         if ctx.character.stats.kondycja < 15:
             return "Brakuje ci kondycji."
         ctx.character.stats.kondycja -= 15
-        score = random.randint(1, 10) + ctx.character.stats.percepcja + ctx.character.skills.values["spostrzegawczosc"]["level"] // 10
+        score = random.randint(1, 10) + ctx.character.stats.percepcja + ctx.character.skills.values["obserwacja"]["level"] // 10
         for hidden in list(loc.hidden_elements):
             difficulty = cast(int | str, hidden["difficulty"])
             if score >= int(difficulty):

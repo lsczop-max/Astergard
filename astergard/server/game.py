@@ -24,6 +24,7 @@ class GameServer:
     cmd_emote: CommandFunc
     cmd_shout: CommandFunc
     cmd_score: CommandFunc
+    cmd_profile: CommandFunc
     cmd_skills: CommandFunc
     cmd_inventory: CommandFunc
     cmd_get: CommandFunc
@@ -81,7 +82,7 @@ class GameServer:
         aliases = {
             "cmd_look": "look", "cmd_move": "polnoc", "cmd_say": "powiedz",
             "cmd_emote": "em", "cmd_shout": "krzycz", "cmd_score": "cechy",
-            "cmd_skills": "umiejetnosci", "cmd_inventory": "ekwipunek", "cmd_get": "wez",
+            "cmd_profile": "profil", "cmd_skills": "umiejetnosci", "cmd_inventory": "ekwipunek", "cmd_get": "wez",
             "cmd_drop": "upusc", "cmd_wear": "zaloz", "cmd_remove": "zdejmij",
             "cmd_kill": "zabij", "cmd_flee": "ucieczka", "cmd_talk": "rozmawiaj",
             "cmd_quests": "zadania", "cmd_offer": "oferta", "cmd_buy": "kup",

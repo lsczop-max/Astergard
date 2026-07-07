@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from statistics import mean
 from typing import Callable
 
+from astergard.characters.professions import all_profession_definitions, resolve_profession
 from astergard.characters.models import Character, CharacterStats
 from astergard.combat.manager import COMBAT_STYLES, CombatManager
 from astergard.items.models import Item
@@ -102,6 +103,7 @@ def make_player_duelist(style: str = "zrownowazony") -> Character:
     c = Character("Gracz")
     c.stats = CharacterStats(sila=11, zrecznosc=11, wytrzymalosc=11, percepcja=10, sila_woli=10, kondycja=110)
     c.combat_style = style
+    c.formation = "front"
     c.equipment["prawa_reka"] = Item(
         "prosty miecz", "Miecz testowy.", 1.8, 25, "simple_sword", "weapon", "prawa_reka",
         damage_type="cieta", base_damage=4, reach=1, initiative_modifier=1, parry_bonus=1,
@@ -116,6 +118,34 @@ def make_player_duelist(style: str = "zrownowazony") -> Character:
     return c
 
 
+def make_profession_duelist(main_profession: str, secondary_profession: str | None = None, style: str | None = None) -> Character:
+    combatant = make_player_duelist(style or "zrownowazony")
+    combatant.main_profession = resolve_profession(main_profession, kind="main").key
+    combatant.secondary_profession = ""
+    if secondary_profession:
+        combatant.secondary_profession = resolve_profession(secondary_profession, kind="additional").key
+    combatant.name = combatant.main_profession
+    profession_keys = [combatant.main_profession, combatant.secondary_profession or ""]
+    for key in profession_keys:
+        if not key:
+            continue
+        definition = resolve_profession(key)
+        for skill, bonus in definition.skill_bonuses.items():
+            combatant.skills.grant_starting_bonus(skill, bonus)
+        for item in definition.inventory_items():
+            combatant.inventory.append(item)
+        for slot, item in definition.equipment_items().items():
+            matched = next((candidate for candidate in combatant.inventory if candidate.vnum == item.vnum), None)
+            equipped = matched if matched is not None else item
+            if matched is not None:
+                combatant.inventory.remove(matched)
+            combatant.equipment[slot] = equipped
+        if definition.combat_style:
+            combatant.combat_style = definition.combat_style
+    combatant.sync_state_from_flags()
+    return combatant
+
+
 def make_npc_character(vnum: str, style: str | None = None) -> Character:
     npc = NPCFactory().create(vnum, room_id=1)
     c = npc.character
@@ -128,6 +158,13 @@ def make_npc_character(vnum: str, style: str | None = None) -> Character:
 def _make_player_duelist_factory(style: str) -> CharacterFactory:
     def factory() -> Character:
         return make_player_duelist(style)
+
+    return factory
+
+
+def _make_profession_duelist_factory(main_profession: str, secondary_profession: str | None = None) -> CharacterFactory:
+    def factory() -> Character:
+        return make_profession_duelist(main_profession, secondary_profession)
 
     return factory
 
@@ -163,6 +200,23 @@ def default_balance_scenarios(iterations: int = 1000) -> list[CombatScenario]:
                 lambda: make_player_duelist("zrownowazony"),
                 iterations=iterations,
                 seed=4000 + len(scenarios),
+            )
+        )
+    return scenarios
+
+
+def profession_balance_scenarios(iterations: int = 1000) -> list[CombatScenario]:
+    scenarios: list[CombatScenario] = []
+    for index, definition in enumerate(all_profession_definitions()):
+        if definition.kind != "main":
+            continue
+        scenarios.append(
+            CombatScenario(
+                f"profession_{definition.key}_vs_balanced",
+                _make_profession_duelist_factory(definition.key),
+                lambda: make_player_duelist("zrownowazony"),
+                iterations=iterations,
+                seed=6000 + index,
             )
         )
     return scenarios

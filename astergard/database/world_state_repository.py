@@ -207,12 +207,12 @@ class WorldStateRepository:
             "is_merchant": npc.is_merchant,
             "merchant_gold": npc.merchant_gold,
             "shop_inventory": [item.to_dict() for item in npc.shop_inventory],
-            "character": {
-                "stats": npc.character.stats.__dict__,
-                "skills": npc.character.skills.values,
-                "inventory": [item.to_dict() for item in npc.character.inventory],
-                "equipment": {slot: item.to_dict() if item is not None else None for slot, item in npc.character.equipment.items()},
-                "wounds": npc.character.wounds,
+                "character": {
+                    "stats": npc.character.stats.__dict__,
+                    "skills": npc.character.skills.to_dict(),
+                    "inventory": [item.to_dict() for item in npc.character.inventory],
+                    "equipment": {slot: item.to_dict() if item is not None else None for slot, item in npc.character.equipment.items()},
+                    "wounds": npc.character.wounds,
                 "gold": npc.character.gold,
                 "is_alive": npc.character.is_alive,
                 "in_combat": npc.character.in_combat,

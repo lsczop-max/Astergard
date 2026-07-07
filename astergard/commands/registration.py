@@ -24,6 +24,7 @@ COMMAND_DEFINITIONS: dict[str, CommandDefinitionTuple] = {
     "emote": ("Komunikacja", ["em", "emocja", "emote"], "Opisuje gest lub emocję postaci.", "em <opis>", 0.5, True, "opis"),
     "shout": ("Komunikacja", ["krzycz", "wrzasnij", "wrzaśnij", "shout"], "Krzyczy do graczy w strefie.", "krzycz <tekst>", 3.0, True, "tekst"),
     "score": ("Postać", ["cechy", "stan", "score"], "Pokazuje stan i cechy postaci.", "cechy", 0.0, False, ""),
+    "profile": ("Postać", ["profil", "profile"], "Pokazuje pełny profil postaci.", "profil", 0.0, False, ""),
     "skills": ("Postać", ["umiejetnosci", "umiejętności", "um", "umki"], "Pokazuje poziomy umiejętności.", "umiejetnosci", 0.0, False, ""),
     "style": ("Walka", ["styl", "postawa"], "Ustawia albo pokazuje styl walki.", "styl [nazwa]", 0.0, False, "nazwa"),
     "reputation": ("Postać", ["reputacja"], "Pokazuje reputację u frakcji.", "reputacja", 0.0, False, ""),

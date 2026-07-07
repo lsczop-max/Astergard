@@ -1,0 +1,1 @@
+ALTER TABLE players ADD COLUMN creator_json TEXT NOT NULL DEFAULT '{}';

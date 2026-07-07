@@ -4,6 +4,9 @@ from collections.abc import Awaitable, Callable
 
 from astergard.server.context import GameContext
 from astergard.combat.manager import COMBAT_STYLES, normalize_combat_style
+from astergard.characters.creation import ORIGIN_DEFINITIONS
+from astergard.characters.professions import profession_label
+from astergard.rules.skills import all_skill_definitions, skill_threshold
 
 CommandHandler = Callable[[GameContext, str | None, int], Awaitable[str]]
 
@@ -23,15 +26,59 @@ def _skill_desc(level: int) -> str:
 def build_character_sheet_handlers() -> dict[str, CommandHandler]:
     async def cmd_score(ctx: GameContext, arg: str | None, index: int) -> str:
         stats = ctx.character.stats
+        origin = ORIGIN_DEFINITIONS.get(ctx.character.origin)
+        origin_name = origin.label if origin is not None else (ctx.character.origin or "brak")
         return (
+            f"Imię: {ctx.character.name or ctx.character.username}\n"
+            f"Opis postaci: {ctx.character.gender_description or 'brak'}\n"
+            f"Wiek: {ctx.character.age or 'brak'}\n"
+            f"Pochodzenie: {origin_name}\n"
+            f"Region urodzenia: {ctx.character.birth_region or 'brak'}\n"
+            f"Kultura: {ctx.character.culture or 'brak'}\n"
+            f"Religia: {ctx.character.religion or 'brak'}\n"
+            f"Profesja główna: {profession_label(ctx.character.main_profession)}\n"
+            f"Profesja dodatkowa: {profession_label(ctx.character.secondary_profession)}\n"
             f"Siła: {stats.describe_stat(stats.sila)}\n"
             f"Zręczność: {stats.describe_stat(stats.zrecznosc)}\n"
             f"Kondycja: {stats.kondycja}/{stats.max_kondycja}\n"
             f"Styl walki: {ctx.character.combat_style}"
         )
 
+    async def cmd_profile(ctx: GameContext, arg: str | None, index: int) -> str:
+        origin = ORIGIN_DEFINITIONS.get(ctx.character.origin)
+        origin_name = origin.label if origin is not None else (ctx.character.origin or "brak")
+        starter_inventory = ", ".join(item.display_name() for item in ctx.character.inventory) or "brak"
+        equipment = ", ".join(
+            f"{slot}: {item.display_name()}" for slot, item in ctx.character.equipment.items() if item is not None
+        ) or "brak"
+        return (
+            f"Imię: {ctx.character.name or ctx.character.username}\n"
+            f"Opis postaci: {ctx.character.gender_description or 'brak'}\n"
+            f"Wiek: {ctx.character.age or 'brak'}\n"
+            f"Pochodzenie: {origin_name}\n"
+            f"Region urodzenia: {ctx.character.birth_region or 'brak'}\n"
+            f"Kultura: {ctx.character.culture or 'brak'}\n"
+            f"Religia / wyznanie: {ctx.character.religion or 'brak'}\n"
+            f"Profesja główna: {profession_label(ctx.character.main_profession)}\n"
+            f"Profesja dodatkowa: {profession_label(ctx.character.secondary_profession)}\n"
+            f"Wygląd: {ctx.character.appearance or 'brak'}\n"
+            f"Historia: {ctx.character.history or 'brak'}\n"
+            f"Reputacja startowa: {ctx.character.starting_reputation}\n"
+            f"Reputacja globalna: {ctx.character.global_reputation}\n"
+            f"Ekwipunek startowy: {starter_inventory}\n"
+            f"Wyposażenie: {equipment}"
+        )
+
     async def cmd_skills(ctx: GameContext, arg: str | None, index: int) -> str:
-        return "\n".join(f"{name}: {_skill_desc(data['level'])}" for name, data in ctx.character.skills.values.items())
+        lines: list[str] = []
+        for definition in all_skill_definitions():
+            data = ctx.character.skills.values.get(definition.key, {"level": 1, "progress": 0})
+            threshold = skill_threshold(definition.key, data["level"])
+            lines.append(
+                f"{definition.label}: {_skill_desc(data['level'])} "
+                f"({data['progress']}/{threshold})"
+            )
+        return "\n".join(lines)
 
 
     async def cmd_style(ctx: GameContext, arg: str | None, index: int) -> str:
@@ -60,4 +107,4 @@ def build_character_sheet_handlers() -> dict[str, CommandHandler]:
             f"Frakcje:\n{factions}"
         )
 
-    return {"score": cmd_score, "skills": cmd_skills, "style": cmd_style, "reputation": cmd_reputation}
+    return {"score": cmd_score, "profile": cmd_profile, "skills": cmd_skills, "style": cmd_style, "reputation": cmd_reputation}

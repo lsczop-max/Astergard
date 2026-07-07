@@ -15,11 +15,25 @@ class CharacterStateSerializer:
         inventory = [item.to_dict() for item in char.inventory]
         equipment = {slot: item.to_dict() if item is not None else None for slot, item in char.equipment.items()}
         effects = [effect.to_dict() for effect in char.active_effects]
+        creator_profile = {
+            "name": char.name,
+            "gender_description": char.gender_description,
+            "age": char.age,
+            "origin": char.origin,
+            "birth_region": char.birth_region,
+            "culture": char.culture,
+            "religion": char.religion,
+            "main_profession": char.main_profession,
+            "secondary_profession": char.secondary_profession,
+            "appearance": char.appearance,
+            "history": char.history,
+            "starting_reputation": char.starting_reputation,
+        }
         return (
             char.room_id,
             char.gold,
             json.dumps(char.stats.__dict__, ensure_ascii=False),
-            json.dumps(char.skills.values, ensure_ascii=False),
+            json.dumps(char.skills.to_dict(), ensure_ascii=False),
             json.dumps(char.wounds, ensure_ascii=False),
             json.dumps(char.reputation, ensure_ascii=False),
             char.global_reputation,
@@ -35,6 +49,7 @@ class CharacterStateSerializer:
             json.dumps(equipment, ensure_ascii=False),
             json.dumps(effects, ensure_ascii=False),
             char.combat_style,
+            json.dumps(creator_profile, ensure_ascii=False),
         )
 
     @staticmethod
@@ -66,5 +81,19 @@ class CharacterStateSerializer:
         char.active_effects = [Effect.from_dict(effect) for effect in json.loads(row[17])]
         if len(row) > 18 and row[18]:
             char.combat_style = str(row[18])
+        profile_raw = json.loads(row[19]) if len(row) > 19 and row[19] else {}
+        if isinstance(profile_raw, dict):
+            char.name = str(profile_raw.get("name", ""))
+            char.gender_description = str(profile_raw.get("gender_description", ""))
+            char.age = int(profile_raw.get("age", 0) or 0)
+            char.origin = str(profile_raw.get("origin", ""))
+            char.birth_region = str(profile_raw.get("birth_region", ""))
+            char.culture = str(profile_raw.get("culture", ""))
+            char.religion = str(profile_raw.get("religion", ""))
+            char.main_profession = str(profile_raw.get("main_profession", ""))
+            char.secondary_profession = str(profile_raw.get("secondary_profession", ""))
+            char.appearance = str(profile_raw.get("appearance", ""))
+            char.history = str(profile_raw.get("history", ""))
+            char.starting_reputation = int(profile_raw.get("starting_reputation", 0) or 0)
         char.sync_state_from_flags()
         return char
