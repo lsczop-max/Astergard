@@ -111,29 +111,20 @@ START_CONTENT: tuple[LocationContent, ...] = (
     ),
     LocationContent(
         room_id=24,
-        name="Domy Biedoty",
-        description=(
-            "Tu miasto zwęża się do desek, gliny i zbyt wielu ludzi pod jednym dachem. "
-            "Domy są niskie, łatane, często mokre od środka, a jednak pełne życia, które nie ma dokąd pójść."
-        ),
-        inspectables={
-            "chaty bieda": "Chociaż domy są biedne, stoją blisko siebie. W biedzie bliskość bywa jedyną obroną.",
-            "podworka podwórka": "Podwórka są ubite i pełne błota. Dzieci i psy wypracowały tu własne ścieżki szybciej niż dorośli.",
-        },
-        items=(Item("łatana kurtka", "Stara kurtka połatana tyle razy, że oryginalna tkanina prawie zniknęła.", 1.3, 2, "patched_coat_24"),),
-    ),
-    LocationContent(
-        room_id=24,
         name="Cichy Przesmyk",
         description=(
             "Przesmyk jest tak wąski, że dwie osoby muszą minąć się bokiem. Powyżej, między dachami, "
-            "widać tylko cienką kreskę nieba."
+            "widać tylko cienką kreskę nieba. Z jednej strony wciskają się tu niskie, łatane domy biedoty, "
+            "z drugiej - ściana cieńszego niż gdzie indziej spokoju."
         ),
         inspectables={
             "dachy niebo": "Dachy prawie się stykają. W deszczu woda musi spadać tu zwartą zasłoną.",
             "sciany ściany": "Ściany noszą ślady dłoni, sadzy i ostrzy przeciągniętych po tynku.",
             "przesmyk zaulek zaułek": "To dobre miejsce, żeby zgubić ogon. Albo przekonać się, że samemu jest się czyimś ogonem.",
+            "chaty bieda": "Niskie domy stoją tu tak blisko, że sąsiedzi słyszą każdy krok i każde westchnienie.",
+            "podworka podwórka": "Podwórka są ubite, błotniste i wytarte przez codzienny ruch tych, którzy nie mają gdzie pójść dalej.",
         },
+        items=(Item("łatana kurtka", "Stara kurtka połatana tyle razy, że oryginalna tkanina prawie zniknęła.", 1.3, 2, "patched_coat_24"),),
     ),
 )
 
@@ -361,24 +352,6 @@ _DISTRICT_OVERRIDES: dict[int, LocationContent] = {
         items=(
             Item("kamienna świeczka", "Mała świeczka zostawiona przez podróżnego.", 0.1, 1, "road_candle_59"),
             Item("modlitewny sznur", "Prosty sznur z nawleczonymi paciorkami.", 0.2, 2, "prayer_beads_59"),
-        ),
-    ),
-    60: LocationContent(
-        room_id=60,
-        name="Błotna Brama",
-        description=(
-            "Podgrodzie zaczyna się od błota, kolein i wąskich domów przyklejonych do palisady. "
-            "To pierwszy teren poza kamieniem miasta, gdzie ludzie żyją bliżej zwierząt, wozów i deszczu. "
-            "Nie ma tu ceremonialnego wejścia w świat pracy - jest tylko nieustanne brudzenie butów."
-        ),
-        inspectables={
-            "brama palisada": "Brama jest prostsza niż miejska, lecz nosi na sobie te same ślady po naprawach i pośpiechu.",
-            "błoto koleiny": "Błoto wypełnia koleiny po kostki. Widać, że drogi nikt tu nie oszczędza.",
-            "domy chaty": "Domy są niskie, ciasne i ogrzewane tak oszczędnie, jakby drewno było złotem.",
-        },
-        items=(
-            Item("drewniane wiadro", "Wiadro z grubych klepek, dobre do noszenia wody albo zboża.", 1.1, 3, "bucket_60", item_type="tool"),
-            Item("wóz furmański", "Zniszczony wóz na szerokich kołach, wciąż gotowy do krótkiego kursu przez błoto.", 48.0, 25, "podgrodzie_cart_60", item_type="furniture"),
         ),
     ),
     61: LocationContent(
@@ -1662,8 +1635,18 @@ def _d351b_content(room_id: int, index: int, name: str, label: str, terrain: str
     inspectables = {feature_a[0]: feature_a[1], feature_b[0]: feature_b[1], feature_c[0]: feature_c[1]}
     items: tuple[Item, ...] = ()
     hidden_items: tuple[tuple[Item, int], ...] = ()
+    if room_id == 60:
+        items = (
+            Item("drewniane wiadro", "Wiadro z grubych klepek, dobre do noszenia wody albo zboża.", 1.1, 3, "bucket_60", item_type="tool"),
+            Item("wóz furmański", "Zniszczony wóz na szerokich kołach, wciąż gotowy do krótkiego kursu przez błoto.", 48.0, 25, "podgrodzie_cart_60", item_type="furniture"),
+            Item("złamane koło wozu", "Pęknięte koło zdjęte z wozu. Da się je jeszcze naprawić u dobrego kowala.", 7.0, 6, "podgrodzie_broken_wheel_60", item_type="tool"),
+        )
     if room_id in {63, 82, 99, 113, 143, 156, 183, 196}:
-        items = (Item("porzucony rzemień", "Krótki, zużyty rzemień. Może posłużyć do prostych napraw albo wiązania pakunków.", 0.05, 1, f"strap_{room_id}"),)
+        items += (Item("porzucony rzemień", "Krótki, zużyty rzemień. Może posłużyć do prostych napraw albo wiązania pakunków.", 0.05, 1, f"strap_{room_id}"),)
+    if room_id == 63:
+        items += (Item("worek zboża", "Worek z ziarnem, ciężki i dobrze zawiązany.", 7.5, 11, "podgrodzie_grain_sack_63", is_container=True, capacity=24),)
+    if room_id == 64:
+        items += (Item("drewno opałowe", "Porąbane drewno czekające na palenisko albo piec.", 14.0, 6, "podgrodzie_firewood_64"),)
     if room_id in {69, 91, 107, 121, 151, 176, 188, 205}:
         hidden_items = ((Item("miedziana moneta", "Brudna miedziana moneta zgubiona przy drodze.", 0.01, 1, f"road_copper_{room_id}"), 10),)
     return LocationContent(room_id=room_id, name=name, description=description, inspectables=inspectables, items=items, hidden_items=hidden_items)

@@ -46,6 +46,18 @@ def build_character_sheet_handlers() -> dict[str, CommandHandler]:
         return f"Przyjmujesz styl walki: {style}."
 
     async def cmd_reputation(ctx: GameContext, arg: str | None, index: int) -> str:
-        return "\n".join(f"{name}: {value}" for name, value in ctx.character.reputation.items())
+        local = ", ".join(f"{zone}: {value}" for zone, value in sorted(ctx.character.local_reputation.items())) or "brak"
+        crimes = ", ".join(f"{crime}: {count}" for crime, count in sorted(ctx.character.crimes.items())) or "brak"
+        wanted = "\n".join(f"- {entry}" for entry in ctx.character.wanted_posts[:5]) or "brak"
+        factions = "\n".join(f"{name}: {value}" for name, value in sorted(ctx.character.reputation.items())) or "brak"
+        return (
+            f"Tytuł: {ctx.character.title}\n"
+            f"Sława: {ctx.character.renown}\n"
+            f"Reputacja globalna: {ctx.character.global_reputation}\n"
+            f"Reputacja lokalna: {local}\n"
+            f"Przestępstwa: {crimes}\n"
+            f"Listy gończe:\n{wanted}\n"
+            f"Frakcje:\n{factions}"
+        )
 
     return {"score": cmd_score, "skills": cmd_skills, "style": cmd_style, "reputation": cmd_reputation}

@@ -33,6 +33,9 @@ class CombatApplicationService:
         if result.defender_dead:
             self._spawn_corpse(ctx, ctx.character.room_id, npc.name, npc.vnum, npc.character.inventory)
             ctx.factions.register_kill(ctx.character, npc.faction)
+            location = ctx.world.get_location(ctx.character.room_id)
+            if npc.faction == ctx.factions.MEEKHAN:
+                ctx.factions.record_crime(ctx.character, "zabójstwo", zone=location.zone if location is not None else None, detail=npc.vnum)
             ctx.event_bus.emit(DomainEventType.COMBATANT_DIED, username=ctx.character.username, target=npc.vnum, room_id=ctx.character.room_id)
             ctx.event_bus.emit(DomainEventType.NPC_DIED, npc_id=npc.id, vnum=npc.vnum, room_id=ctx.character.room_id)
             ctx.event_bus.emit(DomainEventType.REPUTATION_CHANGED, username=ctx.character.username, faction=npc.faction, reason="kill")

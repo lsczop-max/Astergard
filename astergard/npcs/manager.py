@@ -130,6 +130,11 @@ class NPCManager:
         self.spawn("bagna_zaba", 481)
         self.spawn("bagna_mysliwy", 488)
         self.spawn("bagna_pustelnik", 493)
+        self.spawn("traveler", 180, "Boczne_Drogi")
+        self.spawn("puszcza_mysliwy", 280, "Knieja_Cichych_Sciezek")
+        self.spawn("mountain_troll", 335, "Gory_Mekhara")
+        self.spawn("warband_captain", 425, "Ruiny_Karshold")
+        self.spawn("wolf", 455, "Jaskinie_Wilkow")
         self.spawn("trakty_przewodnik", 135)
         self.spawn("trakty_pielgrzym", 136)
         self.spawn("trakty_karawaniarz", 138)
@@ -146,11 +151,13 @@ class NPCManager:
         loc = self.world.get_location(room_id)
         return loc is not None and self.rules.can_spawn(len(loc.npc_ids))
 
-    def spawn(self, vnum: str, room_id: int) -> NPC | None:
+    def spawn(self, vnum: str, room_id: int, zone: str | None = None) -> NPC | None:
         loc = self.world.get_location(room_id)
         if loc is None or not self.rules.can_spawn(len(loc.npc_ids)):
             return None
         npc = self.factory.create(vnum, room_id)
+        if zone is not None:
+            npc.zone = zone
         npc.home_room_id = room_id
         self.npcs[npc.id] = npc
         loc.npc_ids.append(npc.id)
@@ -172,11 +179,11 @@ class NPCManager:
     def _route_depth_for(self, npc: NPC) -> int:
         if npc.vnum in {"astergard_guard", "watch_sergeant", "podgrodzie_straznik_miejski", "haldun_wartownik", "dungrim_guard", "dungrim_patrol_guard", "dungrim_sergeant", "straznica_wartownik", "straznica_zwiadowca", "straznica_dowodca", "trakty_straznik", "puszcza_jelen", "puszcza_dzik", "bagna_zaba"}:
             return 3
-        if npc.vnum in {"podgrodzie_woznica", "haldun_solt", "dungrim_commander", "dungrim_lieutenant", "straznica_przewodnik", "straznica_karawanowy", "straznica_mysliwy", "straznica_woznica", "straznica_podrozny", "straznica_pielgrzym", "trakty_przewodnik", "trakty_karawaniarz", "trakty_kurier", "trakty_woznica", "trakty_podrozny", "trakty_pielgrzym", "trakty_mysliwy", "trakty_drwal", "trakty_handlarz", "puszcza_mysliwy", "puszcza_zielarz", "puszcza_pustelnik", "puszcza_drwal", "bagna_zielarz", "bagna_pustelnik", "bagna_mysliwy"}:
+        if npc.vnum in {"podgrodzie_woznica", "podgrodzie_pielgrzym", "haldun_solt", "dungrim_commander", "dungrim_lieutenant", "straznica_przewodnik", "straznica_karawanowy", "straznica_mysliwy", "straznica_woznica", "straznica_podrozny", "straznica_pielgrzym", "trakty_przewodnik", "trakty_karawaniarz", "trakty_kurier", "trakty_woznica", "trakty_podrozny", "trakty_pielgrzym", "trakty_mysliwy", "trakty_drwal", "trakty_handlarz", "puszcza_mysliwy", "puszcza_zielarz", "puszcza_pustelnik", "puszcza_drwal", "bagna_zielarz", "bagna_pustelnik", "bagna_mysliwy"}:
             return 3
-        if npc.vnum in {"innkeeper", "podgrodzie_karczmarz", "podgrodzie_karczmarka", "merchant", "customs_clerk", "fishmonger", "podgrodzie_handlarz", "podgrodzie_przekupka", "haldun_merchant", "haldun_wellkeeper", "haldun_blacksmith", "haldun_miller", "haldun_farmerka", "dungrim_quartermaster", "dungrim_storekeeper", "dungrim_armorer", "dungrim_military_blacksmith", "dungrim_stablemaster", "dungrim_cook", "puszcza_zielarz", "bagna_zielarz"}:
+        if npc.vnum in {"innkeeper", "podgrodzie_karczmarz", "podgrodzie_karczmarka", "merchant", "customs_clerk", "fishmonger", "dockhand", "podgrodzie_handlarz", "podgrodzie_przekupka", "haldun_merchant", "haldun_wellkeeper", "haldun_blacksmith", "haldun_miller", "haldun_farmerka", "dungrim_quartermaster", "dungrim_storekeeper", "dungrim_armorer", "dungrim_military_blacksmith", "dungrim_stablemaster", "dungrim_cook", "puszcza_zielarz", "bagna_zielarz"}:
             return 2
-        if npc.vnum in {"blacksmith", "carpenter", "tanner", "bowyer", "armorer", "podgrodzie_kowal", "podgrodzie_pomocnik_kowala", "fisherman", "podgrodzie_rybak", "dockhand", "podgrodzie_piekarz", "puszcza_drwal"}:
+        if npc.vnum in {"blacksmith", "carpenter", "tanner", "bowyer", "armorer", "woodcutter", "podgrodzie_kowal", "podgrodzie_pomocnik_kowala", "fisherman", "podgrodzie_rybak", "podgrodzie_piekarz", "puszcza_drwal"}:
             return 2
         if npc.vnum in {"child", "urchin", "podgrodzie_dziecko", "beggar", "vagrant", "podgrodzie_zebrak", "traveler", "podgrodzie_pielgrzym", "haldun_farmerka", "puszcza_pustelnik", "bagna_pustelnik", "trakty_zebrak"}:
             return 2

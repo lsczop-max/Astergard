@@ -106,9 +106,34 @@ def starter_items() -> list[Item]:
 def innkeeper_shop_inventory() -> list[Item]:
     return [
         Item("woda źródlana", "Dzban czystej wody na drogę.", 1.0, 1, "innkeeper_spring_water", "food", is_consumable=True, effects_on_consume={"restore_stamina": 4}),
-        Item("napój ziołowy", "Lekki napój z ziół i miodu.", 0.5, 2, "innkeeper_herbal_drink", "food", is_consumable=True, effects_on_consume={"restore_stamina": 6}),
+        Item("piwo jasne", "Lekkie piwo warzone na bieżący wieczór.", 0.6, 3, "innkeeper_light_ale", "food", is_consumable=True, effects_on_consume={"restore_stamina": 5}),
+        Item("piwo ciemne", "Ciemniejsze piwo podawane do sytego posiłku.", 0.7, 4, "innkeeper_dark_ale", "food", is_consumable=True, effects_on_consume={"restore_stamina": 6}),
+        Item("miód pitny", "Słodszy napój na spokojny wieczór.", 0.5, 5, "innkeeper_mead", "food", is_consumable=True, effects_on_consume={"restore_stamina": 7}),
         Item("chleb", "Twardy bochen z pieca.", 0.4, 2, "innkeeper_bread", "food", is_consumable=True, effects_on_consume={"restore_stamina": 12}),
-        Item("racja podróżna", "Sucha racja na marsz i nocleg w drodze.", 0.7, 4, "innkeeper_travel_ration", "food", is_consumable=True, effects_on_consume={"restore_stamina": 10}),
+        Item("gulasz karczemny", "Gęsty gulasz z prostych składników.", 0.8, 6, "innkeeper_stew", "food", is_consumable=True, effects_on_consume={"restore_stamina": 11}),
+        Item("ser z chleba", "Porcja sera podawana z kromką chleba.", 0.5, 4, "innkeeper_cheese_plate", "food", is_consumable=True, effects_on_consume={"restore_stamina": 8}),
+    ]
+
+
+def karczmarz_shop_inventory() -> list[Item]:
+    return [
+        Item("piwo z beczki", "Świeżo nalane piwo o prostym, uczciwym smaku.", 0.6, 3, "innkeeper_cask_ale", "food", is_consumable=True, effects_on_consume={"restore_stamina": 5}),
+        Item("piwo ciemne", "Gęstsze piwo dla tych, którzy zostają dłużej.", 0.7, 4, "innkeeper_dark_ale", "food", is_consumable=True, effects_on_consume={"restore_stamina": 6}),
+        Item("miód pitny", "Słodki trunek na zakończenie dnia.", 0.5, 5, "innkeeper_mead", "food", is_consumable=True, effects_on_consume={"restore_stamina": 7}),
+        Item("chleb z pieca", "Bochen jeszcze ciepły od pieca karczmy.", 0.4, 2, "innkeeper_oven_bread", "food", is_consumable=True, effects_on_consume={"restore_stamina": 12}),
+        Item("gulasz z kotła", "Gęsty gulasz, którym da się najeść do syta.", 0.9, 6, "innkeeper_pot_stew", "food", is_consumable=True, effects_on_consume={"restore_stamina": 11}),
+        Item("kiszone ogórki", "Słój ogórków do piwa i do obiadu.", 0.5, 3, "innkeeper_pickles", "food", is_consumable=True, effects_on_consume={"restore_stamina": 4}),
+    ]
+
+
+def karczmarka_shop_inventory() -> list[Item]:
+    return [
+        Item("bułka maślana", "Miękka bułka na szybkie śniadanie.", 0.2, 2, "innkeeper_butter_roll", "food", is_consumable=True, effects_on_consume={"restore_stamina": 5}),
+        Item("jajka", "Koszyczek świeżych jaj od pobliskich gospodarzy.", 0.3, 3, "innkeeper_eggs", "food", is_consumable=True, effects_on_consume={"restore_stamina": 3}),
+        Item("ser biały", "Świeży ser zawinięty w płótno.", 0.4, 4, "innkeeper_white_cheese", "food", is_consumable=True, effects_on_consume={"restore_stamina": 6}),
+        Item("kasza z boczkiem", "Prosta porcja kaszy z kawałkami boczku.", 0.8, 5, "innkeeper_groats_bacon", "food", is_consumable=True, effects_on_consume={"restore_stamina": 10}),
+        Item("zupa jarzynowa", "Lekka zupa z warzyw z kuchennego kotła.", 0.7, 4, "innkeeper_vegetable_soup", "food", is_consumable=True, effects_on_consume={"restore_stamina": 8}),
+        Item("miód stołowy", "Łagodny miód podawany do posiłku.", 0.4, 4, "innkeeper_table_honey", "food", is_consumable=True, effects_on_consume={"restore_stamina": 6}),
     ]
 
 
@@ -116,8 +141,12 @@ def baker_shop_inventory() -> list[Item]:
     return [
         Item("chleb", "Jeszcze ciepły bochen z miejskiego pieca.", 0.4, 2, "baker_bread", "food", is_consumable=True, effects_on_consume={"restore_stamina": 12}),
         Item("podpłomyk", "Cienki placek na szybki posiłek.", 0.2, 1, "baker_flatbread", "food", is_consumable=True, effects_on_consume={"restore_stamina": 6}),
-        Item("mąka", "Sakwa drobno mielonej mąki.", 1.0, 2, "baker_flour", "misc"),
         Item("bułka", "Miękka bułka na śniadanie.", 0.2, 1, "baker_roll", "food", is_consumable=True, effects_on_consume={"restore_stamina": 4}),
+        Item("precel", "Zwykły precel z solą.", 0.1, 1, "baker_pretzel", "food", is_consumable=True, effects_on_consume={"restore_stamina": 3}),
+        Item("placek drożdżowy", "Słodki placek na popołudniowy głód.", 0.4, 3, "baker_yeast_cake", "food", is_consumable=True, effects_on_consume={"restore_stamina": 7}),
+        Item("mąka", "Sakwa drobno mielonej mąki.", 1.0, 2, "baker_flour", "misc"),
+        Item("drożdże", "Mały woreczek drożdży do domowego wypieku.", 0.1, 1, "baker_yeast", "misc"),
+        Item("bułka maślana", "Bułka z dodatkiem masła, jeszcze ciepła.", 0.2, 2, "baker_butter_roll", "food", is_consumable=True, effects_on_consume={"restore_stamina": 5}),
     ]
 
 
@@ -125,8 +154,12 @@ def blacksmith_shop_inventory() -> list[Item]:
     return [
         Item("pilnik", "Pilnik do ostrzenia i wygładzania metalu.", 0.4, 3, "smith_file", "tool"),
         Item("młotek warsztatowy", "Niewielki młotek do drobnych napraw.", 1.2, 5, "smith_work_hammer", "tool"),
-        Item("naprawione ostrze", "Stare ostrze po naprawie, dobre do lekkiej służby.", 1.6, 9, "smith_reforged_blade", "weapon", "prawa_reka", damage_type="cieta", base_damage=3, reach=1, initiative_modifier=0, parry_bonus=1),
+        Item("kowadło podręczne", "Małe kowadło do napraw w warsztacie.", 4.5, 12, "smith_hand_anvil", "tool"),
         Item("krótki nóż", "Krótki nóż do cięcia sznurów i skóry.", 0.3, 4, "smith_knife", "weapon", "prawa_reka", damage_type="kluta", base_damage=2, reach=1, initiative_modifier=1, parry_bonus=0),
+        Item("podkowa", "Zwykła podkowa do naprawy chodzących zwierząt.", 0.8, 4, "smith_horseshoe", "tool"),
+        Item("gwoździe", "Pakiet mocnych gwoździ do płotów i belek.", 0.3, 2, "smith_nails", "tool"),
+        Item("zawias", "Solidny zawias do drzwi i skrzyń.", 0.4, 3, "smith_hinge", "tool"),
+        Item("szczypce kowalskie", "Długie szczypce do rozgrzanego metalu.", 1.0, 5, "smith_tongs", "tool"),
     ]
 
 
@@ -137,15 +170,21 @@ def merchant_shop_inventory() -> list[Item]:
         Item("latarnia podróżna", "Prosta latarnia z grubym szkłem.", 1.4, 6, "merchant_lantern", "tool"),
         Item("sakwa podróżna", "Sakwa z jedną dużą przegródką i mocnym paskiem.", 1.0, 5, "merchant_travel_sack", is_container=True, capacity=12),
         Item("zwój liny", "Zwój grubej liny, przydatny przy drodze.", 2.8, 4, "merchant_rope", "tool"),
+        Item("sól w worku", "Niewielki worek soli do drogi i kuchni.", 1.2, 3, "merchant_salt_bag", "food", is_consumable=False),
+        Item("świeca łojowa", "Zwykła świeca na wieczorne postoje.", 0.1, 1, "merchant_tallow_candle", "tool"),
+        Item("igła i nitka", "Zestaw do prostych napraw odzieży.", 0.1, 2, "merchant_needle_thread", "tool"),
     ]
 
 
 def fisher_shop_inventory() -> list[Item]:
     return [
         Item("świeża ryba", "Świeżo złowiona ryba z lokalnego nurtu.", 0.6, 2, "fisher_fresh_fish", "food", is_consumable=True, effects_on_consume={"restore_stamina": 6}),
+        Item("wędzona ryba", "Ryba uwędzona na długie dni.", 0.5, 3, "fisher_smoked_fish", "food", is_consumable=True, effects_on_consume={"restore_stamina": 8}),
         Item("sieć rybacka", "Mokra sieć do połowu i napraw.", 2.2, 9, "fisher_net", "tool"),
         Item("haczyk", "Mały haczyk do lin i sieci.", 0.1, 1, "fisher_hook", "tool"),
         Item("sznur do sieci", "Krótki sznur do łatania sieci.", 0.2, 2, "fisher_net_cord", "tool"),
+        Item("pławik", "Korek i pióro do szybkiego zestawu wędkarskiego.", 0.1, 1, "fisher_float", "tool"),
+        Item("sól do ryb", "Mały worek soli do peklowania połowu.", 0.2, 2, "fisher_fish_salt", "food", is_consumable=False),
     ]
 
 
@@ -153,6 +192,9 @@ def vendor_shop_inventory() -> list[Item]:
     return [
         Item("cebula", "Cebula z chłodnego składu.", 0.1, 1, "vendor_onion", "food", is_consumable=True, effects_on_consume={"restore_stamina": 2}),
         Item("marchew", "Twarda, świeża marchew.", 0.1, 1, "vendor_carrot", "food", is_consumable=True, effects_on_consume={"restore_stamina": 2}),
+        Item("ziemniaki", "Workowana porcja ziemniaków na zupę albo ognisko.", 0.7, 2, "vendor_potatoes", "food", is_consumable=True, effects_on_consume={"restore_stamina": 3}),
+        Item("jabłka", "Kosz zwykłych jabłek z targu.", 0.6, 2, "vendor_apples", "food", is_consumable=True, effects_on_consume={"restore_stamina": 4}),
+        Item("jajka", "Kilka jaj od pobliskich gospodarzy.", 0.3, 3, "vendor_eggs", "food", is_consumable=True, effects_on_consume={"restore_stamina": 3}),
         Item("łatana koszula", "Tania koszula połatana na łokciach.", 0.8, 3, "vendor_patched_shirt", "armor", "korpus", protection=0),
         Item("lniana chusta", "Lekka chusta chroniąca przed kurzem.", 0.2, 2, "vendor_linen_scarf", "armor", "glowa", protection=0),
         Item("guziki", "Pęk drewnianych guzików do prostych napraw.", 0.05, 1, "vendor_buttons", "misc"),

@@ -22,6 +22,13 @@ class PersistenceTests(unittest.TestCase):
             char.skills.train("bron_cieta", 10)
             char.wounds["prawa_noga"] = 3
             char.reputation["MEEKHAN"] = -600
+            char.global_reputation = -42
+            char.local_reputation["Podgrodzie"] = -17
+            char.renown = 88
+            char.title = "Znany"
+            char.crimes["kradzież"] = 2
+            char.wanted_level = 2
+            char.wanted_posts.append("kradzież @ Podgrodzie")
             char.active_quests["wolf_pelt"] = {"current": 1}
             char.active_quests["market_delivery"] = {"current": 1}
             char.completed_quests.append("intro")
@@ -41,6 +48,13 @@ class PersistenceTests(unittest.TestCase):
             self.assertEqual(loaded.stats.sila, 14)
             self.assertEqual(loaded.wounds["prawa_noga"], 3)
             self.assertEqual(loaded.reputation["MEEKHAN"], -600)
+            self.assertEqual(loaded.global_reputation, -42)
+            self.assertEqual(loaded.local_reputation["Podgrodzie"], -17)
+            self.assertEqual(loaded.renown, 88)
+            self.assertEqual(loaded.title, "Znany")
+            self.assertEqual(loaded.crimes["kradzież"], 2)
+            self.assertEqual(loaded.wanted_level, 2)
+            self.assertEqual(loaded.wanted_posts[0], "kradzież @ Podgrodzie")
             self.assertIn("wolf_pelt", loaded.active_quests)
             self.assertIn("market_delivery", loaded.active_quests)
             self.assertIn("intro", loaded.completed_quests)

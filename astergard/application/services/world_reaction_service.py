@@ -37,11 +37,12 @@ class WorldReactionService:
         if char is None:
             return
         rep = int(event.payload.get("rep", 0))
+        zone = self._zone(char.room_id)
         if rep:
-            self.factions.adjust(char, self.factions.MEEKHAN, rep)
+            self.factions.adjust(char, self.factions.MEEKHAN, rep, zone=zone)
         quest_id = str(event.payload.get("quest_id", ""))
-        if quest_id in {"market_delivery", "blacksmith_tools", "fisher_net", "priest_herbs", "haldun_well_bucket", "haldun_forge_coal", "haldun_grain_delivery", "haldun_barn_beam", "haldun_orchard_crate", "haldun_watch_round", "straznica_meldunek", "straznica_manifest", "straznica_lamp_oil", "straznica_rope", "straznica_blanket", "straznica_hunter_report", "trakty_kurier_note", "trakty_manifest", "trakty_lamp_oil", "trakty_rope", "trakty_blanket", "trakty_hunter_report", "puszcza_herbs", "puszcza_camp_token", "puszcza_stream_water", "bagna_herbs", "bagna_stone", "bagna_tracks"}:
-            self.factions.adjust(char, self.factions.MEEKHAN, self.HELP_REP)
+        if quest_id in {"market_delivery", "blacksmith_tools", "fisher_net", "priest_herbs", "city_ring_search", "merchant_price_check", "dockside_rumor", "pilgrim_escort", "wheel_repair", "shield_repair", "wolf_watch", "fish_delivery", "grain_delivery", "wood_delivery", "candles_gather", "well_water_delivery", "haldun_well_bucket", "haldun_forge_coal", "haldun_grain_delivery", "haldun_barn_beam", "haldun_orchard_crate", "haldun_watch_round", "straznica_meldunek", "straznica_manifest", "straznica_lamp_oil", "straznica_rope", "straznica_blanket", "straznica_hunter_report", "trakty_kurier_note", "trakty_manifest", "trakty_lamp_oil", "trakty_rope", "trakty_blanket", "trakty_hunter_report", "puszcza_herbs", "puszcza_camp_token", "puszcza_stream_water", "bagna_herbs", "bagna_stone", "bagna_tracks"}:
+            self.factions.adjust(char, self.factions.MEEKHAN, self.HELP_REP, zone=zone)
         self._emit_reputation_changed(char, "quest")
 
     def on_combat_attacked(self, event: EngineEvent) -> None:
@@ -57,7 +58,9 @@ class WorldReactionService:
         if bool(event.payload.get("defender_dead", False)):
             return
         penalty = self.ATTACK_REP
-        self.factions.adjust(char, self.factions.MEEKHAN, penalty)
+        zone = self._zone(room_id)
+        self.factions.adjust(char, self.factions.MEEKHAN, penalty, zone=zone)
+        self.factions.record_crime(char, "napaść", zone=zone, detail=npc.vnum)
         self._emit_reputation_changed(char, "attack")
 
     def on_item_picked_up(self, event: EngineEvent) -> None:
@@ -69,7 +72,9 @@ class WorldReactionService:
             return
         if not self.npcs.by_room(int(room_id)):
             return
-        self.factions.adjust(char, self.factions.MEEKHAN, self.THEFT_REP)
+        zone = self._zone(int(room_id))
+        self.factions.adjust(char, self.factions.MEEKHAN, self.THEFT_REP, zone=zone)
+        self.factions.record_crime(char, "kradzież", zone=zone, detail=str(event.payload.get("item", "")))
         self._emit_reputation_changed(char, "theft")
 
     def _player(self, event: EngineEvent) -> Character | None:

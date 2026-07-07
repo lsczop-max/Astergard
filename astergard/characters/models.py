@@ -98,6 +98,13 @@ class Character:
     wounds: dict[str, int] = field(default_factory=lambda: {part: 0 for part in BODY_PARTS})
     gold: int = 25
     reputation: dict[str, int] = field(default_factory=lambda: {"MEEKHAN": 0, "SE_HARIEN": 0, "REBELS": 0})
+    global_reputation: int = 0
+    local_reputation: dict[str, int] = field(default_factory=dict)
+    renown: int = 0
+    title: str = "Wędrowiec"
+    crimes: dict[str, int] = field(default_factory=lambda: {"kradzież": 0, "napaść": 0, "zabójstwo": 0})
+    wanted_level: int = 0
+    wanted_posts: list[str] = field(default_factory=list)
     active_effects: list[Effect] = field(default_factory=list)
     active_quests: dict[str, dict[str, int]] = field(default_factory=dict)
     completed_quests: list[str] = field(default_factory=list)
@@ -107,6 +114,33 @@ class Character:
     combat_events: list[str] = field(default_factory=list)
     state: str = CharacterState.ALIVE.value
     admin_role: str | None = None
+
+    def add_local_reputation(self, zone: str, amount: int) -> None:
+        self.local_reputation[zone] = self.local_reputation.get(zone, 0) + amount
+
+    def add_global_reputation(self, amount: int) -> None:
+        self.global_reputation += amount
+
+    def add_renown(self, amount: int) -> None:
+        if amount > 0:
+            self.renown += amount
+
+    def record_crime(self, crime: str, zone: str | None = None, detail: str | None = None) -> None:
+        normalized = crime.strip().lower()
+        self.crimes[normalized] = self.crimes.get(normalized, 0) + 1
+        entry = normalized
+        if zone:
+            entry += f" @ {zone}"
+        if detail:
+            entry += f" - {detail}"
+        self.wanted_posts.insert(0, entry)
+        del self.wanted_posts[10:]
+
+    def sync_identity(self, title: str | None = None, wanted_level: int | None = None) -> None:
+        if title is not None:
+            self.title = title
+        if wanted_level is not None:
+            self.wanted_level = wanted_level
 
 
     def sync_flags_from_state(self) -> None:

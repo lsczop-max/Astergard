@@ -4,6 +4,8 @@ from astergard.application.use_case_contexts import QuestContext
 from astergard.commands.helpers import find_npc_in_manager
 from astergard.commands.polish import normalize_phrase
 from astergard.engine.events import DomainEventType
+from astergard.factions.reputation import FactionManager
+from astergard.npcs.models import NPC
 from astergard.quests.manager import QUESTS, QuestManager
 
 _DIALOGUE_TOPIC_PATTERNS: dict[str, tuple[str, ...]] = {
@@ -14,8 +16,9 @@ _DIALOGUE_TOPIC_PATTERNS: dict[str, tuple[str, ...]] = {
 
 
 class QuestApplicationService:
-    def __init__(self, quests: QuestManager) -> None:
+    def __init__(self, quests: QuestManager, factions: FactionManager) -> None:
         self.quests = quests
+        self.factions = factions
 
     def talk(self, ctx: QuestContext, arg: str | None) -> str:
         if not arg:
@@ -28,6 +31,8 @@ class QuestApplicationService:
             if quest.completion_npc == npc.vnum and self.quests.is_ready(ctx.character, quest.id):
                 message = self.quests.complete_if_ready(ctx.character, quest.id, ctx.event_bus)
                 return f"{npc.name.capitalize()}: {quest.completion_text}\n{message}"
+        if self._conversation_blocked(ctx, npc):
+            return f"{npc.name.capitalize()}: Z taką reputacją najpierw napraw swoje sprawy."
         topic = self._topic_for(npc, normalized)
         if topic is not None:
             return f"{npc.name.capitalize()}: {npc.dialogue(topic, ctx.character.reputation.get(npc.faction, 0))}"
@@ -40,6 +45,9 @@ class QuestApplicationService:
                 return f"<green>Otrzymujesz nowe zadanie: {quest.title}</green>\n{quest.offer_text}"
         if quest is not None and quest.id in ctx.character.active_quests:
             return f"{npc.name.capitalize()}: {quest.reminder_text}"
+
+        if quest is not None and self.factions.rules.quests_are_blocked(ctx.character.global_reputation, ctx.character.wanted_level):
+            return f"{npc.name.capitalize()}: Najpierw odbuduj reputację, zanim przyjmiesz kolejne zadanie."
 
         progress_messages = self.quests.progress(ctx.character, "talk", npc.vnum)
         if progress_messages:
@@ -67,6 +75,13 @@ class QuestApplicationService:
                 continue
             return quest
         return None
+
+    def _conversation_blocked(self, ctx: QuestContext, npc: NPC) -> bool:
+        if npc.faction == self.factions.MEEKHAN and self.factions.hostile_to_guards(ctx.character):
+            return True
+        if npc.is_merchant and self.factions.merchants_are_hostile(ctx.character, npc.faction):
+            return True
+        return False
 
     def render_quest_log(self, character) -> str:
         return self.quests.render(character)

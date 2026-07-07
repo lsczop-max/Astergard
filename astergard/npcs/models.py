@@ -9,6 +9,8 @@ from astergard.items.models import (
     Item,
     baker_shop_inventory,
     blacksmith_shop_inventory,
+    karczmarz_shop_inventory,
+    karczmarka_shop_inventory,
     dungrim_armory_inventory,
     dungrim_kitchen_inventory,
     dungrim_quartermaster_inventory,
@@ -90,6 +92,13 @@ class NPCFactory:
         npc.respawn_delay_seconds = max(30, int(npc.respawn_delay_seconds * profile.respawn_multiplier))
         if not npc.daily_schedule:
             npc.daily_schedule = self._daily_schedule_for(npc.vnum)
+        if not npc.dialogue_tree:
+            npc.dialogue_tree = {
+                "default": [f"{npc.name.capitalize()} milczy i obserwuje otoczenie."],
+                "praca": [f"{npc.name.capitalize()} mówi krótko o swojej codziennej robocie."],
+                "miejsce": [f"{npc.name.capitalize()} zna to miejsce lepiej niż własne buty."],
+                "plotki": [f"{npc.name.capitalize()} nie ufa plotkom, ale coś jednak słyszał."],
+            }
         apply_threat_profile(npc.character, profile)
         return npc
 
@@ -112,6 +121,208 @@ class NPCFactory:
         return tree
 
     def _daily_schedule_for(self, vnum: str) -> dict[str, str]:
+        specific_schedules: dict[str, dict[str, str]] = {
+            "astergard_guard": {
+                "świt": "Obchodzi bramę i sprawdza, czy bruk jest czysty po nocy.",
+                "dzień": "Patroluje plac i zagląda w boczne przejścia.",
+                "wieczór": "Wraca pod bramę i zamyka ruch na szlaku.",
+                "noc": "Siedzi przy wartowni i nasłuchuje kroków za murem.",
+            },
+            "watch_sergeant": {
+                "świt": "Liczy zmianę i idzie od placu do koszar.",
+                "dzień": "Sprawdza posterunki i wraca po meldunki.",
+                "wieczór": "Przechodzi przez dziedziniec i zamyka odprawę.",
+                "noc": "Wraca do wartowni i pilnuje ciszy w koszarach.",
+            },
+            "innkeeper": {
+                "świt": "Otwiera karczmę i ustawia stoły przy wejściu.",
+                "dzień": "Obsługuje gości, dogląda sali i wraca po beczki.",
+                "wieczór": "Siedzi przy ladzie i liczy kufle przed zamknięciem.",
+                "noc": "Wraca na zaplecze i gasi światło w sali.",
+            },
+            "merchant": {
+                "świt": "Rozstawia kram przy bramie i sprawdza ceny.",
+                "dzień": "Przechodzi między placem a kramem, szukając kupujących.",
+                "wieczór": "Zamyka stoisko i wraca z towarem do składu.",
+                "noc": "Liczy monety i siedzi przy zamkniętym kramie.",
+            },
+            "customs_clerk": {
+                "świt": "Idzie od bramy do kancelarii i układa księgi.",
+                "dzień": "Przyjmuje listy i wraca po kolejne wpisy.",
+                "wieczór": "Obchodzi magazyn i zamyka rachunki.",
+                "noc": "Wraca do izby przy kantorze i odkłada pieczęcie.",
+            },
+            "dockhand": {
+                "świt": "Idzie nad nabrzeże i rozplątuje liny przy łodziach.",
+                "dzień": "Nosi skrzynie między pomostem a składami.",
+                "wieczór": "Wraca z portu ciężkim krokiem i czyści dłonie z soli.",
+                "noc": "Siedzi przy nabrzeżu i pilnuje cum przed snem.",
+            },
+            "fishmonger": {
+                "świt": "Wystawia ryby na targu i idzie po świeży połów.",
+                "dzień": "Krąży między targiem a szopą rybaków.",
+                "wieczór": "Zawija towar i wraca do chłodni przy wodzie.",
+                "noc": "Zamyka stragan i liczy, ile ryb wróci jutro.",
+            },
+            "fisherman": {
+                "świt": "Schodzi nad wodę z sieciami i wraca na pomost.",
+                "dzień": "Sprzedaje część połowu i znika po kolejne ryby.",
+                "wieczór": "Wraca do szopy nad rzeką i naprawia sieci.",
+                "noc": "Siedzi przy nabrzeżu i suszy liny po pracy.",
+            },
+            "beggar": {
+                "świt": "Przenosi się spod muru pod lepszy kąt przy rynku.",
+                "dzień": "Siedzi przy placu i wraca tam, gdzie ludzie częściej rzucają drobne.",
+                "wieczór": "Idzie pod osłonę bramy i szuka suchego kąta.",
+                "noc": "Wraca pod mur i zwija lichy koc do snu.",
+            },
+            "traveler": {
+                "świt": "Rusza od bramy do karczmy i sprawdza, czy droga jest bezpieczna.",
+                "dzień": "Krąży między targiem a przystankiem, szukając wieści o szlaku.",
+                "wieczór": "Wraca pod karczmę i szuka noclegu przed zmrokiem.",
+                "noc": "Śpi przy zajeździe i szykuje sakwy na rano.",
+            },
+            "child": {
+                "świt": "Wybiega na podwórko i wraca przed pierwszym tłokiem na placu.",
+                "dzień": "Biega między straganami i wraca do domu po południu.",
+                "wieczór": "Siedzi przy progu i wraca na podwórko, gdy zaczyna się ściemniać.",
+                "noc": "Wraca pod dach i zasypia blisko pieca.",
+            },
+            "urchin": {
+                "świt": "Wysuwa się z zaułka i sprawdza, co zostało na targu.",
+                "dzień": "Kręci się przy kramach i wraca po chwili do bezpieczniejszej uliczki.",
+                "wieczór": "Znika przy murze i wraca do kryjówki przed nocą.",
+                "noc": "Śpi tam, gdzie nie dosięga wiatr z bramy.",
+            },
+            "priest_aide": {
+                "świt": "Idzie do kapliczki i wraca z wodą oraz świecami.",
+                "dzień": "Dogląda porządku przy świątyni i odwiedza cmentarzyk.",
+                "wieczór": "Wraca po zapasy do zakrystii i zamyka drzwi.",
+                "noc": "Zasypia przy kaplicy i pilnuje ciszy.",
+            },
+            "carpenter": {
+                "świt": "Otwiera warsztat i idzie po drewno z placu składowego.",
+                "dzień": "Pracuje przy ławie i wraca po nowe deski.",
+                "wieczór": "Odkłada narzędzia i wraca do domu z trocinami na rękawach.",
+                "noc": "Siedzi przy warsztacie i liczy zlecenia na jutro.",
+            },
+            "tanner": {
+                "świt": "Sprawdza skóry na podwórzu i wraca po sól do składu.",
+                "dzień": "Pracuje przy beczkach i idzie na plac po kolejne skóry.",
+                "wieczór": "Chowa skóry do zadaszenia i wraca do domu.",
+                "noc": "Myje ręce i siedzi przy zamkniętej garbarni.",
+            },
+            "bowyer": {
+                "świt": "Przenosi drewno łucznicze do warsztatu i wraca po klej.",
+                "dzień": "Pracuje przy łukach i zagląda na plac po strzały.",
+                "wieczór": "Składa zamówienia i wraca do stołu warsztatowego.",
+                "noc": "Siedzi przy warsztacie i sprawdza klejone ramiona łuków.",
+            },
+            "armorer": {
+                "świt": "Idzie do magazynu po hełmy i wraca do stołu naprawczego.",
+                "dzień": "Dopasowuje pancerze i kontroluje stan zbroi.",
+                "wieczór": "Wraca do warsztatu i zamyka stojaki z ochroną.",
+                "noc": "Liczy klamry i odkłada skórzane pasy pod dach.",
+            },
+            "woodcutter": {
+                "świt": "Idzie po drewno do składu i wraca z wiązką na barku.",
+                "dzień": "Pracuje przy pile i nosi drewno na plac.",
+                "wieczór": "Zamyka robotę i wraca z ostrzem pod pachą.",
+                "noc": "Siedzi przy stercie pni i ostrzy topór.",
+            },
+            "podgrodzie_woznica": {
+                "świt": "Sprawdza wóz na skraju Podgrodzia i wraca do szopy z uprzężą.",
+                "dzień": "Jedzie do rynku i wraca z towarem przy osi.",
+                "wieczór": "Odprowadza zaprzęg do stajni i zamyka podwórze.",
+                "noc": "Wraca do domu i przykrywa wóz płachtą.",
+            },
+            "podgrodzie_karczmarz": {
+                "świt": "Otwiera karczmę i idzie po drewno do kuchni.",
+                "dzień": "Siedzi przy ladzie i dogląda gości między salą a zapleczem.",
+                "wieczór": "Wraca do stołu z rachunkami i zamyka wejście.",
+                "noc": "Pilnuje ciszy na zapleczu i wraca do kwatery.",
+            },
+            "podgrodzie_karczmarka": {
+                "świt": "Przygotowuje tace i wraca po wodę dla gości.",
+                "dzień": "Krąży między kuchnią a salą, podając jadło przy stołach.",
+                "wieczór": "Wraca do sali po puste misy i liczy zamówienia.",
+                "noc": "Siedzi przy pustej karczmie i wraca na piętro.",
+            },
+            "podgrodzie_pielgrzym": {
+                "świt": "Idzie do kapliczki i wraca z modlitwy na skraj drogi.",
+                "dzień": "Odwiedza targ, by zostawić drobną ofiarę i wraca do rozstajów.",
+                "wieczór": "Zatrzymuje się przy karczmie i wraca przed nocą do miejsca spoczynku.",
+                "noc": "Wraca pod osłonę kapliczki i siedzi cicho do rana.",
+            },
+            "podgrodzie_piekarz": {
+                "świt": "Rozpala piec i idzie po mąkę do składu.",
+                "dzień": "Wypieka chleb i wraca po kolejne porcje ciasta.",
+                "wieczór": "Zamyka piekarnię i wraca z ostatnimi bochenkami.",
+                "noc": "Śpi przy wygasającym piecu i czeka na świt.",
+            },
+            "podgrodzie_handlarz": {
+                "świt": "Rozstawia kram przy targu i wraca po wagę.",
+                "dzień": "Handluje między placem a bramą i wraca po drobny towar.",
+                "wieczór": "Zamyka stoisko i wraca z zarobkiem do domu.",
+                "noc": "Liczy monety i siedzi przy zamkniętym kramie.",
+            },
+            "podgrodzie_przekupka": {
+                "świt": "Idzie na targ z koszem i wraca po świeży drobiazg.",
+                "dzień": "Krąży między straganami i wraca po kolejną dostawę.",
+                "wieczór": "Sprząta kram i wraca do domu przez boczne uliczki.",
+                "noc": "Odkłada kosze i siedzi przy kuchni po dniu handlu.",
+            },
+            "podgrodzie_kowal": {
+                "świt": "Rozpala palenisko i wraca po węgiel do kuźni.",
+                "dzień": "Kuje przy placu i wraca po podkowy oraz szczypce.",
+                "wieczór": "Gasi żar i wraca z narzędziami pod dach.",
+                "noc": "Liczy zamówienia i siedzi przy osmolonym stole.",
+            },
+            "podgrodzie_pomocnik_kowala": {
+                "świt": "Nosi węgiel do paleniska i wraca po wodę.",
+                "dzień": "Pomaga przy kowadle i wraca po szczypce do kuźni.",
+                "wieczór": "Sprząta żużel i wraca do izby z brudnym fartuchem.",
+                "noc": "Siedzi przy wygaszonym ogniu i pakuje narzędzia.",
+            },
+            "podgrodzie_straznik_miejski": {
+                "świt": "Obchodzi bramę Podgrodzia i wraca na posterunek.",
+                "dzień": "Patroluje skrzyżowania i wraca po meldunek.",
+                "wieczór": "Zamyka przejście i wraca do wartowni.",
+                "noc": "Siedzi przy bramie i nasłuchuje, czy ktoś wraca spóźniony.",
+            },
+            "podgrodzie_rybak": {
+                "świt": "Schodzi nad rzekę z sieciami i wraca na targ z pierwszym połowem.",
+                "dzień": "Sprzedaje ryby i wraca po kolejne skrzynki przy wodzie.",
+                "wieczór": "Naprawia sieci i wraca do pomostu przed nocą.",
+                "noc": "Siedzi przy wodzie i suszy liny po pracy.",
+            },
+            "podgrodzie_dziecko": {
+                "świt": "Wybiega na podwórze i wraca przed ruchem na targu.",
+                "dzień": "Biega między uliczkami i wraca do domu po południu.",
+                "wieczór": "Wraca z placu do domu, zanim zrobi się ciemno.",
+                "noc": "Śpi przy piecu i nie wychodzi na pusty bruk.",
+            },
+            "podgrodzie_zebrak": {
+                "świt": "Przenosi się spod ściany do cieplejszego zakątka przy rynku.",
+                "dzień": "Siedzi przy bramie i wraca pod mur, gdy robi się tłoczno.",
+                "wieczór": "Szuka schronienia przy karczmie i wraca pod osłonę dachu.",
+                "noc": "Leży pod murem i zasypia tam, gdzie wiatr słabnie.",
+            },
+            "podgrodzie_chlop": {
+                "świt": "Przynosi sprzęt z pola i wraca po kolejne worki.",
+                "dzień": "Sprzedaje plony na placu i wraca do obejścia.",
+                "wieczór": "Zamyka robotę i wraca do domu z błotem na butach.",
+                "noc": "Siedzi przy gospodarstwie i ostrzy narzędzia na rano.",
+            },
+            "podgrodzie_chlopka": {
+                "świt": "Roznosi kosze z jajami i wraca po mleko do obejścia.",
+                "dzień": "Handluje na targu i wraca do domu z zakupami.",
+                "wieczór": "Zamyka kosze i wraca do kuchni przed nocą.",
+                "noc": "Siedzi przy domowym ogniu i układa zapasy na jutro.",
+            },
+        }
+        if vnum in specific_schedules:
+            return specific_schedules[vnum]
         if vnum in {"astergard_guard", "watch_sergeant", "podgrodzie_straznik_miejski", "haldun_wartownik", "dungrim_guard", "dungrim_patrol_guard", "dungrim_sergeant", "dungrim_lieutenant", "dungrim_commander"}:
             return {
                 "świt": "Zmienia wartę i obchodzi drogę.",
@@ -1714,6 +1925,9 @@ class NPCFactory:
                 faction="MEEKHAN",
                 room_id=room_id,
                 stats=CharacterStats(9, 9, 10, 11, 11, 100),
+                is_merchant=True,
+                merchant_gold=58,
+                shop_inventory=karczmarz_shop_inventory(),
                 equipment={
                     "korpus": Item("karczemny fartuch", "Gruby fartuch z kieszeniami na łyżki, klucze i drobne rachunki.", 1.0, 5, "podgrodzie_inn_apron", "armor", "korpus", protection=1),
                 },
@@ -1736,6 +1950,9 @@ class NPCFactory:
                 faction="MEEKHAN",
                 room_id=room_id,
                 stats=CharacterStats(9, 10, 9, 10, 11, 95),
+                is_merchant=True,
+                merchant_gold=52,
+                shop_inventory=karczmarka_shop_inventory(),
                 equipment={
                     "korpus": Item("karczemny gorset", "Roboczy gorset z grubej tkaniny, odporny na kuchenny pośpiech.", 0.9, 5, "podgrodzie_inn_garment", "armor", "korpus", protection=1),
                     "prawa_reka": Item("taca z blachy", "Niewielka taca do noszenia kubków i talerzy.", 0.8, 4, "podgrodzie_inn_tray", "weapon", "prawa_reka", damage_type="obuchowa", base_damage=1, reach=1, initiative_modifier=1, parry_bonus=0),
