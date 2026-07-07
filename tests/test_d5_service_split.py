@@ -7,7 +7,7 @@ import unittest
 from pathlib import Path
 
 from astergard.characters.models import Character
-from astergard.server.game import GameContext, GameServer
+from astergard.server.game import GameServer
 
 
 class D5ServiceSplitTests(unittest.TestCase):

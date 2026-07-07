@@ -8,7 +8,7 @@ from pathlib import Path
 
 from astergard.characters.models import Character
 from astergard.items.models import Item
-from astergard.server.game import GameContext, GameServer
+from astergard.server.game import GameServer
 
 
 class D4ApplicationUseCaseTests(unittest.TestCase):
@@ -38,7 +38,7 @@ class D4ApplicationUseCaseTests(unittest.TestCase):
         self.assertFalse(any(item.name == "testowy kamień" for item in loc.items))
 
     def test_combat_service_owns_corpse_quest_and_faction_coordination(self) -> None:
-        server = self.make_server()
+        self.make_server()
         src = Path(__file__).resolve().parents[1] / "astergard" / "application" / "services" / "combat_service.py"
         text = src.read_text(encoding="utf-8")
         self.assertIn("register_kill", text)

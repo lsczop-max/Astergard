@@ -5,7 +5,7 @@ from typing import Any, Coroutine, cast
 import tempfile
 import unittest
 
-from astergard.server.game import GameContext, GameServer
+from astergard.server.game import GameServer
 
 
 class D2ModularityTests(unittest.TestCase):

@@ -1,5 +1,7 @@
 from __future__ import annotations
+
 from dataclasses import dataclass
+
 from astergard.characters.models import Character
 from astergard.items.models import Item
 
@@ -26,6 +28,7 @@ class CraftingService:
             removed = 0
             for item in list(char.inventory):
                 if item.name == name and removed < count:
-                    char.inventory.remove(item); removed += 1
+                    char.inventory.remove(item)
+                    removed += 1
         char.inventory.append(recipe.output)
         return f"Tworzysz: {recipe.output.name}."

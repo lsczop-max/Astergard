@@ -6,7 +6,7 @@ import unittest
 from pathlib import Path
 
 from astergard.characters.models import Character
-from astergard.engine.events import DomainEventType, EngineEvent, EventBus
+from astergard.engine.events import DomainEventType, EventBus
 from astergard.items.models import Item
 from astergard.server.game import GameServer
 

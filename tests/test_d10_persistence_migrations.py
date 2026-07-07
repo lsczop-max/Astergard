@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from astergard.characters.models import Character, Effect
+from astergard.characters.models import Effect
 from astergard.database.migrations import MigrationRunner
 from astergard.database.repository import PlayerRepository
 from astergard.items.models import Item

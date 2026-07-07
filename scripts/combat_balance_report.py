@@ -8,7 +8,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from astergard.combat.balance import CombatBalanceSimulator, all_balance_scenarios, render_balance_report
+from astergard.combat.balance import CombatBalanceSimulator, all_balance_scenarios, render_balance_report  # noqa: E402
 
 
 def main() -> None:

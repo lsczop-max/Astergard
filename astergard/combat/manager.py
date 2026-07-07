@@ -2,10 +2,13 @@ from __future__ import annotations
 
 import random
 from dataclasses import dataclass, field
-from typing import Protocol
+from typing import TYPE_CHECKING, Protocol
 
 from astergard.characters.models import Character
 from astergard.combat.wounds import is_dead
+
+if TYPE_CHECKING:
+    from astergard.rules.combat import CombatRules
 
 BODY_WEIGHTS = [
     ("glowa", 10),
@@ -41,14 +44,15 @@ COMBAT_STYLES: dict[str, CombatStyle] = {
     "brutalny": CombatStyle("brutalny", attack_modifier=3, defense_modifier=-1, initiative_modifier=-1, stamina_cost_modifier=1, damage_modifier=2, label="brutalnym zamachem"),
 }
 
-
-from astergard.rules.combat import CombatRules, default_combat_rules
-
 def normalize_combat_style(name: str | None) -> str:
+    from astergard.rules.combat import default_combat_rules
+
     return default_combat_rules().normalize_style(name)
 
 
 def get_combat_style(name: str | None) -> CombatStyle:
+    from astergard.rules.combat import default_combat_rules
+
     return default_combat_rules().style(name)
 
 
@@ -87,6 +91,8 @@ class CombatRoundResult:
 
 class CombatManager:
     def __init__(self, rng: RandomSource | None = None, rules: CombatRules | None = None) -> None:
+        from astergard.rules.combat import default_combat_rules
+
         self.active_fights: list[tuple[str, str]] = []
         self.rng: RandomSource = rng or random
         self.rules = rules or default_combat_rules()

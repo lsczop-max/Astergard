@@ -15,7 +15,7 @@ class ParsedCommand:
 class CommandParser:
     ORDINALS: dict[str, int] = {
         "pierwszy": 1, "pierwsza": 1, "pierwsze": 1, "1": 1,
-        "drugi": 2, "druga": 2, "drugie": 2, "drugiego": 2, "druga": 2, "2": 2,
+        "drugi": 2, "druga": 2, "drugie": 2, "drugiego": 2, "2": 2,
         "trzeci": 3, "trzecia": 3, "trzecie": 3, "trzeciego": 3, "3": 3,
         "czwarty": 4, "czwarta": 4, "czwarte": 4, "czwartego": 4, "4": 4,
         "piaty": 5, "piata": 5, "piate": 5, "piatego": 5, "5": 5,

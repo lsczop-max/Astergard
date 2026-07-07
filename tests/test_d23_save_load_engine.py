@@ -5,7 +5,6 @@ import unittest
 from pathlib import Path
 
 from astergard.application.bootstrap import GameBootstrapper
-from astergard.characters.models import Character
 
 
 class SaveLoadEngineTests(unittest.TestCase):

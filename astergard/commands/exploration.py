@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections.abc import Awaitable, Callable
 from typing import TYPE_CHECKING
 
-from astergard.application.services.exploration_service import DIRECTIONS
+from astergard.application.services.exploration_service import DIRECTIONS as DIRECTIONS
 from astergard.characters.models import Character
 from astergard.server.context import GameContext
 
@@ -28,3 +28,6 @@ def build_exploration_handlers(service: ExplorationService) -> dict[str, Command
 
 def move_direct_with(service: ExplorationService, ctx: GameContext, char: Character, direction: str) -> str:
     return service.move_direct(ctx.exploration(), char, direction)
+
+
+__all__ = ["DIRECTIONS", "build_exploration_handlers", "move_direct_with", "CommandHandler"]

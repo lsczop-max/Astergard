@@ -28,7 +28,7 @@ LEMMA_OVERRIDES: dict[str, str] = {
     "skore": "skora", "skory": "skora", "skora": "skora",
     "sakwy": "sakwa", "sakwe": "sakwa", "sakiewke": "sakiewka", "sakiewki": "sakiewka",
     "plecaka": "plecak", "plecakiem": "plecak", "plecaku": "plecak",
-    "skrzynie": "skrzynia", "skrzyni": "skrzynia", "skrzynia": "skrzynia", "skrzynia": "skrzynia",
+    "skrzynie": "skrzynia", "skrzyni": "skrzynia", "skrzynia": "skrzynia",
     "skrzynke": "skrzynka", "skrzynki": "skrzynka", "skrzynce": "skrzynka",
     "drugiej": "drugi", "trzeciej": "trzeci", "czwartej": "czwarty", "piatej": "piaty",
     "polnoc": "polnoc", "poludnie": "poludnie", "wschod": "wschod", "zachod": "zachod",

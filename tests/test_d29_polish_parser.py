@@ -3,7 +3,6 @@ from __future__ import annotations
 import asyncio
 import tempfile
 import unittest
-from pathlib import Path
 
 from astergard.characters.models import Character
 from astergard.commands.parser import CommandParser

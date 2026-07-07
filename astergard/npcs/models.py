@@ -6,7 +6,7 @@ from uuid import uuid4
 from astergard.characters.models import Character, CharacterStats
 from astergard.items.models import Item
 from astergard.npcs.combat_profiles import combat_style_for_vnum
-from astergard.npcs.threat import ThreatProfile, apply_threat_profile, threat_for_vnum
+from astergard.npcs.threat import apply_threat_profile, threat_for_vnum
 from astergard.state import NPC_STATE_MACHINE, NPCState, parse_npc_state
 
 

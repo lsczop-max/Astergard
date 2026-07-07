@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 from astergard.characters.models import Character
 from astergard.items.models import Item
 from astergard.npcs.models import NPC
@@ -32,8 +33,10 @@ class EconomyService:
             return "Nie masz dość monet."
         if char.total_weight() + item.weight > char.stats.get_weight_limit():
             return "Nie uniesiesz tego."
-        char.gold -= price; merchant.merchant_gold += price
-        merchant.shop_inventory.remove(item); char.inventory.append(item)
+        char.gold -= price
+        merchant.merchant_gold += price
+        merchant.shop_inventory.remove(item)
+        char.inventory.append(item)
         return f"Kupujesz {item.name} za {price} monet."
 
     def sell(self, char: Character, merchant: NPC, item_name: str) -> str:
@@ -43,6 +46,8 @@ class EconomyService:
         price = self.sell_price(item)
         if merchant.merchant_gold < price:
             return "Kupiec nie ma dość monet."
-        merchant.merchant_gold -= price; char.gold += price
-        char.inventory.remove(item); merchant.shop_inventory.append(item)
+        merchant.merchant_gold -= price
+        char.gold += price
+        char.inventory.remove(item)
+        merchant.shop_inventory.append(item)
         return f"Sprzedajesz {item.name} za {price} monet."

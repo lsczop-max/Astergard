@@ -1,12 +1,15 @@
 from __future__ import annotations
+
 import asyncio
+import tempfile
+import unittest
 from typing import Any, Coroutine, cast
-import tempfile, unittest
-from astergard.commands.parser import CommandParser
-from astergard.server.game import GameContext, GameServer
-from astergard.combat.manager import CombatManager
+
 from astergard.characters.models import Character
+from astergard.combat.manager import CombatManager
+from astergard.commands.parser import CommandParser
 from astergard.items.models import Item
+from astergard.server.game import GameServer
 
 class AstergardCoreTests(unittest.TestCase):
     def make_server(self) -> GameServer:
@@ -31,21 +34,24 @@ class AstergardCoreTests(unittest.TestCase):
                     self.assertIn(opposite, target.exits)
 
     def test_inventory_equipment_and_weight(self) -> None:
-        srv = self.make_server(); char = Character("tester")
+        srv = self.make_server()
+        char = Character("tester")
         ctx = srv.make_context(char)
         out: str = asyncio.run(cast(Coroutine[Any, Any, str], srv.cmd_wear(ctx, "miecz", 1)))
         self.assertIn("Zakładasz", out)
         self.assertIsNotNone(char.equipment["prawa_reka"])
 
     def test_combat_damage_can_wound(self) -> None:
-        attacker = Character("a"); defender = Character("d")
+        attacker = Character("a")
+        defender = Character("d")
         attacker.equipment["prawa_reka"] = Item("topór", "", 2, 10, "axe", "weapon", "prawa_reka", base_damage=10)
         res = CombatManager().attack(attacker, defender)
         self.assertTrue(sum(defender.wounds.values()) >= 0)
         self.assertIsInstance(res.message, str)
 
     def test_quest_trade_and_commands(self) -> None:
-        srv = self.make_server(); char = Character("tester")
+        srv = self.make_server()
+        char = Character("tester")
         ctx = srv.make_context(char)
         talk: str = asyncio.run(cast(Coroutine[Any, Any, str], srv.cmd_talk(ctx, "kupiec o wilki", 1)))
         self.assertIn("Otrzymujesz", talk)

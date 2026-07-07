@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any
 
-from astergard.engine.events import DomainEventType, EventBus
+from astergard.engine.events import EventBus
 from astergard.database.repository import PlayerRepository
 
 

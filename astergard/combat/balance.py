@@ -10,7 +10,7 @@ from astergard.characters.models import Character, CharacterStats
 from astergard.combat.manager import COMBAT_STYLES, CombatManager
 from astergard.items.models import Item
 from astergard.npcs.models import NPCFactory
-from astergard.npcs.threat import THREAT_PROFILES, threat_for_vnum
+from astergard.npcs.threat import THREAT_PROFILES
 
 CharacterFactory = Callable[[], Character]
 

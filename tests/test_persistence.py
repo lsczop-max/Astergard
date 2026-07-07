@@ -3,7 +3,7 @@ from __future__ import annotations
 import tempfile
 import unittest
 
-from astergard.characters.models import Character, Effect
+from astergard.characters.models import Effect
 from astergard.database.repository import PlayerRepository
 from astergard.items.models import Item
 
