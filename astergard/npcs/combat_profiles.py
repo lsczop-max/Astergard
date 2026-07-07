@@ -5,6 +5,14 @@ NPC_COMBAT_STYLE_BY_VNUM: dict[str, str] = {
     "merchant": "ostrozny",
     "mountain_troll": "brutalny",
     "wolf": "ofensywny",
+    "astergard_guard": "defensywny",
+    "innkeeper": "ostrozny",
+    "blacksmith": "defensywny",
+    "farmer": "zrownowazony",
+    "fisherman": "zrownowazony",
+    "traveler": "zrownowazony",
+    "child": "zrownowazony",
+    "beggar": "zrownowazony",
 }
 
 

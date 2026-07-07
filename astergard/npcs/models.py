@@ -50,7 +50,159 @@ class NPCFactory:
         apply_threat_profile(npc.character, profile)
         return npc
 
+    def _basic_npc(
+        self,
+        *,
+        vnum: str,
+        name: str,
+        short_desc: str,
+        long_desc: str,
+        zone: str,
+        faction: str,
+        room_id: int,
+        ai_state: str = "IDLE",
+        stats: CharacterStats | None = None,
+        equipment: dict[str, Item | None] | None = None,
+        inventory: list[Item] | None = None,
+        dialogue_tree: dict[str, list[str]] | None = None,
+        is_merchant: bool = False,
+        shop_inventory: list[Item] | None = None,
+    ) -> NPC:
+        character = Character(name.capitalize())
+        if stats is not None:
+            character.stats = stats
+        character.inventory.clear()
+        if inventory:
+            character.inventory.extend(inventory)
+        if equipment:
+            character.equipment.update(equipment)
+        npc = NPC(
+            vnum=vnum,
+            name=name,
+            short_desc=short_desc,
+            long_desc=long_desc,
+            zone=zone,
+            faction=faction,
+            ai_state=ai_state,
+            room_id=room_id,
+            character=character,
+            is_merchant=is_merchant,
+            shop_inventory=list(shop_inventory or []),
+            home_room_id=room_id,
+        )
+        npc.character.combat_style = combat_style_for_vnum(npc.vnum)
+        if dialogue_tree is not None:
+            npc.dialogue_tree = dialogue_tree
+        return self._finalize(npc)
+
     def create(self, vnum: str, room_id: int) -> NPC:
+        if vnum == "astergard_guard":
+            return self._basic_npc(
+                vnum="astergard_guard",
+                name="strażnik",
+                short_desc="Strażnik miasta opiera włócznię o ramię.",
+                long_desc="Nosi płaszcz w barwach Astergardu i ma twarz człowieka, który widział zbyt wiele spóźnionych kłótni.",
+                zone="Centrum_Twierdza",
+                faction="MEEKHAN",
+                room_id=room_id,
+                ai_state="GUARD",
+                stats=CharacterStats(12, 11, 12, 10, 10, 110),
+                equipment={
+                    "prawa_reka": Item("włócznia strażnicza", "Prosta włócznia do kontroli ulic i bram.", 2.6, 18, "city_guard_spear", "weapon", "prawa_reka", damage_type="kluta", base_damage=5, reach=2, initiative_modifier=0, parry_bonus=0),
+                    "lewa_reka": Item("mniejsza tarcza", "Tarcza służbowa z wybitym herbem miasta.", 2.7, 14, "city_guard_shield", "shield", "lewa_reka", protection=1, shield_block=2),
+                    "korpus": Item("płaszcz straży", "Wzmacniany płaszcz miejskiej straży.", 4.8, 22, "city_guard_cloak", "armor", "korpus", protection=1),
+                },
+                dialogue_tree={
+                    "default": ["Pilnuj drogi i nie zawracaj ludziom głowy."],
+                    "brama": ["Przy bramie najłatwiej o kłopoty, więc patrzymy tu podwójnie uważnie."],
+                },
+            )
+        if vnum == "innkeeper":
+            return self._basic_npc(
+                vnum="innkeeper",
+                name="karczmarz",
+                short_desc="Karczmarz ociera dłonie o fartuch i patrzy na gości bez zaufania.",
+                long_desc="Pamięta cudze rachunki lepiej niż cudze twarze, a mimo to rzadko daje się oszukać po raz drugi.",
+                zone="Centrum_Twierdza",
+                faction="MEEKHAN",
+                room_id=room_id,
+                stats=CharacterStats(9, 9, 10, 11, 11, 100),
+                dialogue_tree={
+                    "default": ["Siadaj albo idź dalej, ale nie blokuj przejścia."],
+                    "piwo": ["Piwo jest ciemne, bo ludzie chcą zapomnieć, nie błyszczeć."],
+                },
+            )
+        if vnum == "blacksmith":
+            return self._basic_npc(
+                vnum="blacksmith",
+                name="kowal",
+                short_desc="Kowal ma dłonie zgrubiałe od ognia i młota.",
+                long_desc="Jego twarz nosi ślad wiecznego żaru, a ubranie pachnie węglem, olejem i rozgrzanym żelazem.",
+                zone="Centrum_Twierdza",
+                faction="MEEKHAN",
+                room_id=room_id,
+                stats=CharacterStats(13, 9, 12, 10, 10, 110),
+                inventory=[Item("młot kowalski", "Praktyczny młot do codziennej pracy.", 2.0, 10, "npc_blacksmith_hammer", item_type="tool")],
+            )
+        if vnum == "farmer":
+            return self._basic_npc(
+                vnum="farmer",
+                name="rolnik",
+                short_desc="Rolnik ma buty ubłocone od pól i twarz zmęczoną przed świtem.",
+                long_desc="Żyje rytmem ziemi, a nie miasta. W jego sakwie prawie zawsze coś szeleści: ziarno, sznurek albo rachunek do spłacenia.",
+                zone="Haldun",
+                faction="MEEKHAN",
+                room_id=room_id,
+                stats=CharacterStats(9, 9, 10, 8, 9, 90),
+                inventory=[Item("wiązka zboża", "Mały snopek świeżo zebranej słomy.", 0.9, 2, "npc_grain_bundle", item_type="food")],
+            )
+        if vnum == "fisherman":
+            return self._basic_npc(
+                vnum="fisherman",
+                name="rybak",
+                short_desc="Rybak pachnie rzeką, smołą i mokrą liną.",
+                long_desc="Przez większość dnia stoi przy nabrzeżu, licząc sieci, a nie słowa. Zna nurt rzeki lepiej niż bruk miasta.",
+                zone="Centrum_Twierdza",
+                faction="MEEKHAN",
+                room_id=room_id,
+                stats=CharacterStats(9, 10, 10, 11, 9, 92),
+                inventory=[Item("hak do sieci", "Mały hak do naprawy sieci i lin.", 0.3, 2, "npc_fishhook", item_type="tool")],
+            )
+        if vnum == "traveler":
+            return self._basic_npc(
+                vnum="traveler",
+                name="podróżny",
+                short_desc="Podróżny stoi z sakwą przy nodze i ogląda miasto tak, jakby wciąż szukał wyjścia.",
+                long_desc="Na płaszczu ma pył z kilku dróg, a na twarzy ostrożność ludzi, którzy widzieli już zbyt wiele granic.",
+                zone="Centrum_Twierdza",
+                faction="MEEKHAN",
+                room_id=room_id,
+                stats=CharacterStats(10, 10, 10, 10, 10, 100),
+                inventory=[Item("podróżna sakwa", "Niewielka sakwa z najpotrzebniejszymi rzeczami.", 1.0, 5, "npc_travel_sack", is_container=True, capacity=10)],
+            )
+        if vnum == "child":
+            return self._basic_npc(
+                vnum="child",
+                name="dziecko",
+                short_desc="Dziecko patrzy z ciekawością, której dorośli szybko by się oduczyli.",
+                long_desc="Ma startą od zabawy kurtkę i spojrzenie, które widzi więcej, niż powinno w tym wieku.",
+                zone="Podgrodzie",
+                faction="MEEKHAN",
+                room_id=room_id,
+                stats=CharacterStats(6, 10, 7, 10, 8, 70),
+            )
+        if vnum == "beggar":
+            return self._basic_npc(
+                vnum="beggar",
+                name="żebrak",
+                short_desc="Żebrak siedzi przy ścianie i wyciąga dłoń szybciej, niż unosi wzrok.",
+                long_desc="Ma płaszcz łatany tak wiele razy, że bardziej przypomina mapę biedy niż ubranie. Nie wygląda groźnie, ale zna ulice lepiej niż niejeden strażnik.",
+                zone="Centrum_Twierdza",
+                faction="MEEKHAN",
+                room_id=room_id,
+                stats=CharacterStats(7, 8, 8, 10, 8, 75),
+                inventory=[Item("miska na jałmużnę", "Mała miska na monety i okruchy.", 0.4, 1, "beggar_bowl", item_type="misc")],
+            )
         if vnum == "meekhan_soldier":
             c = Character("Żołnierz")
             c.stats = CharacterStats(12, 10, 12, 10, 10, 120)

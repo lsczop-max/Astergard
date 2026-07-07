@@ -30,6 +30,14 @@ NPC_THREAT_BY_VNUM: dict[str, str] = {
     "meekhan_soldier": "standard",
     "mountain_troll": "elite",
     "warband_captain": "boss",
+    "astergard_guard": "standard",
+    "innkeeper": "trash",
+    "blacksmith": "standard",
+    "farmer": "trash",
+    "fisherman": "trash",
+    "traveler": "standard",
+    "child": "trash",
+    "beggar": "trash",
 }
 
 

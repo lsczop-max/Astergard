@@ -41,6 +41,20 @@ class NPCManager:
         for rid in [0, 5, 20]:
             self.spawn("meekhan_soldier", rid)
         self.spawn("merchant", 0)
+        self.spawn("astergard_guard", 2)
+        self.spawn("blacksmith", 12)
+        self.spawn("innkeeper", 14)
+        self.spawn("astergard_guard", 25)
+        self.spawn("astergard_guard", 26)
+        self.spawn("fisherman", 38)
+        self.spawn("beggar", 40)
+        self.spawn("traveler", 59)
+        self.spawn("child", 60)
+        self.spawn("farmer", 80)
+        self.spawn("farmer", 84)
+        self.spawn("traveler", 100)
+        self.spawn("astergard_guard", 110)
+        self.spawn("farmer", 113)
         for rid in [101, 125, 233, 399]:
             self.spawn("wolf", rid)
 

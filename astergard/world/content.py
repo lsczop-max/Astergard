@@ -167,8 +167,316 @@ _DETAILS = (
     "Na wysokości pasa ciągnie się rysa po ostrzu, długa i zbyt równa, by była przypadkowa.",
 )
 
+_DISTRICT_OVERRIDES: dict[int, LocationContent] = {
+    2: LocationContent(
+        room_id=2,
+        name="Główny Plac Astergardu",
+        description=(
+            "Sercem miasta jest szeroki plac, na którym spotykają się kupcy, żołnierze i ludzie bez stałego zajęcia. "
+            "Bruk jest tu lepiej utrzymany niż w bocznych ulicach, lecz wciąż nosi ślady kół i końskich podków. "
+            "Nad wszystkim wiszą mokre flagi i dym z pieców, a echo kroków odbija się od fasad jak od wnętrza studni."
+        ),
+        inspectables={
+            "studnia fontanna": "Kamienna studnia ma niski cembrowinowy krąg i żelazny kubeł na łańcuchu. Woda jest zimna i lekko słona od miejskiego pyłu.",
+            "ogloszenia tablica słup": "Na słupie wiszą wyblakłe ogłoszenia o targach, straży i zaginionych rzeczach. Dwa z nich są dopisane ręką pisarza, nie urzędnika.",
+            "straz żołnierze ludzie": "Plac należy do wszystkich i nikogo. Straż patrzy tu nie na tłum, lecz na kieszenie i dłonie.",
+        },
+        items=(
+            Item("ława targowa", "Niska, ciężka ława z ciemnego drewna. Służyła kupcom i czekającym klientom.", 5.0, 8, "market_bench_02", item_type="furniture"),
+            Item("skrzynia targowa", "Porysowana skrzynia po solonych śledziach i płótnie.", 2.4, 4, "market_crate_02", is_container=True, capacity=18),
+        ),
+    ),
+    12: LocationContent(
+        room_id=12,
+        name="Kuźnia przy Murze",
+        description=(
+            "Kowalski ogień bije tu przez szczeliny w ścianach i barwi kurz na czerwono. W powietrzu wisi zapach węgla, spalonego smaru i rozgrzanego żelaza. "
+            "Każdy dźwięk młota zdaje się krótszy niż w innych częściach miasta, jakby sam mur połykał resztę hałasu."
+        ),
+        inspectables={
+            "kowadlo młot": "Kowadło jest spłaszczone od lat pracy. Młoty leżą obok w kolejności, którą rozumie tylko właściciel.",
+            "ogien palenisko": "W palenisku tlą się jeszcze ostatnie węgle. Ktoś dorzucił świeżo rozłupaną szczapę, żeby żar nie umarł przed świtem.",
+            "narzedzia szczypce": "Szczypce, pilniki i dłuta wiszą na hakach. Są używane tak często, że ich uchwyty wypolerowały się od dłoni.",
+        },
+        items=(
+            Item("kowalski młot", "Ciężki młot o spękanym trzonku, ale nadal zdolny do pracy.", 2.1, 12, "blacksmith_hammer_12", item_type="tool"),
+            Item("szczypce kowalskie", "Długie szczypce do wyciągania żelaza z ognia.", 1.0, 6, "smith_tongs_12", item_type="tool"),
+            Item("pochodnia kuźnicza", "Pochodnia przesiąknięta smołą i sadzą z kuźni.", 0.5, 2, "forge_torch_12"),
+        ),
+    ),
+    14: LocationContent(
+        room_id=14,
+        name="Karczma pod Żurawiem",
+        description=(
+            "Karczma stoi ciężko przy ulicy, z niskim dachem i szerokim wejściem od głównego szlaku w mieście. "
+            "Przez otwarte okna wypływa zapach warzonego piwa, tłuszczu i mokrych płaszczy. "
+            "To miejsce jest głośne tylko wtedy, gdy jeszcze nie zapadła noc albo gdy ktoś właśnie postawił ostatni kubek na stole."
+        ),
+        inspectables={
+            "lada karczmarz": "Lada jest gładka od łokci i kubków. Za nią wiszą haczyki na kufle, lecz połowa z nich jest pusta.",
+            "kominek ogien": "Ogień w kominku daje więcej dymu niż ciepła. Drewno jest wilgotne, ale karczmarz nie zamierza oszczędzać gościom światła.",
+            "lawy stol": "Ławy są ciężkie i odrapane. Na jednej ktoś wyciął znak żeglarskiego węzła, zapewne po pijaku albo z tęsknoty.",
+        },
+        items=(
+            Item("beczka piwa", "Niska beczka z ciemnym, słabym piwem. Dla karczmy to codzienność, nie luksus.", 14.0, 10, "tavern_beer_barrel_14", is_container=True, capacity=60),
+            Item("miska gulaszu", "Gliniasta miska z resztką gulaszu. Jeszcze ciepła.", 0.8, 3, "tavern_stew_bowl_14", item_type="food", is_consumable=True, effects_on_consume={"restore_stamina": 16}),
+            Item("dębowa ława", "Ława, która pamięta więcej rozmów niż niejeden urzędnik.", 6.0, 9, "tavern_oak_bench_14", item_type="furniture"),
+        ),
+    ),
+    25: LocationContent(
+        room_id=25,
+        name="Koszary Straży",
+        description=(
+            "Koszary zajmują szeroki plac przy południowym ramieniu miasta. Z otwartych drzwi dochodzą kroki, komendy i dźwięk ostrzonej stali. "
+            "W powietrzu miesza się pot, smoła i wilgoć z mokrych płaszczy rozwieszonych przy wejściu."
+        ),
+        inspectables={
+            "lozka prycze": "Prycze są ustawione równo, z zawieszonymi nad nimi tarczami i płaszczami. Każdy przedmiot ma swoje miejsce, choć nikt nie wygląda na zachwyconego porządkiem.",
+            "straznicy zbroja": "Strażnicy siedzą cicho, gdy nie ma rozkazu. Ich cisza jest równie ważna jak szkolenie.",
+            "stajnia konie": "Przy koszarach trzyma się kilka koni patrolowych. Zwierzęta reagują nerwowo na każdy obcy głos.",
+        },
+        items=(
+            Item("drewniana tarcza patrolowa", "Prosta tarcza strażnicza z wybitym znakiem miasta.", 3.0, 14, "guard_shield_25", item_type="shield", slot="lewa_reka", protection=1, shield_block=2),
+            Item("włócznia strażnicza", "Standardowa włócznia miejskiej straży, ciężka w środku i pewna w ręku.", 2.6, 18, "guard_spear_25", item_type="weapon", slot="prawa_reka", damage_type="kluta", base_damage=5, reach=2),
+        ),
+    ),
+    37: LocationContent(
+        room_id=37,
+        name="Świątynia Popiołu",
+        description=(
+            "Świątynia nie błyszczy złotem ani szkłem. Jest zbudowana z ciemnego kamienia i niskich filarów, które znoszą dym z setek świec. "
+            "Wewnątrz pachnie popiołem, woskiem i chłodną wodą na kamiennym progu, jakby modlitwy miały tu zawsze najpierw obmyć stopy."
+        ),
+        inspectables={
+            "oltarz ołtarz": "Ołtarz jest prosty, z popękanym blatem i metalową misą na ofiary z oliwy i wosku.",
+            "swiece wosk": "Świece palą się nierówno, ale nikt nie gasi ich przed czasem. Wosk spływa grubymi smugami po kamieniu.",
+            "kaplani modlitwa": "Kapłani mówią niewiele, lecz ich obecność uspokaja tych, którzy przyszli tu zbyt późno na zwykłe słowa.",
+        },
+        items=(
+            Item("woskowa świeca", "Gruba świeca, jeszcze nieodpalona.", 0.2, 1, "wax_candle_37"),
+            Item("drewniana ławka", "Prosta ławka dla modlących się lub czekających.", 4.0, 6, "chapel_bench_37", item_type="furniture"),
+        ),
+    ),
+    38: LocationContent(
+        room_id=38,
+        name="Port Rzeczny",
+        description=(
+            "Nabrzeże jest krótkie, ale ruchliwe. Płaskodenne łodzie kołyszą się przy palach, a sieci schną na słupach obok beczek ze śledziami i mokrych lin. "
+            "Port nie jest wielki, lecz to przez niego do Astergardu płyną ryby, sól, drewno i wieści z niższych osad."
+        ),
+        inspectables={
+            "lodzie łodzie czolna": "Łodzie są niskie, ciężkie i zbudowane do spokojnej rzeki, nie do chwały. Na burtach widać łaty po dawnych naprawach.",
+            "sieci liny": "Sieci wiszą ciężko od wilgoci. Ktoś starannie łatał je igłą i sznurkiem, by nie rozeszły się przy pierwszym rzucie.",
+            "beczki ryby sol": "Beczki pachną rybą, solą i smołą. To zapach pracy, która utrzymuje miasto przy życiu.",
+        },
+        items=(
+            Item("sieć rybacka", "Mokra sieć z ciężarkami z ołowiu.", 2.2, 9, "fishing_net_38", item_type="tool"),
+            Item("beczka śledzi", "Beczka z solonymi śledziami. Ciężka, ale cenniejsza niż wygląda.", 18.0, 18, "herring_barrel_38", is_container=True, capacity=70),
+            Item("skrzynia portowa", "Skrzynia po towarach rzecznych, z popękanym wiekiem.", 4.8, 7, "river_crate_38", is_container=True, capacity=30),
+        ),
+    ),
+    39: LocationContent(
+        room_id=39,
+        name="Most Rzeczny",
+        description=(
+            "Most łączy oba brzegi niewielkiej rzeki, która wcina się w miasto jak cienki, żywy nóż. "
+            "Deski są mokre od mgły i rzeki, a pod spodem słychać tylko szum wody, zbyt cichy, by uspokoić człowieka przyzwyczajonego do kamiennych murów. "
+            "To miejsce wygląda skromnie, ale bez niego port i targ oddzieliłaby długa droga wokół bagiennych brzegów."
+        ),
+        inspectables={
+            "rzeka woda": "Rzeka jest wąska, lecz szybka. Niesie patyki, pianę i czasem całe gałęzie z górnego biegu.",
+            "deski balustrada": "Balustrada jest nowa tylko w połowie; miejscami widać łaty po zimowych pęknięciach.",
+            "prąd nurt": "Prąd poniżej mostu jest zdradliwy. Kto wpadnie do wody, ten najpierw straci buty, potem cierpliwość.",
+        },
+        items=(
+            Item("zwój liny", "Zwój grubej liny, przydatny przy przeprawie albo cumowaniu łodzi.", 3.2, 6, "bridge_rope_39", item_type="tool"),
+            Item("pochodnia mostowa", "Pochodnia osmolona od nocnych wart przy brzegu.", 0.6, 2, "bridge_torch_39"),
+        ),
+    ),
+    47: LocationContent(
+        room_id=47,
+        name="Rynek Żelazny",
+        description=(
+            "Na rynku handluje się wszystkim, co można zważyć, zwinąć albo wycenić bez patrzenia w oczy. "
+            "Wózki z żelazem stoją obok skrzyń z tkaniną, a przekupki wybijają rytm targu głosami ostrzejszymi niż noże rzeźników. "
+            "Tu Astergard pokazuje swoją prawdziwą twarz: nie królewską, lecz kupiecką."
+        ),
+        inspectables={
+            "kramy stragany": "Stragany są zasłane płótnem, skórą i odłamkami metalu. Każdy sprzedawca ma inną historię, ale te same obcasy.",
+            "wagi odważniki": "Wagi są pilnowane surowiej niż uczciwość. Obok leżą odważniki z wybitymi znakami cechu.",
+            "handel kupcy": "Kupcy mówią szybko, lecz milkną, gdy widzą straż. Wtedy wszyscy nagle przypominają sobie o przepisach.",
+        },
+        items=(
+            Item("odważnik targowy", "Mały odważnik z wybitym znakiem rynku.", 0.7, 5, "market_weight_47"),
+            Item("skrzynka na przyprawy", "Niska skrzynka po cennych przyprawach i ziołach.", 1.5, 9, "spice_crate_47", is_container=True, capacity=12),
+        ),
+    ),
+    54: LocationContent(
+        room_id=54,
+        name="Skład Soli",
+        description=(
+            "Sól trzymana jest tu jak skarb, choć wygląda jak zwykły biały pył. Wewnątrz panuje chłód, a podłoga skrzypi od rozlanych kryształków i ciężkich worków. "
+            "Robotnicy mówią tu półgłosem, bo nawet kichnięcie potrafi wzniecić chmurę drobnego, gryzącego pyłu."
+        ),
+        inspectables={
+            "worki sol": "Worki są ciasno związane i oznaczone kredowym znakiem cechu. Ktoś już policzył ich zawartość.",
+            "beczki skrzynie": "Beczki i skrzynie stoją pod ścianą, gotowe na transport do kuchni, portu albo fortecznych magazynów.",
+            "robotnicy nosze": "Robotnicy przenoszą sól ostrożnie, jakby każdy rozsypany garść oznaczał osobistą winę.",
+        },
+        items=(
+            Item("worek soli", "Ciężki worek z grubą, kuchenną solą.", 4.5, 7, "salt_sack_54", is_container=True, capacity=20),
+            Item("drewniana beczka", "Zwykła beczka na sól lub mokre towary.", 9.0, 8, "wooden_barrel_54", is_container=True, capacity=40),
+        ),
+    ),
+    59: LocationContent(
+        room_id=59,
+        name="Kapliczka Podróżnych",
+        description=(
+            "Kapliczka stoi przy samym wyjściu z bruku, na miejscu, gdzie miasto oddycha już drogą i wiatrem. "
+            "Przywieszone do niej wstążki są wyblakłe od deszczu, a kamienna misa na ofiary pełna jest monet, guzików i małych obietnic. "
+            "Ludzie zatrzymują się tu nie dlatego, że wierzą więcej, lecz dlatego, że dalej nie warto iść bez chwili ciszy."
+        ),
+        inspectables={
+            "wstazki wstążki": "Wstążki szarzeją od deszczu. Każda ma inny wzór, jakby zostawili je podróżni z różnych krain.",
+            "misa ofiary": "W misie leżą drobne monety, kawałki wosku i gładkie kamyki. To skromne ofiary, ale najczęściej szczere.",
+            "droga trakt": "Stąd widać już tylko wylot drogi i koleiny prowadzące ku podmiejskim polom.",
+        },
+        items=(
+            Item("kamienna świeczka", "Mała świeczka zostawiona przez podróżnego.", 0.1, 1, "road_candle_59"),
+            Item("modlitewny sznur", "Prosty sznur z nawleczonymi paciorkami.", 0.2, 2, "prayer_beads_59"),
+        ),
+    ),
+    60: LocationContent(
+        room_id=60,
+        name="Błotna Brama",
+        description=(
+            "Podgrodzie zaczyna się od błota, kolein i wąskich domów przyklejonych do palisady. "
+            "To pierwszy teren poza kamieniem miasta, gdzie ludzie żyją bliżej zwierząt, wozów i deszczu. "
+            "Nie ma tu ceremonialnego wejścia w świat pracy - jest tylko nieustanne brudzenie butów."
+        ),
+        inspectables={
+            "brama palisada": "Brama jest prostsza niż miejska, lecz nosi na sobie te same ślady po naprawach i pośpiechu.",
+            "błoto koleiny": "Błoto wypełnia koleiny po kostki. Widać, że drogi nikt tu nie oszczędza.",
+            "domy chaty": "Domy są niskie, ciasne i ogrzewane tak oszczędnie, jakby drewno było złotem.",
+        },
+        items=(Item("drewniane wiadro", "Wiadro z grubych klepek, dobre do noszenia wody albo zboża.", 1.1, 3, "bucket_60", item_type="tool"),),
+    ),
+    70: LocationContent(
+        room_id=70,
+        name="Droga do Pól",
+        description=(
+            "Droga odchodzi od miasta szerokim łukiem, wyprowadzając wozy ku otwartym polom i gospodarstwom. "
+            "Po bokach ciągną się rowy, niskie płoty i resztki ubitej ziemi, na której jeszcze wczoraj suszyły się snopy. "
+            "Kto zna tę okolicę, wie, że to nie jest zwykły trakt - to codzienna obietnica chleba dla Astergardu."
+        ),
+        inspectables={
+            "pola zagony": "Zagony zaczynają się kilka minut marszu dalej. Ziemia jest ciężka, ale uporządkowana z uporem ludzi, którzy nie znają litości wobec pogody.",
+            "rowy ploty płoty": "Rowy są czyszczone regularnie, żeby wiosenne wody nie zjadły drogi przed żniwami.",
+            "wozy snopy": "Ślady wozów i rozsypane źdźbła pokazują, że droga żyje tu od świtu do zmierzchu.",
+        },
+        items=(Item("kij mierniczy", "Prosty kij do odmierzania pola i płotu.", 0.8, 2, "measuring_staff_70", item_type="tool"),),
+    ),
+    80: LocationContent(
+        room_id=80,
+        name="Droga do Haldun",
+        description=(
+            "Wieś Haldun leży dalej od murów, ale wciąż w zasięgu miejskich wozów i pogłosek. "
+            "Droga tuje się między polami, kępami wierzb i zagrodami, które pamiętają więcej zim niż ludzi. "
+            "Kto idzie tędy po zmroku, ten słyszy już nie miasto, lecz pracę ziemi."
+        ),
+        inspectables={
+            "chlopi gospodarze": "Gospodarze z Haldun patrzą na obcych jak na możliwy kłopot, który trzeba policzyć, zanim zacznie mówić.",
+            "pola zboze zboże": "Pola są równe i wydeptywane codziennie. Żyto i jęczmień trzymają się tu uparcie mimo wiatru.",
+            "droga trakty": "Droga jest szeroka na dwa wozy i jedną złą decyzję. Dalej robi się bardziej wiejsko niż bezpiecznie.",
+        },
+        items=(Item("snop jęczmienia", "Mocno związany snop zboża.", 2.2, 4, "barley_sheaf_80", item_type="food"),),
+    ),
+    84: LocationContent(
+        room_id=84,
+        name="Pola Jęczmienia",
+        description=(
+            "Tutaj ziemia jest tak dobrze obrabiana, jakby każdy skrawek miał własne nazwisko. "
+            "Żółte łany falują nisko, a wiatr niesie z nich suchy pył i zapach słomy. "
+            "Przy drodze stoją narzędzia, wiadra i gnijące snopy, bo nikt nie ma czasu na porządek, gdy nadchodzi zbiory."
+        ),
+        inspectables={
+            "zboze łany": "Łany są niskie i gęste. Przetrwały wiosenny deszcz, ale jeszcze nie przetrwały ludzi z sierpami.",
+            "narzedzia sierpy widły": "Narzędzia leżą byle gdzie, lecz każdy rolnik umiałby wskazać swoje bez chwili wahania.",
+            "wiatr pył": "Pył z pól osiada na ubraniu i zostaje tam do wieczora. To znak, że pracowano bez przerwy.",
+        },
+        items=(
+            Item("sierp zbożowy", "Lekki sierp do żniw. Ostrze jest ostre, ale rękojeść wyślizgana.", 0.9, 6, "harvest_sickle_84", item_type="tool", slot="prawa_reka"),
+            Item("worek ziarna", "Worek pełen ziarna, ciężki i dobrze zawiązany.", 6.5, 12, "grain_sack_84", is_container=True, capacity=25),
+        ),
+    ),
+    95: LocationContent(
+        room_id=95,
+        name="Wschodnia Furta Łowców",
+        description=(
+            "Furtę otwiera się rzadko, bo za nią zaczyna się świat mokrego drewna, sideł i cichego tropienia. "
+            "Osada myśliwych jest mała, ale twarda; jej mieszkańcy wiedzą, kiedy wrócić z lasu i kiedy nie wracać wcale. "
+            "Dym z ich palenisk ma zapach skóry, tłuszczu i żywicy."
+        ),
+        inspectables={
+            "lowcy myśliwi": "Łowcy noszą noże przy pasie i nie lubią pustych rozmów. Zaczynają od obserwacji, a pytania zostawiają na koniec.",
+            "futa palisada": "Furta jest praktyczna, nie ozdobna. Wystarczy do przepuszczenia ludzi, psów i upolowanej zwierzyny.",
+            "dym paleniska": "Dym z osady jest ciężki i lepki. To znak suszonych skór i mięsa, które ma przetrwać zimę.",
+        },
+        items=(Item("wiązka sideł", "Zbiór sideł z powrozem i pętlami.", 1.0, 7, "hunter_traps_95", item_type="tool"),),
+    ),
+    100: LocationContent(
+        room_id=100,
+        name="Plac Tropicieli",
+        description=(
+            "Plac jest tylko ubitym skrawkiem ziemi między szałasami, ale tutaj ważą się ważniejsze rzeczy niż w niejednym urzędzie. "
+            "Na belkach wiszą skóry, łuki i świeżo zdjęte trofea. Mężczyźni i kobiety z osady liczą tutaj zdobycz, dzielą się mięsem i kłócą o ślady."
+        ),
+        inspectables={
+            "skory futra": "Skóry wiszą gęsto, suszone przy dymie. Niektóre są przeznaczone na handel, inne na własne buty i rękawice.",
+            "łuki bełty": "Łuki są proste, lecz dobrze dopasowane do zimnego lasu. Bełty i strzały mają różne długości, bo nikt nie poluje tu z jednego powodu.",
+            "tropy slady": "W glinie placu widać ślady psów, łasic i ludzi wracających z lasu późnym wieczorem.",
+        },
+        items=(
+            Item("łuk myśliwski", "Lekki łuk z ciemnego drewna.", 1.2, 15, "hunter_bow_100", item_type="weapon", slot="prawa_reka", damage_type="pociskowa", base_damage=4, reach=2),
+            Item("kołczan strzał", "Skórzany kołczan z garścią długich strzał.", 1.8, 10, "hunter_quiver_100", item_type="tool"),
+        ),
+    ),
+    110: LocationContent(
+        room_id=110,
+        name="Brama Dungrim",
+        description=(
+            "Forteca Dungrim stoi na drodze jak zaciśnięta pięść. Brama jest wąska, wzmocniona żelazem i patrzona przez ludzi, którzy nie zadają pytań dwa razy. "
+            "To miejsce żyje rozkazem, zapasem i obawą przed tym, co może przyjść z traktu albo z pustki za nim."
+        ),
+        inspectables={
+            "brama trakt": "Brama została zaprojektowana tak, by zatrzymać wóz, znużyć konia i rozgniewać kupca.",
+            "zolnierze żołnierze": "Żołnierze w Dungrim nie wyglądają na paradnych. Ich zadaniem jest trwać i liczyć zapasy.",
+            "kamien mur": "Kamień jest tu ciemny od deszczu i smoły, a mur ma więcej łat niż świętości.",
+        },
+        items=(Item("strażnicza włócznia", "Włócznia fortecznej straży, prosta i dobrze utrzymana.", 2.7, 20, "dungrim_spear_110", item_type="weapon", slot="prawa_reka", damage_type="kluta", base_damage=5, reach=2),),
+    ),
+    113: LocationContent(
+        room_id=113,
+        name="Studnia Forteczna",
+        description=(
+            "Studnia przy garnizonie jest tak głęboka, że jej echo wraca po chwili dłuższej niż rozmowa. "
+            "Woda ma smak kamienia i żelaza, a wartownicy traktują ją niemal jak część załogi. "
+            "Nad kamienną cembrowiną zwiesza się wiadro, którego nikt nie zostawia bez nadzoru."
+        ),
+        inspectables={
+            "studnia woda": "Woda jest zimna, czysta i ciężka od minerałów. Wystarczy do picia, ale nie do przyjemności.",
+            "wiadro lancuch łańcuch": "Łańcuch jest nowy, bo stary pękł tej zimy. W Dungrim rzeczy zużywają się szybciej niż ludzie mówią o tym głośno.",
+            "straz garnizon": "Strażnicy są tu bardziej zmęczeni niż dumni. To wystarcza, by byli skuteczni.",
+        },
+        items=(Item("wiadro forteczne", "Mocne wiadro z metalowym obrzeżem.", 1.6, 4, "fortress_bucket_113", item_type="tool"),),
+    ),
+}
+
 
 def _district_content(room_id: int, index: int, name: str) -> LocationContent:
+    override = _DISTRICT_OVERRIDES.get(room_id)
+    if override is not None:
+        return override
     feature_a = _FEATURES[index % len(_FEATURES)]
     feature_b = _FEATURES[(index + 3) % len(_FEATURES)]
     description = (
