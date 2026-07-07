@@ -13,6 +13,19 @@ NPC_COMBAT_STYLE_BY_VNUM: dict[str, str] = {
     "traveler": "zrownowazony",
     "child": "zrownowazony",
     "beggar": "zrownowazony",
+    "carpenter": "zrownowazony",
+    "tanner": "zrownowazony",
+    "bowyer": "zrownowazony",
+    "armorer": "defensywny",
+    "dockhand": "zrownowazony",
+    "miller": "zrownowazony",
+    "priest_aide": "zrownowazony",
+    "watch_sergeant": "defensywny",
+    "customs_clerk": "zrownowazony",
+    "fishmonger": "zrownowazony",
+    "woodcutter": "zrownowazony",
+    "urchin": "zrownowazony",
+    "vagrant": "zrownowazony",
 }
 
 

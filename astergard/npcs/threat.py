@@ -38,6 +38,19 @@ NPC_THREAT_BY_VNUM: dict[str, str] = {
     "traveler": "standard",
     "child": "trash",
     "beggar": "trash",
+    "carpenter": "trash",
+    "tanner": "trash",
+    "bowyer": "trash",
+    "armorer": "standard",
+    "dockhand": "trash",
+    "miller": "trash",
+    "priest_aide": "trash",
+    "watch_sergeant": "standard",
+    "customs_clerk": "trash",
+    "fishmonger": "trash",
+    "woodcutter": "trash",
+    "urchin": "trash",
+    "vagrant": "trash",
 }
 
 

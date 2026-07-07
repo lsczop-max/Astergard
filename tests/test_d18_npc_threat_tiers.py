@@ -8,6 +8,7 @@ from astergard.combat.balance import CombatBalanceSimulator, threat_balance_scen
 from astergard.database.connections import SQLiteConnectionFactory
 from astergard.database.world_state_repository import WorldStateRepository
 from astergard.npcs.manager import NPCManager
+from astergard.npcs.combat_profiles import combat_style_for_vnum
 from astergard.npcs.models import NPC, NPCFactory
 from astergard.npcs.threat import THREAT_PROFILES, threat_for_vnum
 from astergard.world.manager import WorldManager
@@ -19,6 +20,10 @@ class D18NPCThreatTierTests(unittest.TestCase):
         self.assertEqual(threat_for_vnum("meekhan_soldier").tier, "standard")
         self.assertEqual(threat_for_vnum("mountain_troll").tier, "elite")
         self.assertEqual(threat_for_vnum("warband_captain").tier, "boss")
+        self.assertEqual(threat_for_vnum("watch_sergeant").tier, "standard")
+        self.assertEqual(threat_for_vnum("carpenter").tier, "trash")
+        self.assertEqual(combat_style_for_vnum("watch_sergeant"), "defensywny")
+        self.assertEqual(combat_style_for_vnum("armorer"), "defensywny")
 
     def test_factory_applies_threat_metadata_and_scaling(self) -> None:
         factory = NPCFactory()
@@ -33,6 +38,20 @@ class D18NPCThreatTierTests(unittest.TestCase):
         self.assertGreater(boss.character.stats.sila, soldier.character.stats.sila)
         self.assertGreater(boss.character.weapon().base_damage, soldier.character.weapon().base_damage)  # type: ignore[union-attr]
         self.assertGreater(boss.respawn_delay_seconds, troll.respawn_delay_seconds)
+
+    def test_new_civilian_npcs_have_known_profiles(self) -> None:
+        factory = NPCFactory()
+        sergeant = factory.create("watch_sergeant", 25)
+        carpenter = factory.create("carpenter", 48)
+        clerk = factory.create("customs_clerk", 43)
+        self.assertIsNotNone(sergeant)
+        self.assertIsNotNone(carpenter)
+        self.assertIsNotNone(clerk)
+        self.assertEqual(sergeant.threat_tier, "standard")
+        self.assertEqual(carpenter.threat_tier, "trash")
+        self.assertEqual(clerk.threat_tier, "trash")
+        self.assertEqual(sergeant.character.combat_style, "defensywny")
+        self.assertEqual(carpenter.character.combat_style, "zrownowazony")
 
     def test_balance_has_threat_scenarios(self) -> None:
         names = {scenario.name for scenario in threat_balance_scenarios(iterations=10)}

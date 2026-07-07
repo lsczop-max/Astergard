@@ -203,6 +203,169 @@ class NPCFactory:
                 stats=CharacterStats(7, 8, 8, 10, 8, 75),
                 inventory=[Item("miska na jałmużnę", "Mała miska na monety i okruchy.", 0.4, 1, "beggar_bowl", item_type="misc")],
             )
+        if vnum == "carpenter":
+            return self._basic_npc(
+                vnum="carpenter",
+                name="cieśla",
+                short_desc="Cieśla ma dłonie pełne drzazg i pyłu.",
+                long_desc="Mierzy belki okiem szybciej niż inni liczą pieniądze, a przy tym zawsze myśli o tym, co da się jeszcze uratować z drewna.",
+                zone="Centrum_Twierdza",
+                faction="MEEKHAN",
+                room_id=room_id,
+                stats=CharacterStats(10, 10, 10, 10, 10, 100),
+                inventory=[Item("dłuto", "Robocze dłuto do drewna.", 0.4, 4, "carpenter_chisel_npc", item_type="tool")],
+            )
+        if vnum == "tanner":
+            return self._basic_npc(
+                vnum="tanner",
+                name="garbarz",
+                short_desc="Garbarz pachnie skórą, popiołem i gorzkim płynem z kadzi.",
+                long_desc="Pracuje przy skórach bez pośpiechu, bo wie, że twarda robota i tak zrobi z niego człowieka milczącego.",
+                zone="Centrum_Twierdza",
+                faction="MEEKHAN",
+                room_id=room_id,
+                stats=CharacterStats(9, 9, 10, 9, 10, 95),
+                inventory=[Item("garbarski skrobak", "Płaski skrobak do skóry.", 0.5, 3, "tanner_scraper_npc", item_type="tool")],
+            )
+        if vnum == "bowyer":
+            return self._basic_npc(
+                vnum="bowyer",
+                name="łuczarz",
+                short_desc="Łuczarz niesie pod pachą giętkie drewno i klej do łuków.",
+                long_desc="Nie ufa szybkim rozwiązaniom. Łuk, jak powtarza, musi pamiętać rękę, która go zrobiła.",
+                zone="Centrum_Twierdza",
+                faction="MEEKHAN",
+                room_id=room_id,
+                stats=CharacterStats(9, 11, 9, 11, 10, 95),
+                inventory=[Item("półfabrykat łuku", "Niedokończony łuk z giętkiego drewna.", 0.7, 6, "bowyer_blank_npc", item_type="weapon", slot="prawa_reka", damage_type="pociskowa", base_damage=2, reach=2)],
+            )
+        if vnum == "armorer":
+            return self._basic_npc(
+                vnum="armorer",
+                name="płatnerz",
+                short_desc="Płatnerz ma fartuch okopcony od kuźni i cierpliwość dla krzywych nitów.",
+                long_desc="Naprawia pęknięcia, które inni już by wyrzucili. Tego typu ludzie trzymają miasta razem lepiej niż urzędy.",
+                zone="Centrum_Twierdza",
+                faction="MEEKHAN",
+                room_id=room_id,
+                stats=CharacterStats(12, 9, 12, 10, 10, 110),
+                inventory=[Item("nitownica", "Ciężkie narzędzie do nitowania zbroi.", 1.0, 5, "armorer_riveter_npc", item_type="tool")],
+            )
+        if vnum == "dockhand":
+            return self._basic_npc(
+                vnum="dockhand",
+                name="tragarz nabrzeża",
+                short_desc="Tragarz nabrzeża ma mokre buty i plecy od worków.",
+                long_desc="Przenosi beczki, skrzynie i cudze zyski. Jeśli ma humor, to zwykle dlatego, że dziś jeszcze nic na niego nie spadło.",
+                zone="Centrum_Twierdza",
+                faction="MEEKHAN",
+                room_id=room_id,
+                stats=CharacterStats(11, 10, 11, 9, 9, 100),
+                inventory=[Item("hak ładunkowy", "Żelazny hak do przenoszenia ciężkich pakunków.", 0.8, 4, "dockhook_npc", item_type="tool")],
+            )
+        if vnum == "miller":
+            return self._basic_npc(
+                vnum="miller",
+                name="młynarz",
+                short_desc="Młynarz ma twarz białą od pyłu i ręce od worków z ziarnem.",
+                long_desc="Wie, ile wart jest zbożowy worek i jak łatwo ludzie kłócą się o mąkę. Jego dzień zaczyna się wcześniej niż dzień miasta.",
+                zone="Haldun",
+                faction="MEEKHAN",
+                room_id=room_id,
+                stats=CharacterStats(9, 9, 10, 10, 10, 95),
+                inventory=[Item("miernik ziarna", "Mały drewniany miernik do zboża.", 0.5, 3, "miller_measure_npc", item_type="tool")],
+            )
+        if vnum == "priest_aide":
+            return self._basic_npc(
+                vnum="priest_aide",
+                name="pomocnik kapłana",
+                short_desc="Pomocnik kapłana niesie wiadro wody i zwitek płótna.",
+                long_desc="Nie ma w nim wielkiej powagi, ale zna porządek świątyni i wie, kiedy lepiej mówić mniej niż trzeba.",
+                zone="Centrum_Twierdza",
+                faction="MEEKHAN",
+                room_id=room_id,
+                stats=CharacterStats(8, 10, 9, 11, 12, 90),
+                inventory=[Item("zwitek płótna", "Szorstkie płótno do świątynnych porządków.", 0.3, 2, "priest_aide_linen_npc")],
+            )
+        if vnum == "watch_sergeant":
+            return self._basic_npc(
+                vnum="watch_sergeant",
+                name="sierżant warty",
+                short_desc="Sierżant warty wygląda na człowieka, który nie lubi pytań po zmroku.",
+                long_desc="Pilnuje bram i dziedzińców z twarzą kogoś, kto już widział za dużo cudzych wymówek. Inni strażnicy słuchają go szybciej niż radzą się sumienia.",
+                zone="Centrum_Twierdza",
+                faction="MEEKHAN",
+                room_id=room_id,
+                ai_state="GUARD",
+                stats=CharacterStats(13, 11, 13, 11, 11, 125),
+                equipment={
+                    "prawa_reka": Item("sierżancka włócznia", "Włócznia oznaczona żelaznym pierścieniem.", 2.8, 24, "watch_sergeant_spear", "weapon", "prawa_reka", damage_type="kluta", base_damage=5, reach=2),
+                    "lewa_reka": Item("sierżancka tarcza", "Cięższa tarcza dla starszego straży.", 3.1, 18, "watch_sergeant_shield", "shield", "lewa_reka", protection=1, shield_block=3),
+                },
+                dialogue_tree={
+                    "default": ["Ruch szybko. Zatrzymasz się, jeśli ja powiem."],
+                    "brama": ["Bramy pilnuje się przed świtem i po zmroku. W środku dnia też, jeśli trzeba."],
+                },
+            )
+        if vnum == "customs_clerk":
+            return self._basic_npc(
+                vnum="customs_clerk",
+                name="celnik",
+                short_desc="Celnik ma kałamarz przy pasie i twarz człowieka, który liczy wszystko.",
+                long_desc="Nie nosi broni ostentacyjnie, ale za to pamięta każdą pieczęć i każdy fałszywy pakunek. To wystarcza, by był niebezpieczny w zupełnie innym sensie.",
+                zone="Centrum_Twierdza",
+                faction="MEEKHAN",
+                room_id=room_id,
+                stats=CharacterStats(8, 10, 9, 11, 12, 90),
+                inventory=[Item("księga ceł", "Ciężka księga zapisów celnych.", 1.3, 6, "customs_book_npc", item_type="tool")],
+            )
+        if vnum == "fishmonger":
+            return self._basic_npc(
+                vnum="fishmonger",
+                name="rybaczka",
+                short_desc="Rybaczka sprzedaje ryby szybko, zanim zdążą stracić sens i zapach.",
+                long_desc="Ma twardy głos i ręce od soli. W porcie nikt nie pyta, skąd ma najlepszy towar, bo wszyscy to widzą.",
+                zone="Centrum_Twierdza",
+                faction="MEEKHAN",
+                room_id=room_id,
+                stats=CharacterStats(9, 11, 9, 10, 10, 95),
+                inventory=[Item("hak do ryb", "Krótki hak do rozcinania i czyszczenia ryb.", 0.2, 2, "fishmonger_hook_npc", item_type="tool")],
+            )
+        if vnum == "woodcutter":
+            return self._basic_npc(
+                vnum="woodcutter",
+                name="drwal",
+                short_desc="Drwal ma topór cięższy niż jego uśmiech.",
+                long_desc="Przychodzi z lasu z żywicą na rękawach i nie zadaje pytań, jeśli ktoś nie zadaje ich jego robocie.",
+                zone="Podgrodzie",
+                faction="MEEKHAN",
+                room_id=room_id,
+                stats=CharacterStats(12, 10, 12, 9, 9, 110),
+                inventory=[Item("topór drwala", "Użytkowy topór do ścinania drzew.", 2.9, 8, "woodcutter_axe_npc", item_type="weapon", slot="prawa_reka", damage_type="obuchowa", base_damage=4, reach=1)],
+            )
+        if vnum == "urchin":
+            return self._basic_npc(
+                vnum="urchin",
+                name="dzieciak uliczny",
+                short_desc="Dzieciak uliczny ogląda wszystko z ostrożnością i gotowością do biegu.",
+                long_desc="Ma za duże oczy jak na swój wiek i wie dokładnie, które kieszenie są lekkie. Na ulicy to cenniejsza wiedza niż alfabet.",
+                zone="Centrum_Twierdza",
+                faction="MEEKHAN",
+                room_id=room_id,
+                stats=CharacterStats(6, 12, 7, 11, 8, 65),
+            )
+        if vnum == "vagrant":
+            return self._basic_npc(
+                vnum="vagrant",
+                name="włóczęga",
+                short_desc="Włóczęga stoi z sakwą przy nodze i wygląda, jakby znał za dużo skrótów.",
+                long_desc="Nie trzyma się jednego miejsca dłużej niż trzeba. Tacy ludzie są kłopotem albo świadkami, zależnie od tego, kto pyta.",
+                zone="Centrum_Twierdza",
+                faction="MEEKHAN",
+                room_id=room_id,
+                stats=CharacterStats(8, 10, 8, 10, 9, 85),
+                inventory=[Item("wytarta sakwa", "Stara sakwa z jednym paskiem za mało.", 0.8, 2, "vagrant_sack_npc", is_container=True, capacity=8)],
+            )
         if vnum == "meekhan_soldier":
             c = Character("Żołnierz")
             c.stats = CharacterStats(12, 10, 12, 10, 10, 120)

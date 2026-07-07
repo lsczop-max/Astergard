@@ -70,43 +70,54 @@ START_CONTENT: tuple[LocationContent, ...] = (
     ),
     LocationContent(
         room_id=21,
-        name="Dziedziniec Suchych Studni",
+        name="Studnia Miejska",
         description=(
-            "Na dziedzińcu stoją dwie studnie, obie zakryte ciężkimi kratami. "
-            "Dzieci nie bawią się tu nigdy, a dorośli przechodzą szybciej, niż wymaga droga."
+            "Studnia stoi między domami jak obowiązek, z którym nikt nie dyskutuje. "
+            "Przychodzą tu wszyscy, od straży po dzieci, a kamień wokół cembrowiny jest wyślizgany do połysku."
         ),
         inspectables={
-            "studnia studnie kraty krata": "Krata jest zamknięta na stary łańcuch. Z dołu nie dochodzi plusk wody, tylko zimny przeciąg.",
-            "dzieci": "Nie ma tu dzieci. To właśnie jest najbardziej zauważalne.",
-            "lancuch łańcuch": "Ogniwa są grube i świeżo natłuszczone, jakby ktoś regularnie sprawdzał zamknięcie.",
+            "łańcuch wiadro": "Łańcuch jest posmarowany świeżym tłuszczem, żeby nie zjadała go wilgoć.",
+            "kamień cembrowina": "Kamień na obrzeżu jest chłodny, twardy i wiecznie mokry od rozchlapywanej wody.",
         },
+        items=(Item("wiadro studzienne", "Proste wiadro do noszenia wody.", 1.2, 3, "city_well_bucket_21", item_type="tool"),),
     ),
     LocationContent(
         room_id=22,
-        name="Zaułek Garbarzy",
+        name="Jatki Rzeźników",
         description=(
-            "Między niskimi szopami wisi kwaśny smród skór, popiołu i zgniłej wody. "
-            "Deski pod ścianami są ciemne od lat pracy, której nikt nie chce oglądać z bliska."
+            "Jatki są niskie, czerwone od zachodu i ciemne od krwi niezmywanej do końca. "
+            "Podłoga jest tu mokra od wody, tłuszczu i wszystkiego, co spływa do rynsztoka dopiero nocą."
         ),
         inspectables={
-            "skory skóry": "Skóry wiszą na hakach. Niektóre są świeże, inne sztywne jak deski.",
-            "szopy": "Szopy wyglądają, jakby trzymały się tylko na smołowanym sznurze i uporze właścicieli.",
-            "woda rynsztok": "W rynsztoku płynie szara woda z tłustymi plamami na powierzchni.",
+            "noze haki": "Noże wiszą równo, a haki są ciężkie od dawnej pracy.",
+            "krew podłoga": "Na podłodze widać plamy po krwi, soli i tłuszczu. Nic tu nie pachnie świeżo.",
         },
-        items=(Item("skórzany worek", "Poplamiony worek po garbnikach. Nadal nadaje się jako prosty pojemnik.", 0.6, 3, "leather_sack", is_container=True, capacity=8),),
     ),
     LocationContent(
         room_id=23,
-        name="Ulica Przy Składach",
+        name="Targ Rybny",
         description=(
-            "Długie składy zamykają ulicę z obu stron. Na drzwiach wiszą znaki kupieckie, a pod progami "
-            "leży słoma, piasek i kawałki sznura."
+            "Ryby leżą tu na lodzie, w beczkach albo bez litości dla nosa. "
+            "Handlarze ryczą ceny, rybacy przeklinają wiatr, a mewy krążą nisko nad targiem."
         ),
         inspectables={
-            "sklady składy drzwi": "Drzwi składów są mocne, okute i poznaczone pieczęciami kilku kupieckich rodzin.",
-            "znaki szyldy": "Znaki są proste: zboże, sól, skóry, żelazo. Każdy mówi więcej kupcowi niż podróżnemu.",
-            "sznur sloma słoma": "W słomie można znaleźć urwane wiązania paczek i ślady drobnych gryzoni.",
+            "sieci beczki": "Sieci schną na palach, a obok stoją beczki po śledziach i solankach.",
+            "ryby lód": "Lód topnieje w szare kałuże, więc towar trzeba sprzedawać szybko.",
         },
+        items=(Item("sakwa śledzi", "Mała sakwa z solonymi śledziami.", 1.6, 6, "fish_market_herring_23", item_type="food"),),
+    ),
+    LocationContent(
+        room_id=24,
+        name="Domy Biedoty",
+        description=(
+            "Tu miasto zwęża się do desek, gliny i zbyt wielu ludzi pod jednym dachem. "
+            "Domy są niskie, łatane, często mokre od środka, a jednak pełne życia, które nie ma dokąd pójść."
+        ),
+        inspectables={
+            "chaty bieda": "Chociaż domy są biedne, stoją blisko siebie. W biedzie bliskość bywa jedyną obroną.",
+            "podworka podwórka": "Podwórka są ubite i pełne błota. Dzieci i psy wypracowały tu własne ścieżki szybciej niż dorośli.",
+        },
+        items=(Item("łatana kurtka", "Stara kurtka połatana tyle razy, że oryginalna tkanina prawie zniknęła.", 1.3, 2, "patched_coat_24"),),
     ),
     LocationContent(
         room_id=24,
@@ -471,6 +482,319 @@ _DISTRICT_OVERRIDES: dict[int, LocationContent] = {
         items=(Item("wiadro forteczne", "Mocne wiadro z metalowym obrzeżem.", 1.6, 4, "fortress_bucket_113", item_type="tool"),),
     ),
 }
+
+_DISTRICT_OVERRIDES.update(
+    {
+        3: LocationContent(
+            room_id=3,
+            name="Boczne Uliczki Placu",
+            description=(
+                "Boczne przejścia odchodzą od rynku jak ciemne żyły w kamieniu. "
+                "Między fasadami jest tu ciszej, ale też mniej pewnie, bo każde okno widzi trochę za dużo."
+            ),
+            inspectables={
+                "okna okiennice": "Okiennice uchylają się tylko na moment. Mieszkańcy placu wolą widzieć mniej, niż by chcieli inni.",
+                "rynsztok": "Rynsztok zbiera wodę, pył i drobne resztki z targu.",
+            },
+        ),
+        5: LocationContent(
+            room_id=5,
+            name="Zaułek za Karczmą",
+            description=(
+                "Za karczmą zostają popiół, resztki jedzenia i ludzie, którzy nie chcą być pytani o imię. "
+                "W nocy czuć tu tłuszcz, mokre drewno i stary dym z kuchennego pieca."
+            ),
+            inspectables={
+                "popiół": "Popiół miesza się z błotem i tworzy ciemną skorupę pod butami.",
+                "kufle beczki": "Puste kufle i beczki stoją tu do rana, jeśli wcześniej nie znikną w czyjejś ręce.",
+            },
+            items=(Item("tłusty fartuch", "Stary fartuch kuchenny z plamami po piwie.", 0.6, 2, "tavern_apron_05"),),
+        ),
+        21: LocationContent(
+            room_id=21,
+            name="Studnia Miejska",
+            description=(
+                "Studnia stoi między domami jak obowiązek, z którym nikt nie dyskutuje. "
+                "Przychodzą tu wszyscy, od straży po dzieci, a kamień wokół cembrowiny jest wyślizgany do połysku."
+            ),
+            inspectables={
+                "łańcuch wiadro": "Łańcuch jest posmarowany świeżym tłuszczem, żeby nie zjadała go wilgoć.",
+                "kamień cembrowina": "Kamień na obrzeżu jest chłodny, twardy i wiecznie mokry od rozchlapywanej wody.",
+            },
+            items=(Item("wiadro studzienne", "Proste wiadro do noszenia wody.", 1.2, 3, "city_well_bucket_21", item_type="tool"),),
+        ),
+        22: LocationContent(
+            room_id=22,
+            name="Jatki Rzeźników",
+            description=(
+                "Jatki są niskie, czerwone od zachodu i ciemne od krwi niezmywanej do końca. "
+                "Podłoga jest tu mokra od wody, tłuszczu i wszystkiego, co spływa do rynsztoka dopiero nocą."
+            ),
+            inspectables={
+                "noze haki": "Noże wiszą równo, a haki są ciężkie od dawnej pracy.",
+                "krew podłoga": "Na podłodze widać plamy po krwi, soli i tłuszczu. Nic tu nie pachnie świeżo.",
+            },
+        ),
+        23: LocationContent(
+            room_id=23,
+            name="Targ Rybny",
+            description=(
+                "Ryby leżą tu na lodzie, w beczkach albo bez litości dla nosa. "
+                "Handlarze ryczą ceny, rybacy przeklinają wiatr, a mewy krążą nisko nad targiem."
+            ),
+            inspectables={
+                "sieci beczki": "Sieci schną na palach, a obok stoją beczki po śledziach i solankach.",
+                "ryby lód": "Lód topnieje w szare kałuże, więc towar trzeba sprzedawać szybko.",
+            },
+            items=(Item("sakwa śledzi", "Mała sakwa z solonymi śledziami.", 1.6, 6, "fish_market_herring_23", item_type="food"),),
+        ),
+        25: LocationContent(
+            room_id=25,
+            name="Dziedziniec Straży",
+            description=(
+                "Na dziedzińcu straży stoi stojak na tarcze, kilka żłobów i błoto, które nigdy do końca nie schnie. "
+                "To stąd wychodzą patrole, zanim miasto zacznie udawać poranek."
+            ),
+            inspectables={
+                "tarcze": "Tarcze stoją równo, ale każda ma inne rysy po nocnych interwencjach.",
+                "żołnierze": "Strażnicy wolą zimną herbatę od bohaterskich historii i zwykle mają rację.",
+            },
+        ),
+        35: LocationContent(
+            room_id=35,
+            name="Ogród Ziół Kapłanów",
+            description=(
+                "Za niskim murem kapłani trzymają grządki z gorzkimi ziołami i roślinami na napary. "
+                "Zapach jest czysty tylko przez chwilę, po czym miesza się z wilgocią i dymem z miasta."
+            ),
+            inspectables={
+                "grządki zioła": "Rośliny rosną w równych rzędach, jakby nawet leczenie wymagało porządku.",
+                "mur": "Mur ogrodu jest niski, ale wystarcza, by oddzielić ciszę od ulicy.",
+            },
+            items=(Item("wiązka ziół", "Garść świeżo zebranych ziół leczniczych.", 0.2, 3, "priest_herb_bundle_35"),),
+        ),
+        36: LocationContent(
+            room_id=36,
+            name="Przedsionek Świątyni",
+            description=(
+                "Przedsionek oddziela uliczny chłód od ciszy świątyni. "
+                "Kamienna posadzka jest tu wygładzona przez mokre buty, a świeczniki noszą ślady sadzy i wosku."
+            ),
+            inspectables={
+                "posadzka": "W kamieniu widać małe pęknięcia, naprawiane więcej niż raz.",
+                "świeczniki": "Świeczniki są ciężkie i ciemne od sadzy.",
+            },
+        ),
+        41: LocationContent(
+            room_id=41,
+            name="Pomosty",
+            description=(
+                "Pomosty wychodzą nad wodę jak dłonie ludzi, którzy chcą jeszcze coś przytrzymać. "
+                "Deski są mokre, śliskie i łatane, ale wciąż wytrzymują beczki, sieci i ludzi."
+            ),
+            inspectables={
+                "deski liny": "Deski są czarne od wilgoci, a liny pachną smołą.",
+                "woda": "Woda pod pomostami płynie szybko i niesie śmieci z targu.",
+            },
+            items=(Item("zwój liny", "Gruba lina do cumowania łodzi.", 2.8, 4, "river_dock_rope_41", item_type="tool"),),
+        ),
+        42: LocationContent(
+            room_id=42,
+            name="Przystań Rybacka",
+            description=(
+                "Przystań rybacka żyje od pierwszego wyładowanego kosza do ostatniej beczki ze śledziami. "
+                "W powietrzu czuć rzekę, sól i stary muł."
+            ),
+            inspectables={
+                "lodzie łodzie sieci": "Łodzie są płaskie i mocno obite od brzegu. Sieci schną na palach, a w oczkach widać resztki glonów.",
+                "rybacy": "Rybacy mówią krótko, bo mają ręce zajęte pracą.",
+            },
+        ),
+        43: LocationContent(
+            room_id=43,
+            name="Dom Celników",
+            description=(
+                "Dom celników stoi przy drodze do mostu i obserwuje każdy wóz tak, jakby każda paczka była podejrzana. "
+                "Wnętrze jest skromne, ale pełne list, stempli i pytań o to, co ktoś wiezie."
+            ),
+            inspectables={
+                "stemple listy": "Papier waży tu więcej niż broń.",
+                "atrament": "Atrament jest tani, ale używany oszczędnie.",
+            },
+            items=(Item("stempel celny", "Drewniany stempel z wypalonym znakiem urzędu.", 0.5, 4, "customs_stamp_43"),),
+        ),
+        44: LocationContent(
+            room_id=44,
+            name="Magazyn Soli",
+            description=(
+                "Sól trzyma się tu jak zapas na zimę i wojnę. "
+                "W środku jest chłodno, a podłoga skrzypi od ciężkich worków i białego pyłu."
+            ),
+            inspectables={
+                "worki pył": "Worki są ciasno związane i oznaczone kredą.",
+                "regały": "Regały trzymają wilgoć, ale nadal wytrzymują ciężar zapasów.",
+            },
+            items=(Item("worek soli", "Gruby worek z solą kuchenną.", 4.8, 6, "salt_sack_44", is_container=True, capacity=20),),
+        ),
+        45: LocationContent(
+            room_id=45,
+            name="Szopa Sieciarzy",
+            description=(
+                "Szopa sieciarzy jest niska i ciasna, pełna sznurków, haków i mokrego lnu. "
+                "Tu łata się dziurawe sieci i przeklina ryby, które uciekły poprzedniej nocy."
+            ),
+            inspectables={
+                "igły sznurek": "Igły do sieci leżą w misce obok ciężkich sznurków.",
+                "lny": "Lniane płachty schną na belkach, pachnąc smołą i wodą.",
+            },
+        ),
+        48: LocationContent(
+            room_id=48,
+            name="Warsztat Cieśli",
+            description=(
+                "Warsztat cieśli pełen jest wiórów, belek i niedokończonych ram. "
+                "Drzewo leży tu w kawałkach, ale każdy element ma swój przyszły sens."
+            ),
+            inspectables={
+                "wióry belki": "Wióry zbierają się w suchych stosach, a belki są oznaczone kredą.",
+                "narzędzia": "Narzędzia wiszą na hakach w kolejności znanej tylko właścicielowi.",
+            },
+        ),
+        49: LocationContent(
+            room_id=49,
+            name="Garbarnia",
+            description=(
+                "Garbarnia pachnie tak, że człowiek wie od razu, po co tu przyszedł i jak bardzo chciałby już wyjść. "
+                "Skóry wiszą na ramach, a podłoga jest wiecznie mokra od pracy i odpływu."
+            ),
+            inspectables={
+                "skóry": "Skóry są rozciągnięte na ramach i pracuje się nad nimi powoli.",
+                "baryłki": "Baryłki z garbnikiem stoją pod ścianą.",
+            },
+        ),
+        50: LocationContent(
+            room_id=50,
+            name="Warsztat Łuczarza",
+            description=(
+                "Warsztat łuczarza jest pełen giętkiego drewna, kleju i cierpliwości. "
+                "Na ścianach wiszą półgotowe łuki, a na stole leżą strzały bez lotek."
+            ),
+            inspectables={
+                "łuki": "Łuki wiszą na hakach, od jasnych po ciemne.",
+                "klej": "Klej pachnie żywicą i gotowanym kościem.",
+            },
+        ),
+        51: LocationContent(
+            room_id=51,
+            name="Warsztat Płatnerza",
+            description=(
+                "Płatnerz pracuje w rytmie młotka, skrobaka i oddechu, bo przy zbroi najmniejszy błąd kosztuje skórę. "
+                "Stoją tu połamane hełmy, napierśniki z wgnieceniami i tarcze, które wróciły z bitwy bardziej zniszczone niż właściciele."
+            ),
+            inspectables={
+                "hełmy napierśniki": "Napierśniki wiszą na hakach, częściowo naprawione, częściowo czekające na lepszy dzień.",
+                "młot": "Młot leży obok kowadła i ma ciężar, który budzi respekt.",
+            },
+        ),
+        52: LocationContent(
+            room_id=52,
+            name="Skład Drewna",
+            description=(
+                "Skład drewna to plac pełen belek, szczap i mokrych stosów, które mają dopiero trafić do pieców, warsztatów albo na łodzie. "
+                "W powietrzu czuć żywicę i wilgoć."
+            ),
+            inspectables={
+                "belki szczapy": "Belki są spięte sznurami i oznaczone kredą.",
+                "wióry": "Wióry łatwo chwytają ogień, więc nikt nie zostawia tu lamp bez nadzoru.",
+            },
+            items=(Item("wiązka drewna", "Mała wiązka suchych szczap.", 1.5, 2, "wood_bundle_52"),),
+        ),
+        53: LocationContent(
+            room_id=53,
+            name="Palenisko Węglarskie",
+            description=(
+                "Palenisko węglarskie to czarna, dymiąca dziura w tkance miasta, potrzebna bardziej niż ładna. "
+                "Pnie tlą się tu długo, a ludzie pracują w sadzy i półmroku."
+            ),
+            inspectables={
+                "dym sadza": "Dym jest ciężki i tłusty.",
+                "węgiel": "Węgiel leży w pryzmach, jeszcze ciepły w środku.",
+            },
+        ),
+        54: LocationContent(
+            room_id=54,
+            name="Zaułek Czeladników",
+            description=(
+                "Czeladnicy mieszkają i pracują w zaułku, który nocą brzmi jak zbiór cichych sporów o narzędzia i honor. "
+                "Pod ścianami stoją skrzynki, zwoje sznurów i łaty materiału."
+            ),
+            inspectables={
+                "skrzynki": "Skrzynki stoją jedna na drugiej i każda ma swój zbyt mały porządek.",
+                "wióry pył": "Wióry i pył tworzą cienką warstwę na bruku.",
+            },
+        ),
+        55: LocationContent(
+            room_id=55,
+            name="Rozstaje Traktów",
+            description=(
+                "Rozstaje otwierają się poza miasto jak wybór, który zawsze przychodzi za późno. "
+                "Tutaj drogi rozchodzą się ku polom, młynowi i mostowi, a każdy skręt ma na sobie ślady kół i decyzji."
+            ),
+            inspectables={
+                "drogi koleiny": "Koleiny rozchodzą się w kilka stron.",
+                "kamień": "Na kamieniu granicznym ktoś niedawno zostawił ślad kredy.",
+            },
+        ),
+        56: LocationContent(
+            room_id=56,
+            name="Opuszczona Chata",
+            description=(
+                "Chata stoi krzywo, ale jeszcze nie upadła, jakby sama nie była pewna, czy zasługuje na zapomnienie. "
+                "W środku zalega kurz, stara słoma i kilka śladów po tym, że ktoś kiedyś jednak tu mieszkał."
+            ),
+            inspectables={
+                "słoma kurz": "Słoma jest zbita i zbutwiała.",
+                "palenisko": "Palenisko dawno wygasło. Został tylko ciemny krąg i kilka zwęglonych szczap.",
+            },
+        ),
+        57: LocationContent(
+            room_id=57,
+            name="Gospodarstwo na Skraju",
+            description=(
+                "Gospodarstwo leży już prawie poza miastem, tam gdzie pole zaczyna wygrywać z brukiem. "
+                "Dom, stodoła i mały ogród trzymają się razem przeciwko wiatrowi i podatkom."
+            ),
+            inspectables={
+                "stodoła ogród": "Stodoła ma świeże łaty, a ogród jest mały, lecz uporządkowany.",
+                "płoty": "Płoty naprawiono na szybko, bo wiatry nie czekają na sezon po świętach.",
+            },
+        ),
+        58: LocationContent(
+            room_id=58,
+            name="Pastwiska",
+            description=(
+                "Pastwiska rozciągają się szeroko, płaskie i wietrzne, z niską trawą i wydeptanymi ścieżkami zwierząt. "
+                "To przestrzeń, która wygląda spokojnie tylko z daleka."
+            ),
+            inspectables={
+                "trawa": "Trawa jest niska, szorstka i miejscami już wyjedzona do ziemi.",
+                "ślady": "Ślady kopyt nakładają się na siebie warstwami.",
+            },
+        ),
+        59: LocationContent(
+            room_id=59,
+            name="Kapliczka Przydrożna",
+            description=(
+                "Kapliczka stoi przy drodze jak ostatni znak przed dalszą, mniej pewną częścią świata. "
+                "W niszy z kamienia zostawiono wstążki, monetę i wyblakły kawałek chleba."
+            ),
+            inspectables={
+                "wstążki monety": "Wstążki są wyblakłe, monety ciemne od deszczu.",
+                "nisza": "Nisza w kamieniu jest płytka, ale wystarcza, by osłonić ofiarę od wiatru.",
+            },
+        ),
+    }
+)
 
 
 def _district_content(room_id: int, index: int, name: str) -> LocationContent:
