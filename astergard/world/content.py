@@ -53,7 +53,7 @@ START_CONTENT: tuple[LocationContent, ...] = (
             "skrzynki groty": "W skrzynkach leżą groty włóczni i krótkie żelazne kolce do naprawy palisady.",
             "komin dym": "Dym pachnie mokrym drewnem, tanią kaszą i czymś przypalonym na dnie garnka.",
         },
-        hidden_items=((Item("srebrny pierścień", "Zmatowiały pierścień wciśnięty między deski pod ścianą wartowni.", 0.05, 50, "silver_ring"), 12),),
+        hidden_items=((Item("srebrny pierścień", "Zmatowiały pierścień wciśnięty między deski pod ścianą wartowni.", 0.05, 50, "silver_ring"), 11),),
     ),
     LocationContent(
         room_id=20,
