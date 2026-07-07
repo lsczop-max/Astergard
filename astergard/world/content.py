@@ -1067,8 +1067,594 @@ _D351B_ATMOSPHERE = (
     "Lokalni znają skróty, lecz obcy szybko rozumie, że mapa nie zastąpi pamięci nóg.",
 )
 
+_TRACT_ITEM_MAP: dict[int, tuple[Item, ...]] = {
+    135: (
+        Item("zwój mapy traktu", "Mapa z zaznaczonymi kamieniami milowymi i skrótami.", 0.2, 8, "trakty_route_map_135", "tool"),
+        Item("olej do lamp", "Butelka oleju na wieczorne czuwanie.", 0.4, 3, "trakty_lamp_oil_135", "tool"),
+    ),
+    136: (
+        Item("koc podróżny", "Gruby koc na zimny postój przy kapliczce.", 1.8, 5, "trakty_travel_blanket_136", "tool"),
+    ),
+    138: (
+        Item("list przewozowy", "Papier z opisem karawany i ładunku.", 0.1, 4, "trakty_manifest_138", "tool"),
+    ),
+    140: (
+        Item("zapieczętowany list", "Krótkie pismo owinięte woskowym sznurkiem.", 0.1, 2, "trakty_sealed_note_140", "tool"),
+    ),
+    141: (
+        Item("zwój liny", "Mocny zwój liny do wozu i mostu.", 2.6, 4, "trakty_rope_141", "tool"),
+    ),
+    152: (
+        Item("worek soli", "Mały worek soli na drogę i do konserwacji zapasów.", 0.4, 2, "trakty_salt_152", "tool"),
+    ),
+    165: (
+        Item("wiązka sideł", "Zbiór sideł z powrozem i pętlami.", 1.0, 7, "trakty_trap_bundle_165", "tool"),
+    ),
+    166: (
+        Item("topór rozłupujący", "Ciężki topór do rąbania drewna przy drodze.", 3.1, 9, "trakty_lumber_axe_166", "weapon", "prawa_reka", damage_type="obuchowa", base_damage=4, reach=1, initiative_modifier=0, parry_bonus=0),
+    ),
+    172: (
+        Item("raport patrolowy", "Zwijany raport o ruchu na trakcie.", 0.2, 2, "trakty_patrol_report_172", "tool"),
+    ),
+    176: (
+        Item("znacznik targowy", "Drewniany znacznik używany do oznaczania towaru.", 0.1, 1, "trakty_trade_token_176", "tool"),
+    ),
+    179: (
+        Item("pieczęć przejazdu", "Pieczęć uprawniająca do przejazdu poza szlak.", 0.1, 3, "trakty_pass_seal_179", "tool"),
+    ),
+}
+
+
+def _tract_profile_for(name: str, _index: int) -> tuple[str, dict[str, str]]:
+    lowered = name.lower()
+    if any(marker in lowered for marker in ("kapliczka", "modlitw", "święt")):
+        return (
+            "Przydrożna kapliczka i drobne ofiary tłumią tu hałas traktu.",
+            {
+                "kamien": "Na kamieniu leżą monety, wosk i ślady butów ludzi, którzy przyszli prosić o bezpieczną drogę.",
+                "swiece": "Świece palą się krótko, ale wystarczająco długo, by rozproszyć ciemność przy postoju.",
+                "modlitwa": "Kto się tu zatrzyma, zwykle robi to ciszej niż mówi.",
+            },
+        )
+    if any(marker in lowered for marker in ("kamień", "kamien", "słup", "slup", "znak", "milowy", "kopiec", "głaz", "glaz")):
+        return (
+            "Kamień, słup albo znak przypomina, że na trakcie myli się tylko ten, kto nie patrzy pod nogi.",
+            {
+                "znaki": "Znaki są porysowane od deszczu i wozów, ale nadal da się z nich czytać kierunek.",
+                "koleiny": "Koleiny przy znaku mówią, jak często tędy przejeżdżają wozy i karawany.",
+                "wiatr": "Wiatr smaga kamień tak samo jak twarze ludzi, którzy się tu zatrzymują.",
+            },
+        )
+    if any(marker in lowered for marker in ("most", "bród", "kladka", "kładka", "przepust")):
+        return (
+            "Przejście przez wodę lub nierówny teren wymaga tu cierpliwości i dwóch mocnych lin.",
+            {
+                "woda": "Woda pod konstrukcją jest chłodna i szybka, a każdy ruch wozu słychać pod deskami.",
+                "deski": "Deski i kamienie są wyślizgane przez koła, buty i kopyta.",
+                "liny": "Liny trzymają tyle, ile pozwolił ostatni człowiek, który je sprawdzał.",
+            },
+        )
+    if any(marker in lowered for marker in ("popas", "zajazd", "ognisko", "postoj", "postoju")):
+        return (
+            "To miejsce służy odpoczynkowi, naprawie uprzęży i cichym rozmowom przy ogniu.",
+            {
+                "ognisko": "Kamienie przy ognisku są czarne od wielu drobnych postojów.",
+                "sakwa": "Rozłożone sakwy, kubki i garnki wskazują, że ktoś tu nocował dosłownie przed chwilą.",
+                "drewno": "W stosie drewna widać, że droga nie daje odpocząć nawet wtedy, gdy człowiek już usiadł.",
+            },
+        )
+    if any(marker in lowered for marker in ("woz", "wozów", "wozow", "karawan", "kupiecki", "przejazd", "rozstaje", "rozdroże", "rozdroze", "zjazd", "skręt", "skret", "zakręt", "zakret", "droga", "trakt", "szlak", "koleina")):
+        return (
+            "Tu wozy zwalniają, a karawany ustawiają się w kolejkę do kolejnego odcinka drogi.",
+            {
+                "wozy": "Na ziemi widać ślady skrętu osi, klinów i nerwowego hamowania.",
+                "rozstaje": "Rozstaje są szerokie, ale niosą w sobie więcej decyzji niż drogi.",
+                "ładunek": "Ładunek przy takich miejscach zawsze wygląda, jakby zaraz miał się rozsunąć.",
+            },
+        )
+    if any(marker in lowered for marker in ("pola", "łan", "lan", "chat", "dolina", "brzezina", "brzezin", "granica", "nasyp", "grobla")):
+        return (
+            "Szlak ociera się tu o pola, zarośla i ludzkie obejścia, więc ruch robi się gęstszy i bardziej ostrożny.",
+            {
+                "łany": "Łany i miedze są wydeptane przez ludzi, którzy żyją z drogi i z ziemi jednocześnie.",
+                "płoty": "Płoty naprawiane są częściej niż opowiadane o nich historie.",
+                "wiatr": "Wiatr niesie pył, słomę i czasem zapach gotującej się strawy z dalszych gospodarstw.",
+            },
+        )
+    if any(marker in lowered for marker in ("bagna", "bagno", "torf", "torfow", "mokra", "mokra", "błot", "blot")):
+        return (
+            "Krawędź szlaku staje się tu cięższa, mokrzejsza i mniej przyjazna dla każdego, kto nie zna obejścia.",
+            {
+                "torf": "Torf i błoto połykają ślady szybciej niż ludzie zdążą je obejrzeć.",
+                "mokradło": "Na mokradle najważniejsze są buty, kije i cierpliwość.",
+                "mgła": "Mgła robi z drogi coś krótszego i bardziej niepewnego niż mapa.",
+            },
+        )
+    return (
+        "To odcinek zwykłego traktu, ale nawet zwykłe miejsce ma tu własny ciężar i własne tempo.",
+        {
+            "droga": "Droga jest wyjeżdżona głęboko, a koleiny pokazują ruch bez przerwy.",
+            "pył": "Pył osiada na wszystkim: butach, sakwach i spokojnych twarzach podróżnych.",
+            "cisza": "Cisza trwa tu krótko. Zawsze coś jedzie, idzie albo wraca.",
+        },
+    )
+
+_HALDUN_CONTENT: dict[int, LocationContent] = {
+    80: LocationContent(
+        room_id=80,
+        name="Droga do Haldun",
+        description=(
+            "Droga do Haldun wychodzi z podmiejskiego błota i przechodzi w udeptany trakt pomiędzy zagonami. "
+            "Widać stąd zarówno wieś, jak i wielki ruch wokół niej: wozy, psy, ptaki i ludzi, którzy zawsze gdzieś się spieszą."
+        ),
+        inspectables={
+            "koleiny wozy": "Koleiny są głębokie i świeże. To najpewniejszy znak, że zboże i siano krążą tędy codziennie.",
+            "rowy ploty": "Rowy przy drodze czyszczone są tak samo uparcie jak płoty, bo wiosenna woda nie zna litości.",
+            "domy zagrody": "Pierwsze zagrody stoją blisko drogi, jakby nie chciały się od niej odrywać zbyt daleko.",
+        },
+        items=(Item("znak drogowy Haldun", "Drewniana tabliczka z wypalonym kierunkiem do wsi.", 0.6, 3, "haldun_road_sign_80", "tool"),),
+    ),
+    81: LocationContent(
+        room_id=81,
+        name="Krzyżowy Kamień",
+        description=(
+            "Przy rozstaju stoi głaz z naciętym znakiem i śladami kredy po dawnych oznaczeniach. "
+            "Miejscowi zostawiają tu informacje, wiązki sznurka i wiadomości, których nie warto wozić dalej niż trzeba."
+        ),
+        inspectables={
+            "kamien znak": "Kamień jest obity deszczem, ale nadal dobrze widać kierunkowe nacięcia.",
+            "kreda ogloszenia": "Na skale widać kredowe kreski i stare ślady po ogłoszeniach przybitych do deski.",
+            "rozstaje droga": "Tu drogi dzielą się na wieś, pola i obejście przy fortecznej trasie.",
+        },
+        items=(
+            Item("sznurek oznaczeniowy", "Krótki sznurek używany do znakowania zapasów.", 0.1, 1, "haldun_marker_cord_81", "tool"),
+            Item("tabliczka pola", "Mała tabliczka z numerem zagonu.", 0.2, 2, "haldun_field_tag_81", "tool"),
+        ),
+    ),
+    82: LocationContent(
+        room_id=82,
+        name="Pierwsze Zagony",
+        description=(
+            "Pierwsze zagony są wąskie, ale już dobrze wytyczone. "
+            "Tutaj zaczyna się ziemia, która musi wyżywić domy, stodoły i tych, którzy nie chcą pracować ciężej niż trzeba."
+        ),
+        inspectables={
+            "sadzonki ziemia": "Gleba jest ciężka i wilgotna, lecz wyraźnie spulchniana regularnie od wielu sezonów.",
+            "strach na wróble": "Strachy na wróble są poprute od wiatru, ale nadal skutecznie odganiają ptaki.",
+            "narzedzia sierp": "Narzędzia stoją przy zagonach, gotowe do żniw albo szybkiej naprawy płotu.",
+        },
+        items=(
+            Item("snop jęczmienia", "Mocno związany snop z lokalnych zagonów.", 2.0, 4, "haldun_grain_bundle_82", "food"),
+            Item("stary strach na wróble", "Stara kukła ze słomy i szmat. Nie ma dużej wartości, ale robi swoje.", 3.0, 2, "haldun_scarecrow_82", "furniture"),
+        ),
+    ),
+    83: LocationContent(
+        room_id=83,
+        name="Studnia Haldun",
+        description=(
+            "Studnia stoi pośrodku wsi jak punkt odniesienia dla wszystkich spraw. "
+            "Przy cembrowinie leżą wiadra, sznury i ślady butów tak głębokie, że widać, kto przychodzi tu codziennie, a kto tylko raz."
+        ),
+        inspectables={
+            "cembrowina kamien": "Kamień jest wyślizgany i chłodny. Na krawędzi widać rysy po wiadrach i hakach.",
+            "lancuch wiadro": "Łańcuch skrzypi, ale trzyma. To ważniejsze niż wygląd.",
+            "woda studnia": "Woda jest zimna, ciężka i dobra do picia nawet po dniu pracy na polu.",
+        },
+        items=(
+            Item("wiadro studzienne", "Wiadro do noszenia wody z lokalnej studni.", 1.0, 3, "haldun_well_bucket", "tool"),
+            Item("linowy zwój", "Zwój liny do studni lub płotu.", 0.8, 2, "haldun_well_rope", "tool"),
+        ),
+    ),
+    84: LocationContent(
+        room_id=84,
+        name="Zagony pod Wierzbami",
+        description=(
+            "Zagony pod Wierzbami leżą szerzej niż pierwsze pola i widać po nich, że ziemia dostaje tu więcej uwagi niż gdzie indziej. "
+            "Wierzby dają cień, ale też zbierają wilgoć, więc rolnicy pracują tu ostrożniej."
+        ),
+        inspectables={
+            "wierzby cień": "Wierzby pochylają się nad rowem i osłaniają część pola przed wiatrem.",
+            "zboze łany": "Łany są gęste i równe, gotowe na żniwa albo na kolejną porcję narzekań.",
+            "ślad wóz": "Ślady wozów prowadzą do stodoły i z powrotem, tworząc codzienny rytm gospodarstwa.",
+        },
+        items=(
+            Item("zboże do młyna", "Worek z bochenkiem przyszłej mąki.", 6.8, 7, "haldun_grain_delivery", is_container=True, capacity=25),
+            Item("żelazny sierp", "Sierp z dobrze naostrzonym ostrzem.", 0.9, 6, "haldun_harvest_sickle_84", "tool"),
+        ),
+    ),
+    85: LocationContent(
+        room_id=85,
+        name="Chata Sołtysa",
+        description=(
+            "Chata sołtysa stoi bliżej środka wsi niż większość domów, bo tu przychodzą sprawy, które trzeba liczyć, spisywać i rozstrzygać. "
+            "Przy drzwiach wisi deska z ogłoszeniami, a na ławie leży księga zapisów."
+        ),
+        inspectables={
+            "deska ogloszenia": "Na desce wiszą ogłoszenia o zbożu, naprawach i zaginionych narzędziach.",
+            "ksiega wpisy": "Księga jest gruba od rachunków, nie od ozdobników.",
+            "drzwi próg": "Próg jest mocno wytarty. Tyle ludzi przychodzi tu z prośbą, że drewno już dawno się poddało.",
+        },
+        items=(
+            Item("sołtysia pieczęć", "Drewniana pieczęć do drobnych zapisów.", 0.3, 3, "haldun_headman_seal_85", "tool"),
+            Item("lista robót", "Zwinięta lista napraw do wykonania przed żniwami.", 0.2, 2, "haldun_headman_tasks_85", "tool"),
+        ),
+    ),
+    86: LocationContent(
+        room_id=86,
+        name="Obora pod Wierzbami",
+        description=(
+            "Obora stoi przy zaroślach i pachnie sianem, mlekiem oraz mokrą deską. "
+            "Nie jest duża, ale miejscowi trzymają tu zwierzęta lepiej niż wiele większych gospodarstw."
+        ),
+        inspectables={
+            "krowy żłób": "Krowy leniwie przeżuwają, ale wystarczy jeden obcy ruch, by podnieść całe stado na nogi.",
+            "żłób siano": "Siano jest suche i dobrze ułożone, a żłób wciąż nosi ślady świeżej naprawy.",
+            "drzwi zagroda": "Drzwi są solidne, bo zwierzęta w Haldun mają talent do nieplanowanych wyjść.",
+        },
+        items=(
+            Item("mleczne wiadro", "Wiadro do dojenia i noszenia mleka.", 1.4, 4, "haldun_milk_pail_86", "tool"),
+            Item("wiązka siana", "Sucha wiązka siana dla zwierząt.", 1.2, 2, "haldun_hay_bundle_86"),
+        ),
+    ),
+    87: LocationContent(
+        room_id=87,
+        name="Stodoły Zachodnie",
+        description=(
+            "Kilka stodół stoi tu obok siebie jak długi magazyn wsi. "
+            "Powietrze pachnie słomą, pyłem i drewnem, a deski szumią przy każdym mocniejszym podmuchu."
+        ),
+        inspectables={
+            "stodoła dach": "Dachy są łatane, ale nadal trzymają zapasy suchsze niż niejeden dom.",
+            "wóz siano": "Przez stodoły przejeżdżają wozy z sianem, drewnem i workami zboża.",
+            "belka krokiew": "Belki noszą ślady napraw i nowych klinów, bo w Haldun nic nie stoi bez opieki.",
+        },
+        items=(
+            Item("belka stodolna", "Ciężka belka przygotowana do naprawy dachu.", 4.8, 6, "haldun_barn_beam", "furniture"),
+            Item("zwój słomy", "Słoma związana w praktyczny zwój.", 1.0, 2, "haldun_straw_roll_87"),
+        ),
+    ),
+    88: LocationContent(
+        room_id=88,
+        name="Młynny Rów",
+        description=(
+            "Młynny rów prowadzi wodę do koła i oddaje ją dalej, wzdłuż zabudowań. "
+            "Woda szumi tu stale, a pył mączny osiada na kamieniu i deskach jak cienka warstwa śniegu."
+        ),
+        inspectables={
+            "koło woda": "Koło młyna obraca się wolno, ale równo, bez zbędnych kaprysów.",
+            "sluz rów": "Sluza kieruje wodę wąskim kanałem, ważniejsza dla wsi niż niejeden urzędnik.",
+            "pył mąka": "Pył mączny osiada na wszystkim, co stoi zbyt długo w jednym miejscu.",
+        },
+        items=(
+            Item("węgiel do kuźni", "Worek mocnego węgla, zwykle wynoszony do kuźni.", 3.6, 5, "haldun_forge_coal", is_container=True, capacity=18),
+            Item("kamień młyński", "Mały kamień z odłupanym brzegiem.", 5.0, 4, "haldun_millstone_88", "furniture"),
+        ),
+    ),
+    89: LocationContent(
+        room_id=89,
+        name="Mostek nad Strugą",
+        description=(
+            "Mostek łączy oba brzegi strugi tak, by wóz nie musiał brnąć przez wodę. "
+            "W tym miejscu zbiegają się gospodarstwa, handel i ścieżki, więc zawsze ktoś tu stoi choćby na chwilę."
+        ),
+        inspectables={
+            "deski most": "Deski są wyślizgane od kół i butów, ale nadal trzymają ciężar dnia.",
+            "struga nurt": "Struga jest wąska, lecz szybka. Niesie listki, gałązki i plotki z wyższych pól.",
+            "handel wóz": "To dobre miejsce na wymianę worka, wiadomości albo cen z sąsiadem.",
+        },
+        items=(
+            Item("zwój liny", "Lina przydatna przy przeprawie albo naprawie mostku.", 2.4, 4, "haldun_bridge_rope_89", "tool"),
+            Item("znacznik targowy", "Mały znacznik używany przez handlarzy do oznaczania towaru.", 0.1, 1, "haldun_trade_token_89", "misc"),
+        ),
+    ),
+    90: LocationContent(
+        room_id=90,
+        name="Pola Jęczmienne",
+        description=(
+            "Pola jęczmienne ciągną się szeroko i równo, aż po linię drzew przy drodze. "
+            "To tutaj widać, czy rok był łaskawy, bo wszystko mierzy się liczbą kłosów i tym, ile zostało po gradzie."
+        ),
+        inspectables={
+            "kłosy zboże": "Kłosy są ciężkie i dobrze wyrośnięte. Właśnie tak ma wyglądać pole, które chce wyżywić wieś.",
+            "sierpy widły": "Sierpy i widły stoją przy miedzy, gotowe na żniwa albo na kolejną zmianę pogody.",
+            "wiatr pył": "Wiatr niesie pył i suchą słomę, która przyczepia się do butów na cały dzień.",
+        },
+        items=(
+            Item("worek jęczmienia", "Worek pełen jęczmienia, ciężki i dobrze zawiązany.", 7.0, 9, "haldun_barley_sack_90", is_container=True, capacity=24),
+            Item("stępiony sierp", "Sierp po całym sezonie żniw.", 0.8, 3, "haldun_worn_sickle_90", "tool"),
+        ),
+    ),
+    91: LocationContent(
+        room_id=91,
+        name="Sad Kwaśnych Jabłek",
+        description=(
+            "Sad jest mały, ale zadbany, a jabłka mają wyraźnie kwaśny smak i twardą skórkę. "
+            "Drzewa rosną nisko, przez co trzeba schylać się po owoce i uważać na spadające gałęzie."
+        ),
+        inspectables={
+            "jabłka drzewa": "Owoce są gęsto rozsiane po gałęziach. To jeden z nielicznych sadów, który wytrzymuje wiatr.",
+            "gałęzie kosze": "Kosze i skrzynki stoją pod drzewami, gotowe do szybkiego zbioru.",
+            "trawa wilgoć": "Trawa jest wilgotna od cienia i rano długo nie schnie.",
+        },
+        items=(
+            Item("kosz jabłek", "Kosz kwaśnych jabłek z sadu.", 3.2, 7, "haldun_orchard_crate", is_container=True, capacity=14),
+            Item("skrzynka na owoce", "Skrzynka z wytartym dnem, ale nadal użyteczna.", 1.5, 3, "haldun_fruit_crate_91", is_container=True, capacity=10),
+        ),
+    ),
+    92: LocationContent(
+        room_id=92,
+        name="Pastwisko Koni",
+        description=(
+            "Pastwisko jest szerokie i wietrzne, a konie trzymają się tu bliżej ogrodzeń niż środka pola. "
+            "Widać po nich, że znały już ciężkie wozy i bardziej niż chleb cenią spokój."
+        ),
+        inspectables={
+            "konie ogrodzenie": "Konie obwąchują obcych z wyczuciem tych, którzy nie ufają pierwszemu krokowi.",
+            "ogrodzenie słupy": "Ogrodzenie jest świeżo naprawiane; kilka słupów ma jeszcze ślady po nowych klinach.",
+            "trawa kopyta": "Trawa jest wydeptana przez kopyta i wraca do siebie tylko w najdalszych rogach pastwiska.",
+        },
+        items=(
+            Item("uzda końska", "Solidna uzda do prowadzenia koni.", 1.0, 5, "haldun_horse_bridle", "tool"),
+            Item("sól dla stad", "Mały woreczek soli dla zwierząt.", 0.4, 2, "haldun_salt_pouch_92", "food"),
+        ),
+    ),
+    93: LocationContent(
+        room_id=93,
+        name="Kapliczka Żniwiarzy",
+        description=(
+            "Kapliczka stoi przy drodze do fortecy i przypomina, że żniwa też są rodzajem modlitwy. "
+            "W niszy palą się świece, a wokół leżą drobne ofiary i sznury paciorków."
+        ),
+        inspectables={
+            "swiece wosk": "Świece są grube, miejscami przypalone do kamienia.",
+            "paciorki ofiary": "Paciorki, monety i kawałki chleba leżą w niszy jako proste podziękowanie.",
+            "droga forteca": "Z kapliczki widać już kierunek ku fortecy i cięższy ruch na trakcie.",
+        },
+        items=(
+            Item("wiązka wosku", "Wiązka świeżego wosku do świec.", 0.4, 3, "haldun_wax_bundle", is_container=True, capacity=8),
+            Item("paciorki modlitewne", "Niewielki sznur z paciorkami do modlitwy.", 0.2, 2, "haldun_prayer_beads_93"),
+        ),
+    ),
+    94: LocationContent(
+        room_id=94,
+        name="Droga ku Fortecy",
+        description=(
+            "Droga ku Fortecy wychodzi z Haldun i prowadzi dalej do wojskowego pasa na północy. "
+            "Tu kończy się wiejska codzienność, a zaczyna ruch żołnierzy, zapasów i tych, którzy muszą się tłumaczyć z podróży."
+        ),
+        inspectables={
+            "wozy patrole": "Przez drogę przechodzą patrole, wozy z sianem i ludzie, którzy chcą wejść do fortecy bez zbędnych pytań.",
+            "słup drogowskaz": "Drogowskaz jest porysowany, ale nadal pokazuje właściwy kierunek.",
+            "koleiny błoto": "Koleiny są głębokie i świeże. Nie ma wątpliwości, że tędy ciągle coś jedzie.",
+        },
+        items=(
+            Item("lampa drogowa", "Niewielka lampa przydająca się na nocnym trakcie.", 0.9, 4, "haldun_road_lantern_94", "tool"),
+            Item("rozkaz przewozowy", "Zwinięty list przewozowy z pieczęcią.", 0.1, 2, "haldun_route_notice", "tool"),
+        ),
+    ),
+}
+
+_FORTRESS_CONTENT: dict[int, LocationContent] = {
+    110: LocationContent(
+        room_id=110,
+        name="Brama Dungrim",
+        description=(
+            "Brama Dungrim zamyka fortecę na wąskim przesmyku drogi. Żelazne okucia, hak do łańcucha i zgrana warta mówią jasno, że to nie jest miejsce dla przypadkowych przejazdów."
+        ),
+        inspectables={
+            "brama hak": "Hak i łańcuch są grube, ciężkie i wysmarowane tłuszczem, by wytrzymały deszcz oraz mróz.",
+            "warta straż": "Straż przy bramie stoi nieruchomo, ale obserwuje każde dłonie i każdą sakwę.",
+            "mur przejazd": "Mur przy przejeździe jest świeżo łatany smołą i kamieniem.",
+        },
+        items=(Item("bramny klucz", "Ciężki klucz do bocznej furty.", 0.3, 4, "dungrim_gate_key_110", "tool"),),
+    ),
+    111: LocationContent(
+        room_id=111,
+        name="Przedbramie Wilczych Haków",
+        description=(
+            "Przedbramie jest ciasne, niskie i zbudowane tak, by spowolnić każdego, kto nie został tu oczekiwany. Na belkach wiszą stare haki, a pod nogami widać ślady po kołach wozów i butach wartowników."
+        ),
+        inspectables={
+            "haki belki": "Haki są przeznaczone do zatrzymywania ładunków i ludzi, którzy próbują dyskutować z fortem.",
+            "ślady koła": "Ślady kół są głębokie od ciężkich dostaw i rannych transportów.",
+            "warta drzwi": "Drzwi do przejazdu nie otwierają się bez rozkazu.",
+        },
+        items=(Item("tabliczka meldunkowa", "Mała tabliczka do meldowania ruchu przy bramie.", 0.2, 2, "dungrim_muster_board_111", "tool"),),
+    ),
+    112: LocationContent(
+        room_id=112,
+        name="Dziedziniec Garnizonu",
+        description=(
+            "Dziedziniec Garnizonu jest sercem codziennego ruchu. Tu ćwiczą oddziały, tu stają skrzynie z zapasami i tu każdy rozkaz robi się głośniejszy, niż chciałby dowódca."
+        ),
+        inspectables={
+            "plac tarcze": "Na placu stoją tarcze treningowe i pachołki do ćwiczeń.",
+            "żołnierze ćwiczenia": "Żołnierze ćwiczą krótkimi seriami, bo w Dungrim liczy się oszczędność sił.",
+            "błoto koła": "Błoto miesza się tu z piaskiem i odciskami butów w równych pasach.",
+        },
+        items=(Item("drewniany pachołek", "Pachołek używany do ćwiczeń marszu i ustawiania szyku.", 1.0, 3, "dungrim_training_pole_112", item_type="furniture"),),
+    ),
+    113: LocationContent(
+        room_id=113,
+        name="Studnia Forteczna",
+        description=(
+            "Studnia forteczna stoi na środku dziedzińca i obsługuje nie tylko ludzi, ale i konie, kuchnię oraz magazyny. Woda jest zimna, ciężka i pilnowana prawie jak zapasy bełtów."
+        ),
+        inspectables={
+            "łańcuch wiadro": "Łańcuch jest nowy i ciężki, a wiadro nosi ślady po zimowej naprawie.",
+            "kamien woda": "Kamień wokół studni jest wyślizgany do połysku przez setki butów.",
+            "cisza echo": "Echo ze studni wraca krótko i sucho, jakby nawet woda miała tu wojskowy porządek.",
+        },
+        items=(Item("wiadro forteczne", "Mocne wiadro do wody i zadań służbowych.", 1.4, 4, "dungrim_bucket_113", "tool"),),
+    ),
+    114: LocationContent(
+        room_id=114,
+        name="Stajnie Patroli",
+        description=(
+            "Stajnie są niskie, ciepłe i pełne zapachu słomy oraz mokrej skóry. Konie patrolowe stoją w oddzielnych boksach, gotowe do wyjazdu w każdej chwili."
+        ),
+        inspectables={
+            "boks konie": "Boksy są solidne i świeżo naprawiane, bo konie służbowe nie wybaczają słabych belek.",
+            "siano uzda": "Siano leży równo, a uzdy wiszą na hakach obok numerów boksów.",
+            "kopyta błoto": "Błoto z kopyt zbiera się przy wejściu, gdzie stajenny zmiata je co kilka godzin.",
+        },
+        items=(Item("słoma stajenna", "Sucha słoma do boksów i podsypki.", 1.6, 3, "dungrim_stable_straw_114"),),
+    ),
+    115: LocationContent(
+        room_id=115,
+        name="Kuchnia Garnizonowa",
+        description=(
+            "Kuchnia garnizonowa pracuje bez przerwy. Kotły, łopaty do pieca i ciężkie garnki są tu ważniejsze niż ozdoby, bo cała załoga ma jeść na czas."
+        ),
+        inspectables={
+            "kotly ogien": "Kotły stoją w rzędzie, a ogień w palenisku nie gaśnie od świtu.",
+            "gulasz racje": "Gulasz i racje są liczone dokładniej niż plotki.",
+            "zlew noze": "Noże i łyżki leżą w szeregu, jakby nawet sztućce miały tu musztrę.",
+        },
+        items=(
+            Item("kocioł garnizonowy", "Ciężki kocioł do wojskowego gotowania.", 12.0, 12, "dungrim_garrison_pot_115", item_type="furniture"),
+            Item("łyżka polowa", "Drewniana łyżka odpowiednia do zupy i wartowniczej cierpliwości.", 0.2, 1, "dungrim_field_spoon_115", "tool"),
+        ),
+    ),
+    116: LocationContent(
+        room_id=116,
+        name="Koszary Zachodnie",
+        description=(
+            "Koszary Zachodnie to długi budynek z pryczami, skrzyniami i tablicą rozkazów. W środku zawsze ktoś śpi, ktoś czyści sprzęt, a ktoś inny udaje, że nie słyszy pobudki."
+        ),
+        inspectables={
+            "prycze skrzynie": "Prycze są ustawione równo, a skrzynie stoją pod ścianą z numerami kompanii.",
+            "tablica rozkaz": "Na tablicy wiszą krótkie rozkazy i zmiany wart, zapisane dużymi literami.",
+            "buty pasy": "Buty, pasy i mokre płaszcze schną tutaj szybciej niż charakter nowicjusza.",
+        },
+        items=(Item("posłanie koszarowe", "Skręcone posłanie i koc odłożony po zmianie.", 1.8, 3, "dungrim_barracks_roll_116"),),
+    ),
+    117: LocationContent(
+        room_id=117,
+        name="Kuźnia Wojskowa",
+        description=(
+            "Kuźnia wojskowa jest gorąca, ciasna i nieustannie pełna dźwięku metalu. Naprawia się tu groty, podkowy, nity i rzeczy, które nie mogą się zepsuć w czasie marszu."
+        ),
+        inspectables={
+            "kowadlo młot": "Kowadło nosi ślady po tysiącach uderzeń, a młoty wiszą na ścianie w porządku rozumianym tylko przez kowala.",
+            "iskry ogień": "Iskry lecą nisko, bo kuźnia stoi osłonięta od wiatru.",
+            "ostrza nity": "Ostrza i nity czekają na naprawę w osobnych misach i skrzynkach.",
+        },
+        items=(
+            Item("żarownica", "Pojemnik na żar do przenoszenia ognia między paleniskami.", 1.0, 5, "dungrim_brazier_117", item_type="furniture"),
+            Item("szczypce wojskowe", "Szczypce do cięższych napraw fortecznych.", 1.2, 6, "dungrim_forge_tongs_117", "tool"),
+        ),
+    ),
+    118: LocationContent(
+        room_id=118,
+        name="Izba Oficerska",
+        description=(
+            "Izba Oficerska jest bardziej spokojna niż reszta fortu, ale tylko dlatego, że tu zapadają decyzje. Na stole leżą mapy, pieczęcie i zamknięte raporty."
+        ),
+        inspectables={
+            "mapy pieczęcie": "Mapy są pełne notatek o trakcie, a pieczęcie leżą w jednym, pilnowanym miejscu.",
+            "stol raporty": "Stół jest gładki od wielu odpraw i nerwowych palców.",
+            "krzesla cisza": "Krzesła są ciężkie, a cisza w izbie zwykle oznacza, że zaraz padnie rozkaz.",
+        },
+        items=(Item("raport z patrolu", "Zwinięty raport o zmianie patroli.", 0.2, 2, "dungrim_patrol_report_118", "tool"),),
+    ),
+    119: LocationContent(
+        room_id=119,
+        name="Mur Nad Traktem",
+        description=(
+            "Mur Nad Traktem pozwala obserwować drogę w dół i wyłapywać każdy ruch wozów oraz pieszych. Wiatry są tu ostre, a rozmowy krótkie."
+        ),
+        inspectables={
+            "przedmurze droga": "Z muru widać cały zakręt traktu i miejsce, gdzie łatwo urządzić zasadzkę.",
+            "straż patrzenie": "Strażnicy na murze patrzą więcej niż mówią.",
+            "szczeliny wiatr": "Szczeliny w murze pozwalają oddychać i sprawdzać, czy coś nie idzie od zachodu.",
+        },
+        items=(Item("lornetka forteczna", "Prosta lornetka do obserwacji traktu.", 0.8, 8, "dungrim_spyglass_119", "tool"),),
+    ),
+    120: LocationContent(
+        room_id=120,
+        name="Sala Dowódcy",
+        description=(
+            "Sala Dowódcy jest najciszej strzeżonym miejscem w fortecy. Mapa działań, pieczęcie i krzesło przy stole mówią, że tu ważą się decyzje o całym garnizonie."
+        ),
+        inspectables={
+            "mapa plany": "Mapa jest ciężko obłożona kamieniami i oznaczona kilkoma trasami patroli.",
+            "stol pieczęcie": "Na stole leżą pieczęcie, listy i wosk gotowy do użycia.",
+            "okno trakt": "Przez okno widać trakt i ruch przy bramie.",
+        },
+        items=(Item("rozkaz dowódcy", "Zapieczętowany rozkaz dla zmian fortecznych.", 0.1, 3, "dungrim_commander_order_120", "tool"),),
+    ),
+    121: LocationContent(
+        room_id=121,
+        name="Zbrojownia Dungrim",
+        description=(
+            "Zbrojownia trzyma tarcze, hełmy i części pancerzy na osobnych stojakach. Wszystko tu jest oznaczone i policzone, bo w fortecy brak hełmu jest tak samo ważny jak brak człowieka."
+        ),
+        inspectables={
+            "hełmy tarcze": "Hełmy i tarcze stoją w rzędach według rozmiaru oraz stanu naprawy.",
+            "nity skóra": "Nity, skóra i zapięcia leżą osobno, gotowe do wydania zbrojmistrzowi.",
+            "broń stojaki": "Broń na stojakach jest czyściutka, ale bez przesadnej ozdoby.",
+        },
+        items=(Item("pęk nitów", "Zestaw nitów do naprawy zbroi.", 0.5, 4, "dungrim_armor_rivets_121", "tool"),),
+    ),
+    122: LocationContent(
+        room_id=122,
+        name="Magazyn Główny",
+        description=(
+            "Magazyn Główny pęka od skrzyń, beczek i worków. Kto tu wchodzi, musi wiedzieć, że wszystko ma numer, a każdy brak szybko wychodzi na jaw."
+        ),
+        inspectables={
+            "skrzynie beczki": "Skrzynie i beczki są ustawione tak, by dało się je policzyć w kilka chwil.",
+            "kreda spisy": "Na podłodze kredą zaznaczono strefy składowania.",
+            "klucze magazyn": "Klucze do magazynu wiszą na haku większym niż większość sakiew.",
+        },
+        items=(Item("lista zapasów", "Spis zapasów fortu z bieżącego tygodnia.", 0.1, 2, "dungrim_stock_list_122", "tool"),),
+    ),
+    123: LocationContent(
+        room_id=123,
+        name="Skład Racji",
+        description=(
+            "Skład Racji trzyma to, co najczęściej znika: chleb, sól, suszone mięso i lampowy tłuszcz. Każda półka ma własny znak, a wszystko pachnie sucho i praktycznie."
+        ),
+        inspectables={
+            "chleb sol": "Chleb i sól stoją razem, bo oba kończą się za szybko.",
+            "półki worki": "Półki i worki są podpisane, żeby nikt nie pomylił racji z zapasami warsztatowymi.",
+            "pieczęć wydanie": "Pieczęć wydania leży przy małej skrzynce, gotowa na kolejny patrol.",
+        },
+        items=(Item("racja awaryjna", "Dodatkowa porcja suchych zapasów.", 0.6, 4, "dungrim_emergency_ration_123", "food", is_consumable=True, effects_on_consume={"restore_stamina": 10}),),
+    ),
+    124: LocationContent(
+        room_id=124,
+        name="Wyjazd na Zachodni Trakt",
+        description=(
+            "Wyjazd na Zachodni Trakt jest ostatnim punktem fortecy przed drogą w otwarty teren. Tu kontroluje się wóz, pieczęć i ostatni raz patrzy na zawartość ładunku."
+        ),
+        inspectables={
+            "szlaban trakt": "Szlaban jest szeroki i ciężki, bo ma zatrzymać także najuporczywszy wóz.",
+            "pieczęcie warta": "Warta przy wyjeździe sprawdza pieczęcie szybciej niż wymówki.",
+            "błoto ślady": "Błoto miesza się z koleinami i pokazuje, jak często tędy coś opuszcza fort.",
+        },
+        items=(Item("pieczęć przejazdu", "Pieczęć uprawniająca do przejazdu poza fort.", 0.1, 3, "dungrim_pass_seal_124", "tool"),),
+    ),
+}
+
 
 def _d351b_content(room_id: int, index: int, name: str, label: str, terrain: str, feature_a: tuple[str, str], feature_b: tuple[str, str], feature_c: tuple[str, str]) -> LocationContent:
+    if room_id in _HALDUN_CONTENT:
+        return _HALDUN_CONTENT[room_id]
+    if room_id in _FORTRESS_CONTENT:
+        return _FORTRESS_CONTENT[room_id]
+    if 135 <= room_id <= 179:
+        lead, inspectables = _tract_profile_for(name, index)
+        description = (
+            f"{name} leży w strefie: {label}. {lead} "
+            f"{_D351B_ATMOSPHERE[index % len(_D351B_ATMOSPHERE)]}"
+        )
+        tract_items = _TRACT_ITEM_MAP.get(room_id, ())
+        tract_hidden_items: tuple[tuple[Item, int], ...] = ()
+        if room_id in {139, 151, 159, 170, 177}:
+            tract_hidden_items = ((Item("miedziana moneta", "Brudna miedziana moneta zgubiona przy drodze.", 0.01, 1, f"road_copper_{room_id}"), 8),)
+        return LocationContent(room_id=room_id, name=name, description=description, inspectables=inspectables, items=tract_items, hidden_items=tract_hidden_items)
     description = (
         f"{name} leży w strefie: {label}. To {terrain}, ukształtowany przez codzienny ruch ludzi, wozów i patroli. "
         f"{_D351B_ATMOSPHERE[index % len(_D351B_ATMOSPHERE)]}"
@@ -1204,6 +1790,30 @@ def _d351c_forest_content(room_id: int, index: int, name: str) -> LocationConten
         items = (Item("wiązka suchego chrustu", "Lekka wiązka chrustu, dobra na ognisko albo do prostych prac obozowych.", 0.4, 1, f"dry_brushwood_{room_id}"),)
     if room_id in {230, 246, 258, 272}:
         hidden_items = ((Item("garść leśnych ziół", "Gorzko pachnące zioła zebrane z miejsc, których nie widać z duktu.", 0.05, 3, f"forest_herbs_{room_id}"), 11),)
+    if room_id == 246:
+        items = (
+            Item("złamany klin", "Pęknięty klin znaleziony przy obozowisku drwali.", 0.4, 2, "forest_broken_wedge_246", "tool"),
+            Item("wiązka suchego chrustu", "Lekka wiązka chrustu, dobra na ognisko albo do prostych prac obozowych.", 0.4, 1, "dry_brushwood_246"),
+        )
+    if room_id == 252:
+        items = (
+            Item("kamienny medalik", "Mały kamienny medalik pozostawiony przy kapliczce.", 0.1, 4, "forest_chapel_token_252", "tool"),
+        )
+    if room_id == 258:
+        items = (
+            Item("bukłak strumienny", "Bukłak napełniony świeżą wodą ze strumienia.", 1.0, 2, "forest_stream_waterskin_258", "food", is_consumable=True, effects_on_consume={"restore_stamina": 4}),
+        )
+    if room_id == 267:
+        items = (
+            Item("zardzewiały garnek", "Garnek porzucony przy dawnym obozie.", 1.2, 3, "forest_abandoned_pot_267", "tool"),
+            Item("stary rzemień", "Krótki, stary rzemień od sakwy lub pułapki.", 0.1, 1, "forest_old_strap_267", "tool"),
+        )
+    if room_id == 272:
+        hidden_items = ((Item("garść leśnych ziół", "Gorzko pachnące zioła zebrane z miejsc, których nie widać z duktu.", 0.05, 3, "forest_herbs_272"), 11),)
+    if room_id == 230:
+        hidden_items = ((Item("garść leśnych ziół", "Gorzko pachnące zioła zebrane z miejsc, których nie widać z duktu.", 0.05, 3, "forest_herbs_230"), 11),)
+    if room_id == 274:
+        hidden_items = ((Item("znacznik obozu", "Zardzewiały znak pozostawiony przez dawne obozowisko banitów.", 0.1, 5, "forest_camp_token_274", "tool"), 13),)
     return LocationContent(room_id=room_id, name=name, description=description, inspectables=inspectables, items=items, hidden_items=hidden_items)
 
 
@@ -1271,8 +1881,8 @@ def _make_d351d_content() -> tuple[LocationContent, ...]:
 
 
 _D351E_PASS_NAMES = (
-    "Droga pod Strażnicą Przełęczy", "Przedbramie Kamiennych Strażników", "Dziedziniec Północnej Warty", "Studnia pod Skarpą", "Barak Zimowych Wart",
-    "Skład Siana i Soli", "Wieża Sygnałowa Mekhary", "Mur nad Gardzielą", "Brama Wąskiego Gardła", "Ostatni Kamień Graniczny",
+    "Brama Strażnicy Przełęczy", "Dziedziniec Meldunkowy", "Wieża Zwiadowców", "Izba Przewodnika", "Plac Karawan",
+    "Stajnie Wozów", "Izba Podróżnych", "Kaplica Przełęczy", "Ambona Myśliwego", "Brama do Dungrim",
 )
 
 _D351E_MOUNTAIN_NAMES = (
@@ -1323,6 +1933,171 @@ _D351E_MOUNTAIN_FEATURES = (
 
 
 def _d351e_pass_content(room_id: int, index: int, name: str) -> LocationContent:
+    if room_id == 125:
+        return LocationContent(
+            room_id=room_id,
+            name=name,
+            description=(
+                "Brama Strażnicy Przełęczy jest pierwszym miejscem, w którym droga zwalnia przed śniegiem, pieczęciami i pytaniami. "
+                "Tu wóz czeka, aż komendant lub wartownik potwierdzi, że przejazd nie przysporzy kłopotów niżej w dolinie."
+            ),
+            inspectables={
+                "brama łańcuch": "Łańcuch bramy jest gruby i świeżo natarty tłuszczem, żeby nie zamarzł podczas nocnej zmiany.",
+                "meldunki tablica": "Na tablicy meldunkowej zapisuje się ruch karawan, opóźnienia i to, kto ma wrócić przed zmrokiem.",
+                "wiatr szczeliny": "Wiatr wciska się przez szczeliny jak ciekawski urzędnik. Zimą to on pierwszy ogłasza zmianę pogody.",
+            },
+            items=(Item("mapa przełęczy", "Złożona mapa z zaznaczonymi przejazdami i miejscami, gdzie najczęściej zbiera się śnieg.", 0.2, 6, "straznica_pass_map_125", "tool"),),
+        )
+    if room_id == 126:
+        return LocationContent(
+            room_id=room_id,
+            name=name,
+            description=(
+                "Dziedziniec Meldunkowy zbiera wszystkich, którzy muszą liczyć ludzi, konie i skrzynie. "
+                "Ślady kół mieszają się tu z odciskami butów, a każda nowa karawana zostawia po sobie inny układ błota."
+            ),
+            inspectables={
+                "ślady koła": "Koleiny pokazują, że najcięższe wozy muszą skręcać szeroko, żeby nie zaryć bokiem w kamień.",
+                "tablica dyżury": "Na tablicy dyżurów wisi rozpiska wart i zmian. Kto czyta ją uważnie, oszczędza sobie krzyków później.",
+                "palenisko dym": "W palenisku pali się powoli, bo tu bardziej liczy się ciepło dłoni niż ogień do ozdoby.",
+            },
+            items=(Item("dzwonek alarmowy", "Żelazny dzwonek do podniesienia straży, gdy w przełęczy dzieje się coś pilnego.", 0.6, 5, "straznica_alarm_bell_126", item_type="tool"),),
+        )
+    if room_id == 127:
+        return LocationContent(
+            room_id=room_id,
+            name=name,
+            description=(
+                "Wieża Zwiadowców stoi wyżej niż reszta przejazdu i patrzy na szlak, zanim ten zdąży skręcić ku śniegu. "
+                "To miejsce służy bardziej obserwacji niż obronie, ale w przełęczy jedno bez drugiego długo nie działa."
+            ),
+            inspectables={
+                "luneta okno": "Przy oknie leży luneta z porysowaną soczewką. Zwiadowcy używają jej do liczenia karawan i śledzenia chmur.",
+                "schody drewno": "Schody skrzypią, lecz są dobrze utrzymane. Nikt nie chce, by zwiadowca zsunął się przy pierwszym meldunku.",
+                "chorągiew wiatr": "Mała chorągiewka na maszcie pokazuje wiatr lepiej niż większość rozmów w strażnicy.",
+            },
+            items=(
+                Item("luneta strażnicza", "Prosta luneta do obserwacji traktu i górskich zakrętów.", 0.8, 8, "straznica_spyglass_127", "tool"),
+                Item("zardzewiały grot włóczni", "Stary grot, wciąż ostry pod warstwą rdzy.", 0.25, 2, "rusty_spearhead_127", "tool"),
+            ),
+        )
+    if room_id == 128:
+        return LocationContent(
+            room_id=room_id,
+            name=name,
+            description=(
+                "Izba Przewodnika pachnie mapą, lampowym olejem i suchym sznurkiem. "
+                "To tu rozplątuje się drogę dla ludzi, którzy nie chcą zejść z szlaku w złym miejscu."
+            ),
+            inspectables={
+                "mapa stol": "Na stole leży mapa z odręcznymi uwagami o zakrętach, lawinach i miejscach, gdzie koń łamie krok.",
+                "olej lampa": "Olej do lamp trzyma się w małych butelkach, bo przy przełęczy nigdy nie ma go za dużo.",
+                "sznur notatki": "Notatki są przywiązane sznurkiem, żeby nie porwał ich wiatr wpadający przez uchylone okno.",
+            },
+            items=(
+                Item("olej do lamp", "Mała butelka oleju na nocne czuwanie przy przełęczy.", 0.4, 3, "straznica_lamp_oil", "tool"),
+                Item("zwój mapy", "Zwijana mapa przełęczy z zaznaczonymi ścieżkami i punktami widokowymi.", 0.2, 8, "straznica_pass_map", "tool"),
+            ),
+        )
+    if room_id == 129:
+        return LocationContent(
+            room_id=room_id,
+            name=name,
+            description=(
+                "Plac Karawan to niewielki, utwardzony skrawek ziemi, gdzie wozy ustawiają się w półkole przed dalszą drogą. "
+                "Kupcy sprawdzają plomby, woźnice przeklinają zbocze, a straż liczy skrzynie tak, jakby każda była osobnym problemem."
+            ),
+            inspectables={
+                "skrzynie plomby": "Skrzynie mają nowe plomby, ale na kilku widać już drobne pęknięcia po zimnym transporcie.",
+                "wóz koło": "Koła wozów są obwiązane liną, żeby nie zjechały przy nawrocie na stromiznę.",
+                "cła rachunki": "Rachunki za przejazd leżą przy skrzyni z pieczęciami. Nikt nie lubi, ale każdy je tu zna.",
+            },
+            items=(Item("list przewozowy", "Papier z rozpisaną karawaną, ładunkiem i pieczęcią przejazdu.", 0.1, 4, "straznica_manifest_129", "tool"),),
+        )
+    if room_id == 130:
+        return LocationContent(
+            room_id=room_id,
+            name=name,
+            description=(
+                "Stajnie Wozów są niskie i ciasne, zbudowane bardziej pod koła niż pod wygodę ludzi. "
+                "Tu naprawia się oś, wiąże uprząż i stawia klin, zanim droga zacznie zbyt mocno ciągnąć w dół."
+            ),
+            inspectables={
+                "koło oś": "Przy ścianie stoją koła z zapasowymi obręczami i świeżym smarem.",
+                "uprząż klin": "Uprzęże wiszą na hakach, a kliny są zawsze pod ręką, bo zbocze nie wybacza chwili spóźnienia.",
+                "siano słoma": "Siano jest skromne, ale suche. W przełęczy to już brzmi jak luksus.",
+            },
+            items=(
+                Item("zwój liny", "Mocny zwój liny do wozów, noszy i mocowania ładunku.", 2.6, 4, "straznica_rope", "tool"),
+                Item("klin pod koło", "Drewniany klin do unieruchamiania wozu na zboczu.", 0.7, 2, "straznica_wheel_wedge", "tool"),
+            ),
+        )
+    if room_id == 131:
+        return LocationContent(
+            room_id=room_id,
+            name=name,
+            description=(
+                "Izba Podróżnych jest prostym schronieniem dla tych, którzy nie zdążyli zejść z przełęczy przed nocą. "
+                "Ławy, koce i mały piecyk wystarczają, by człowiek przestał marznąć i zaczął myśleć rozsądniej."
+            ),
+            inspectables={
+                "ławy koce": "Ławy są szorstkie, ale koce trzymają ciepło lepiej niż większość obietnic składanych na drodze.",
+                "piecyk dym": "Piecyk daje równy żar i trochę dymu. W przełęczy to uczciwa wymiana.",
+                "kubki woda": "Przy ścianie stoją kubki i dzban wody, gotowe dla zmęczonych gości.",
+            },
+            items=(Item("koc podróżny", "Gruby koc chroniący przed wiatrem na nocnym postoju.", 1.8, 5, "straznica_travel_blanket", "tool"),),
+        )
+    if room_id == 132:
+        return LocationContent(
+            room_id=room_id,
+            name=name,
+            description=(
+                "Kaplica Przełęczy jest mała i surowa, ale podróżni zostawiają tu świece, kamyki i krótkie modlitwy. "
+                "To miejsce nie zatrzymuje wiatru, tylko pozwala ludziom wziąć oddech przed następnym podejściem."
+            ),
+            inspectables={
+                "misa świece": "W kamiennej misie stoją świece, skrawki wosku i kilka drobnych monet.",
+                "wstęgi dzwonek": "Wstęgi przy wejściu trzepoczą nawet wtedy, gdy wiatr wydaje się cichnąć.",
+                "kamień cisza": "Kamień jest tu gładszy od reszty strażnicy, bo ludzie odruchowo ściszają głos.",
+            },
+            items=(
+                Item("świeca pielgrzyma", "Krótka świeca pozostawiona przez podróżnych.", 0.2, 1, "straznica_pilgrim_candle_132", item_type="tool"),
+                Item("worek soli", "Mały worek soli na drogę i do prostego posiłku.", 0.4, 2, "straznica_road_salt_132", "tool"),
+            ),
+        )
+    if room_id == 133:
+        return LocationContent(
+            room_id=room_id,
+            name=name,
+            description=(
+                "Ambona Myśliwego to wysoka półka skalna z widokiem na boczne zejście i kilka wystających skał, gdzie zwierzyna lubi się kryć. "
+                "Kto zna tropy, ten widzi tu więcej niż tylko kamień."
+            ),
+            inspectables={
+                "tropy śnieg": "Na cienkiej warstwie śniegu widać ślady kopyt, łap i podkutych butów.",
+                "sidła strzały": "Sidła wiszą na haku obok strzał. Myśliwy trzyma wszystko blisko ręki.",
+                "skóra futro": "Na belce suszą się skóry i futra, przesycone zimnym powietrzem i dymem z ognia.",
+            },
+            items=(
+                Item("wiązka grotów", "Wiązka prostych grotów do strzał i bełtów.", 0.7, 5, "straznica_arrowheads", "tool"),
+                Item("futro z kozicy", "Ciepłe futro z górskiej kozicy.", 1.9, 11, "straznica_chamois_fur", "armor", "korpus", protection=1),
+            ),
+        )
+    if room_id == 134:
+        return LocationContent(
+            room_id=room_id,
+            name=name,
+            description=(
+                "Brama do Dungrim zamyka Strażnicę Przełęczy od strony zachodniego zejścia. "
+                "To ostatni punkt, w którym straż liczy pieczęcie, zanim droga spadnie ku wojskowemu fortowi."
+            ),
+            inspectables={
+                "pieczęcie warta": "Pieczęcie leżą tu równo, bo bez nich nikt nie przejdzie dalej w stronę Dungrim.",
+                "mur koleiny": "Mur ma tu głębokie koleiny od wozów i sań, które schodziły ze stromej strony przełęczy.",
+                "śnieg znak": "Śnieg zbiera się przy murze w małe pasy, pokazując, skąd najczęściej wciska się wiatr.",
+            },
+            items=(Item("pieczęć przejazdu", "Pieczęć uprawniająca do przejazdu poza strażnicę.", 0.1, 3, "straznica_pass_seal_134", "tool"),),
+        )
     feature_a = _D351E_PASS_FEATURES[index % len(_D351E_PASS_FEATURES)]
     feature_b = _D351E_PASS_FEATURES[(index + 2) % len(_D351E_PASS_FEATURES)]
     description = (
@@ -1331,11 +2106,7 @@ def _d351e_pass_content(room_id: int, index: int, name: str) -> LocationContent:
         "To miejsce ma więcej wspólnego z rygorem niż z chwałą: liczy wozy, ludzi i zapasy, zanim pozwoli im wejść w góry."
     )
     inspectables = {feature_a[0]: feature_a[1], feature_b[0]: feature_b[1], "znaki rozkazy tablice": "Tablice są krótkie: opłaty, zakazy, ostrzeżenia przed śniegiem i lista tych, którzy nie wrócili."}
-    items: tuple[Item, ...] = ()
-    hidden_items: tuple[tuple[Item, int], ...] = ()
-    if room_id in {127, 132}:
-        items = (Item("zardzewiały grot włóczni", "Stary grot, wciąż ostry pod warstwą rdzy.", 0.25, 2, f"rusty_spearhead_{room_id}"),)
-    return LocationContent(room_id=room_id, name=name, description=description, inspectables=inspectables, items=items, hidden_items=hidden_items)
+    return LocationContent(room_id=room_id, name=name, description=description, inspectables=inspectables)
 
 
 def _d351e_mountain_content(room_id: int, index: int, name: str) -> LocationContent:
@@ -1567,6 +2338,18 @@ def _d351h_swamp_content(room_id: int, index: int, name: str) -> LocationContent
         items = (Item("garść torfowego ziela", "Wilgotne, ostro pachnące ziele zebrane na krawędzi mokradła.", 0.05, 3, f"hookri_bog_herb_{room_id}"),)
     if room_id in {481, 488, 495, 499}:
         hidden_items = ((Item("czarny kamyk z bagna", "Gładki, ciemny kamyk zimny nawet w dłoni.", 0.03, 5, f"hookri_black_stone_{room_id}"), 14),)
+    if room_id == 475:
+        hidden_items = ((Item("zestaw torfowych ziół", "Wiązka mokrych, lecz użytecznych roślin z mokradła.", 0.05, 4, "swamp_herbs_475"), 12),)
+    if room_id == 481:
+        items = (
+            Item("wiązka trzcin", "Wiązka trzcin ściętych na suchszej kępie.", 0.4, 2, "swamp_reeds_481", "tool"),
+        )
+    if room_id == 495:
+        items = (
+            Item("kamienny talizman", "Ciężki, ciemny talizman znaleziony przy starym ołtarzu.", 0.2, 5, "swamp_talisman_495", "tool"),
+        )
+    if room_id == 499:
+        hidden_items = ((Item("czarny kamyk bagienny", "Gładki, ciemny kamyk zimny nawet w dłoni.", 0.03, 5, "hookri_black_stone_499"), 14),)
     return LocationContent(room_id=room_id, name=name, description=description, inspectables=inspectables, items=items, hidden_items=hidden_items)
 
 

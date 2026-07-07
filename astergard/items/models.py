@@ -159,5 +159,182 @@ def vendor_shop_inventory() -> list[Item]:
     ]
 
 
+def haldun_market_inventory() -> list[Item]:
+    return [
+        Item("chleb wiejski", "Bochen na zakwasie, jeszcze ciepły po porannym wypieku.", 0.5, 2, "haldun_country_bread", "food", is_consumable=True, effects_on_consume={"restore_stamina": 10}),
+        Item("jabłka z sadu", "Koszyk kwaśnych jabłek z lokalnego sadu.", 1.0, 4, "haldun_orchard_apples", "food", is_consumable=True, effects_on_consume={"restore_stamina": 5}),
+        Item("ser wiejski", "Twardy ser zawinięty w płótno.", 0.7, 5, "haldun_country_cheese", "food", is_consumable=True, effects_on_consume={"restore_stamina": 8}),
+        Item("worek nasion", "Mieszanka nasion gotowa na wiosenny zasiew.", 1.4, 6, "haldun_seed_sack", is_container=True, capacity=14),
+    ]
+
+
+def haldun_forge_inventory() -> list[Item]:
+    return [
+        Item("podkowa", "Prosta podkowa do naprawy końskiego kopyta.", 0.8, 4, "haldun_horseshoe", "tool"),
+        Item("gwoździe", "Pakiet mocnych gwoździ do płotów i stajen.", 0.3, 2, "haldun_nails", "tool"),
+        Item("sierp", "Lekki sierp do żniw.", 0.8, 6, "haldun_scythe", "weapon", "prawa_reka", damage_type="cieta", base_damage=2, reach=1, initiative_modifier=1, parry_bonus=0),
+        Item("łopata", "Płaska łopata do rowów i błota.", 1.6, 5, "haldun_shovel", "tool"),
+    ]
+
+
+def haldun_mill_inventory() -> list[Item]:
+    return [
+        Item("mąka razowa", "Workowana mąka z lokalnego młyna.", 1.0, 3, "haldun_wholemeal_flour", "food", is_consumable=True, effects_on_consume={"restore_stamina": 4}),
+        Item("worek zboża", "Ciężki worek z jęczmieniem.", 6.8, 8, "haldun_grain_sack", is_container=True, capacity=24),
+        Item("otręby", "Tani, pożywny worek otrębów.", 1.1, 2, "haldun_bran", "food", is_consumable=True, effects_on_consume={"restore_stamina": 3}),
+        Item("babka na zakwasie", "Płaski chleb na szybki posiłek.", 0.4, 2, "haldun_flat_loaf", "food", is_consumable=True, effects_on_consume={"restore_stamina": 6}),
+    ]
+
+
+def dungrim_armory_inventory() -> list[Item]:
+    return [
+        Item("hełm garnizonowy", "Prosty hełm używany przez wartowników fortecy.", 2.8, 18, "dungrim_garrison_helm", "armor", "glowa", protection=1),
+        Item("płaszcz patrolowy", "Ciężki płaszcz chroniący przed wiatrem na murach.", 3.4, 24, "dungrim_patrol_cloak", "armor", "korpus", protection=1),
+        Item("tarcza forteczna", "Tarcza okuta żelazem, zrobiona do długiej służby.", 4.0, 30, "dungrim_fortress_shield", "shield", "lewa_reka", protection=2, shield_block=3),
+        Item("miecz wartowniczy", "Krótki miecz dla straży i oficerów.", 1.9, 28, "dungrim_watch_sword", "weapon", "prawa_reka", damage_type="cieta", base_damage=4, reach=1, initiative_modifier=1, parry_bonus=1),
+    ]
+
+
+def dungrim_quartermaster_inventory() -> list[Item]:
+    return [
+        Item("racja żołnierska", "Sucha porcja do marszu i nocnej wachty.", 0.6, 4, "dungrim_ration", "food", is_consumable=True, effects_on_consume={"restore_stamina": 8}),
+        Item("oliwa do lamp", "Mała butelka oliwy do lamp i pochodni.", 0.4, 3, "dungrim_lamp_oil", "tool"),
+        Item("zwój bełtów", "Zwój bełtów do fortecznych kusz.", 1.4, 10, "dungrim_bolt_bundle", "tool"),
+        Item("stara latarnia", "Latarnia z grubym szkłem, dobra na patrol.", 1.3, 8, "dungrim_lantern", "tool"),
+    ]
+
+
+def dungrim_stable_inventory() -> list[Item]:
+    return [
+        Item("siano wojskowe", "Zapas siana dla koni patrolowych.", 3.0, 4, "dungrim_hay_bundle", "food", is_consumable=False),
+        Item("uzda patrolowa", "Mocna uzda do służbowych koni.", 1.1, 7, "dungrim_patrol_bridle", "tool"),
+        Item("podkowa forteczna", "Cięższa podkowa do końskiej służby.", 0.9, 5, "dungrim_fortress_horseshoe", "tool"),
+    ]
+
+
+def dungrim_kitchen_inventory() -> list[Item]:
+    return [
+        Item("gulasz garnizonowy", "Gęsty, prosty gulasz dla załogi.", 0.9, 5, "dungrim_garrison_stew", "food", is_consumable=True, effects_on_consume={"restore_stamina": 12}),
+        Item("chleb koszarowy", "Twardy bochen z wojskowego pieca.", 0.5, 2, "dungrim_barracks_bread", "food", is_consumable=True, effects_on_consume={"restore_stamina": 9}),
+        Item("worek soli", "Worek soli do kuchni i konserwacji zapasów.", 2.6, 4, "dungrim_kitchen_salt", is_container=True, capacity=18),
+    ]
+
+
+def straznica_supply_inventory() -> list[Item]:
+    return [
+        Item("olej do lamp", "Mała butelka oleju na nocne czuwanie przy przełęczy.", 0.4, 3, "straznica_lamp_oil", "tool"),
+        Item("zwój mapy", "Zwijana mapa przełęczy z zaznaczonymi ścieżkami i punktami widokowymi.", 0.2, 8, "straznica_pass_map", "tool"),
+        Item("zwój liny", "Mocny zwój liny do wozów, noszy i mocowania ładunku.", 2.6, 4, "straznica_rope", "tool"),
+        Item("koc podróżny", "Gruby koc chroniący przed wiatrem na nocnym postoju.", 1.8, 5, "straznica_travel_blanket", "tool"),
+    ]
+
+
+def straznica_caravan_inventory() -> list[Item]:
+    return [
+        Item("list przewozowy", "Papier z rozpisaną karawaną, ładunkiem i pieczęcią przejazdu.", 0.1, 4, "straznica_manifest_129", "tool"),
+        Item("smar do osi", "Czarny smar przydatny przy naprawie kół wozu.", 0.5, 3, "straznica_axle_grease", "tool"),
+        Item("klin pod koło", "Drewniany klin do unieruchamiania wozu na zboczu.", 0.7, 2, "straznica_wheel_wedge", "tool"),
+        Item("suszone mięso", "Twardy kawałek mięsa na długą drogę.", 0.6, 4, "straznica_dried_meat", "food", is_consumable=True, effects_on_consume={"restore_stamina": 9}),
+        Item("woda w bukłaku", "Bukłak z zimną wodą dla karawany.", 1.0, 2, "straznica_waterskin", "food", is_consumable=True, effects_on_consume={"restore_stamina": 4}),
+    ]
+
+
+def straznica_hunter_inventory() -> list[Item]:
+    return [
+        Item("wiązka grotów", "Wiązka prostych grotów do strzał i bełtów.", 0.7, 5, "straznica_arrowheads", "tool"),
+        Item("skórzane rękawice", "Rękawice z wyprawionej skóry, dobre na wiatr i kamień.", 0.4, 4, "straznica_leather_gloves", "armor", "lewa_reka", protection=0),
+        Item("sakwa ziołowa", "Mała sakwa z suszonymi ziołami i gorzkimi liśćmi.", 0.5, 4, "straznica_herb_sack", "food", is_consumable=True, effects_on_consume={"restore_stamina": 5}),
+        Item("futro z kozicy", "Ciepłe futro z górskiej kozicy.", 1.9, 11, "straznica_chamois_fur", "armor", "korpus", protection=1),
+    ]
+
+
+def trakty_route_inventory() -> list[Item]:
+    return [
+        Item("olej do lamp", "Mała butelka oleju na nocne czuwanie przy trakcie.", 0.4, 3, "trakty_lamp_oil_135", "tool"),
+        Item("zwój mapy", "Zwijana mapa z kamieniami milowymi i zaznaczonymi rozstajami.", 0.2, 8, "trakty_route_map_135", "tool"),
+        Item("zwój liny", "Mocny zwój liny do wozów, mostków i ładunku.", 2.6, 4, "trakty_rope_141", "tool"),
+        Item("koc podróżny", "Gruby koc chroniący przed wiatrem na nocnym postoju.", 1.8, 5, "trakty_travel_blanket_136", "tool"),
+    ]
+
+
+def trakty_caravan_inventory() -> list[Item]:
+    return [
+        Item("list przewozowy", "Papier z rozpisaną karawaną, ładunkiem i pieczęcią przejazdu.", 0.1, 4, "trakty_manifest_138", "tool"),
+        Item("smar do osi", "Czarny smar przydatny przy naprawie kół wozu.", 0.5, 3, "trakty_axle_grease", "tool"),
+        Item("klin pod koło", "Drewniany klin do unieruchamiania wozu na zboczu.", 0.7, 2, "trakty_wheel_wedge", "tool"),
+        Item("suszone mięso", "Twardy kawałek mięsa na długą drogę.", 0.6, 4, "trakty_dried_meat", "food", is_consumable=True, effects_on_consume={"restore_stamina": 9}),
+        Item("woda w bukłaku", "Bukłak z zimną wodą dla karawany.", 1.0, 2, "trakty_waterskin", "food", is_consumable=True, effects_on_consume={"restore_stamina": 4}),
+    ]
+
+
+def trakty_courier_inventory() -> list[Item]:
+    return [
+        Item("zapieczętowany list", "Krótkie pismo owinięte woskowym sznurkiem.", 0.1, 2, "trakty_sealed_note_140", "tool"),
+        Item("wosk do pieczęci", "Twardy wosk do zamykania listów i worków.", 0.2, 2, "trakty_seal_wax", "tool"),
+        Item("atramentowy fiolek", "Mała fiolka atramentu na meldunki i notatki.", 0.1, 2, "trakty_ink_vial", "tool"),
+        Item("gwizdek pocztowy", "Krótki gwizdek przydatny w drodze.", 0.1, 1, "trakty_whistle", "tool"),
+    ]
+
+
+def trakty_hunter_inventory() -> list[Item]:
+    return [
+        Item("wiązka grotów", "Wiązka prostych grotów do strzał i bełtów.", 0.7, 5, "trakty_arrowheads", "tool"),
+        Item("skórzane rękawice", "Rękawice z wyprawionej skóry, dobre na wiatr i kamień.", 0.4, 4, "trakty_leather_gloves", "armor", "lewa_reka", protection=0),
+        Item("sakwa ziołowa", "Mała sakwa z suszonymi ziołami i gorzkimi liśćmi.", 0.5, 4, "trakty_herb_sack", "food", is_consumable=True, effects_on_consume={"restore_stamina": 5}),
+        Item("futro z kozicy", "Ciepłe futro z górskiej kozicy.", 1.9, 11, "trakty_chamois_fur", "armor", "korpus", protection=1),
+    ]
+
+
+def trakty_lumber_inventory() -> list[Item]:
+    return [
+        Item("topór rozłupujący", "Ciężki topór do rąbania drewna przy drodze.", 3.1, 9, "trakty_lumber_axe", "weapon", "prawa_reka", damage_type="obuchowa", base_damage=4, reach=1, initiative_modifier=0, parry_bonus=0),
+        Item("klin do drewna", "Metalowy klin do rozszczepiania pieńków.", 0.8, 3, "trakty_wood_wedge", "tool"),
+        Item("żywica sosnowa", "Lepka żywica do napraw i uszczelnień.", 0.3, 3, "trakty_resin", "tool"),
+        Item("wiązka chrustu", "Suchy chrust przydatny na ognisko.", 1.0, 2, "trakty_kindling", "food"),
+    ]
+
+
+def puszcza_herbal_inventory() -> list[Item]:
+    return [
+        Item("wiązka leśnych ziół", "Zioła zebrane z mokrego poszycia i cienistych polan.", 0.2, 4, "puszcza_herb_bundle", "food", is_consumable=True, effects_on_consume={"restore_stamina": 4}),
+        Item("suszone grzyby", "Pęk suszonych grzybów na długą drogę.", 0.3, 3, "puszcza_dry_mushrooms", "food", is_consumable=True, effects_on_consume={"restore_stamina": 5}),
+        Item("maść na ukąszenia", "Prosta maść z tłuszczu i ziół.", 0.2, 5, "puszcza_bite_ointment", "tool"),
+        Item("woreczek nasion", "Nasiona roślin potrzebnych w lesie i przy obejściu.", 0.5, 4, "puszcza_seed_pouch", is_container=True, capacity=8),
+    ]
+
+
+def puszcza_hunter_inventory() -> list[Item]:
+    return [
+        Item("kołczan strzał", "Skórzany kołczan z długimi strzałami.", 1.6, 10, "puszcza_arrows", "tool"),
+        Item("sidła leśne", "Zestaw sidel i pętli na zwierzynę.", 1.0, 8, "puszcza_traps", "tool"),
+        Item("futro sarny", "Cienkie, miękkie futro z lasu.", 1.5, 7, "puszcza_deer_fur", "armor", "korpus", protection=0),
+        Item("nóż tropiciela", "Krótki nóż do skór, lin i tropów.", 0.3, 6, "puszcza_tracker_knife", "weapon", "prawa_reka", damage_type="kluta", base_damage=2, reach=1, initiative_modifier=1, parry_bonus=0),
+    ]
+
+
+def puszcza_hermit_inventory() -> list[Item]:
+    return [
+        Item("skórzana torba", "Torba pełna notatek, sznurków i drobnych znalezisk.", 1.0, 6, "puszcza_hermit_bag", is_container=True, capacity=10),
+        Item("stary medalik", "Wytarty medalik noszony na sznurku.", 0.1, 5, "puszcza_hermit_medallion", "tool"),
+        Item("kubek z kory", "Kubek wyrzeźbiony z kory i drewna.", 0.2, 2, "puszcza_bark_cup", "tool"),
+    ]
+
+
+def bagna_herbal_inventory() -> list[Item]:
+    return [
+        Item("torfowe ziele", "Wilgotne, ostre ziele zebrane na skraju mokradła.", 0.1, 4, "bagna_bog_herb", "food", is_consumable=True, effects_on_consume={"restore_stamina": 4}),
+        Item("suszone pałki", "Szkliście suche pałki i sitowie do naparów.", 0.2, 3, "bagna_reed_bundle", "tool"),
+        Item("maść przeciw wilgoci", "Lepka maść chroniąca skórę przed mokradłem.", 0.3, 5, "bagna_moisture_salve", "tool"),
+    ]
+
+
+def bagna_hermit_inventory() -> list[Item]:
+    return [
+        Item("talizman z kości", "Niewielki talizman wystrugany z kości i drewna.", 0.1, 4, "bagna_bone_talisman", "tool"),
+        Item("stary kij", "Kij do chodzenia po kładkach i trzcinie.", 0.8, 3, "bagna_old_staff", "weapon", "prawa_reka", damage_type="obuchowa", base_damage=1, reach=2, initiative_modifier=0, parry_bonus=0),
+        Item("sznur ostów", "Sznur mokrych ostów i wiązanych trzcin.", 0.2, 2, "bagna_reed_rope", "tool"),
+    ]
+
+
 def innkeeper_favor_item() -> Item:
     return Item("gorący posiłek", "Ciepły, prosty posiłek dla zaufanego gościa.", 0.8, 5, "innkeeper_favor_meal", "food", is_consumable=True, effects_on_consume={"restore_stamina": 14})

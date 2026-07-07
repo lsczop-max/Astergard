@@ -10,7 +10,7 @@ from astergard.npcs.models import NPC
 
 
 class WorldReactionService:
-    LOCAL_ZONES = {"Centrum_Twierdza", "Podgrodzie"}
+    LOCAL_ZONES = {"Centrum_Twierdza", "Podgrodzie", "Straznica_Przeleczy", "Puszcza_Ciszy", "Knieja_Cichych_Sciezek", "Bagna_Hookri"}
     HELP_REP = 5
     THEFT_REP = -2
     ATTACK_REP = -18
@@ -40,7 +40,7 @@ class WorldReactionService:
         if rep:
             self.factions.adjust(char, self.factions.MEEKHAN, rep)
         quest_id = str(event.payload.get("quest_id", ""))
-        if quest_id in {"market_delivery", "blacksmith_tools", "fisher_net", "priest_herbs"}:
+        if quest_id in {"market_delivery", "blacksmith_tools", "fisher_net", "priest_herbs", "haldun_well_bucket", "haldun_forge_coal", "haldun_grain_delivery", "haldun_barn_beam", "haldun_orchard_crate", "haldun_watch_round", "straznica_meldunek", "straznica_manifest", "straznica_lamp_oil", "straznica_rope", "straznica_blanket", "straznica_hunter_report", "trakty_kurier_note", "trakty_manifest", "trakty_lamp_oil", "trakty_rope", "trakty_blanket", "trakty_hunter_report", "puszcza_herbs", "puszcza_camp_token", "puszcza_stream_water", "bagna_herbs", "bagna_stone", "bagna_tracks"}:
             self.factions.adjust(char, self.factions.MEEKHAN, self.HELP_REP)
         self._emit_reputation_changed(char, "quest")
 

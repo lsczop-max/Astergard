@@ -149,6 +149,9 @@ class WorldStateRepository:
                 npc.respawn_delay_seconds = int(npc_payload.get("respawn_delay_seconds", npc.respawn_delay_seconds))
                 npc.threat_tier = str(npc_payload.get("threat_tier", npc.threat_tier))
                 npc.threat_label = str(npc_payload.get("threat_label", npc.threat_label))
+                schedule = npc_payload.get("daily_schedule", npc.daily_schedule)
+                if isinstance(schedule, dict):
+                    npc.daily_schedule = {str(phase): str(activity) for phase, activity in schedule.items()}
                 npc.daily_activity = str(npc_payload.get("daily_activity", npc.daily_activity))
                 daily_target = npc_payload.get("daily_target_room_id", npc.daily_target_room_id)
                 npc.daily_target_room_id = int(daily_target) if daily_target is not None else None
@@ -197,6 +200,7 @@ class WorldStateRepository:
             "respawn_delay_seconds": npc.respawn_delay_seconds,
             "threat_tier": npc.threat_tier,
             "threat_label": npc.threat_label,
+            "daily_schedule": dict(npc.daily_schedule),
             "daily_activity": npc.daily_activity,
             "daily_target_room_id": npc.daily_target_room_id,
             "daily_phase": npc.daily_phase,

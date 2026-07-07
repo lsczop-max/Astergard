@@ -78,20 +78,69 @@ class NPCManager:
         self.spawn("traveler", 59)
         self.spawn("child", 24)
         self.spawn("urchin", 24)
-        self.spawn("farmer", 80)
-        self.spawn("farmer", 84)
-        self.spawn("miller", 87)
+        self.spawn("haldun_farmer", 80)
+        self.spawn("haldun_farmer", 82)
+        self.spawn("haldun_wellkeeper", 83)
+        self.spawn("haldun_farmerka", 84)
+        self.spawn("haldun_solt", 85)
+        self.spawn("haldun_miller", 87)
+        self.spawn("haldun_blacksmith", 88)
+        self.spawn("haldun_merchant", 89)
+        self.spawn("haldun_pasterz", 92)
+        self.spawn("haldun_wartownik", 94)
+        self.spawn("dungrim_guard", 110)
+        self.spawn("dungrim_patrol_guard", 112)
+        self.spawn("dungrim_stablemaster", 114)
+        self.spawn("dungrim_cook", 115)
+        self.spawn("dungrim_sergeant", 116)
+        self.spawn("dungrim_military_blacksmith", 117)
+        self.spawn("dungrim_lieutenant", 118)
+        self.spawn("dungrim_patrol_guard", 119)
+        self.spawn("dungrim_commander", 120)
+        self.spawn("dungrim_armorer", 121)
+        self.spawn("dungrim_quartermaster", 122)
+        self.spawn("dungrim_storekeeper", 123)
+        self.spawn("dungrim_guard", 124)
         self.spawn("traveler", 100)
-        self.spawn("astergard_guard", 110)
-        self.spawn("farmer", 113)
         self.spawn("priest_aide", 35)
         self.spawn("vagrant", 56)
         self.spawn("carpenter", 48)
         self.spawn("tanner", 49)
         self.spawn("bowyer", 50)
         self.spawn("armorer", 51)
-        for rid in [101, 125, 233, 399]:
+        for rid in [101, 233, 399]:
             self.spawn("wolf", rid)
+        self.spawn("straznica_dowodca", 125)
+        self.spawn("straznica_wartownik", 126)
+        self.spawn("straznica_zwiadowca", 127)
+        self.spawn("straznica_przewodnik", 128)
+        self.spawn("straznica_karawanowy", 129)
+        self.spawn("straznica_woznica", 130)
+        self.spawn("straznica_podrozny", 131)
+        self.spawn("straznica_pielgrzym", 132)
+        self.spawn("straznica_mysliwy", 133)
+        self.spawn("straznica_wartownik", 134)
+        self.spawn("puszcza_mysliwy", 216)
+        self.spawn("puszcza_zielarz", 223)
+        self.spawn("puszcza_jelen", 241)
+        self.spawn("puszcza_drwal", 246)
+        self.spawn("puszcza_pustelnik", 252)
+        self.spawn("puszcza_dzik", 267)
+        self.spawn("bagna_zielarz", 478)
+        self.spawn("bagna_zaba", 481)
+        self.spawn("bagna_mysliwy", 488)
+        self.spawn("bagna_pustelnik", 493)
+        self.spawn("trakty_przewodnik", 135)
+        self.spawn("trakty_pielgrzym", 136)
+        self.spawn("trakty_karawaniarz", 138)
+        self.spawn("trakty_kurier", 140)
+        self.spawn("trakty_woznica", 141)
+        self.spawn("trakty_podrozny", 145)
+        self.spawn("trakty_zebrak", 156)
+        self.spawn("trakty_mysliwy", 165)
+        self.spawn("trakty_drwal", 166)
+        self.spawn("trakty_straznik", 172)
+        self.spawn("trakty_handlarz", 176)
 
     def can_spawn_at(self, room_id: int) -> bool:
         loc = self.world.get_location(room_id)
@@ -120,126 +169,23 @@ class NPCManager:
             return "wieczór"
         return "noc"
 
+    def _route_depth_for(self, npc: NPC) -> int:
+        if npc.vnum in {"astergard_guard", "watch_sergeant", "podgrodzie_straznik_miejski", "haldun_wartownik", "dungrim_guard", "dungrim_patrol_guard", "dungrim_sergeant", "straznica_wartownik", "straznica_zwiadowca", "straznica_dowodca", "trakty_straznik", "puszcza_jelen", "puszcza_dzik", "bagna_zaba"}:
+            return 3
+        if npc.vnum in {"podgrodzie_woznica", "haldun_solt", "dungrim_commander", "dungrim_lieutenant", "straznica_przewodnik", "straznica_karawanowy", "straznica_mysliwy", "straznica_woznica", "straznica_podrozny", "straznica_pielgrzym", "trakty_przewodnik", "trakty_karawaniarz", "trakty_kurier", "trakty_woznica", "trakty_podrozny", "trakty_pielgrzym", "trakty_mysliwy", "trakty_drwal", "trakty_handlarz", "puszcza_mysliwy", "puszcza_zielarz", "puszcza_pustelnik", "puszcza_drwal", "bagna_zielarz", "bagna_pustelnik", "bagna_mysliwy"}:
+            return 3
+        if npc.vnum in {"innkeeper", "podgrodzie_karczmarz", "podgrodzie_karczmarka", "merchant", "customs_clerk", "fishmonger", "podgrodzie_handlarz", "podgrodzie_przekupka", "haldun_merchant", "haldun_wellkeeper", "haldun_blacksmith", "haldun_miller", "haldun_farmerka", "dungrim_quartermaster", "dungrim_storekeeper", "dungrim_armorer", "dungrim_military_blacksmith", "dungrim_stablemaster", "dungrim_cook", "puszcza_zielarz", "bagna_zielarz"}:
+            return 2
+        if npc.vnum in {"blacksmith", "carpenter", "tanner", "bowyer", "armorer", "podgrodzie_kowal", "podgrodzie_pomocnik_kowala", "fisherman", "podgrodzie_rybak", "dockhand", "podgrodzie_piekarz", "puszcza_drwal"}:
+            return 2
+        if npc.vnum in {"child", "urchin", "podgrodzie_dziecko", "beggar", "vagrant", "podgrodzie_zebrak", "traveler", "podgrodzie_pielgrzym", "haldun_farmerka", "puszcza_pustelnik", "bagna_pustelnik", "trakty_zebrak"}:
+            return 2
+        if npc.vnum in {"farmer", "woodcutter", "miller", "priest_aide", "podgrodzie_chlop", "podgrodzie_chlopka", "haldun_farmer", "haldun_pasterz", "puszcza_jelen", "puszcza_dzik", "bagna_zaba"}:
+            return 3
+        return 1
+
     def _routine_for(self, npc: NPC) -> DailyRoutine:
-        if npc.vnum in {"astergard_guard", "watch_sergeant", "podgrodzie_straznik_miejski"}:
-            return DailyRoutine(
-                activity_by_phase={
-                    "świt": "Zmienia wartę i rozgląda się po ulicy.",
-                    "dzień": "Patroluje ulicę.",
-                    "wieczór": "Obchodzi posterunek przed nocą.",
-                    "noc": "Zmienia wartę i pilnuje bramy.",
-                },
-                route_depth=3,
-            )
-        if npc.vnum in {"innkeeper", "podgrodzie_karczmarz", "podgrodzie_karczmarka"}:
-            return DailyRoutine(
-                activity_by_phase={
-                    "świt": "Sprząta salę i otrzepuje stoły.",
-                    "dzień": "Obsługuje gości przy ladzie.",
-                    "wieczór": "Wyciera drewniane stoły i liczy kufle.",
-                    "noc": "Zostaje w karczmie po zamknięciu drzwi.",
-                },
-                route_depth=2,
-            )
-        if npc.vnum in {"merchant", "customs_clerk", "fishmonger", "podgrodzie_handlarz", "podgrodzie_przekupka"}:
-            return DailyRoutine(
-                activity_by_phase={
-                    "świt": "Rozstawia towar i sprawdza wagę.",
-                    "dzień": "Handluje na targu i pilnuje cen.",
-                    "wieczór": "Pakuje skrzynki i zwija płótno.",
-                    "noc": "Zamyka stoisko i odkłada klucze.",
-                },
-                route_depth=2,
-            )
-        if npc.vnum in {"blacksmith", "carpenter", "tanner", "bowyer", "armorer", "podgrodzie_kowal", "podgrodzie_pomocnik_kowala"}:
-            return DailyRoutine(
-                activity_by_phase={
-                    "świt": "Otwiera warsztat i przygotowuje narzędzia.",
-                    "dzień": "Uderza młotem w rozgrzane żelazo.",
-                    "wieczór": "Czyści stanowisko i wygasza ogień.",
-                    "noc": "Wraca do domu z zapachem dymu i metalu.",
-                },
-                route_depth=2,
-            )
-        if npc.vnum in {"fisherman", "podgrodzie_rybak", "dockhand"}:
-            return DailyRoutine(
-                activity_by_phase={
-                    "świt": "Idzie nad wodę z sieciami i liną.",
-                    "dzień": "Niesie świeżo złowione ryby.",
-                    "wieczór": "Wraca z połowu ciężkim krokiem.",
-                    "noc": "Odpoczywa od soli i wilgoci.",
-                },
-                route_depth=2,
-            )
-        if npc.vnum == "podgrodzie_woznica":
-            return DailyRoutine(
-                activity_by_phase={
-                    "świt": "Sprawdza uprząż i koła wozu.",
-                    "dzień": "Prowadzi wóz po błotnej drodze.",
-                    "wieczór": "Odprowadza zaprzęg do stajni.",
-                    "noc": "Pilnuje wozu pod płachtą.",
-                },
-                route_depth=3,
-            )
-        if npc.vnum == "podgrodzie_piekarz":
-            return DailyRoutine(
-                activity_by_phase={
-                    "świt": "Rozpala piec i wyrabia ciasto.",
-                    "dzień": "Wyciąga bochenki z pieca.",
-                    "wieczór": "Czyści blaty i liczy bochenki.",
-                    "noc": "Odpoczywa po nocnym wypieku.",
-                },
-                route_depth=2,
-            )
-        if npc.vnum in {"child", "urchin", "podgrodzie_dziecko"}:
-            return DailyRoutine(
-                activity_by_phase={
-                    "świt": "Wysuwa się na podwórko, zanim dorośli skończą poranki.",
-                    "dzień": "Biega między zaułkami i zagląda do cudzych spraw.",
-                    "wieczór": "Wraca do domu przed zmrokiem.",
-                    "noc": "Śpi w bezpiecznym kącie.",
-                },
-                route_depth=2,
-            )
-        if npc.vnum in {"beggar", "vagrant", "podgrodzie_zebrak"}:
-            return DailyRoutine(
-                activity_by_phase={
-                    "świt": "Szuka suchego miejsca przy ścianie.",
-                    "dzień": "Prosi o jałmużnę i wypatruje dobrych twarzy.",
-                    "wieczór": "Szuka schronienia przed nocą.",
-                    "noc": "Drzemie pod murem.",
-                },
-                route_depth=2,
-            )
-        if npc.vnum in {"traveler", "podgrodzie_pielgrzym"}:
-            return DailyRoutine(
-                activity_by_phase={
-                    "świt": "Zbiera sakwy i rusza w drogę.",
-                    "dzień": "Przemierza ulice i szuka traktu.",
-                    "wieczór": "Szuka noclegu przed zmrokiem.",
-                    "noc": "Odpoczywa po długiej drodze.",
-                },
-                route_depth=2,
-            )
-        if npc.vnum in {"farmer", "woodcutter", "miller", "priest_aide", "podgrodzie_chlop", "podgrodzie_chlopka"}:
-            return DailyRoutine(
-                activity_by_phase={
-                    "świt": "Przygotowuje narzędzia i zaczyna dzień pracy.",
-                    "dzień": "Zajmuje się codziennym obowiązkiem.",
-                    "wieczór": "Zamyka robotę i wraca do domu.",
-                    "noc": "Odpoczywa po pracy.",
-                },
-                route_depth=3,
-            )
-        return DailyRoutine(
-            activity_by_phase={
-                "świt": "Rozpoczyna zwykły dzień.",
-                "dzień": "Zajmuje się swoimi sprawami.",
-                "wieczór": "Powoli kończy dzień.",
-                "noc": "Odpoczywa w ciszy.",
-            },
-            route_depth=1,
-        )
+        return DailyRoutine(activity_by_phase=dict(npc.daily_schedule), route_depth=self._route_depth_for(npc))
 
     def _local_route(self, npc: NPC, depth: int) -> list[int]:
         start_room = npc.home_room_id or npc.room_id

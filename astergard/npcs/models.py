@@ -2,15 +2,36 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from uuid import uuid4
+from typing import TypedDict, cast
 
 from astergard.characters.models import Character, CharacterStats
 from astergard.items.models import (
     Item,
     baker_shop_inventory,
     blacksmith_shop_inventory,
+    dungrim_armory_inventory,
+    dungrim_kitchen_inventory,
+    dungrim_quartermaster_inventory,
+    dungrim_stable_inventory,
+    haldun_forge_inventory,
+    haldun_market_inventory,
+    haldun_mill_inventory,
     fisher_shop_inventory,
     innkeeper_shop_inventory,
     merchant_shop_inventory,
+    bagna_herbal_inventory,
+    bagna_hermit_inventory,
+    puszcza_herbal_inventory,
+    puszcza_hermit_inventory,
+    puszcza_hunter_inventory,
+    straznica_caravan_inventory,
+    straznica_hunter_inventory,
+    straznica_supply_inventory,
+    trakty_caravan_inventory,
+    trakty_courier_inventory,
+    trakty_hunter_inventory,
+    trakty_lumber_inventory,
+    trakty_route_inventory,
     vendor_shop_inventory,
 )
 from astergard.npcs.combat_profiles import combat_style_for_vnum
@@ -38,6 +59,7 @@ class NPC:
     respawn_delay_seconds: int = 300
     threat_tier: str = "standard"
     threat_label: str = "standardowy przeciwnik"
+    daily_schedule: dict[str, str] = field(default_factory=dict)
     daily_activity: str = ""
     daily_target_room_id: int | None = None
     daily_phase: str = ""
@@ -66,6 +88,8 @@ class NPCFactory:
         npc.threat_tier = profile.tier
         npc.threat_label = profile.label
         npc.respawn_delay_seconds = max(30, int(npc.respawn_delay_seconds * profile.respawn_multiplier))
+        if not npc.daily_schedule:
+            npc.daily_schedule = self._daily_schedule_for(npc.vnum)
         apply_threat_profile(npc.character, profile)
         return npc
 
@@ -86,6 +110,1488 @@ class NPCFactory:
         for topic, line in extra.items():
             tree[topic] = [line]
         return tree
+
+    def _daily_schedule_for(self, vnum: str) -> dict[str, str]:
+        if vnum in {"astergard_guard", "watch_sergeant", "podgrodzie_straznik_miejski", "haldun_wartownik", "dungrim_guard", "dungrim_patrol_guard", "dungrim_sergeant", "dungrim_lieutenant", "dungrim_commander"}:
+            return {
+                "świt": "Zmienia wartę i obchodzi drogę.",
+                "dzień": "Patroluje obejście i wypatruje cudzych błędów.",
+                "wieczór": "Obchodzi posterunek przed nocą.",
+                "noc": "Pilnuje przejścia i nasłuchuje poza murem.",
+            }
+        if vnum in {"straznica_dowodca", "straznica_wartownik", "straznica_zwiadowca"}:
+            return {
+                "świt": "Sprawdza meldunki i zlicza ludzi przed zmianą.",
+                "dzień": "Dogląda traktu i wyznacza kolejne patrole.",
+                "wieczór": "Porządkuje raporty i zamyka przejazd.",
+                "noc": "Nasłuchuje wiatru i liczy ogniska na szlaku.",
+            }
+        if vnum in {"innkeeper", "podgrodzie_karczmarz", "podgrodzie_karczmarka"}:
+            return {
+                "świt": "Sprząta salę i otrzepuje stoły.",
+                "dzień": "Obsługuje gości przy ladzie.",
+                "wieczór": "Wyciera drewniane stoły i liczy kufle.",
+                "noc": "Zamyka karczmę i pilnuje ciszy.",
+            }
+        if vnum in {"merchant", "customs_clerk", "fishmonger", "podgrodzie_handlarz", "podgrodzie_przekupka", "haldun_merchant", "haldun_wellkeeper", "dungrim_quartermaster", "dungrim_storekeeper"}:
+            return {
+                "świt": "Rozstawia towar i sprawdza wagę.",
+                "dzień": "Handluje i liczy monety.",
+                "wieczór": "Pakuje skrzynki i zwija płótno.",
+                "noc": "Zamyka stoisko i odkłada klucze.",
+            }
+        if vnum in {"straznica_przewodnik", "straznica_karawanowy"}:
+            return {
+                "świt": "Układa ładunek i sprawdza, czy towar przetrwa drogę.",
+                "dzień": "Obsługuje drogę, gości albo towar według potrzeby.",
+                "wieczór": "Zamyka interes i liczy straty po przełęczy.",
+                "noc": "Chroni to, co jeszcze nie ruszyło w drogę.",
+            }
+        if vnum in {"blacksmith", "carpenter", "tanner", "bowyer", "armorer", "podgrodzie_kowal", "podgrodzie_pomocnik_kowala", "haldun_blacksmith", "dungrim_armorer", "dungrim_military_blacksmith"}:
+            return {
+                "świt": "Otwiera warsztat i rozpala ogień.",
+                "dzień": "Uderza młotem w rozgrzane żelazo.",
+                "wieczór": "Czyści stanowisko i wygasza ogień.",
+                "noc": "Wraca do domu z zapachem dymu i metalu.",
+            }
+        if vnum in {"straznica_woznica", "straznica_podrozny", "straznica_pielgrzym"}:
+            return {
+                "świt": "Spina sakwy i przygniata płaszcz przed wiatrem.",
+                "dzień": "Idzie albo jedzie powoli, pilnując stopy i oddechu.",
+                "wieczór": "Szuka postoju bliżej ognia i dalej od krawędzi.",
+                "noc": "Odpoczywa, jeśli przełęcz pozwala mu zasnąć.",
+            }
+        if vnum in {"trakty_przewodnik", "trakty_karawaniarz", "trakty_woznica", "trakty_kurier", "trakty_podrozny", "trakty_pielgrzym", "trakty_zebrak", "trakty_mysliwy", "trakty_drwal", "trakty_handlarz"}:
+            return {
+                "świt": "Sprawdza drogę, sakwy i to, czy dzień nie zaczyna się od błota.",
+                "dzień": "Pilnuje traktu, ludzi i ładunków według własnego rytmu.",
+                "wieczór": "Szuka bezpiecznego postoju albo kończy handel przy ogniu.",
+                "noc": "Odpoczywa przy drodze, jeśli droga na to pozwala.",
+            }
+        if vnum in {"puszcza_mysliwy", "puszcza_zielarz", "puszcza_pustelnik", "puszcza_drwal", "bagna_zielarz", "bagna_pustelnik", "bagna_mysliwy"}:
+            return {
+                "świt": "Sprawdza ślady, zbiory albo miejsce noclegu po chłodnej nocy.",
+                "dzień": "Pilnuje lasu lub mokradeł i zbiera to, co akurat daje ziemia.",
+                "wieczór": "Wraca do ognia albo kapliczki, zanim zapadnie pełna ciemność.",
+                "noc": "Słucha lasu, bagna i tego, czego w ciemności nie warto nazywać.",
+            }
+        if vnum in {"puszcza_jelen", "puszcza_dzik", "bagna_zaba"}:
+            return {
+                "świt": "Wychodzi z ukrycia i szuka spokojnego miejsca.",
+                "dzień": "Przemieszcza się ostrożnie po własnym terenie.",
+                "wieczór": "Wraca bliżej kryjówki albo wody.",
+                "noc": "Kryje się w cieniu i czeka na ciszę.",
+            }
+        if vnum in {"fisherman", "podgrodzie_rybak", "dockhand"}:
+            return {
+                "świt": "Idzie nad wodę z sieciami i liną.",
+                "dzień": "Niesie świeżo złowione ryby.",
+                "wieczór": "Wraca z połowu ciężkim krokiem.",
+                "noc": "Odpoczywa od soli i wilgoci.",
+            }
+        if vnum in {"podgrodzie_woznica", "haldun_farmhand"}:
+            return {
+                "świt": "Sprawdza uprząż i koła wozu.",
+                "dzień": "Prowadzi wóz po błotnej drodze.",
+                "wieczór": "Odprowadza zaprzęg do stajni.",
+                "noc": "Pilnuje sprzętu pod płachtą.",
+            }
+        if vnum in {"podgrodzie_piekarz", "haldun_farmerka"}:
+            return {
+                "świt": "Przygotowuje piec albo przynosi karmę dla zwierząt.",
+                "dzień": "Dba o domowe obowiązki i zapasy.",
+                "wieczór": "Odkłada narzędzia i porządkuje izbę.",
+                "noc": "Odpoczywa po długim dniu pracy.",
+            }
+        if vnum in {"child", "urchin", "podgrodzie_dziecko"}:
+            return {
+                "świt": "Wysuwa się na podwórko, zanim dorośli skończą poranki.",
+                "dzień": "Biega między zaułkami i zagląda do cudzych spraw.",
+                "wieczór": "Wraca do domu przed zmrokiem.",
+                "noc": "Śpi w bezpiecznym kącie.",
+            }
+        if vnum in {"beggar", "vagrant", "podgrodzie_zebrak"}:
+            return {
+                "świt": "Szuka suchego miejsca przy ścianie.",
+                "dzień": "Prosi o jałmużnę i wypatruje dobrych twarzy.",
+                "wieczór": "Szuka schronienia przed nocą.",
+                "noc": "Drzemie pod murem.",
+            }
+        if vnum in {"traveler", "podgrodzie_pielgrzym"}:
+            return {
+                "świt": "Zbiera sakwy i rusza w drogę.",
+                "dzień": "Przemierza ulice i szuka traktu.",
+                "wieczór": "Szuka noclegu przed zmrokiem.",
+                "noc": "Odpoczywa po długiej drodze.",
+            }
+        if vnum in {"farmer", "woodcutter", "miller", "priest_aide", "podgrodzie_chlop", "podgrodzie_chlopka", "haldun_farmer", "haldun_pasterz", "haldun_solt", "dungrim_stablemaster"}:
+            return {
+                "świt": "Przygotowuje narzędzia i zaczyna dzień pracy.",
+                "dzień": "Zajmuje się codziennym obowiązkiem.",
+                "wieczór": "Zamyka robotę i wraca do domu.",
+                "noc": "Odpoczywa po pracy.",
+            }
+        if vnum == "dungrim_cook":
+            return {
+                "świt": "Rozpala kuchenny ogień i sprawdza garnki.",
+                "dzień": "Karmi garnizon i miesza gulasz.",
+                "wieczór": "Czyści kotły i odkłada racje.",
+                "noc": "Pilnuje ognia, żeby śniadanie nie przyszło za późno.",
+            }
+        if vnum == "straznica_mysliwy":
+            return {
+                "świt": "Sprawdza sidła i ślady przy kamieniach.",
+                "dzień": "Wypatruje zwierzyny i osłania szlak przed drobną kradzieżą.",
+                "wieczór": "Skraca drogę z łupem i liczy, ile zostało strzał.",
+                "noc": "Suszy skórę i ostrzy grot przed kolejnym wyjściem.",
+            }
+        return {
+            "świt": "Rozpoczyna zwykły dzień.",
+            "dzień": "Zajmuje się swoimi sprawami.",
+            "wieczór": "Powoli kończy dzień.",
+            "noc": "Odpoczywa w ciszy.",
+        }
+
+    def _haldun_dialogue(self, role: str) -> dict[str, list[str]]:
+        dialogues = {
+            "haldun_solt": self._social_dialogue(
+                "Jeśli chcesz coś załatwić, mów krótko i rzeczowo.",
+                "Moja praca to liczyć zboże, ludzi i problemy, zanim urosną.",
+                "Stoję między domem, stodołą i drogą, bo tam wszystko się przecina.",
+                "Plotki o wozach, cenach i wilkach rozchodzą się tu szybciej niż dym z pieca.",
+                studnia="Studnia jest sercem wsi. Gdy wyschnie, wszyscy to poczują.",
+            ),
+            "haldun_wellkeeper": self._social_dialogue(
+                "Woda jest dla wszystkich, ale wiadro już nie zawsze.",
+                "Pilnuję studni, łapię wiadra i pamiętam, komu co obiecałem.",
+                "Stoję przy studni, bo ktoś musi pilnować łańcucha i cembrowiny.",
+                "Plotki? Najczęściej słyszę je przy wiadrze, bo ludzie przy wodzie mówią prawdę częściej.",
+                woda="Jeśli chcesz wody, nie rozlewaj jej więcej niż trzeba.",
+            ),
+            "haldun_blacksmith": self._social_dialogue(
+                "Żelazo nie czeka, ale możesz chwilę postać w progu.",
+                "Praca kowala zaczyna się od ognia, a kończy na odciskach.",
+                "Kuźnia stoi przy rowie, żeby iskry nie poszły na siano.",
+                "Plotki? Słyszę je przez młot, ale i tak rozpoznaję, kto przyszedł z pustymi rękami.",
+                kuznia="W kuźni nie ma miejsca na gadanie bez celu.",
+            ),
+            "haldun_miller": self._social_dialogue(
+                "Mielimy zboże, nie czas.",
+                "Praca młynarza to pył, worki i liczenie uczciwych porcji.",
+                "Stoję tam, gdzie rów daje ruch kołu i mące zapach chleba.",
+                "Plotki przy młynie mają w sobie sporo pyłu. To dlatego ludzie je rozdmuchują.",
+                mly="Młyn nie zatrzyma się sam. Kto przychodzi, ten zwykle coś niesie albo odbiera.",
+            ),
+            "haldun_merchant": self._social_dialogue(
+                "Jeśli masz monety, to kupuj, a jeśli nie, to nie zabieraj mi światła.",
+                "Praca handlarza to waga, ceny i dobry wzrok.",
+                "Stoję przy moście, bo tędy przechodzą wszyscy, którzy jeszcze wierzą w dobry interes.",
+                "Plotki krążą po stoisku szybciej niż monety.",
+                targ="Na targu każdy chce coś sprzedać. Ja też.",
+            ),
+            "haldun_farmer": self._social_dialogue(
+                "Jeśli trzeba gadać, to najlepiej przy płocie, nie w polu.",
+                "Praca przy ziemi zaczyna się przed świtem i kończy po zachodzie.",
+                "Jestem tam, gdzie zagony wymagają najwięcej cierpliwości.",
+                "Plotki? W polu słyszy się je z wiatrem i zapamiętuje na czas żniw.",
+                pola="Pola nie wybaczają lenistwa.",
+            ),
+            "haldun_farmerka": self._social_dialogue(
+                "Najpierw obowiązki, potem słowa.",
+                "Praca w obejściu to karmienie, sprzątanie i pilnowanie zapasów.",
+                "Stoję przy oborze albo przy ogrodzie, zależnie od pory dnia.",
+                "Plotki przychodzą z sąsiedztwa razem z jajami i mlekiem.",
+                zagroda="Zagroda musi być czysta, bo zwierzęta pamiętają brud dłużej niż ludzie.",
+            ),
+            "haldun_pasterz": self._social_dialogue(
+                "Owce słyszą więcej niż ludzie, dlatego mówię spokojnie.",
+                "Praca pasterza to liczenie, wołanie i pilnowanie, żeby żadna sztuka nie zniknęła.",
+                "Stoję przy pastwisku, kiedy zwierzęta chcą za daleko odejść.",
+                "Plotki niosą się po łące tak samo jak gwizd pasterza.",
+                pastwisko="Pastwisko daje spokój tylko z daleka.",
+            ),
+            "haldun_wartownik": self._social_dialogue(
+                "Nie rozmawiam długo z obcymi. Taka już służba.",
+                "Moja robota to patrzeć na drogę i wiedzieć, kto powinien wrócić przed zmrokiem.",
+                "Stoję przy drodze ku fortecy, bo stamtąd najłatwiej o kłopoty.",
+                "Plotki przy warcie są jak wiatr: każdy czuje, ale nikt nie złapałby w garść.",
+                droga="Na drodze widać, kto pracuje, a kto szuka kłopotów.",
+            ),
+        }
+        return dialogues.get(role, self._social_dialogue(
+            "Nie mam teraz wiele do powiedzenia.",
+            "Praca trwa od świtu do nocy.",
+            "Stoję tam, gdzie trzeba.",
+            "Plotki są tanie, ale rzadko dobre.",
+        ))
+
+    def _haldun_equipment(self, vnum: str) -> dict[str, Item | None]:
+        if vnum == "haldun_solt":
+            return {
+                "korpus": Item("sołtysi kaftan", "Grubszy kaftan noszony przez sołtysa do codziennych obchodów.", 1.5, 8, "haldun_headman_coat", "armor", "korpus", protection=1),
+                "prawa_reka": Item("laska sołtysa", "Krótsza laska do wskazywania drogi i porządkowania rozmów.", 0.7, 4, "haldun_headman_staff", "tool", "prawa_reka"),
+            }
+        if vnum == "haldun_wellkeeper":
+            return {
+                "korpus": Item("płócienny fartuch", "Mocny fartuch odporny na wodę i błoto.", 1.0, 4, "haldun_wellkeeper_apron", "armor", "korpus", protection=0),
+                "prawa_reka": Item("hak do wiadra", "Krótki hak do łańcuchów i wiader.", 0.3, 2, "haldun_bucket_hook", "tool", "prawa_reka"),
+            }
+        if vnum == "haldun_blacksmith":
+            return {
+                "korpus": Item("fartuch kowalski", "Skórzany fartuch z osmalonymi brzegami.", 2.5, 12, "haldun_forge_apron", "armor", "korpus", protection=1),
+                "prawa_reka": Item("młot kowalski", "Młot do kucia żelaza i odstraszania gapiów.", 2.3, 10, "haldun_forge_hammer", "weapon", "prawa_reka", damage_type="obuchowa", base_damage=4, reach=1, initiative_modifier=0, parry_bonus=1),
+            }
+        if vnum == "haldun_miller":
+            return {
+                "korpus": Item("pyłowy kaftan", "Kaftan tak biały od mąki, że nie da się go pomylić z niczym innym.", 1.2, 6, "haldun_miller_coat", "armor", "korpus", protection=0),
+                "prawa_reka": Item("miernik ziarna", "Mały miernik do worków i porcji mąki.", 0.6, 3, "haldun_mill_measure", "tool", "prawa_reka"),
+            }
+        if vnum == "haldun_merchant":
+            return {
+                "korpus": Item("kupiecki płaszcz", "Płaszcz z wieloma kieszeniami na monety i rachunki.", 1.0, 6, "haldun_merchant_cloak", "armor", "korpus", protection=0),
+                "prawa_reka": Item("miarka handlowa", "Krótka miarka i sznur do pilnowania uczciwej wagi.", 0.4, 4, "haldun_merchant_measure", "tool", "prawa_reka"),
+            }
+        if vnum == "haldun_farmer":
+            return {
+                "korpus": Item("płócienna koszula", "Koszula dostosowana do pracy w polu i przy sianie.", 1.0, 4, "haldun_farmer_shirt", "armor", "korpus", protection=0),
+                "prawa_reka": Item("widły", "Widły do siana i przepędzania ciekawskich psów.", 2.2, 8, "haldun_pitchfork", "weapon", "prawa_reka", damage_type="obuchowa", base_damage=3, reach=2, initiative_modifier=0, parry_bonus=0),
+            }
+        if vnum == "haldun_farmerka":
+            return {
+                "korpus": Item("roboczy fartuch", "Fartuch z wieloma łatami i kieszeniami.", 0.9, 4, "haldun_farmer_apron", "armor", "korpus", protection=0),
+                "prawa_reka": Item("sierp gospodarski", "Krótki sierp do zboża i ziół.", 0.8, 6, "haldun_farmer_sickle", "weapon", "prawa_reka", damage_type="cieta", base_damage=2, reach=1, initiative_modifier=1, parry_bonus=0),
+            }
+        if vnum == "haldun_pasterz":
+            return {
+                "korpus": Item("wełniany płaszcz", "Płaszcz chroniący przed wiatrem na pastwisku.", 1.3, 5, "haldun_herder_cloak", "armor", "korpus", protection=0),
+                "prawa_reka": Item("pastuszy kij", "Długi kij do prowadzenia stad.", 1.1, 4, "haldun_herder_staff", "weapon", "prawa_reka", damage_type="obuchowa", base_damage=1, reach=2, initiative_modifier=0, parry_bonus=0),
+            }
+        if vnum == "haldun_wartownik":
+            return {
+                "korpus": Item("płaszcz wartownika", "Służbowy płaszcz do nocnych obchodów.", 1.4, 7, "haldun_watch_cloak", "armor", "korpus", protection=1),
+                "prawa_reka": Item("krótka włócznia", "Włócznia do krótkich patroli.", 2.5, 12, "haldun_watch_spear", "weapon", "prawa_reka", damage_type="kluta", base_damage=4, reach=2, initiative_modifier=0, parry_bonus=0),
+            }
+        return {}
+
+    class HaldunNPCSpec(TypedDict, total=False):
+        name: str
+        short_desc: str
+        long_desc: str
+        room_id: int
+        stats: CharacterStats
+        merchant: bool
+        gold: int
+        shop: str
+        ai_state: str
+
+    def _create_haldun_npc(self, vnum: str, room_id: int) -> NPC:
+        data: dict[str, NPCFactory.HaldunNPCSpec] = {
+            "haldun_solt": {
+                "name": "sołtys",
+                "short_desc": "Sołtys stoi przy domu i mierzy wzrokiem drogę, pole oraz ludzi.",
+                "long_desc": "Pilnuje porządku w Haldun, zna sąsiedzkie spory i wie, która stodoła najpierw wymaga naprawy.",
+                "room_id": 85,
+                "stats": CharacterStats(10, 10, 10, 11, 11, 100),
+            },
+            "haldun_wellkeeper": {
+                "name": "studniarz",
+                "short_desc": "Studniarz dogląda wiader i łańcucha przy cembrowinie.",
+                "long_desc": "Zna każdy odprysk kamienia przy studni i pamięta, ile wiader wody znosi się tu każdego dnia.",
+                "room_id": 83,
+                "stats": CharacterStats(9, 10, 10, 10, 10, 90),
+                "merchant": True,
+                "gold": 34,
+                "shop": "haldun_market_inventory",
+            },
+            "haldun_blacksmith": {
+                "name": "kowal",
+                "short_desc": "Kowal z Haldun rozgrzewa żelazo i pilnuje, by nikt nie stał za blisko ognia.",
+                "long_desc": "Jego kuźnia naprawia pługi, podkowy i cierpliwość całej wsi.",
+                "room_id": 88,
+                "stats": CharacterStats(12, 9, 12, 10, 10, 110),
+                "merchant": True,
+                "gold": 62,
+                "shop": "haldun_forge_inventory",
+            },
+            "haldun_miller": {
+                "name": "młynarz",
+                "short_desc": "Młynarz ma twarz białą od pyłu i ręce od worków z ziarnem.",
+                "long_desc": "W Haldun to on decyduje, czy zboże wróci do wsi jako mąka, czy tylko jako narzekanie.",
+                "room_id": 87,
+                "stats": CharacterStats(9, 9, 10, 10, 10, 95),
+                "merchant": True,
+                "gold": 48,
+                "shop": "haldun_mill_inventory",
+            },
+            "haldun_merchant": {
+                "name": "handlarz",
+                "short_desc": "Handlarz liczy worki, jajka i każdą obcą plotkę, która wpada do wsi.",
+                "long_desc": "Ma mały kram przy moście i zbyt dobre oko do cen jak na człowieka, który rzekomo sprzedaje tylko proste rzeczy.",
+                "room_id": 89,
+                "stats": CharacterStats(9, 10, 9, 11, 11, 95),
+                "merchant": True,
+                "gold": 58,
+                "shop": "haldun_market_inventory",
+            },
+            "haldun_farmer": {
+                "name": "rolnik",
+                "short_desc": "Rolnik z Haldun wraca z pól, nawet kiedy inni jeszcze nie wyszli z domów.",
+                "long_desc": "Żyje rytmem ziemi i zna każde pole po ciężarze ziemi na butach.",
+                "room_id": 82,
+                "stats": CharacterStats(9, 9, 10, 8, 9, 90),
+            },
+            "haldun_farmerka": {
+                "name": "gospodyni",
+                "short_desc": "Gospodyni nadzoruje obejście i pilnuje zapasów lepiej niż księgowy.",
+                "long_desc": "Umie wycenić jajko, skrzynię i dobre słowo, a przy tym nikt w wiosce nie wie o niej za mało ani za dużo.",
+                "room_id": 84,
+                "stats": CharacterStats(9, 10, 9, 10, 10, 90),
+                "merchant": True,
+                "gold": 28,
+                "shop": "haldun_market_inventory",
+            },
+            "haldun_pasterz": {
+                "name": "pasterz",
+                "short_desc": "Pasterz trzyma stado blisko pastwiska i patrzy, by żadna sztuka nie poszła za daleko.",
+                "long_desc": "Zna owce, konie i ludzi, którzy zbyt często przechodzą obok zagrody bez pytania o zgodę.",
+                "room_id": 92,
+                "stats": CharacterStats(8, 10, 9, 10, 11, 85),
+            },
+            "haldun_wartownik": {
+                "name": "wartownik",
+                "short_desc": "Wartownik stoi przy drodze do fortecy i liczy przechodniów.",
+                "long_desc": "To człowiek od krótkich pytań i długiej pamięci. W Haldun widzi wszystko, co jedzie, idzie albo się chowa.",
+                "room_id": 94,
+                "stats": CharacterStats(11, 11, 11, 11, 11, 110),
+                "ai_state": "GUARD",
+            },
+        }
+        spec = data.get(vnum)
+        if spec is None:
+            raise KeyError(f"Unknown Haldun NPC: {vnum}")
+        character = Character(spec["name"].capitalize())
+        character.stats = spec["stats"]
+        character.inventory.clear()
+        shop_factories = {
+            "haldun_market_inventory": haldun_market_inventory,
+            "haldun_forge_inventory": haldun_forge_inventory,
+            "haldun_mill_inventory": haldun_mill_inventory,
+        }
+        shop_name = cast(str | None, spec.get("shop"))
+        ai_state = spec["ai_state"] if "ai_state" in spec else "IDLE"
+        merchant_gold = spec["gold"] if "gold" in spec else 100
+        npc = NPC(
+            vnum=vnum,
+            name=spec["name"],
+            short_desc=spec["short_desc"],
+            long_desc=spec["long_desc"],
+            zone="Haldun",
+            faction="MEEKHAN",
+            ai_state=ai_state,
+            room_id=room_id,
+            character=character,
+            is_merchant=bool(spec.get("merchant", False)),
+            shop_inventory=list(shop_factories[shop_name]()) if shop_name is not None else [],
+            merchant_gold=merchant_gold,
+            home_room_id=int(spec["room_id"]),
+        )
+        npc.character.combat_style = combat_style_for_vnum(npc.vnum)
+        npc.character.equipment.update(self._haldun_equipment(vnum))
+        npc.dialogue_tree = self._haldun_dialogue(vnum)
+        return self._finalize(npc)
+
+    class DungrimNPCSpec(TypedDict, total=False):
+        name: str
+        short_desc: str
+        long_desc: str
+        room_id: int
+        stats: CharacterStats
+        merchant: bool
+        gold: int
+        shop: str
+        ai_state: str
+
+    def _dungrim_dialogue(self, role: str) -> dict[str, list[str]]:
+        dialogues = {
+            "dungrim_commander": self._social_dialogue(
+                "Raport krótko. Forteca nie ma czasu na ozdobniki.",
+                "Dowodzenie to zapas, dyscyplina i ludzie, którzy wiedzą, gdzie jest ich miejsce.",
+                "Stoję tam, gdzie trzeba trzymać całość razem: między bramą, dziedzińcem i murem.",
+                "Plotki o trakcie są mniej ważne niż stan bełtów i zapasów.",
+                fort="Fort trzyma się na rozkazie, nie na hałasie.",
+            ),
+            "dungrim_lieutenant": self._social_dialogue(
+                "Jeśli nie masz meldunku, nie masz po co tu stać.",
+                "Oficer pilnuje patroli, zmian i tego, by nikt nie zgubił rozkazu po drodze.",
+                "Przechodzę między koszarami a dziedzińcem, bo tam wszystko się sprawdza dwa razy.",
+                "Plotki? Zwykle zaczynają się od słowa 'widziałem'.",
+                patrole="Patrole liczy się jak zapasy: rano, po południu i przed nocą.",
+            ),
+            "dungrim_sergeant": self._social_dialogue(
+                "W szeregu mówimy mało i słuchamy dużo.",
+                "Sierżant pilnuje zmiany, porządku i tego, żeby brama nie została sama.",
+                "Najczęściej stoję przy koszarach albo przy murze nad traktem.",
+                "Plotki noszą młodsi, ale rozkaz musi wykonać każdy.",
+                wart="Straż bez warujących ma krótszą pamięć niż zły koń.",
+            ),
+            "dungrim_guard": self._social_dialogue(
+                "Stój, meldunek i dalej już tylko według rozkazu.",
+                "Strażnik pilnuje dziedzińca, wieży i magazynów.",
+                "Siedzę tam, gdzie trzeba widzieć bramę, ludzi i skrzynie.",
+                "Plotki? W fortecy częściej słyszę je przy beczkach niż w koszarach.",
+            ),
+            "dungrim_patrol_guard": self._social_dialogue(
+                "Nie zatrzymuję się bez powodu.",
+                "Patrol to marsz, obserwacja i pamięć o każdym rogu muru.",
+                "Chodzę po murze i po trakcie, żeby droga nie była zbyt cicha.",
+                "Plotki w terenie są jak ślady w błocie: zostają dłużej niż ludzie myślą.",
+                mur="Mur trzeba znać krokiem, nie wzrokiem.",
+            ),
+            "dungrim_armorer": self._social_dialogue(
+                "Zbroja ma służyć, nie błyszczeć.",
+                "Praca zbrojmistrza to nit, skóra i cierpliwość do wgnieceń.",
+                "Stoję przy zbrojowni, bo tam najlepiej słychać, co się psuje.",
+                "Plotki? Zbroja pamięta więcej niż ludzie.",
+                zbrojownia="Zbrojownia to serce jakości, nie magazyn dla ładnych słów.",
+            ),
+            "dungrim_military_blacksmith": self._social_dialogue(
+                "Jak chcesz narzekać, rób to poza kuźnią.",
+                "Kowal wojskowy naprawia ostrza, okucia i wojskową dumę.",
+                "Kuźnia stoi obok magazynu, bo tu wszystko ma być blisko ręki.",
+                "Plotki? Iskra nie pyta, czy ktoś ją widzi.",
+                ogien="Ogień trzyma tempo całej fortecy.",
+            ),
+            "dungrim_quartermaster": self._social_dialogue(
+                "Racja, pieczęć i podpis. Inaczej nie ma rozmowy.",
+                "Magazynier pilnuje wydań, spisów i racji.",
+                "Stoję przy magazynach, bo tam najłatwiej policzyć, co znika.",
+                "Plotki? Każdy z nich to inny sposób na ukrycie braku w tabeli.",
+                zapasy="Zapasy nie lubią chaosu.",
+            ),
+            "dungrim_storekeeper": self._social_dialogue(
+                "Do magazynu tylko z listą.",
+                "Trzymam wszystko, co armia nosi, je i zgubić nie powinna.",
+                "Jestem przy składach, bo ktoś musi wiedzieć, która skrzynia jest czyja.",
+                "Plotki? W składzie słychać tylko liczenie i przekleństwa.",
+                skrot="Na skróty do zapasów prowadzi tylko cudza odpowiedzialność.",
+            ),
+            "dungrim_stablemaster": self._social_dialogue(
+                "Koń widzi twoje zamiary szybciej niż ty sam.",
+                "Stajenny dowodzi końmi patrolowymi i pilnuje sprzętu jeździeckiego.",
+                "Stoję przy stajniach, bo tam najlepiej słychać kopyta i złe decyzje.",
+                "Plotki? Kiedy koń prycha, wiem, że ktoś skłamał.",
+                konie="Konie potrzebują spokoju, nie opowieści.",
+            ),
+            "dungrim_cook": self._social_dialogue(
+                "Jeśli nie jesteś głodny, to masz szczęście i możesz iść dalej.",
+                "Kuchnia forteczna karmi wszystkich, którzy wracają z muru.",
+                "Stoję przy piecu i kotłach, bo tu smak ma znaczenie większe niż ozdoby.",
+                "Plotki? Kuchnia słyszy wszystko, ale zapamiętuje tylko połowę.",
+                gulasz="Gulasz wart jest więcej niż kolejna narada.",
+            ),
+        }
+        return dialogues.get(role, self._social_dialogue(
+            "Mów z sensem albo wracaj na wartę.",
+            "Służba trwa od świtu do nocy.",
+            "Stoję tam, gdzie rozkaz tego wymaga.",
+            "Plotki w garnizonie żyją krócej niż świeży chleb.",
+        ))
+
+    def _dungrim_equipment(self, vnum: str) -> dict[str, Item | None]:
+        if vnum == "dungrim_commander":
+            return {
+                "korpus": Item("płaszcz dowódcy", "Ciężki płaszcz z metalowymi haftami i śladami po deszczu.", 2.2, 18, "dungrim_commander_cloak", "armor", "korpus", protection=2),
+                "prawa_reka": Item("miecz dowódczy", "Miecz noszony przez dowódcę fortu.", 2.0, 20, "dungrim_commander_sword", "weapon", "prawa_reka", damage_type="cieta", base_damage=5, reach=1, initiative_modifier=1, parry_bonus=1),
+            }
+        if vnum == "dungrim_lieutenant":
+            return {
+                "korpus": Item("oficerski kaftan", "Kaftan noszony przez oficera zmiany.", 1.8, 14, "dungrim_officer_coat", "armor", "korpus", protection=1),
+                "prawa_reka": Item("krótki miecz", "Broń do wydawania krótkich, przekonujących decyzji.", 1.7, 12, "dungrim_officer_blade", "weapon", "prawa_reka", damage_type="cieta", base_damage=4, reach=1, initiative_modifier=1, parry_bonus=1),
+            }
+        if vnum == "dungrim_sergeant":
+            return {
+                "korpus": Item("sierżancki płaszcz", "Płaszcz służbowy używany na posterunku.", 2.0, 12, "dungrim_sergeant_coat", "armor", "korpus", protection=1),
+                "prawa_reka": Item("halabarda patrolowa", "Halabarda do kontroli bramy i dziedzińca.", 3.8, 16, "dungrim_halberd", "weapon", "prawa_reka", damage_type="kluta", base_damage=5, reach=2, initiative_modifier=0, parry_bonus=0),
+            }
+        if vnum in {"dungrim_guard", "dungrim_patrol_guard"}:
+            return {
+                "korpus": Item("płaszcz strażniczy", "Służbowy płaszcz odporny na wiatr.", 1.9, 10, "dungrim_guard_coat", "armor", "korpus", protection=1),
+                "prawa_reka": Item("włócznia forteczna", "Włócznia do kontroli przejść i murów.", 2.6, 14, "dungrim_guard_spear", "weapon", "prawa_reka", damage_type="kluta", base_damage=4, reach=2, initiative_modifier=0, parry_bonus=0),
+            }
+        if vnum == "dungrim_armorer":
+            return {
+                "korpus": Item("fartuch zbrojmistrza", "Ciężki fartuch z łuskami i nitami.", 2.3, 10, "dungrim_armorer_apron", "armor", "korpus", protection=1),
+                "prawa_reka": Item("młotek nitujący", "Młotek do naprawy zbroi i tarcz.", 1.1, 5, "dungrim_armorer_hammer", "tool", "prawa_reka"),
+            }
+        if vnum == "dungrim_military_blacksmith":
+            return {
+                "korpus": Item("okopcony fartuch", "Fartuch czarny od sadzy i ognia.", 2.6, 12, "dungrim_forge_apron", "armor", "korpus", protection=1),
+                "prawa_reka": Item("młot wojskowy", "Młot do podkuwania i napraw służbowych.", 2.4, 11, "dungrim_forge_hammer", "weapon", "prawa_reka", damage_type="obuchowa", base_damage=4, reach=1, initiative_modifier=0, parry_bonus=1),
+            }
+        if vnum == "dungrim_quartermaster":
+            return {
+                "korpus": Item("urzędowy płaszcz", "Płaszcz z kieszeniami na pieczęcie i klucze.", 1.6, 8, "dungrim_quartermaster_coat", "armor", "korpus", protection=0),
+                "prawa_reka": Item("laska magazyniera", "Laska do wskazywania skrzyń i pilnowania porządku.", 0.8, 4, "dungrim_quartermaster_staff", "tool", "prawa_reka"),
+            }
+        if vnum == "dungrim_storekeeper":
+            return {
+                "korpus": Item("składowy kaftan", "Roboczy kaftan pełen kurzu i kredy.", 1.4, 6, "dungrim_storekeeper_coat", "armor", "korpus", protection=0),
+                "prawa_reka": Item("klucz do magazynu", "Pęk kluczy do składów i skrzyń.", 0.2, 3, "dungrim_storekeeper_keys", "tool", "prawa_reka"),
+            }
+        if vnum == "dungrim_stablemaster":
+            return {
+                "korpus": Item("stajenny kaftan", "Kaftan odporny na słomę, pot i pył.", 1.3, 6, "dungrim_stable_coat", "armor", "korpus", protection=0),
+                "prawa_reka": Item("bat stajenny", "Krótki bat używany przy koniach służbowych.", 0.5, 4, "dungrim_stable_whip", "weapon", "prawa_reka", damage_type="obuchowa", base_damage=1, reach=1, initiative_modifier=1, parry_bonus=0),
+            }
+        if vnum == "dungrim_cook":
+            return {
+                "korpus": Item("fartuch kuchenny", "Fartuch noszony przy wojskowym piecu.", 1.0, 5, "dungrim_cook_apron", "armor", "korpus", protection=0),
+                "prawa_reka": Item("łyżka warowna", "Drewniana łyżka wystarczająco twarda, by służyć za kij.", 0.4, 2, "dungrim_cook_spoon", "tool", "prawa_reka"),
+            }
+        return {}
+
+    def _straznica_dialogue(self, role: str) -> dict[str, list[str]]:
+        dialogues = {
+            "straznica_dowodca": self._social_dialogue(
+                "Przełęcz nie wybacza bałaganu. Mów krótko.",
+                "Moja praca to liczyć ludzi, ogień i zapasy, zanim zrobi to śnieg.",
+                "Stoję na gardzieli przejazdu, gdzie każdy błąd ma cenę.",
+                "Plotki przychodzą z karawanami, ale ja wolę meldunki niż opowieści.",
+                karawana="Karawana jest bezpieczna tylko do chwili, gdy minie bramę.",
+            ),
+            "straznica_wartownik": self._social_dialogue(
+                "Stój spokojnie i nie zasłaniaj przejazdu.",
+                "Pilnuję muru, schodów i tego, czy ktoś nie niesie za dużo na jedną rękę.",
+                "Najczęściej stoję tam, gdzie wiatr pierwszy uderza w twarz.",
+                "Plotki? W przełęczy każde echo brzmi jak cudza tajemnica.",
+            ),
+            "straznica_zwiadowca": self._social_dialogue(
+                "Najpierw patrzę na ślady, potem na ludzi.",
+                "Zwiad to oczy, nogi i pamięć o tym, co zostaje po śniegu.",
+                "Chodzę wyżej niż inni, bo stamtąd lepiej widać problemy.",
+                "Plotki w górach wyglądają jak śnieg: dużo ich, ale niewiele ważą.",
+                zwiad="Po zwiadzie zawsze trzeba liczyć drogę powrotną.",
+            ),
+            "straznica_przewodnik": self._social_dialogue(
+                "Jeśli chcesz przejść bez kłopotów, słuchaj pierwszej rady.",
+                "Prowadzę ludzi i ładunki tak, żeby przełęcz nie zjadła nam dnia.",
+                "Stoję przy mapach i znakach, bo każdy skręt wygląda tu podobnie.",
+                "Plotki? Najczęściej zaczynają się od pytania, którędy bezpieczniej.",
+                szlak="Szlak jest prosty tylko wtedy, gdy ktoś go wcześniej odgarnął.",
+            ),
+            "straznica_karawanowy": self._social_dialogue(
+                "Towar stoi, dopóki ja nie policzę skrzyń.",
+                "Handel przez przełęcz to rachunki, cła i cierpliwość do koni.",
+                "Mam swoje miejsce przy karawanach, bo ktoś musi patrzeć na ładunek.",
+                "Plotki? Kupcy rozpoznają je po tym, ile ważą na końcu drogi.",
+                karawana="Karawana lubi płaski teren, a tu dostaje tylko stromiznę.",
+            ),
+            "straznica_woznica": self._social_dialogue(
+                "Koń, oś i klin. Reszta to tylko hałas.",
+                "Prowadzę wozy przez zakręty, zanim koło poleci w przepaść.",
+                "Siedzę przy zaprzęgu, bo droga sama się nie poprawi.",
+                "Plotki? Woźnica słucha stukotu kół bardziej niż ludzi.",
+                woz="Wóz mówi wszystko po skrzypieniu osi.",
+            ),
+            "straznica_podrozny": self._social_dialogue(
+                "Nie szukaj tu wygody. Szukaj tylko przejścia.",
+                "Podróżny żyje z tego, co uniesie i gdzie zdąży przed zmrokiem.",
+                "Stoję przy ogniu albo przy murze, zależnie od wiatru.",
+                "Plotki? Każdy trakt niesie je razem z błotem.",
+                postoj="Postój bywa najlepszą częścią drogi.",
+            ),
+            "straznica_pielgrzym": self._social_dialogue(
+                "Modlitwa przy przełęczy brzmi ciszej, ale nie mniej szczerze.",
+                "Idę tam, gdzie trzeba iść spokojnie, nawet jeśli wiatr nie pomaga.",
+                "Staję przy kaplicy i rozstaju, bo tam najczęściej ludzie zwalniają krok.",
+                "Plotki nie mają tu wielkiej wartości. Kamień i wiatr i tak pamiętają więcej.",
+                kaplica="Kaplica daje chwilę ciszy każdemu, kto jeszcze ją nosi w sobie.",
+            ),
+            "straznica_mysliwy": self._social_dialogue(
+                "Zwierzyna nie czeka na twoją historię.",
+                "Moja robota to trop, łuk i cierpliwość do kamienia.",
+                "Stoję tam, gdzie krawędź szlaku styka się z polowaniem.",
+                "Plotki? Na zboczu ważniejsze są ślady niż słowa.",
+                tropy="Tropy przy przełęczy mieszają ludzi, kozy i czasem coś większego.",
+            ),
+        }
+        return dialogues.get(role, self._social_dialogue(
+            "Mów z sensem albo wracaj na szlak.",
+            "Praca trwa tu od świtu do nocy.",
+            "Stoję tam, gdzie rozkaz tego wymaga.",
+            "Plotki w górach żyją krócej niż świeży śnieg.",
+        ))
+
+    def _straznica_equipment(self, vnum: str) -> dict[str, Item | None]:
+        if vnum == "straznica_dowodca":
+            return {
+                "korpus": Item("płaszcz przełęczy", "Gruby, wiatroodporny płaszcz z metalowymi klamrami.", 2.1, 16, "straznica_commander_cloak", "armor", "korpus", protection=2),
+                "prawa_reka": Item("miecz przełęczy", "Krótki miecz do krótkich i ostatecznych decyzji.", 1.8, 18, "straznica_commander_sword", "weapon", "prawa_reka", damage_type="cieta", base_damage=5, reach=1, initiative_modifier=1, parry_bonus=1),
+            }
+        if vnum == "straznica_wartownik":
+            return {
+                "korpus": Item("płaszcz wartowniczy", "Szary płaszcz odporny na deszcz i śnieg.", 1.8, 10, "straznica_guard_cloak", "armor", "korpus", protection=1),
+                "prawa_reka": Item("włócznia strażnicza", "Włócznia do kontroli przejazdu i skraju muru.", 2.5, 14, "straznica_guard_spear", "weapon", "prawa_reka", damage_type="kluta", base_damage=4, reach=2, initiative_modifier=0, parry_bonus=0),
+                "lewa_reka": Item("mała tarcza", "Lekka tarcza na długie postoje przy wietrze.", 2.2, 11, "straznica_guard_shield", "shield", "lewa_reka", protection=1, shield_block=2),
+            }
+        if vnum == "straznica_zwiadowca":
+            return {
+                "glowa": Item("zwiadowczy kaptur", "Kaptur tłumiący wiatr i błysk śniegu.", 1.1, 8, "straznica_scout_hood", "armor", "glowa", protection=0),
+                "prawa_reka": Item("łuk zwiadowcy", "Lekki łuk do prowadzenia ognia z krawędzi szlaku.", 1.5, 16, "straznica_scout_bow", "weapon", "prawa_reka", damage_type="pociskowa", base_damage=4, reach=2, initiative_modifier=1, parry_bonus=0),
+                "lewa_reka": Item("krótki nóż", "Nóż do lin, skór i bliskich problemów.", 0.3, 5, "straznica_scout_knife", "weapon", "lewa_reka", damage_type="kluta", base_damage=2, reach=1, initiative_modifier=1, parry_bonus=0),
+            }
+        if vnum == "straznica_przewodnik":
+            return {
+                "korpus": Item("kurtka przewodnika", "Lekka, ale ciepła kurtka z wieloma kieszeniami.", 1.4, 10, "straznica_guide_coat", "armor", "korpus", protection=1),
+                "prawa_reka": Item("laska przewodnika", "Laska do wskazywania kamieni, zejść i bezpieczniejszych obejść.", 0.9, 4, "straznica_guide_staff", "tool", "prawa_reka"),
+            }
+        if vnum == "straznica_karawanowy":
+            return {
+                "korpus": Item("karawanowy kaftan", "Kaftan z wieloma łatami po linach i sakwach.", 1.5, 9, "straznica_caravan_coat", "armor", "korpus", protection=0),
+                "prawa_reka": Item("rachmistrzowska pałeczka", "Krótka pałeczka do liczenia skrzyń i worków.", 0.5, 3, "straznica_caravan_tally", "tool", "prawa_reka"),
+            }
+        if vnum == "straznica_woznica":
+            return {
+                "korpus": Item("woźnicki płaszcz", "Gruby płaszcz zabezpieczony przed błotem i wiatrem.", 1.9, 11, "straznica_driver_coat", "armor", "korpus", protection=1),
+                "prawa_reka": Item("bat woźnicy", "Krótki bat do kierowania zaprzęgiem.", 0.6, 5, "straznica_driver_whip", "weapon", "prawa_reka", damage_type="obuchowa", base_damage=2, reach=1, initiative_modifier=1, parry_bonus=0),
+            }
+        if vnum == "straznica_podrozny":
+            return {
+                "korpus": Item("podróżny płaszcz", "Płaszcz z łatami po wielu drogach.", 1.4, 8, "straznica_travel_coat", "armor", "korpus", protection=0),
+                "prawa_reka": Item("mały nóż", "Krótki nóż przydatny w drodze.", 0.2, 3, "straznica_travel_knife", "weapon", "prawa_reka", damage_type="kluta", base_damage=2, reach=1, initiative_modifier=1, parry_bonus=0),
+            }
+        if vnum == "straznica_pielgrzym":
+            return {
+                "korpus": Item("pielgrzymi habit", "Ciepły habit odporny na deszcz i śnieg.", 1.6, 9, "straznica_pilgrim_habit", "armor", "korpus", protection=0),
+                "prawa_reka": Item("kij pielgrzyma", "Prosty kij do marszu po kamiennym szlaku.", 1.0, 4, "straznica_pilgrim_staff", "weapon", "prawa_reka", damage_type="obuchowa", base_damage=1, reach=2, initiative_modifier=0, parry_bonus=0),
+            }
+        if vnum == "straznica_mysliwy":
+            return {
+                "korpus": Item("futro myśliwego", "Ciepłe futro wygarbowane na wiatr i śnieg.", 2.0, 12, "straznica_hunter_fur", "armor", "korpus", protection=1),
+                "prawa_reka": Item("łuk przełęczy", "Łuk dopasowany do stromych ścieżek i cichego polowania.", 1.7, 18, "straznica_hunter_bow", "weapon", "prawa_reka", damage_type="pociskowa", base_damage=4, reach=2, initiative_modifier=1, parry_bonus=0),
+            }
+        return {}
+
+    def _trakty_dialogue(self, role: str) -> dict[str, list[str]]:
+        dialogues = {
+            "trakty_przewodnik": self._social_dialogue(
+                "Na trakcie liczy się kierunek i czas, nie opowieści.",
+                "Moja robota to prowadzić ludzi tak, żeby nie zgubiła ich pogoda ani skrót.",
+                "Stoję tam, gdzie najłatwiej pomylić szlak z błędną radą.",
+                "Plotki? Po drodze każdy ma własną wersję tego samego zakrętu.",
+                szlak="Szlak bez przewodnika jest tylko śladem w błocie.",
+            ),
+            "trakty_karawaniarz": self._social_dialogue(
+                "Pokaż manifest, a potem możemy mówić o dalszej drodze.",
+                "Liczenie skrzyń i kół to jedyna rzecz, która nie kłamie na trakcie.",
+                "Stoję przy karawanie, bo ładunek sam się nie obroni przed błotem.",
+                "Plotki kupieckie są jak cło: każdy coś traci, ktoś inny zyskuje.",
+                karawana="Karawana jedzie spokojnie tylko wtedy, gdy nikt nie pęka pierwszy.",
+            ),
+            "trakty_kurier": self._social_dialogue(
+                "Jeśli list jest pilny, nie mam czasu na długie pytania.",
+                "Praca kuriera to pamięć, nogi i mokry płaszcz.",
+                "Stoję tam, gdzie można jeszcze kogoś dogonić przed zmrokiem.",
+                "Plotki? Ja wolę wiadomości, które da się dostarczyć zanim ostygną.",
+                list="List ma wartość tylko wtedy, gdy trafi do właściwych rąk.",
+            ),
+            "trakty_woznica": self._social_dialogue(
+                "Koło, oś, klin. Reszta to tylko hałas i droga.",
+                "Wożę ludzi i towary, a czasem tylko cierpliwość.",
+                "Stoję przy wozie, bo drogi nie da się przekonać do litości.",
+                "Plotki słyszę po skrzypieniu osi szybciej niż po słowach.",
+                woz="Wóz na trakcie nie wybacza byle błędu.",
+            ),
+            "trakty_podrozny": self._social_dialogue(
+                "Dziś idę dalej, ale chwilę mogę postać.",
+                "Praca podróżnego to marsz, oszczędność sił i szukanie suchego miejsca.",
+                "Stoję tam, gdzie da się jeszcze odpocząć bez walki z wiatrem.",
+                "Plotki zbieram tylko wtedy, gdy przydają się do drogi.",
+                postoj="Dobry postój jest wart więcej niż szybki krok.",
+            ),
+            "trakty_pielgrzym": self._social_dialogue(
+                "Kaplica i droga wystarczą mi za rozmowę.",
+                "Idę spokojnie, bo śpieszenie się przy przełęczy nie pomaga duszy ani nogom.",
+                "Stoję przy miejscach modlitwy i na skrzyżowaniach, gdzie każdy zwalnia krok.",
+                "Plotki omijam, jeśli nie niosą niczego lepszego niż kurz.",
+                modlitwa="Modlitwa przy szlaku ma smak wiatru i zmęczenia.",
+            ),
+            "trakty_zebrak": self._social_dialogue(
+                "Masz drobne? Nie musisz się spieszyć z odpowiedzią.",
+                "Praca żebraka to czekać tam, gdzie ludzie jeszcze mają miękkie serca.",
+                "Stoję przy rozstajach, bo tam nikt nie wie, czy iść dalej, czy wracać.",
+                "Plotki są dobre, jeśli da się za nie dostać zupę.",
+                cieplo="Ciepło przy drodze to rzadki luksus.",
+            ),
+            "trakty_mysliwy": self._social_dialogue(
+                "Zwierzyna nie czeka, aż skończysz gadać.",
+                "Poluję, patroluję i sprzedaję to, co da się unieść z przełęczy.",
+                "Stoję tam, gdzie tropy schodzą z drogi w kamienie albo krzaki.",
+                "Plotki o wilkach zwykle kończą się tam, gdzie zaczynają się ślady.",
+                tropy="Tropy na trakcie mówią więcej niż cudze obietnice.",
+            ),
+            "trakty_drwal": self._social_dialogue(
+                "Na trakcie drzewo nie pyta, czy chce się je ciąć.",
+                "Praca drwala to topór, klin i cierpliwość do drewna, które nie chce współpracować.",
+                "Stoję przy składzie drewna albo przy ognisku, zależnie od pory dnia.",
+                "Plotki o lasach zawsze wracają do jednego: kto pierwszy ściął zdrowy pień.",
+                drewno="Drewno przy drodze ratuje noc, ale kosztuje dzień pracy.",
+            ),
+            "trakty_handlarz": self._social_dialogue(
+                "Jeśli masz monety, to patrz na towar, nie na pogodę.",
+                "Handluję tym, co ludzie gubią po drodze i czego potem żałują.",
+                "Stoję tam, gdzie ruch jest największy i cisza trwa najkrócej.",
+                "Plotki mają cenę, ale zawsze najwyższą płaci ostatni słuchacz.",
+                targ="Targ na trakcie jest mniejszy niż w mieście, ale bardziej szczery.",
+            ),
+        }
+        return dialogues.get(role, self._social_dialogue(
+            "Nie mam dziś wiele do powiedzenia.",
+            "Praca trwa od świtu do nocy.",
+            "Stoję tam, gdzie trzeba.",
+            "Plotki są tanie, ale rzadko dobre.",
+        ))
+
+    def _trakty_equipment(self, vnum: str) -> dict[str, Item | None]:
+        if vnum == "trakty_przewodnik":
+            return {
+                "korpus": Item("kurtka przewodnika", "Lekka, ale ciepła kurtka z wieloma kieszeniami.", 1.4, 10, "trakty_guide_coat", "armor", "korpus", protection=1),
+                "prawa_reka": Item("laska przewodnika", "Laska do wskazywania kamieni, zejść i bezpieczniejszych obejść.", 0.9, 4, "trakty_guide_staff", "tool", "prawa_reka"),
+            }
+        if vnum == "trakty_karawaniarz":
+            return {
+                "korpus": Item("karawanowy kaftan", "Kaftan z wieloma łatami po linach i sakwach.", 1.5, 9, "trakty_caravan_coat", "armor", "korpus", protection=0),
+                "prawa_reka": Item("rachmistrzowska pałeczka", "Krótka pałeczka do liczenia skrzyń i worków.", 0.5, 3, "trakty_caravan_tally", "tool", "prawa_reka"),
+            }
+        if vnum == "trakty_kurier":
+            return {
+                "korpus": Item("kurierki płaszcz", "Płaszcz z krótkim krojem, dobry do biegu i jazdy.", 1.2, 8, "trakty_courier_coat", "armor", "korpus", protection=0),
+                "prawa_reka": Item("poczta pieczęć", "Krótkie narzędzie do zamykania listów i potwierdzeń.", 0.2, 2, "trakty_courier_seal", "tool", "prawa_reka"),
+            }
+        if vnum == "trakty_woznica":
+            return {
+                "korpus": Item("woźnicki płaszcz", "Gruby płaszcz zabezpieczony przed błotem i wiatrem.", 1.9, 11, "trakty_driver_coat", "armor", "korpus", protection=1),
+                "prawa_reka": Item("bat woźnicy", "Krótki bat do kierowania zaprzęgiem.", 0.6, 5, "trakty_driver_whip", "weapon", "prawa_reka", damage_type="obuchowa", base_damage=2, reach=1, initiative_modifier=1, parry_bonus=0),
+            }
+        if vnum == "trakty_podrozny":
+            return {
+                "korpus": Item("podróżny płaszcz", "Płaszcz z łatami po wielu drogach.", 1.4, 8, "trakty_travel_coat", "armor", "korpus", protection=0),
+                "prawa_reka": Item("mały nóż", "Krótki nóż przydatny w drodze.", 0.2, 3, "trakty_travel_knife", "weapon", "prawa_reka", damage_type="kluta", base_damage=2, reach=1, initiative_modifier=1, parry_bonus=0),
+            }
+        if vnum == "trakty_pielgrzym":
+            return {
+                "korpus": Item("pielgrzymi habit", "Ciepły habit odporny na deszcz i pył.", 1.6, 9, "trakty_pilgrim_habit", "armor", "korpus", protection=0),
+                "prawa_reka": Item("kij pielgrzyma", "Prosty kij do marszu po kamiennym szlaku.", 1.0, 4, "trakty_pilgrim_staff", "weapon", "prawa_reka", damage_type="obuchowa", base_damage=1, reach=2, initiative_modifier=0, parry_bonus=0),
+            }
+        if vnum == "trakty_zebrak":
+            return {
+                "korpus": Item("łachman i koc", "Nędzny koc i łachman chronią przed chłodem bardziej niż przed spojrzeniem.", 0.8, 1, "trakty_beggar_rag", "armor", "korpus", protection=0),
+                "prawa_reka": Item("kij żebraka", "Krótki kij do podpierania się i odganiania psów.", 0.7, 1, "trakty_beggar_staff", "weapon", "prawa_reka", damage_type="obuchowa", base_damage=1, reach=1, initiative_modifier=0, parry_bonus=0),
+            }
+        if vnum == "trakty_mysliwy":
+            return {
+                "korpus": Item("futro myśliwego", "Ciepłe futro wygarbowane na wiatr i pył.", 2.0, 12, "trakty_hunter_fur", "armor", "korpus", protection=1),
+                "prawa_reka": Item("łuk trakty", "Łuk dopasowany do polowań przy drodze.", 1.7, 18, "trakty_hunter_bow", "weapon", "prawa_reka", damage_type="pociskowa", base_damage=4, reach=2, initiative_modifier=1, parry_bonus=0),
+            }
+        if vnum == "trakty_drwal":
+            return {
+                "korpus": Item("roboczy kaftan", "Kaftan odporny na żywicę, pył i iskry ogniska.", 1.5, 7, "trakty_lumber_coat", "armor", "korpus", protection=0),
+                "prawa_reka": Item("topór drwala", "Topór do drewna, wozów i wszystkich rzeczy, które trzeba rozłupać.", 2.9, 11, "trakty_lumber_axe", "weapon", "prawa_reka", damage_type="obuchowa", base_damage=4, reach=1, initiative_modifier=0, parry_bonus=0),
+            }
+        if vnum == "trakty_straznik":
+            return {
+                "korpus": Item("płaszcz strażniczy", "Służbowy płaszcz odporny na wiatr.", 1.9, 10, "trakty_guard_coat", "armor", "korpus", protection=1),
+                "prawa_reka": Item("włócznia trakty", "Włócznia do kontroli przejść i rozstajów.", 2.6, 14, "trakty_guard_spear", "weapon", "prawa_reka", damage_type="kluta", base_damage=4, reach=2, initiative_modifier=0, parry_bonus=0),
+                "lewa_reka": Item("mała tarcza", "Lekka tarcza na długie postoje przy wietrze.", 2.2, 11, "trakty_guard_shield", "shield", "lewa_reka", protection=1, shield_block=2),
+            }
+        if vnum == "trakty_handlarz":
+            return {
+                "korpus": Item("handlarski płaszcz", "Płaszcz z wieloma kieszeniami i łatami po drogach.", 1.3, 8, "trakty_merchant_cloak", "armor", "korpus", protection=0),
+                "prawa_reka": Item("miarka handlowa", "Krótka miarka i sznur do pilnowania uczciwej wagi.", 0.4, 4, "trakty_merchant_measure", "tool", "prawa_reka"),
+            }
+        return {}
+
+    class TraktyNPCSpec(TypedDict, total=False):
+        name: str
+        short_desc: str
+        long_desc: str
+        room_id: int
+        stats: CharacterStats
+        merchant: bool
+        gold: int
+        shop: str
+        ai_state: str
+
+    def _create_trakty_npc(self, vnum: str, room_id: int) -> NPC:
+        data: dict[str, NPCFactory.TraktyNPCSpec] = {
+            "trakty_przewodnik": {
+                "name": "przewodnik",
+                "short_desc": "Przewodnik zna kamienie milowe i ostrzega przed złą pogodą.",
+                "long_desc": "Prowadzi ludzi przez trakty tak, jakby każda koleina była zapisana w pamięci nóg.",
+                "room_id": 135,
+                "stats": CharacterStats(10, 11, 10, 12, 11, 100),
+                "merchant": True,
+                "gold": 42,
+                "shop": "trakty_route_inventory",
+            },
+            "trakty_karawaniarz": {
+                "name": "karawaniarz",
+                "short_desc": "Karawaniarz liczy skrzynie, osie i pieczęcie przewozowe.",
+                "long_desc": "Widzi wagę towaru szybciej niż jego cenę i nie wierzy w drogę bez przynajmniej jednego dobrego klinu.",
+                "room_id": 138,
+                "stats": CharacterStats(10, 10, 10, 11, 11, 95),
+                "merchant": True,
+                "gold": 55,
+                "shop": "trakty_caravan_inventory",
+            },
+            "trakty_kurier": {
+                "name": "kurier",
+                "short_desc": "Kurier ma płaszcz ubłocony od biegu między punktami postoju.",
+                "long_desc": "Niesie wiadomości szybciej niż plotki i znika, zanim ktoś zdąży zapytać o szczegóły.",
+                "room_id": 140,
+                "stats": CharacterStats(9, 11, 9, 12, 10, 88),
+                "merchant": True,
+                "gold": 24,
+                "shop": "trakty_courier_inventory",
+            },
+            "trakty_woznica": {
+                "name": "woźnica",
+                "short_desc": "Woźnica pilnuje osi i ogląda drogę tak, jakby umiała mówić.",
+                "long_desc": "Zna każdy zjazd, w którym wóz może stracić rozum, i każdy kamień, który trzeba obejść.",
+                "room_id": 141,
+                "stats": CharacterStats(11, 10, 11, 10, 10, 100),
+            },
+            "trakty_podrozny": {
+                "name": "podróżny",
+                "short_desc": "Podróżny odpoczywa przy trakcie z sakwą przy nodze.",
+                "long_desc": "Na twarzy ma pył z kilku dróg i ostrożność ludzi, którzy nie chcą drugi raz zaczynać od zera.",
+                "room_id": 145,
+                "stats": CharacterStats(9, 10, 9, 10, 10, 90),
+            },
+            "trakty_pielgrzym": {
+                "name": "pielgrzym",
+                "short_desc": "Pielgrzym zwalnia przy kapliczce i poprawia sznur paciorków.",
+                "long_desc": "Idzie bez pośpiechu, ale z uporem ludzi, których prowadzi cel silniejszy niż zmęczenie.",
+                "room_id": 136,
+                "stats": CharacterStats(8, 10, 9, 11, 12, 85),
+            },
+            "trakty_zebrak": {
+                "name": "żebrak",
+                "short_desc": "Żebrak siedzi przy rozstajach i udaje, że wiatr go nie dotyczy.",
+                "long_desc": "Zna drogi lepiej niż wielu uczciwych ludzi, bo całe życie przesiedział tam, gdzie wszyscy musieli przejść.",
+                "room_id": 156,
+                "stats": CharacterStats(7, 8, 8, 10, 8, 75),
+            },
+            "trakty_mysliwy": {
+                "name": "myśliwy",
+                "short_desc": "Myśliwy sprzedaje strzały i kilka dobrych rad o śladach na kamieniu.",
+                "long_desc": "Zna tropy kozy, wilka i człowieka, który za długo stał w jednym miejscu przy drodze.",
+                "room_id": 165,
+                "stats": CharacterStats(11, 12, 11, 11, 10, 100),
+                "merchant": True,
+                "gold": 48,
+                "shop": "trakty_hunter_inventory",
+            },
+            "trakty_drwal": {
+                "name": "drwal",
+                "short_desc": "Drwal niesie topór i wiązkę drewna na suchy ogień.",
+                "long_desc": "Przychodzi z lasu przy trakcie z żywicą na rękawach i nie pyta o sprawy, które można rozwiązać jednym cięciem.",
+                "room_id": 166,
+                "stats": CharacterStats(12, 10, 12, 9, 9, 110),
+                "merchant": True,
+                "gold": 30,
+                "shop": "trakty_lumber_inventory",
+            },
+            "trakty_straznik": {
+                "name": "strażnik traktu",
+                "short_desc": "Strażnik traktu patrzy na rozstaje i liczy wozy.",
+                "long_desc": "Nosi cierpliwość, włócznię i pamięć do twarzy, które za często wracają po zmroku.",
+                "room_id": 172,
+                "stats": CharacterStats(11, 11, 12, 11, 10, 108),
+                "ai_state": "PATROL",
+            },
+            "trakty_handlarz": {
+                "name": "handlarz",
+                "short_desc": "Handlarz trzyma kram przy trakcie i rozstawia towar przed kolejną karawaną.",
+                "long_desc": "Ma mały stół, dużą pamięć do cen i cierpliwość tylko do tych, którzy naprawdę chcą kupować.",
+                "room_id": 176,
+                "stats": CharacterStats(9, 10, 9, 11, 11, 92),
+                "merchant": True,
+                "gold": 46,
+                "shop": "trakty_route_inventory",
+            },
+        }
+        spec = data.get(vnum)
+        if spec is None:
+            raise KeyError(f"Unknown Trakty NPC: {vnum}")
+        character = Character(spec["name"].capitalize())
+        character.stats = spec["stats"]
+        shop_factories = {
+            "trakty_route_inventory": trakty_route_inventory,
+            "trakty_caravan_inventory": trakty_caravan_inventory,
+            "trakty_courier_inventory": trakty_courier_inventory,
+            "trakty_hunter_inventory": trakty_hunter_inventory,
+            "trakty_lumber_inventory": trakty_lumber_inventory,
+        }
+        shop_name = cast(str | None, spec.get("shop"))
+        ai_state = spec["ai_state"] if "ai_state" in spec else "IDLE"
+        merchant_gold = spec["gold"] if "gold" in spec else 100
+        npc = NPC(
+            vnum=vnum,
+            name=spec["name"],
+            short_desc=spec["short_desc"],
+            long_desc=spec["long_desc"],
+            zone="Trakty",
+            faction="MEEKHAN",
+            ai_state=ai_state,
+            room_id=room_id,
+            character=character,
+            is_merchant=bool(spec.get("merchant", False)),
+            shop_inventory=list(shop_factories[shop_name]()) if shop_name is not None else [],
+            merchant_gold=merchant_gold,
+            home_room_id=int(spec["room_id"]),
+        )
+        npc.character.combat_style = combat_style_for_vnum(npc.vnum)
+        npc.character.equipment.update(self._trakty_equipment(vnum))
+        npc.dialogue_tree = self._trakty_dialogue(vnum)
+        return self._finalize(npc)
+
+    def _wild_dialogue(self, role: str) -> dict[str, list[str]]:
+        dialogues = {
+            "puszcza_mysliwy": self._social_dialogue(
+                "Na leśnej ścieżce nie mówi się głośniej niż trzeba.",
+                "Patrzę na tropy, stawiam sidła i znam las z tego, co zostaje po przejściu zwierzyny.",
+                "Stoję tam, gdzie droga przechodzi w poszycie, a człowiek musi zwolnić.",
+                "Plotki w lesie kończą się szybciej niż ślady po deszczu.",
+                tropy="Tropy są uczciwsze niż większość ludzi.",
+            ),
+            "puszcza_zielarz": self._social_dialogue(
+                "Jeśli szukasz ziół, patrz pod nogi, nie w korony drzew.",
+                "Zbieram, suszę i mieszam to, co las daje bez pytania.",
+                "Stoję przy polanach i strumieniach, gdzie rośliny rosną najtłustsze.",
+                "Plotki wolę suszyć razem z ziołami: inaczej spleśnieją.",
+                zioła="Dobre zioła rosną tam, gdzie nikt nie depcze zbyt często.",
+            ),
+            "puszcza_pustelnik": self._social_dialogue(
+                "Cisza jest tu uczciwsza od miasta.",
+                "Pilnuję kapliczki i wspomnień o tym, co las zabrał, a czego jeszcze nie oddał.",
+                "Stoję przy starych kamieniach i zapomnianych ogniskach.",
+                "Plotki zostawiam podróżnym. Ja wolę słuchać drzew.",
+                kaplica="Kapliczka w lesie bywa lepszym schronieniem niż niejedna chata.",
+            ),
+            "puszcza_drwal": self._social_dialogue(
+                "Jeśli słyszysz topór, to znaczy, że drewno już przegrało.",
+                "Ścinam, rąbię i naprawiam obóz, zanim wiatr zrobi to za mnie.",
+                "Stoję przy polanie i składzie drewna, bo tam widać pracę najlepiej.",
+                "Plotki o lesie są jak suche gałęzie: łatwo je złamać, ale trudno spalić do końca.",
+                drewno="Drewno trzeba brać tam, gdzie las pozwala, a nie tam, gdzie człowiek chce.",
+            ),
+            "puszcza_jelen": self._social_dialogue(
+                "Nie zbliżaj się za szybko.",
+                "Pasę się, uciekam i wracam tam, gdzie jest najspokojniej.",
+                "Stoję przy polanach i wodzie, bo tam trawa jest lepsza.",
+                "Plotki? Człowiek mówi za dużo, jeleń za mało.",
+            ),
+            "puszcza_dzik": self._social_dialogue(
+                "Nie oglądam się za ludziami.",
+                "Przecinam podszyt i ryję tam, gdzie korzenie są miękkie.",
+                "Stoję w gęstwinie, gdzie ślady łatwo znikają.",
+                "Plotki? Lepsze są kły i błoto.",
+            ),
+            "bagna_zielarz": self._social_dialogue(
+                "Bagno daje dobre zioła, jeśli nie boisz się ubrudzić rąk.",
+                "Zbieram torfowe rośliny, suszę trzcinę i znam leki na wilgoć.",
+                "Stoję przy kępach i suchych wyspach, tam gdzie rosną najtwardsze rośliny.",
+                "Plotki z mokradła trzeba odsączać dłużej niż napary.",
+                zioła="W mokradle zioła rosną gorzkie, ale skuteczne.",
+            ),
+            "bagna_pustelnik": self._social_dialogue(
+                "Tu można zniknąć i nie być znalezionym.",
+                "Pilnuję kapliczki i starego ołtarza, bo ktoś musi pamiętać, że bagno też ma święte miejsca.",
+                "Stoję przy suchych kępach i kamieniach, które jeszcze nie zapadły się w torf.",
+                "Plotki? Bagno połyka je szybciej niż ludzi.",
+                kaplica="Stary ołtarz trzyma się lepiej niż połowa świata naokoło.",
+            ),
+            "bagna_mysliwy": self._social_dialogue(
+                "Na mokradle trzeba patrzeć dwa razy: raz pod nogi, raz na ślady.",
+                "Poluję, tropię i sprawdzam, co wyszło z wody po zmroku.",
+                "Stoję przy groblach i trzcinie, gdzie zwierzyna lubi przechodzić po cichu.",
+                "Plotki o bagnach zwykle kończą się w wodzie.",
+                tropy="Tropy w błocie są jak podpisy: nie da się ich łatwo skłamać.",
+            ),
+            "bagna_zaba": self._social_dialogue(
+                "Rechot to też odpowiedź.",
+                "Skaczę, chowam się i wiem, gdzie jest najmniej suchego błędu.",
+                "Stoję przy wodzie i trzcinie, bo to mój dom.",
+                "Plotki? Ja słyszę tylko plusk.",
+            ),
+        }
+        return dialogues.get(role, self._social_dialogue(
+            "Nie mam dziś wiele do powiedzenia.",
+            "Las i bagno wolą czyny od słów.",
+            "Stoję tam, gdzie mnie postawiono.",
+            "Plotki znikają tu szybciej niż ślad po deszczu.",
+        ))
+
+    def _wild_equipment(self, vnum: str) -> dict[str, Item | None]:
+        if vnum == "puszcza_mysliwy":
+            return {
+                "korpus": Item("leśne futro", "Ciężkie futro odporne na wilgoć i mróz.", 2.0, 11, "puszcza_hunter_fur", "armor", "korpus", protection=1),
+                "prawa_reka": Item("łuk leśny", "Łuk do polowania na leśne zwierzęta.", 1.6, 16, "puszcza_hunter_bow", "weapon", "prawa_reka", damage_type="pociskowa", base_damage=4, reach=2, initiative_modifier=1, parry_bonus=0),
+            }
+        if vnum == "puszcza_zielarz":
+            return {
+                "korpus": Item("płócienna szata", "Szata odporniejsza na wilgoć i zabrudzenia po ziołach.", 1.0, 6, "puszcza_herbal_coat", "armor", "korpus", protection=0),
+                "prawa_reka": Item("nożyk ziołowy", "Mały nożyk do obcinania łodyg i korzeni.", 0.2, 3, "puszcza_herbal_knife", "weapon", "prawa_reka", damage_type="kluta", base_damage=1, reach=1, initiative_modifier=1, parry_bonus=0),
+            }
+        if vnum == "puszcza_pustelnik":
+            return {
+                "korpus": Item("wytarty płaszcz", "Płaszcz tak stary, jak opowieści o lesie.", 1.3, 5, "puszcza_hermit_cloak", "armor", "korpus", protection=0),
+                "prawa_reka": Item("kij pustelnika", "Kij do marszu i opierania się przy kamieniach.", 0.9, 4, "puszcza_hermit_staff", "weapon", "prawa_reka", damage_type="obuchowa", base_damage=1, reach=2, initiative_modifier=0, parry_bonus=0),
+            }
+        if vnum == "puszcza_drwal":
+            return {
+                "korpus": Item("roboczy kaftan", "Kaftan odporny na żywicę i pył z kory.", 1.4, 6, "puszcza_lumber_coat", "armor", "korpus", protection=0),
+                "prawa_reka": Item("topór drwala", "Ciężki topór do zwalonych pni.", 3.0, 10, "puszcza_lumber_axe", "weapon", "prawa_reka", damage_type="obuchowa", base_damage=4, reach=1, initiative_modifier=0, parry_bonus=0),
+            }
+        if vnum == "puszcza_jelen":
+            return {
+                "korpus": Item("sierść jelenia", "Naturalna skóra i poroże tworzące zwykłe, leśne ciało.", 0.0, 0, "puszcza_deer_hide", "armor", "korpus", protection=0),
+                "prawa_reka": Item("poroże", "Naturalne poroże, bardziej do obrony niż ataku.", 0.0, 0, "puszcza_deer_antlers", "weapon", "prawa_reka", damage_type="obuchowa", base_damage=2, reach=1, initiative_modifier=1, parry_bonus=0),
+            }
+        if vnum == "puszcza_dzik":
+            return {
+                "korpus": Item("szorstka szczecina", "Naturalna osłona dzika.", 0.0, 0, "puszcza_boar_hide", "armor", "korpus", protection=0),
+                "prawa_reka": Item("kły dzika", "Naturalne kły i ciężki kark.", 0.0, 0, "puszcza_boar_tusks", "weapon", "prawa_reka", damage_type="obuchowa", base_damage=3, reach=1, initiative_modifier=0, parry_bonus=0),
+            }
+        if vnum == "bagna_zielarz":
+            return {
+                "korpus": Item("mokry fartuch", "Fartuch chroniący przed wodą i błotem.", 1.0, 5, "bagna_herbal_apron", "armor", "korpus", protection=0),
+                "prawa_reka": Item("nożyk torfowy", "Krótki nożyk do cięcia trzcin i ziół.", 0.2, 3, "bagna_herbal_knife", "weapon", "prawa_reka", damage_type="kluta", base_damage=1, reach=1, initiative_modifier=1, parry_bonus=0),
+            }
+        if vnum == "bagna_pustelnik":
+            return {
+                "korpus": Item("stara opończa", "Opończa przesiąknięta wilgocią i dymem.", 1.2, 5, "bagna_hermit_cloak", "armor", "korpus", protection=0),
+                "prawa_reka": Item("kij błotny", "Kij do chodzenia po groblach i kładkach.", 1.0, 4, "bagna_hermit_staff", "weapon", "prawa_reka", damage_type="obuchowa", base_damage=1, reach=2, initiative_modifier=0, parry_bonus=0),
+            }
+        if vnum == "bagna_mysliwy":
+            return {
+                "korpus": Item("błotne futro", "Futro zabezpieczone przed wodą i pluskiem.", 1.8, 10, "bagna_hunter_fur", "armor", "korpus", protection=1),
+                "prawa_reka": Item("łuk bagienny", "Łuk odpowiedni do polowania na mokradłach.", 1.6, 16, "bagna_hunter_bow", "weapon", "prawa_reka", damage_type="pociskowa", base_damage=4, reach=2, initiative_modifier=1, parry_bonus=0),
+            }
+        if vnum == "bagna_zaba":
+            return {
+                "korpus": Item("śliska skóra", "Naturalna, wilgotna skóra stworzenia z mokradeł.", 0.0, 0, "bagna_frog_skin", "armor", "korpus", protection=0),
+                "prawa_reka": Item("długi skok", "Niezwykle szybka, naturalna pogoń.", 0.0, 0, "bagna_frog_jump", "weapon", "prawa_reka", damage_type="obuchowa", base_damage=1, reach=1, initiative_modifier=2, parry_bonus=0),
+            }
+        return {}
+
+    class WildNPCSpec(TypedDict, total=False):
+        name: str
+        short_desc: str
+        long_desc: str
+        room_id: int
+        stats: CharacterStats
+        merchant: bool
+        gold: int
+        shop: str
+        ai_state: str
+        zone: str
+
+    def _create_wild_npc(self, vnum: str, room_id: int) -> NPC:
+        data: dict[str, NPCFactory.WildNPCSpec] = {
+            "puszcza_mysliwy": {
+                "name": "myśliwy",
+                "short_desc": "Myśliwy obserwuje tropy przy leśnym skraju.",
+                "long_desc": "Zna las, strumienie i miejsca, gdzie zwierzyna wraca po zmroku.",
+                "room_id": 216,
+                "zone": "Puszcza_Ciszy",
+                "stats": CharacterStats(11, 12, 11, 11, 10, 100),
+                "merchant": True,
+                "gold": 45,
+                "shop": "puszcza_hunter_inventory",
+            },
+            "puszcza_zielarz": {
+                "name": "zielarz",
+                "short_desc": "Zielarz suszy zioła na sznurku między drzewami.",
+                "long_desc": "Zbiera rośliny, które rosną tam, gdzie inni nie chcą stawiać stopy.",
+                "room_id": 223,
+                "zone": "Puszcza_Ciszy",
+                "stats": CharacterStats(9, 11, 9, 12, 11, 90),
+                "merchant": True,
+                "gold": 34,
+                "shop": "puszcza_herbal_inventory",
+            },
+            "puszcza_pustelnik": {
+                "name": "pustelnik",
+                "short_desc": "Pustelnik pilnuje kapliczki i słucha lasu.",
+                "long_desc": "Mieszka samotnie przy starych kamieniach, żyjąc bardziej z ciszy niż z jedzenia.",
+                "room_id": 252,
+                "zone": "Puszcza_Ciszy",
+                "stats": CharacterStats(8, 10, 9, 11, 12, 80),
+            },
+            "puszcza_drwal": {
+                "name": "drwal",
+                "short_desc": "Drwal oznacza pieńki i układa drewno przy polanie.",
+                "long_desc": "Pracuje w lesie ostrożnie, bo wie, że las pamięta każdy źle poprowadzony topór.",
+                "room_id": 246,
+                "zone": "Puszcza_Ciszy",
+                "stats": CharacterStats(12, 10, 12, 9, 9, 105),
+                "merchant": True,
+                "gold": 26,
+                "shop": "puszcza_herbal_inventory",
+            },
+            "puszcza_jelen": {
+                "name": "jeleń",
+                "short_desc": "Jeleń stoi w cieniu drzew i obserwuje każdy ruch.",
+                "long_desc": "Zwierzę lasu, czujne i niechętne do bliższego kontaktu.",
+                "room_id": 241,
+                "zone": "Puszcza_Ciszy",
+                "stats": CharacterStats(9, 13, 9, 12, 8, 70),
+                "ai_state": "PATROL",
+            },
+            "puszcza_dzik": {
+                "name": "dzik",
+                "short_desc": "Dzik ryje przy korzeniach i nie lubi niespodzianek.",
+                "long_desc": "Potężne zwierzę z mokrym ryjem i ciężkim karkiem.",
+                "room_id": 267,
+                "zone": "Puszcza_Ciszy",
+                "stats": CharacterStats(12, 11, 13, 9, 11, 100),
+                "ai_state": "AGGRESSIVE",
+            },
+            "bagna_zielarz": {
+                "name": "zielarka",
+                "short_desc": "Zielarka zbiera torfowe zioła przy skraju mokradeł.",
+                "long_desc": "Zna rośliny rosnące tylko tam, gdzie ziemia jest wiecznie mokra i gorzka.",
+                "room_id": 478,
+                "zone": "Bagna_Hookri",
+                "stats": CharacterStats(9, 11, 9, 12, 11, 90),
+                "merchant": True,
+                "gold": 36,
+                "shop": "bagna_herbal_inventory",
+            },
+            "bagna_pustelnik": {
+                "name": "pustelnik",
+                "short_desc": "Pustelnik pilnuje starego ołtarza pośrodku bagien.",
+                "long_desc": "Mieszka przy suchych kępach i wierzy, że bagno trzeba najpierw zrozumieć, a dopiero potem przejść.",
+                "room_id": 493,
+                "zone": "Bagna_Hookri",
+                "stats": CharacterStats(8, 10, 9, 11, 12, 80),
+            },
+            "bagna_mysliwy": {
+                "name": "myśliwy",
+                "short_desc": "Myśliwy śledzi ptactwo i płazy po mokradłach.",
+                "long_desc": "Zna groble, kładki i miejsca, gdzie z wody wychodzi zwierzyna.",
+                "room_id": 488,
+                "zone": "Bagna_Hookri",
+                "stats": CharacterStats(10, 12, 10, 11, 10, 95),
+                "merchant": True,
+                "gold": 38,
+                "shop": "puszcza_hunter_inventory",
+            },
+            "bagna_zaba": {
+                "name": "żaba",
+                "short_desc": "Żaba przysiada w trzcinach i znika, gdy ktoś rusza się za głośno.",
+                "long_desc": "Niewielkie stworzenie mokradeł, szybkie i trudne do złapania.",
+                "room_id": 481,
+                "zone": "Bagna_Hookri",
+                "stats": CharacterStats(6, 14, 6, 12, 8, 50),
+                "ai_state": "PATROL",
+            },
+        }
+        spec = data.get(vnum)
+        if spec is None:
+            raise KeyError(f"Unknown wild NPC: {vnum}")
+        character = Character(spec["name"].capitalize())
+        character.stats = spec["stats"]
+        shop_factories = {
+            "puszcza_herbal_inventory": puszcza_herbal_inventory,
+            "puszcza_hunter_inventory": puszcza_hunter_inventory,
+            "puszcza_hermit_inventory": puszcza_hermit_inventory,
+            "bagna_herbal_inventory": bagna_herbal_inventory,
+            "bagna_hermit_inventory": bagna_hermit_inventory,
+        }
+        shop_name = cast(str | None, spec.get("shop"))
+        ai_state = spec["ai_state"] if "ai_state" in spec else "IDLE"
+        merchant_gold = spec["gold"] if "gold" in spec else 100
+        npc = NPC(
+            vnum=vnum,
+            name=spec["name"],
+            short_desc=spec["short_desc"],
+            long_desc=spec["long_desc"],
+            zone=spec["zone"],
+            faction="REBELS",
+            ai_state=ai_state,
+            room_id=room_id,
+            character=character,
+            is_merchant=bool(spec.get("merchant", False)),
+            shop_inventory=list(shop_factories[shop_name]()) if shop_name is not None else [],
+            merchant_gold=merchant_gold,
+            home_room_id=int(spec["room_id"]),
+        )
+        npc.character.combat_style = combat_style_for_vnum(npc.vnum)
+        npc.character.equipment.update(self._wild_equipment(vnum))
+        npc.dialogue_tree = self._wild_dialogue(vnum)
+        return self._finalize(npc)
+
+    class StraznicaNPCSpec(TypedDict, total=False):
+        name: str
+        short_desc: str
+        long_desc: str
+        room_id: int
+        stats: CharacterStats
+        merchant: bool
+        gold: int
+        shop: str
+        ai_state: str
+
+    def _create_straznica_npc(self, vnum: str, room_id: int) -> NPC:
+        data: dict[str, NPCFactory.StraznicaNPCSpec] = {
+            "straznica_dowodca": {
+                "name": "komendant",
+                "short_desc": "Komendant strażnicy porządkuje meldunki i spisuje ruch na przełęczy.",
+                "long_desc": "Odpowiada za przejazd, ludzi i zimowe blokady, a każdy jego rozkaz brzmi, jakby już wcześniej został sprawdzony.",
+                "room_id": 125,
+                "stats": CharacterStats(13, 11, 13, 12, 12, 140),
+                "ai_state": "GUARD",
+            },
+            "straznica_wartownik": {
+                "name": "wartownik",
+                "short_desc": "Wartownik strzeże wąskiego przejazdu i pilnuje, by nikt nie wchodził bez meldunku.",
+                "long_desc": "Zna każdy kamień przy murze, bo spędza tam więcej czasu niż w izbie.",
+                "room_id": 126,
+                "stats": CharacterStats(12, 11, 12, 11, 11, 120),
+                "ai_state": "GUARD",
+            },
+            "straznica_zwiadowca": {
+                "name": "zwiadowca",
+                "short_desc": "Zwiadowca wypatruje ruchu na górskiej ścieżce i lubi zniknąć za załamaniem skały.",
+                "long_desc": "Wraca z góry z błotem na butach i informacjami, których nikt inny nie zauważyłby na czas.",
+                "room_id": 127,
+                "stats": CharacterStats(11, 12, 11, 12, 10, 110),
+                "ai_state": "PATROL",
+            },
+            "straznica_przewodnik": {
+                "name": "przewodnik",
+                "short_desc": "Przewodnik zna bezpieczniejsze obejścia i ostrzega przed zlodowaciałymi płytami.",
+                "long_desc": "Prowadzi ludzi przez przełęcz tak, jakby każdy krok miał być później odtworzony z pamięci.",
+                "room_id": 128,
+                "stats": CharacterStats(10, 11, 10, 12, 11, 100),
+                "merchant": True,
+                "gold": 40,
+                "shop": "straznica_supply_inventory",
+            },
+            "straznica_karawanowy": {
+                "name": "kupiec karawan",
+                "short_desc": "Kupiec karawan liczy skrzynie, koła i opłaty za przejazd.",
+                "long_desc": "W przełęczy nie pyta o marzenia. Pyta o wagę, pieczęć i to, czy ładunek przetrwa wiatr.",
+                "room_id": 129,
+                "stats": CharacterStats(10, 10, 10, 11, 11, 95),
+                "merchant": True,
+                "gold": 55,
+                "shop": "straznica_caravan_inventory",
+            },
+            "straznica_woznica": {
+                "name": "woźnica",
+                "short_desc": "Woźnica zna rytm kół, skrzyni i hamowania na stromym zboczu.",
+                "long_desc": "Kiedy mówi o drodze, mówi jak o żywym stworzeniu, które trzeba szanować albo zostawić w spokoju.",
+                "room_id": 130,
+                "stats": CharacterStats(11, 10, 11, 10, 10, 105),
+            },
+            "straznica_podrozny": {
+                "name": "podróżny",
+                "short_desc": "Podróżny odpoczywa przy przełęczy, zanim ruszy dalej na północ.",
+                "long_desc": "Ma błoto na płaszczu i ten rodzaj cierpliwości, który rodzi się tylko na długiej drodze.",
+                "room_id": 131,
+                "stats": CharacterStats(9, 10, 9, 10, 10, 90),
+            },
+            "straznica_pielgrzym": {
+                "name": "pielgrzym",
+                "short_desc": "Pielgrzym zatrzymuje się przy kaplicy i ogrzewa dłonie nad lampą.",
+                "long_desc": "Idzie lekko, choć droga jest stroma, i słucha ciszy jak modlitwy.",
+                "room_id": 132,
+                "stats": CharacterStats(9, 10, 9, 11, 12, 85),
+            },
+            "straznica_mysliwy": {
+                "name": "myśliwy",
+                "short_desc": "Myśliwy z przełęczy sprzedaje skórę, strzały i kilka dobrych rad o śniegu.",
+                "long_desc": "Zna tropy kozy, wilka i człowieka, który za długo stał w jednym miejscu.",
+                "room_id": 133,
+                "stats": CharacterStats(11, 12, 11, 11, 10, 100),
+                "merchant": True,
+                "gold": 52,
+                "shop": "straznica_hunter_inventory",
+            },
+        }
+        spec = data.get(vnum)
+        if spec is None:
+            raise KeyError(f"Unknown Straznica NPC: {vnum}")
+        character = Character(spec["name"].capitalize())
+        character.stats = spec["stats"]
+        shop_factories = {
+            "straznica_supply_inventory": straznica_supply_inventory,
+            "straznica_caravan_inventory": straznica_caravan_inventory,
+            "straznica_hunter_inventory": straznica_hunter_inventory,
+        }
+        shop_name = cast(str | None, spec.get("shop"))
+        ai_state = spec["ai_state"] if "ai_state" in spec else "IDLE"
+        merchant_gold = spec["gold"] if "gold" in spec else 100
+        npc = NPC(
+            vnum=vnum,
+            name=spec["name"],
+            short_desc=spec["short_desc"],
+            long_desc=spec["long_desc"],
+            zone="Straznica_Przeleczy",
+            faction="MEEKHAN",
+            ai_state=ai_state,
+            room_id=room_id,
+            character=character,
+            is_merchant=bool(spec.get("merchant", False)),
+            shop_inventory=list(shop_factories[shop_name]()) if shop_name is not None else [],
+            merchant_gold=merchant_gold,
+            home_room_id=int(spec["room_id"]),
+        )
+        npc.character.combat_style = combat_style_for_vnum(npc.vnum)
+        npc.character.equipment.update(self._straznica_equipment(vnum))
+        npc.dialogue_tree = self._straznica_dialogue(vnum)
+        return self._finalize(npc)
+
+    def _create_dungrim_npc(self, vnum: str, room_id: int) -> NPC:
+        data: dict[str, NPCFactory.DungrimNPCSpec] = {
+            "dungrim_commander": {
+                "name": "dowódca fortu",
+                "short_desc": "Dowódca fortu stoi nad mapą i liczy zarówno ludzi, jak i zapasy.",
+                "long_desc": "Pilnuje Dungrim z zimną precyzją człowieka, który wie, że błąd na granicy kończy się szybciej niż dyskusja.",
+                "room_id": 120,
+                "stats": CharacterStats(14, 11, 14, 12, 12, 150),
+                "ai_state": "GUARD",
+            },
+            "dungrim_lieutenant": {
+                "name": "oficer",
+                "short_desc": "Oficer prowadzi raporty, zmiany i krótkie odprawy przy mapie.",
+                "long_desc": "Należy do tych ludzi, którzy mówią mało, ale ich głos wystarcza, by koszary zamilkły.",
+                "room_id": 118,
+                "stats": CharacterStats(12, 11, 12, 11, 11, 120),
+                "ai_state": "GUARD",
+            },
+            "dungrim_sergeant": {
+                "name": "sierżant",
+                "short_desc": "Sierżant zna każdy korytarz koszar i każdą wymówkę spóźnionego wartownika.",
+                "long_desc": "Utrzymuje rytm patroli, bo bez niego forteca rozpadłaby się na krzykliwe nawyki.",
+                "room_id": 116,
+                "stats": CharacterStats(12, 11, 12, 11, 11, 125),
+                "ai_state": "PATROL",
+            },
+            "dungrim_guard": {
+                "name": "strażnik",
+                "short_desc": "Strażnik bramy stoi nieruchomo, ale widzi każdy ruch przy przejeździe.",
+                "long_desc": "Nosi blizny, hełm i cierpliwość do ludzi, którzy myślą, że wjazd do fortu jest opcjonalny.",
+                "room_id": 110,
+                "stats": CharacterStats(11, 11, 12, 10, 10, 110),
+                "ai_state": "GUARD",
+            },
+            "dungrim_patrol_guard": {
+                "name": "patrolowy",
+                "short_desc": "Patrolowy obchodzi mur, zanim zdąży się zrobić cicho.",
+                "long_desc": "Widzi drogę, wieżę i dziedziniec, bo od tego zależy, czy noc będzie spokojna.",
+                "room_id": 112,
+                "stats": CharacterStats(11, 12, 11, 10, 10, 108),
+                "ai_state": "PATROL",
+            },
+            "dungrim_armorer": {
+                "name": "zbrojmistrz",
+                "short_desc": "Zbrojmistrz siedzi pośród hełmów, nitów i tarcz z wgnieceniami.",
+                "long_desc": "Zna wagę dobrego pancerza i nie uznaje połowicznych napraw.",
+                "room_id": 121,
+                "stats": CharacterStats(12, 10, 12, 10, 10, 110),
+                "merchant": True,
+                "gold": 64,
+                "shop": "dungrim_armory_inventory",
+            },
+            "dungrim_military_blacksmith": {
+                "name": "kowal wojskowy",
+                "short_desc": "Kowal wojskowy pilnuje iskier, gwoździ i ostrzy przy kuźni fortecznej.",
+                "long_desc": "Naprawia pancerze i broń, a po każdej zmianie zlicza, czy coś nie zniknęło w ogniu.",
+                "room_id": 117,
+                "stats": CharacterStats(13, 10, 13, 10, 10, 120),
+                "merchant": True,
+                "gold": 72,
+                "shop": "dungrim_armory_inventory",
+            },
+            "dungrim_quartermaster": {
+                "name": "magazynier",
+                "short_desc": "Magazynier ma przy pasie klucze, a w głowie dokładny spis skrzyń.",
+                "long_desc": "Nikt tak jak on nie wie, które racje znikają, a które tylko zmieniają miejsce.",
+                "room_id": 122,
+                "stats": CharacterStats(10, 10, 10, 11, 11, 100),
+                "merchant": True,
+                "gold": 50,
+                "shop": "dungrim_quartermaster_inventory",
+            },
+            "dungrim_storekeeper": {
+                "name": "składnik",
+                "short_desc": "Składnik pilnuje beczek, skrzyń i worków w fortecznych magazynach.",
+                "long_desc": "Zna kolejność rzeczy lepiej niż kolejność przełożonych i nie uważa tego za wadę.",
+                "room_id": 123,
+                "stats": CharacterStats(10, 10, 10, 10, 10, 95),
+                "merchant": True,
+                "gold": 36,
+                "shop": "dungrim_quartermaster_inventory",
+            },
+            "dungrim_stablemaster": {
+                "name": "stajenny",
+                "short_desc": "Stajenny pilnuje koni patrolowych i porządku w stajniach.",
+                "long_desc": "Zna każdy stukot kopyt i każdą sztukę, która nie lubi deszczu.",
+                "room_id": 114,
+                "stats": CharacterStats(10, 10, 10, 10, 11, 95),
+                "merchant": True,
+                "gold": 40,
+                "shop": "dungrim_stable_inventory",
+            },
+            "dungrim_cook": {
+                "name": "kucharz",
+                "short_desc": "Kucharz miesza gulasz i liczy, ile racji zostało do wieczora.",
+                "long_desc": "Nie pyta o bohaterstwo, tylko o garnki, sól i kolejkę po jedzenie.",
+                "room_id": 115,
+                "stats": CharacterStats(9, 10, 9, 10, 10, 90),
+                "merchant": True,
+                "gold": 30,
+                "shop": "dungrim_kitchen_inventory",
+            },
+        }
+        spec = data.get(vnum)
+        if spec is None:
+            raise KeyError(f"Unknown Dungrim NPC: {vnum}")
+        character = Character(spec["name"].capitalize())
+        character.stats = spec["stats"]
+        shop_factories = {
+            "dungrim_armory_inventory": dungrim_armory_inventory,
+            "dungrim_quartermaster_inventory": dungrim_quartermaster_inventory,
+            "dungrim_stable_inventory": dungrim_stable_inventory,
+            "dungrim_kitchen_inventory": dungrim_kitchen_inventory,
+        }
+        shop_name = cast(str | None, spec.get("shop"))
+        ai_state = spec["ai_state"] if "ai_state" in spec else "IDLE"
+        merchant_gold = spec["gold"] if "gold" in spec else 100
+        npc = NPC(
+            vnum=vnum,
+            name=spec["name"],
+            short_desc=spec["short_desc"],
+            long_desc=spec["long_desc"],
+            zone="Forteca_Dungrim",
+            faction="MEEKHAN",
+            ai_state=ai_state,
+            room_id=room_id,
+            character=character,
+            is_merchant=bool(spec.get("merchant", False)),
+            shop_inventory=list(shop_factories[shop_name]()) if shop_name is not None else [],
+            merchant_gold=merchant_gold,
+            home_room_id=int(spec["room_id"]),
+        )
+        npc.character.combat_style = combat_style_for_vnum(npc.vnum)
+        npc.character.equipment.update(self._dungrim_equipment(vnum))
+        npc.dialogue_tree = self._dungrim_dialogue(vnum)
+        return self._finalize(npc)
 
     def _basic_npc(
         self,
@@ -128,6 +1634,7 @@ class NPCFactory:
             shop_inventory=list(shop_inventory or []),
             merchant_gold=merchant_gold,
             home_room_id=room_id,
+            daily_schedule=self._daily_schedule_for(vnum),
         )
         npc.character.combat_style = combat_style_for_vnum(npc.vnum)
         if dialogue_tree is not None:
@@ -442,6 +1949,44 @@ class NPCFactory:
                 },
                 inventory=[Item("kosz jaj", "Kosz z jajami, owiniętymi w słomę.", 1.4, 6, "podgrodzie_farmer_egg_basket", is_container=True, capacity=10)],
             )
+        if vnum in {
+            "haldun_solt",
+            "haldun_wellkeeper",
+            "haldun_blacksmith",
+            "haldun_miller",
+            "haldun_merchant",
+            "haldun_farmer",
+            "haldun_farmerka",
+            "haldun_pasterz",
+            "haldun_wartownik",
+        }:
+            return self._create_haldun_npc(vnum, room_id)
+        if vnum in {
+            "dungrim_commander",
+            "dungrim_lieutenant",
+            "dungrim_sergeant",
+            "dungrim_guard",
+            "dungrim_patrol_guard",
+            "dungrim_armorer",
+            "dungrim_military_blacksmith",
+            "dungrim_quartermaster",
+            "dungrim_storekeeper",
+            "dungrim_stablemaster",
+            "dungrim_cook",
+        }:
+            return self._create_dungrim_npc(vnum, room_id)
+        if vnum in {
+            "straznica_dowodca",
+            "straznica_wartownik",
+            "straznica_zwiadowca",
+            "straznica_przewodnik",
+            "straznica_karawanowy",
+            "straznica_woznica",
+            "straznica_podrozny",
+            "straznica_pielgrzym",
+            "straznica_mysliwy",
+        }:
+            return self._create_straznica_npc(vnum, room_id)
         if vnum == "fisherman":
             return self._basic_npc(
                 vnum="fisherman",
@@ -895,6 +2440,33 @@ class NPCFactory:
                 wilki="Wilki schodzą blisko traktu. Przynieś mi jedną skórę, a zapłacę.",
             )
             return self._finalize(npc)
+        if vnum in {
+            "trakty_przewodnik",
+            "trakty_karawaniarz",
+            "trakty_kurier",
+            "trakty_woznica",
+            "trakty_podrozny",
+            "trakty_pielgrzym",
+            "trakty_zebrak",
+            "trakty_mysliwy",
+            "trakty_drwal",
+            "trakty_straznik",
+            "trakty_handlarz",
+        }:
+            return self._create_trakty_npc(vnum, room_id)
+        if vnum in {
+            "puszcza_mysliwy",
+            "puszcza_zielarz",
+            "puszcza_pustelnik",
+            "puszcza_drwal",
+            "puszcza_jelen",
+            "puszcza_dzik",
+            "bagna_zielarz",
+            "bagna_pustelnik",
+            "bagna_mysliwy",
+            "bagna_zaba",
+        }:
+            return self._create_wild_npc(vnum, room_id)
         if vnum == "mountain_troll":
             c = Character("Troll")
             c.stats = CharacterStats(17, 9, 16, 8, 8, 160)
