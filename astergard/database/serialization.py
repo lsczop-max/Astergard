@@ -20,6 +20,7 @@ class CharacterStateSerializer:
             "gender_description": char.gender_description,
             "age": char.age,
             "origin": char.origin,
+            "childhood": char.childhood,
             "birth_region": char.birth_region,
             "culture": char.culture,
             "religion": char.religion,
@@ -89,6 +90,7 @@ class CharacterStateSerializer:
             char.gender_description = str(profile_raw.get("gender_description", ""))
             char.age = int(profile_raw.get("age", 0) or 0)
             char.origin = str(profile_raw.get("origin", ""))
+            char.childhood = str(profile_raw.get("childhood", ""))
             char.birth_region = str(profile_raw.get("birth_region", ""))
             char.culture = str(profile_raw.get("culture", ""))
             char.religion = str(profile_raw.get("religion", ""))

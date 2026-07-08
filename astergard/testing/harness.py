@@ -27,6 +27,8 @@ class TestGameHarness:
     game than unit mocks, but still deterministic and fast.
     """
 
+    __test__ = False
+
     db_path: str | None = None
     server: GameServer | None = None
     _temp_dir: tempfile.TemporaryDirectory[str] | None = None

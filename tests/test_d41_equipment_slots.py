@@ -36,7 +36,7 @@ class EquipmentSlotTests(unittest.TestCase):
             second = server.services.inventory_service.wear_item(character, "amulet mocy", 1)
 
             self.assertIn("Zakładasz amulet odwagi.", first)
-            self.assertIn("Masz już coś na slocie amulet.", second)
+            self.assertIn("Na miejscu amuletu już coś nosisz.", second)
             self.assertIs(character.equipment["amulet"], amulet_a)
             self.assertIn(amulet_b, character.inventory)
 
@@ -164,9 +164,20 @@ class EquipmentSlotTests(unittest.TestCase):
                     1,
                 )
 
+            async def run_postac() -> str:
+                return await server.services.dispatcher.commands["postac"](
+                    server.make_context(hero),
+                    None,
+                    1,
+                )
+
             look_text = asyncio.run(run_look())
-            self.assertIn("broń główna", inventory_text)
-            self.assertIn("amulet", inventory_text)
+            postac_text = asyncio.run(run_postac())
+            self.assertIn("Wyposażenie przy tobie: testowy miecz", inventory_text)
+            self.assertIn("Obciążenie: niewielkie", inventory_text)
+            self.assertIn("Masz na sobie:", postac_text)
+            self.assertIn("W dłoniach masz: testowy miecz w prawej dłoni.", postac_text)
+            self.assertNotIn("broń główna", postac_text)
             self.assertIn("tarcza", look_text)
 
 

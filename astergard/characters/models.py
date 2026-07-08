@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import Any
-from astergard.items.models import EQUIPMENT_SLOTS, EquipmentSet, Item, equipment_slot_label, starter_items
+from astergard.items.models import EQUIPMENT_SLOTS, EquipmentSet, Item, starter_items
 from astergard.rules.skills import (
     apply_skill_use,
     apply_starting_skill_bonus,
@@ -41,6 +41,20 @@ class CharacterStats:
         if value <= 15:
             return "silny"
         return "potężny"
+
+    def describe_kondycja(self) -> str:
+        ratio = 0.0 if self.max_kondycja <= 0 else self.kondycja / self.max_kondycja
+        if ratio >= 0.9:
+            return "w pełni sił"
+        if ratio >= 0.7:
+            return "lekko zmęczony"
+        if ratio >= 0.5:
+            return "zmęczony"
+        if ratio >= 0.25:
+            return "wyczerpany"
+        if self.kondycja > 0:
+            return "ledwo stoi"
+        return "na skraju upadku"
 
 
 @dataclass
@@ -104,6 +118,7 @@ class Character:
     gender_description: str = ""
     age: int = 0
     origin: str = ""
+    childhood: str = ""
     birth_region: str = ""
     culture: str = ""
     religion: str = ""
@@ -182,6 +197,36 @@ class Character:
     def equipped_items(self) -> dict[str, Item]:
         return {slot: item for slot, item in self.equipment.items() if item is not None}
 
+    def _describe_equipped_piece(self, slot: str, item: Item) -> str:
+        slot_labels = {
+            "glowa": "na głowie",
+            "szyja": "na szyi",
+            "korpus": "na korpusie",
+            "plecy": "na plecach",
+            "rece": "na rękach",
+            "dlonie": "na dłoniach",
+            "pas": "przy pasie",
+            "nogi": "na nogach",
+            "stopy": "na stopach",
+            "bron_glowna": "w prawej dłoni",
+            "bron_pomocnicza": "w lewej dłoni",
+            "tarcza": "przy lewym boku",
+            "pierscien_1": "na palcu",
+            "pierscien_2": "na drugim palcu",
+            "amulet": "na piersi",
+        }
+        return f"{item.display_name()} {slot_labels.get(slot, 'przy tobie')}"
+
+    def armor_items(self) -> list[Item]:
+        return [item for item in self.equipment.values() if item is not None and item.item_type in {"armor", "shield"}]
+
+    def armor_weight(self) -> float:
+        return sum(item.weight for item in self.armor_items())
+
+    def armor_burden_penalty(self) -> int:
+        armor_protection = sum(max(0, item.protection) + max(0, item.armor_value) for item in self.armor_items())
+        return max(0, int(self.armor_weight() // 2) + armor_protection // 3)
+
     def set_equipment(self, slot: str, item: Item | None) -> None:
         self.equipment[slot] = item
 
@@ -191,13 +236,34 @@ class Character:
         return item
 
     def equipment_summary(self) -> str:
-        items: list[str] = []
-        for slot in EQUIPMENT_SLOTS:
-            item = self.equipment.get(slot)
-            if item is not None:
-                items.append(f"{equipment_slot_label(slot)}: {item.display_name()}")
-        return ", ".join(items) if items else "brak"
-
+        worn = self.equipped_items()
+        if not worn:
+            return "Nie nosisz teraz żadnego wyposażenia."
+        parts: list[str] = []
+        body_items = [
+            self._describe_equipped_piece(slot, worn[slot])
+            for slot in ("glowa", "szyja", "korpus", "plecy", "rece", "dlonie", "pas", "nogi", "stopy")
+            if worn.get(slot) is not None
+        ]
+        parts.append("Masz na sobie: " + (", ".join(body_items) if body_items else "brak typowego odzienia") + ".")
+        hand_items = [
+            self._describe_equipped_piece(slot, worn[slot])
+            for slot in ("bron_glowna", "bron_pomocnicza")
+            if worn.get(slot) is not None
+        ]
+        shield = worn.get("tarcza")
+        accessories = [
+            self._describe_equipped_piece(slot, worn[slot])
+            for slot in ("pierscien_1", "pierscien_2", "amulet")
+            if worn.get(slot) is not None
+        ]
+        if hand_items:
+            parts.append("W dłoniach masz: " + ", ".join(hand_items) + ".")
+        if shield is not None:
+            parts.append(f"Przy boku nosisz {shield.display_name()}.")
+        if accessories:
+            parts.append("Drobne dodatki to: " + ", ".join(accessories) + ".")
+        return " ".join(parts)
 
     def sync_flags_from_state(self) -> None:
         state = parse_character_state(self.state)

@@ -139,6 +139,35 @@ class D351QLocalQuestExpansionTests(unittest.TestCase):
 
         asyncio.run(run())
 
+    def test_branching_quest_can_use_alternative_targets_and_return_to_turn_in(self) -> None:
+        async def run() -> None:
+            with TestGameHarness() as harness:
+                char = harness.create_character("quest_branch", room_id=0)
+                server = harness.require_server()
+
+                start = await harness.execute(char, "rozmawiaj kupiec ceny")
+                self.assertIn("Targowe ceny", start.output)
+                self.assertIn("merchant_price_check", char.active_quests)
+
+                quest_log = server.services.quests.render(char)
+                self.assertIn("Cele:", quest_log)
+                self.assertIn("jedno z:", quest_log)
+
+                char.room_id = 42
+                await asyncio.sleep(0.6)
+                progress = await harness.execute(char, "rozmawiaj rybaczka")
+                self.assertIn("Cel osiągnięty", progress.output)
+                self.assertEqual(char.active_quests["merchant_price_check"]["current"], 1)
+
+                char.room_id = 0
+                await asyncio.sleep(0.6)
+                finish = await harness.execute(char, "rozmawiaj kupiec")
+                self.assertIn("Kończysz zadanie: Targowe ceny", finish.output)
+                self.assertIn("merchant_price_check", char.completed_quests)
+                self.assertNotIn("merchant_price_check", char.active_quests)
+
+        asyncio.run(run())
+
 
 if __name__ == "__main__":
     unittest.main()

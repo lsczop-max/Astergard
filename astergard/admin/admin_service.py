@@ -61,7 +61,7 @@ class AdminService:
             return denied
         parts = (arg or "").split()
         if len(parts) != 2:
-            return AdminCommandResult(False, "Użycie: teleport <gracz> <lokacja>")
+            return AdminCommandResult(False, "Spróbuj: teleport <gracz> <lokacja>")
         target = self._find_player(ctx, parts[0])
         if target is None:
             return AdminCommandResult(False, "Nie znaleziono gracza.")
@@ -83,7 +83,7 @@ class AdminService:
         try:
             room_id = int((arg or "").strip())
         except ValueError:
-            return AdminCommandResult(False, "Użycie: goto <lokacja>")
+            return AdminCommandResult(False, "Spróbuj: goto <lokacja>")
         if ctx.admin.world.get_location(room_id) is None:
             return AdminCommandResult(False, "Nie ma takiej lokacji.")
         old_room = ctx.character.room_id
@@ -135,7 +135,7 @@ class AdminService:
             return denied
         parts = (arg or "").split(maxsplit=1)
         if len(parts) != 2:
-            return AdminCommandResult(False, "Użycie: give <gracz> <item>")
+            return AdminCommandResult(False, "Spróbuj: give <gracz> <item>")
         target = self._find_player(ctx, parts[0])
         if target is None:
             return AdminCommandResult(False, "Nie znaleziono gracza.")
@@ -151,7 +151,7 @@ class AdminService:
             return denied
         parts = (arg or "").split()
         if len(parts) != 3:
-            return AdminCommandResult(False, "Użycie: setstat <gracz> <stat> <wartość>")
+            return AdminCommandResult(False, "Spróbuj: setstat <gracz> <stat> <wartość>")
         target = self._find_player(ctx, parts[0])
         if target is None:
             return AdminCommandResult(False, "Nie znaleziono gracza.")
@@ -172,7 +172,7 @@ class AdminService:
             return denied
         parts = (arg or "").split()
         if not parts:
-            return AdminCommandResult(False, "Użycie: spawnnpc <vnum> [lokacja]")
+            return AdminCommandResult(False, "Spróbuj: spawnnpc <vnum> [lokacja]")
         vnum = parts[0]
         room_id = ctx.character.room_id
         if len(parts) > 1:
@@ -192,7 +192,7 @@ class AdminService:
             return denied
         result = ctx.admin.save_load.save_world("admin_saveworld")
         self.audit.record(ctx.character.username, "saveworld", success=result.ok)
-        message = "World saved." if result.ok else "; ".join(result.errors)
+        message = "Świat zapisano." if result.ok else "; ".join(result.errors)
         return AdminCommandResult(result.ok, message)
 
     def checkpoint(self, ctx: Any) -> AdminCommandResult:
@@ -205,7 +205,7 @@ class AdminService:
             self.audit.record(ctx.character.username, "checkpoint", success=False, error=str(exc))
             return AdminCommandResult(False, f"Checkpoint nieudany: {exc}")
         self.audit.record(ctx.character.username, "checkpoint", success=True, path=str(path))
-        return AdminCommandResult(True, f"Checkpoint utworzony: {path}")
+        return AdminCommandResult(True, f"Utworzono punkt zapisu: {path}")
 
     def restore(self, ctx: Any, arg: str | None, confirmed: bool = False) -> AdminCommandResult:
         denied = self.ensure(ctx.character, AdminRole.OWNER)
@@ -215,13 +215,13 @@ class AdminService:
             return AdminCommandResult(False, "Komenda destrukcyjna. Użyj: restore <ścieżka> confirm")
         source = (arg or "").strip()
         if not source:
-            return AdminCommandResult(False, "Użycie: restore <ścieżka> confirm")
+            return AdminCommandResult(False, "Spróbuj: restore <ścieżka> confirm")
         try:
             ctx.admin.repo.restore_backup(Path(source))
         except Exception as exc:
             return AdminCommandResult(False, f"Restore nieudany: {exc}")
         self.audit.record(ctx.character.username, "restore", source=source)
-        return AdminCommandResult(True, "Przywrócono backup bazy.")
+        return AdminCommandResult(True, "Przywrócono zapis świata.")
 
     def worldstats(self, ctx: Any) -> AdminCommandResult:
         denied = self.ensure(ctx.character, AdminRole.HELPER)
@@ -234,10 +234,11 @@ class AdminService:
             True,
             "\n".join(
                 [
+                    "Jak wygląda świat:",
                     f"Lokacje: {len(world.locations)}",
-                    f"NPC: {len(npcs.npcs)}",
-                    f"Respawn queue: {len(world.respawn_queue)}",
-                    f"Aktywni gracze: {len(ctx.admin.all_players())}",
+                    f"NPC w ruchu: {len(npcs.npcs)}",
+                    f"Oczekujące odrodzenia: {len(world.respawn_queue)}",
+                    f"Graczy online: {len(ctx.admin.all_players())}",
                 ]
             ),
         )
@@ -262,7 +263,7 @@ class AdminService:
             return denied
         scheduler = ctx.admin.scheduler
         self.audit.record(ctx.character.username, "scheduler")
-        return AdminCommandResult(True, f"Zadania schedulera: {len(getattr(scheduler, '_tasks', []))}")
+        return AdminCommandResult(True, f"Zegar świata trzyma w kolejce {len(scheduler.tasks)} zadań.")
 
     def listsessions(self, ctx: Any) -> AdminCommandResult:
         denied = self.ensure(ctx.character, AdminRole.HELPER)
@@ -271,8 +272,8 @@ class AdminService:
         players = ctx.admin.all_players()
         self.audit.record(ctx.character.username, "listsessions")
         if not players:
-            return AdminCommandResult(True, "Brak aktywnych sesji.")
-        return AdminCommandResult(True, "\n".join(f"{p.username} @ {p.room_id}" for p in players))
+            return AdminCommandResult(True, "Nikt jeszcze nie jest zalogowany.")
+        return AdminCommandResult(True, "Kto jest teraz w świecie:\n" + "\n".join(f"{p.username} w lokacji {p.room_id}" for p in players))
 
 
     def metrics(self, ctx: Any) -> AdminCommandResult:

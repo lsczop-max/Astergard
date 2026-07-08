@@ -115,22 +115,30 @@ def has_permission(context: Any, required: PermissionLevel) -> bool:
 
 def render_help(registry: CommandRegistry, command_name: str | None = None, context: Any | None = None) -> str:
     if command_name:
+        normalized = normalize_phrase(command_name)
+        if normalized in {"zbroja", "wyposazenie", "wyposażenie", "armor", "pancerz"}:
+            return (
+                "Jak nosisz rzeczy:\n"
+                "Na ciele masz miejsce na głowę, szyję, tułów, plecy, ręce, dłonie, pas, nogi i stopy.\n"
+                "Broń główna, broń pomocnicza, tarcza, pierścienie i amulet noszą się osobno.\n"
+                "Zakładasz rzeczy komendą załóż, a zdejmujesz komendą zdejmij."
+            )
         spec = registry.get(command_name)
         if spec is None:
             return "Nie ma takiej komendy w pomocy."
         aliases = ", ".join(spec.aliases)
-        return f"{spec.metadata.canonical_name}: {spec.metadata.description}\nUżycie: {spec.metadata.usage}\nAliasy: {aliases}"
+        return f"{spec.metadata.canonical_name}: {spec.metadata.description}\nJak to zrobić: {spec.metadata.usage}\nZnane nazwy: {aliases}"
 
     grouped: dict[str, list[CommandSpec]] = {}
     for spec in registry.all_specs():
         if context is not None and not has_permission(context, spec.metadata.permission):
             continue
         grouped.setdefault(spec.metadata.group, []).append(spec)
-    lines = ["Dostępne komendy:"]
+    lines = ["Co możesz zrobić:"]
     for group, specs in grouped.items():
         lines.append(f"\n{group}")
         for spec in specs:
             primary = spec.aliases[0]
             lines.append(f"  {primary:<14} - {spec.metadata.description}")
-    lines.append("\nWpisz: pomoc <komenda>, aby zobaczyć szczegóły.")
+    lines.append("\nDla szczegółów wpisz: pomoc <komenda>.")
     return "\n".join(lines)

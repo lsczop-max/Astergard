@@ -161,7 +161,16 @@ function AstergardMap.update(payload)
     return
   end
   AstergardMap.last_payload = decoded
-  AstergardMap.rooms = decoded.rooms or {}
+  if decoded.rooms then
+    AstergardMap.rooms = decoded.rooms
+  elseif not AstergardMap.rooms then
+    AstergardMap.rooms = {}
+  end
+  if decoded.nearby_rooms then
+    for room_id, room in pairs(decoded.nearby_rooms) do
+      AstergardMap.rooms[tostring(room_id)] = room
+    end
+  end
   AstergardMap.current_room_id = decoded.current_room_id
   AstergardMap.current_zone = decoded.current_zone or ""
   AstergardMap.current_room_name = decoded.current_room_name or ""
@@ -206,8 +215,15 @@ function AstergardMap.showFull()
   AstergardMap.render()
 end
 
+function AstergardMap.onTrigger(payload)
+  AstergardMap.update(payload)
+  if type(deleteLine) == "function" then
+    pcall(deleteLine)
+  end
+end
+
 -- Trigger action:
--- AstergardMap.update(matches[2])
+-- AstergardMap.onTrigger(matches[2])
 --
 -- Trigger pattern:
 -- <MAP_JSON>(.*)</MAP_JSON>

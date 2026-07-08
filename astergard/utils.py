@@ -31,17 +31,46 @@ def colorize(text: str) -> str:
     return out
 
 
-async def send_to_client(writer: Any, text: str, prompt: str | None = None) -> None:
-    payload = colorize(text)
-    if prompt is not None:
-        payload = f"{payload}\r\n{prompt}"
-    elif not payload.endswith("\r\n"):
+def describe_gold(gold: int) -> str:
+    if gold <= 0:
+        return "bez pieniędzy"
+    if gold < 10:
+        return "z kilkoma monetami"
+    if gold < 50:
+        return "z sakiewką monet"
+    if gold < 150:
+        return "z cięższą sakiewką"
+    return "z zasobnym mieszkiem"
+
+
+def _normalize_newlines(text: str) -> str:
+    return text.replace("\r\n", "\n").replace("\r", "\n").replace("\n", "\r\n")
+
+
+async def send_text(writer: Any, text: str) -> None:
+    payload = _normalize_newlines(colorize(text))
+    if not payload.endswith("\r\n"):
         payload += "\r\n"
     try:
         writer.write(payload.encode("utf-8"))
         await writer.drain()
     except (ConnectionResetError, BrokenPipeError, RuntimeError, asyncio.CancelledError):
         raise
+
+
+async def send_prompt(writer: Any, prompt: str) -> None:
+    payload = colorize(prompt).rstrip("\r\n")
+    try:
+        writer.write(payload.encode("utf-8"))
+        await writer.drain()
+    except (ConnectionResetError, BrokenPipeError, RuntimeError, asyncio.CancelledError):
+        raise
+
+
+async def send_to_client(writer: Any, text: str, prompt: str | None = None) -> None:
+    await send_text(writer, text)
+    if prompt is not None:
+        await send_prompt(writer, prompt)
 
 
 # asyncio intentionally imported late enough for static tools and explicit enough for runtime exception matching.

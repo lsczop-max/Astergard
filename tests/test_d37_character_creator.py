@@ -20,16 +20,23 @@ class CharacterCreatorTests(unittest.TestCase):
                         "nowy_gracz",
                         "sekret",
                         "Ala",
-                        "kobiecy opis",
+                        "kobieta",
                         "24",
-                        "2",
+                        "chłop z Podgrodzia",
+                        "wieś",
                         "Podgrodzie",
                         "tradycyjna",
                         "wyznanie społeczne",
-                        "6",
+                        "łucznik",
                         "bard",
-                        "Wysoka, ciemnowłosa kobieta z blizną na dłoni.",
-                        "Wychowała się przy targu i zna ceny lepiej niż mapy.",
+                        "szczupła",
+                        "wysoka",
+                        "ciemne i spięte",
+                        "brak",
+                        "blizna na dłoni",
+                        "szare",
+                        "brak",
+                        "pewnym, spokojnym krokiem",
                     ]
                 )
                 writer = FakeWriter()
@@ -42,14 +49,19 @@ class CharacterCreatorTests(unittest.TestCase):
                 self.assertEqual(char.global_reputation, 5)
                 self.assertEqual(char.main_profession, "lucznik")
                 self.assertEqual(char.secondary_profession, "bard")
+                self.assertEqual(char.childhood, "wies")
                 self.assertEqual(char.combat_style, "ofensywny")
+                self.assertEqual(char.room_id, 14)
                 self.assertIn("hunting_bow", [item.vnum for item in char.equipment.values() if item is not None])
                 self.assertIn("lute", [item.vnum for item in char.inventory])
                 self.assertIn("luki", char.skills.values)
                 self.assertGreaterEqual(char.skills.values["luki"]["level"], 3)
                 self.assertIn("muzyka", char.skills.values)
                 self.assertGreaterEqual(char.skills.values["muzyka"]["level"], 3)
-                self.assertIn("Wybierz profesję główną", writer.text())
+                self.assertIn("Powoli odzyskujesz świadomość", writer.text())
+                self.assertIn("Karczmarz opiera łokcie", writer.text())
+                self.assertNotIn("Wybierz pochodzenie", writer.text())
+                self.assertNotIn("Wybierz profesję główną", writer.text())
 
         asyncio.run(run())
 
@@ -61,6 +73,7 @@ class CharacterCreatorTests(unittest.TestCase):
                 gender_description="mężczyzna",
                 age="31",
                 origin="mieszczanin Astergardu",
+                childhood="miasto",
                 birth_region="Astergard",
                 culture="miejską",
                 religion="wyznanie społeczne",
@@ -73,6 +86,7 @@ class CharacterCreatorTests(unittest.TestCase):
             char = repo.load("creator")
             self.assertEqual(char.name, "Marek")
             self.assertEqual(char.origin, "mieszczanin_astergardu")
+            self.assertEqual(char.childhood, "miasto")
             self.assertEqual(char.main_profession, "szermierz")
             self.assertEqual(char.secondary_profession, "kowal")
             self.assertEqual(char.combat_style, "ofensywny")
@@ -107,6 +121,14 @@ class CharacterCreatorTests(unittest.TestCase):
             self.assertEqual(char.secondary_profession, "")
             self.assertEqual(char.starting_reputation, 0)
             self.assertEqual(char.origin, "")
+            self.assertEqual(char.room_id, 14)
+
+    def test_new_characters_start_in_the_inn(self) -> None:
+        with tempfile.NamedTemporaryFile() as tmp:
+            repo = PlayerRepository(tmp.name)
+            self.assertTrue(repo.register("innborn", "secret"))
+            char = repo.load("innborn")
+            self.assertEqual(char.room_id, 14)
 
     def test_invalid_creation_data_is_rejected(self) -> None:
         with self.assertRaises(CharacterCreationError):
@@ -115,6 +137,7 @@ class CharacterCreatorTests(unittest.TestCase):
                 gender_description="mężczyzna",
                 age="24",
                 origin="mieszczanin Astergardu",
+                childhood="miasto",
                 birth_region="Astergard",
                 culture="miejską",
                 religion="wyznanie społeczne",
@@ -130,6 +153,7 @@ class CharacterCreatorTests(unittest.TestCase):
                 gender_description="mężczyzna",
                 age="24",
                 origin="mieszczanin Astergardu",
+                childhood="miasto",
                 birth_region="Astergard",
                 culture="miejską",
                 religion="wyznanie społeczne",
@@ -145,6 +169,7 @@ class CharacterCreatorTests(unittest.TestCase):
                 gender_description="mężczyzna",
                 age="24",
                 origin="mieszczanin Astergardu",
+                childhood="miasto",
                 birth_region="Astergard",
                 culture="miejską",
                 religion="wyznanie społeczne",
@@ -169,26 +194,37 @@ class CharacterCreatorTests(unittest.TestCase):
                         "profil_user",
                         "sekret",
                         "Marek",
-                        "męski opis",
+                        "mężczyzna",
                         "31",
-                        "1",
+                        "mieszczanin Astergardu",
+                        "miasto",
                         "Astergard",
                         "mieszczańska",
                         "wyznanie społeczne",
-                        "1",
+                        "wojownik",
                         "0",
-                        "Wysoki mężczyzna w prostym, czystym płaszczu.",
-                        "Syn cechowego pisarza, który umie czytać rachunki i mapy.",
+                        "krępy",
+                        "wysoki",
+                        "ciemne i krótkie",
+                        "krótka broda",
+                        "stara blizna na policzku",
+                        "piwne",
+                        "brak",
+                        "pewnym krokiem",
                     ]
                 )
                 writer = FakeWriter()
                 result = await harness.require_server().session_flow.login(cast(Any, reader), cast(Any, writer))
                 assert result.character is not None
                 transcript = await harness.execute(result.character, "profil")
-                self.assertIn("Imię: Marek", transcript.output)
-                self.assertIn("Pochodzenie: mieszczanin Astergardu", transcript.output)
-                self.assertIn("Profesja główna: wojownik", transcript.output)
-                self.assertIn("Reputacja startowa: 25", transcript.output)
+                self.assertIn("O tobie:", transcript.output)
+                self.assertIn("Nazywasz się Marek.", transcript.output)
+                self.assertIn("Twoje pochodzenie to mieszczanin Astergardu.", transcript.output)
+                self.assertIn("Ścieżka główna: wojownik.", transcript.output)
+                self.assertIn("Na początku niesiesz:", transcript.output)
+                rep = await harness.execute(result.character, "reputacja")
+                self.assertIn("Twoje imię w świecie:", rep.output)
+                self.assertIn("Jak mówią o tobie ludzie:", rep.output)
 
         asyncio.run(run())
 

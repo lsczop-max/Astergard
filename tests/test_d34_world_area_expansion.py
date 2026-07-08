@@ -34,7 +34,7 @@ class D34WorldAreaExpansionTests(unittest.TestCase):
                 char.room_id = 3
                 transcript = await harness.execute(char, "spojrz")
                 self.assertIn("Boczne Uliczki Placu", transcript.output)
-                self.assertIn("Możesz obejrzeć", transcript.output)
+                self.assertNotIn("Możesz obejrzeć", transcript.output)
                 detail = await harness.execute(char, "obejrzyj okiennice")
                 self.assertIn("uchylają się", detail.output)
 

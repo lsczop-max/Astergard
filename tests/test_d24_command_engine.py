@@ -31,11 +31,11 @@ class CommandEngineD24Tests(unittest.TestCase):
             server = self.make_server()
             ctx = server.make_context(Character("tester"))
             general = await server.dispatcher.execute_line(ctx, "pomoc")
-            self.assertIn("Dostępne komendy", general)
+            self.assertIn("Co możesz zrobić", general)
             self.assertIn("Eksploracja", general)
             detail = await server.dispatcher.execute_line(ctx, "pomoc wez")
             self.assertIn("get:", detail)
-            self.assertIn("Użycie: wez <przedmiot>", detail)
+            self.assertIn("Jak to zrobić: wez <przedmiot>", detail)
         asyncio.run(scenario())
 
     def test_required_argument_validation_runs_before_handler(self) -> None:
@@ -44,6 +44,7 @@ class CommandEngineD24Tests(unittest.TestCase):
             ctx = server.make_context(Character("tester"))
             response = await server.dispatcher.execute_line(ctx, "wez")
             self.assertIn("Brakuje argumentu", response)
+            self.assertIn("Spróbuj: wez <przedmiot>", response)
             self.assertIn("wez <przedmiot>", response)
         asyncio.run(scenario())
 

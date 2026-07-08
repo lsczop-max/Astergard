@@ -28,7 +28,7 @@ class D5ServiceSplitTests(unittest.TestCase):
         char = Character("look")
         ctx = server.make_context(char)
         result: str = asyncio.run(cast(Coroutine[Any, Any, str], server.cmd_look(ctx, None, 1)))
-        self.assertIn("Widoczne wyjścia", result)
+        self.assertIn("Drogi stąd", result)
 
     def test_communication_handler_delegates_to_service(self) -> None:
         server = self.make_server()
@@ -43,7 +43,7 @@ class D5ServiceSplitTests(unittest.TestCase):
         char = server.repo.load("saver")
         ctx = server.make_context(char)
         result: str = asyncio.run(cast(Coroutine[Any, Any, str], server.cmd_save(ctx, None, 1)))
-        self.assertEqual(result, "Zapisano postać.")
+        self.assertEqual(result, "Postać została zapisana.")
 
     def test_remaining_command_handlers_are_thin_after_d5(self) -> None:
         root = Path(__file__).resolve().parents[1]

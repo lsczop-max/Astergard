@@ -3,7 +3,20 @@ from __future__ import annotations
 import asyncio
 import unittest
 
+from astergard.npcs.manager import NPCManager
+from astergard.world.manager import WorldManager
 from astergard.testing import TestGameHarness
+
+
+class PatrolRandom:
+    def __init__(self, value: float = 0.2) -> None:
+        self.value = value
+
+    def random(self) -> float:
+        return self.value
+
+    def choice(self, seq):
+        return seq[0]
 
 
 class D351JWorldReactionTests(unittest.TestCase):
@@ -27,6 +40,26 @@ class D351JWorldReactionTests(unittest.TestCase):
                 self.assertIn("market_delivery", char.completed_quests)
 
         asyncio.run(run())
+
+    def test_bad_weather_slows_patrol_npcs(self) -> None:
+        world = WorldManager()
+        world.generate_world()
+
+        clear_npcs = NPCManager(world)
+        clear_guard = clear_npcs.spawn("dungrim_patrol_guard", 112)
+        self.assertIsNotNone(clear_guard)
+        assert clear_guard is not None
+        clear_events = clear_npcs.ai_tick(rng=PatrolRandom(0.2), weather_by_zone={clear_guard.zone: "slonecznie"})
+        self.assertTrue(any(event.kind == "patrol" for event in clear_events))
+
+        bad_world = WorldManager()
+        bad_world.generate_world()
+        bad_npcs = NPCManager(bad_world)
+        bad_guard = bad_npcs.spawn("dungrim_patrol_guard", 112)
+        self.assertIsNotNone(bad_guard)
+        assert bad_guard is not None
+        bad_events = bad_npcs.ai_tick(rng=PatrolRandom(0.2), weather_by_zone={bad_guard.zone: "mgla"})
+        self.assertFalse(any(event.kind == "patrol" for event in bad_events))
 
     def test_bad_reputation_triggers_guard_aggression(self) -> None:
         with TestGameHarness() as harness:

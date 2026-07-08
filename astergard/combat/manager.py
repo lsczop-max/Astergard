@@ -137,12 +137,13 @@ class CombatManager:
         weapon = character.weapon()
         style = self.rules.style(character.combat_style)
         weapon_modifier = weapon.initiative_modifier if weapon and weapon.durability > 0 else 0
+        armor_penalty = character.armor_burden_penalty()
         wound_penalty = wound_initiative_penalty(character)
         stamina_penalty = self.rules.low_stamina_initiative_penalty if character.stats.kondycja <= max(1, character.stats.max_kondycja // self.rules.low_stamina_divisor) else 0
         tactical = formation_initiative_modifier(character)
         morale_bonus = (morale_score(character) - 10) // 4
         profession_bonus = profession_tactical_modifiers(character, weapon).initiative
-        return character.stats.zrecznosc + weapon_modifier + style.initiative_modifier + tactical + morale_bonus + profession_bonus + self.rng.randint(1, self.rules.initiative_roll_sides) - wound_penalty - stamina_penalty
+        return character.stats.zrecznosc + weapon_modifier + style.initiative_modifier + tactical + morale_bonus + profession_bonus + self.rng.randint(1, self.rules.initiative_roll_sides) - wound_penalty - stamina_penalty - armor_penalty
 
     def ordered_turns(self, attacker_id: str, attacker: Character, defender_id: str, defender: Character) -> list[CombatTurn]:
         turns = [
@@ -209,6 +210,7 @@ class CombatManager:
         defender_morale = morale_score(defender)
         stamina_cost = self._attack_stamina_cost(weapon_reach, attacker_style)
         attacker.stats.kondycja = max(0, attacker.stats.kondycja - stamina_cost)
+        armor_penalty = defender.armor_burden_penalty()
         hit_score = (
             attacker.stats.zrecznosc
             + atk_skill
@@ -232,6 +234,7 @@ class CombatManager:
             + defender_profession.defense
             - wound_defense_penalty(defender)
             - fatigue_defense_penalty(defender)
+            - armor_penalty
             + self.rng.randint(1, self.rules.attack_roll_sides)
         )
         if hit_score <= dodge_score:
@@ -249,7 +252,7 @@ class CombatManager:
 
         part = self.choose_body_part()
         armor = defender.armor_for(part)
-        protection = armor.protection if armor and armor.durability > 0 else 0
+        protection = (armor.protection + max(0, armor.armor_value)) if armor and armor.durability > 0 else 0
         effective = weapon_damage + attacker_style.damage_modifier + attacker_profession.damage - protection
         if weapon and self.rng.random() < self.rules.weapon_degrade_chance:
             weapon.durability = max(0.0, weapon.durability - 0.5)

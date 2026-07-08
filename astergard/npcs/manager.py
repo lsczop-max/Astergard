@@ -359,11 +359,13 @@ class NPCManager:
         factions: FactionManager | None = None,
         rng: RandomSource | None = None,
         hour: int | None = None,
+        weather_by_zone: dict[str, str] | None = None,
     ) -> list[NPCActionEvent]:
         random_source: RandomSource = rng or random
         events: list[NPCActionEvent] = []
         players = players or []
         phase = self._day_phase(hour) if hour is not None else None
+        zone_weather = weather_by_zone or {}
         for npc in list(self.npcs.values()):
             if not npc.character.is_alive:
                 continue
@@ -372,7 +374,7 @@ class NPCManager:
                 if daily_event is not None:
                     events.append(daily_event)
             if npc.ai_state == "PATROL":
-                event = self._patrol_tick(npc, random_source)
+                event = self._patrol_tick(npc, random_source, zone_weather)
                 if event is not None:
                     events.append(event)
             elif npc.ai_state == "AGGRESSIVE":
@@ -386,8 +388,14 @@ class NPCManager:
         self.events.extend(events)
         return events
 
-    def _patrol_tick(self, npc: NPC, rng: RandomSource) -> NPCActionEvent | None:
-        if rng.random() > self.rules.patrol_move_chance:
+    def _patrol_tick(self, npc: NPC, rng: RandomSource, weather_by_zone: dict[str, str] | None = None) -> NPCActionEvent | None:
+        patrol_chance = self.rules.patrol_move_chance
+        weather = weather_by_zone.get(npc.zone) if weather_by_zone is not None else None
+        if weather in {"mgla", "sniezyca"}:
+            patrol_chance *= 0.4
+        elif weather == "deszcz":
+            patrol_chance *= 0.7
+        if rng.random() > patrol_chance:
             return None
         loc = self.world.get_location(npc.room_id)
         if not loc or not loc.exits:

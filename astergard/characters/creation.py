@@ -10,6 +10,7 @@ from astergard.characters.professions import (
     resolve_profession,
 )
 from astergard.items.models import Item, starter_items
+from astergard.world.manager import STARTING_ROOM_ID
 
 
 class CharacterCreationError(ValueError):
@@ -22,6 +23,14 @@ class OriginDefinition:
     label: str
     starting_reputation: int
     inventory_factory: Callable[[], list[Item]]
+
+
+@dataclass(frozen=True, slots=True)
+class ChildhoodDefinition:
+    key: str
+    label: str
+    description: str
+    skill_bonuses: dict[str, int]
 
 
 def _make_item(
@@ -92,6 +101,85 @@ ORIGIN_DEFINITIONS: dict[str, OriginDefinition] = {
 }
 
 
+CHILDHOOD_DEFINITIONS: dict[str, ChildhoodDefinition] = {
+    "wies": ChildhoodDefinition(
+        "wies",
+        "wieś",
+        "Prosty rytm pól, zwierząt i pór roku uczy cierpliwości oraz pracy bez świadków.",
+        {"gotowanie": 1, "oprawianie": 1},
+    ),
+    "miasto": ChildhoodDefinition(
+        "miasto",
+        "miasto",
+        "Zgiełk ulic, targów i cudzych spraw uczy szybkiego patrzenia i szybkiego mówienia.",
+        {"handel": 1, "obserwacja": 1},
+    ),
+    "gory": ChildhoodDefinition(
+        "gory",
+        "góry",
+        "Kamień, wiatr i strome ścieżki hartują ciało oraz uczą oszczędzać oddech.",
+        {"przetrwanie": 1, "uniki": 1},
+    ),
+    "wybrzeze": ChildhoodDefinition(
+        "wybrzeze",
+        "wybrzeże",
+        "Sól, mokry wiatr i zmienna woda zostawiają człowieka czujniejszym niż większość podróżnych.",
+        {"obserwacja": 1, "handel": 1},
+    ),
+    "puszcza": ChildhoodDefinition(
+        "puszcza",
+        "puszcza",
+        "Las uczy słuchać, czekać i nie ufać temu, czego nie widać między pniami.",
+        {"obserwacja": 1, "oprawianie": 1},
+    ),
+    "pogranicze": ChildhoodDefinition(
+        "pogranicze",
+        "pogranicze",
+        "Na skraju ziem człowiek wcześniej uczy się, kiedy patrzeć, a kiedy ustąpić miejsca.",
+        {"dowodzenie": 1, "parowanie": 1},
+    ),
+    "swiatynia": ChildhoodDefinition(
+        "swiatynia",
+        "świątynia",
+        "Cisza krużganków i rytm obrzędów zostawiają po sobie spokój oraz dyscyplinę.",
+        {"morale": 1, "perswazja": 1},
+    ),
+    "twierdza": ChildhoodDefinition(
+        "twierdza",
+        "twierdza",
+        "Mur, warta i rozkazy sprawiają, że człowiek wcześniej dojrzewa do odpowiedzialności.",
+        {"parowanie": 1, "dowodzenie": 1},
+    ),
+}
+
+CHILDHOOD_ALIASES: dict[str, str] = {
+    "wies": "wies",
+    "na wsi": "wies",
+    "wiejskie": "wies",
+    "miasto": "miasto",
+    "w miescie": "miasto",
+    "miejskie": "miasto",
+    "gory": "gory",
+    "w gorach": "gory",
+    "gorskie": "gory",
+    "wybrzeze": "wybrzeze",
+    "nad morzem": "wybrzeze",
+    "port": "wybrzeze",
+    "puszcza": "puszcza",
+    "w lesie": "puszcza",
+    "lesne": "puszcza",
+    "pogranicze": "pogranicze",
+    "przy granicy": "pogranicze",
+    "trakt": "pogranicze",
+    "swiatynia": "swiatynia",
+    "w swiatyni": "swiatynia",
+    "klasztor": "swiatynia",
+    "twierdza": "twierdza",
+    "forteca": "twierdza",
+    "garnizon": "twierdza",
+}
+
+
 def normalize_text(value: str) -> str:
     return " ".join(value.strip().split())
 
@@ -100,11 +188,13 @@ def origin_labels() -> list[str]:
     return [definition.label for definition in ORIGIN_DEFINITIONS.values()]
 
 
-def origin_menu_text() -> str:
-    lines = ["Wybierz pochodzenie:"]
-    for index, definition in enumerate(ORIGIN_DEFINITIONS.values(), start=1):
-        lines.append(f"{index}. {definition.label}")
-    return "\n".join(lines)
+def origin_prompt_text() -> str:
+    return (
+        "Karczmarz opiera łokcie o stół.\n"
+        "— Skąd przychodzisz? Wystarczy jedno słowo albo nazwa miejsca: "
+        "mieszczanin Astergardu, chłop z Podgrodzia, dziecko traktu, uczeń rzemieślnika, "
+        "były strażnik, rybak znad rzeki albo włóczęga."
+    )
 
 
 def resolve_origin(value: str) -> OriginDefinition:
@@ -122,6 +212,31 @@ def resolve_origin(value: str) -> OriginDefinition:
         if normalized == normalize_text(definition.label).lower():
             return definition
     raise CharacterCreationError("Nieznane pochodzenie.")
+
+
+def childhood_prompt_text() -> str:
+    return (
+        "Kronikarz przesuwa palcem po otwartej księdze.\n"
+        "— Gdzie dorastałeś? Wieś, miasto, góry, wybrzeże, puszcza, pogranicze, świątynia albo twierdza."
+    )
+
+
+def resolve_childhood(value: str) -> ChildhoodDefinition:
+    normalized = normalize_text(value).lower()
+    if not normalized:
+        raise CharacterCreationError("Dzieciństwo nie może być puste.")
+    if normalized.isdigit():
+        index = int(normalized) - 1
+        definitions = list(CHILDHOOD_DEFINITIONS.values())
+        if 0 <= index < len(definitions):
+            return definitions[index]
+    alias = CHILDHOOD_ALIASES.get(normalized)
+    if alias is not None:
+        return CHILDHOOD_DEFINITIONS[alias]
+    for definition in CHILDHOOD_DEFINITIONS.values():
+        if normalized in {definition.key, normalize_text(definition.label).lower()}:
+            return definition
+    raise CharacterCreationError("Nieznane dzieciństwo.")
 
 
 def validate_text(label: str, value: str, *, min_length: int = 1, max_length: int = 200) -> str:
@@ -150,6 +265,7 @@ class CharacterCreationProfile:
     gender_description: str
     age: int
     origin: str
+    childhood: str
     birth_region: str
     culture: str
     religion: str
@@ -164,6 +280,7 @@ class CharacterCreationProfile:
             "gender_description": self.gender_description,
             "age": self.age,
             "origin": self.origin,
+            "childhood": self.childhood,
             "birth_region": self.birth_region,
             "culture": self.culture,
             "religion": self.religion,
@@ -185,12 +302,13 @@ class CharacterCreationProfile:
             gender_description=validate_text("Opis płci", str(data.get("gender_description", "")), min_length=2, max_length=80),
             age=validate_age(age_value),
             origin=resolve_origin(str(data.get("origin", ""))).key,
+            childhood=resolve_childhood(str(data.get("childhood", ""))).key if str(data.get("childhood", "")).strip() else "",
             birth_region=validate_text("Region urodzenia", str(data.get("birth_region", "")), min_length=2, max_length=80),
             culture=validate_text("Kultura", str(data.get("culture", "")), min_length=2, max_length=80),
             religion=validate_text("Religia", str(data.get("religion", "")), min_length=2, max_length=80),
             main_profession=selection.main_profession,
             secondary_profession=selection.secondary_profession,
-            appearance=validate_text("Wygląd", str(data.get("appearance", "")), min_length=2, max_length=200),
+            appearance=validate_text("Wygląd", str(data.get("appearance", "")), min_length=2, max_length=800),
             history=validate_text("Historia", str(data.get("history", "")), min_length=10, max_length=600),
         )
 
@@ -209,20 +327,23 @@ class CharacterCreationProfile:
         secondary_profession: str | None,
         appearance: str,
         history: str,
+        childhood: str = "",
     ) -> "CharacterCreationProfile":
         resolved_origin = resolve_origin(origin)
         selection = build_selection(main_profession, secondary_profession)
+        childhood_definition = resolve_childhood(childhood) if normalize_text(childhood) else None
         return cls(
             name=validate_text("Imię", name, min_length=2, max_length=32),
             gender_description=validate_text("Opis płci", gender_description, min_length=2, max_length=80),
             age=validate_age(age),
             origin=resolved_origin.key,
+            childhood=childhood_definition.key if childhood_definition is not None else "",
             birth_region=validate_text("Region urodzenia", birth_region, min_length=2, max_length=80),
             culture=validate_text("Kultura", culture, min_length=2, max_length=80),
             religion=validate_text("Religia", religion, min_length=2, max_length=80),
             main_profession=selection.main_profession,
             secondary_profession=selection.secondary_profession,
-            appearance=validate_text("Wygląd", appearance, min_length=2, max_length=200),
+            appearance=validate_text("Wygląd", appearance, min_length=2, max_length=800),
             history=validate_text("Historia", history, min_length=10, max_length=600),
         )
 
@@ -233,6 +354,11 @@ class CharacterCreationProfile:
         if not self.main_profession:
             return ProfessionSelection("", "")
         return build_selection(self.main_profession, self.secondary_profession or None)
+
+    def childhood_definition(self) -> ChildhoodDefinition | None:
+        if not self.childhood:
+            return None
+        return CHILDHOOD_DEFINITIONS.get(self.childhood)
 
     def _apply_profession(self, char: Character, selection: ProfessionSelection) -> None:
         for profession_key in [selection.main_profession, selection.secondary_profession or ""]:
@@ -261,11 +387,13 @@ class CharacterCreationProfile:
     def create_character(self, username: str) -> Character:
         origin = self.origin_definition()
         profession_selection = self.profession_selection()
-        char = Character(username=username)
+        childhood = self.childhood_definition()
+        char = Character(username=username, room_id=STARTING_ROOM_ID)
         char.name = self.name
         char.gender_description = self.gender_description
         char.age = self.age
         char.origin = origin.key
+        char.childhood = childhood.key if childhood is not None else ""
         char.birth_region = self.birth_region
         char.culture = self.culture
         char.religion = self.religion
@@ -276,8 +404,66 @@ class CharacterCreationProfile:
         char.starting_reputation = origin.starting_reputation
         char.global_reputation = origin.starting_reputation
         char.inventory = starter_items() + origin.inventory_factory()
+        if childhood is not None:
+            for skill, bonus in childhood.skill_bonuses.items():
+                char.skills.grant_starting_bonus(skill, bonus)
         self._apply_profession(char, profession_selection)
         return char
+
+
+def creation_opening_text() -> str:
+    return (
+        "Powoli odzyskujesz świadomość.\n"
+        "Ciepło kominka wraca do zmarzniętych dłoni.\n"
+        "Powietrze pachnie pieczonym mięsem, piwem i dymem.\n"
+        "Przy kilku stołach siedzą podróżni.\n"
+        "Ktoś śmieje się głośno, ktoś właśnie wygrał partię kości.\n"
+        "Karczmarz opiera łokcie o stół i czeka, aż spojrzysz w jego stronę.\n"
+        "Przy sąsiednim stole kronikarz unosi pióro.\n"
+        "— Najpierw powiedz mi, jak mam cię zapisać."
+    )
+
+
+def creation_closing_text() -> str:
+    return (
+        "Karczmarz odkłada kufel i kiwa głową.\n"
+        "— Wyglądasz na gotowego.\n"
+        "— Świat bywa okrutny.\n"
+        "— Mam nadzieję, że jeszcze kiedyś usiądziemy przy tym samym stole."
+    )
+
+
+def build_appearance_summary(
+    *,
+    name: str,
+    gender_description: str,
+    build: str,
+    height: str,
+    hair: str,
+    beard: str,
+    scars: str,
+    eyes: str,
+    tattoos: str,
+    gait: str,
+) -> str:
+    parts = [
+        f"Przed tobą stoi {validate_text('Opis płci', gender_description, min_length=2, max_length=80)} o imieniu {validate_text('Imię', name, min_length=2, max_length=32)}.",
+        f"Ma {height.strip()} i {build.strip()}.",
+        f"Włosy nosi {hair.strip()}.",
+    ]
+    beard_text = normalize_text(beard).lower()
+    if beard_text and beard_text not in {"brak", "bez", "nie", "brak brody", "gładko"}:
+        parts.append(f"Brodę opisujesz jako {beard.strip()}.")
+    elif beard_text:
+        parts.append("Twarz ma gładko ogoloną.")
+    if scars.strip() and normalize_text(scars).lower() not in {"brak", "nie", "bez", "żadne", "zadne"}:
+        parts.append(f"Na twarzy lub ciele nosi ślady: {scars.strip()}.")
+    parts.append(f"Oczy ma {eyes.strip()}.")
+    if tattoos.strip() and normalize_text(tattoos).lower() not in {"brak", "nie", "bez", "żadne", "zadne"}:
+        parts.append(f"Zwracają też uwagę tatuaże: {tattoos.strip()}.")
+    if gait.strip():
+        parts.append(f"Porusza się {gait.strip()}.")
+    return " ".join(parts)
 
 
 def create_character_from_profile(username: str, profile: CharacterCreationProfile) -> Character:

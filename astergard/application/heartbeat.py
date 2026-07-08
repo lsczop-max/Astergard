@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import random
 from collections.abc import Callable
 
 from astergard.application.bootstrap import GameServices
@@ -23,7 +24,18 @@ class HeartbeatService:
     def tick_once(self) -> None:
         zones = list({loc.zone for loc in self.services.world.locations.values()})
         self.services.weather.tick(zones)
-        self.services.npcs.ai_tick(self.players(), self.services.combat, self.services.factions, hour=self.services.weather.hour)
+        if zones:
+            zone = random.choice(zones)
+            ambient = self.services.weather.ambient_event(zone)
+            if ambient:
+                self.services.world.set_ambient_message(zone, ambient)
+        self.services.npcs.ai_tick(
+            self.players(),
+            self.services.combat,
+            self.services.factions,
+            hour=self.services.weather.hour,
+            weather_by_zone=dict(self.services.weather.weather_by_zone),
+        )
         self.process_combat_rounds()
         self.services.npcs.respawn_tick()
         self.services.event_bus.emit("world.respawn_tick_completed", npc_count=len(self.services.npcs.npcs))

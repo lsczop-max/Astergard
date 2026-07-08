@@ -21,7 +21,7 @@ class D4ApplicationUseCaseTests(unittest.TestCase):
         char = Character("inv")
         ctx = server.make_context(char)
         result: str = asyncio.run(cast(Coroutine[Any, Any, str], server.cmd_inventory(ctx, None, 1)))
-        self.assertIn("Wyposażenie", result)
+        self.assertIn("Wyposażenie przy tobie", result)
         self.assertIs(server.services.inventory_service, server.services.inventory_service)
 
     def test_inventory_service_moves_item_from_room_to_character(self) -> None:

@@ -9,7 +9,7 @@ from astergard.engine.events import DomainEventType
 
 class QuestObjective(TypedDict):
     type: str
-    target: str
+    target: str | tuple[str, ...]
     count: int
     current: int
 
@@ -33,6 +33,43 @@ class Quest:
     objectives: list[QuestObjective]
     rewards: QuestRewards = field(default_factory=QuestRewards)
     auto_complete_on_delivery: bool = False
+
+
+def _objective_key(index: int) -> str:
+    return f"o{index}"
+
+
+def _target_matches(expected: str | tuple[str, ...], actual: str) -> bool:
+    if isinstance(expected, tuple):
+        return actual in expected
+    return expected == actual
+
+
+def _format_target(expected: str | tuple[str, ...]) -> str:
+    if isinstance(expected, tuple):
+        return "jedno z: " + ", ".join(expected)
+    return expected
+
+
+def _objective_label(obj_type: str) -> str:
+    return {
+        "talk": "rozmowa",
+        "give": "oddanie",
+        "kill": "pokonanie",
+    }.get(obj_type, obj_type)
+
+
+def _objective_progress(state: dict[str, int], index: int, quest: Quest) -> int:
+    key = _objective_key(index)
+    if key in state:
+        return int(state.get(key, 0))
+    if len(quest.objectives) == 1:
+        return int(state.get("current", 0))
+    return 0
+
+
+def _refresh_current_total(state: dict[str, int], quest: Quest) -> None:
+    state["current"] = sum(_objective_progress(state, index, quest) for index, _ in enumerate(quest.objectives))
 
 
 QUESTS: dict[str, Quest] = {
@@ -121,27 +158,30 @@ QUESTS: dict[str, Quest] = {
     "merchant_price_check": Quest(
         "merchant_price_check",
         "Targowe ceny",
-        "Handlarz chce, by ktoś sprawdził ceny u przekupki i wrócił z wieściami.",
+        "Handlarz chce, by ktoś sprawdził ceny u targowych sprzedawców i wrócił z wieściami.",
         "merchant",
         "merchant",
         ("zadanie", "ceny", "handel", "targ", "przekupka", "towar"),
-        "Handlarz: Podejdź do przekupki i sprawdź, ile teraz kosztuje prosty towar.",
+        "Handlarz: Podejdź do przekupki albo rybaczki i sprawdź, ile teraz kosztuje prosty towar. Potem wróć do mnie.",
         "Handlarz: Jeszcze nie wiem, czy ceny na targu poszły w górę.",
         "Handlarz: Dobrze. Teraz wiem, jak ustawić własny kram.",
-        [{"type": "talk", "target": "podgrodzie_przekupka", "count": 1, "current": 0}],
+        [
+            {"type": "talk", "target": ("podgrodzie_przekupka", "fishmonger"), "count": 1, "current": 0},
+            {"type": "talk", "target": "merchant", "count": 1, "current": 0},
+        ],
         {"gold": 10, "rep": 2},
     ),
     "dockside_rumor": Quest(
         "dockside_rumor",
         "Portowa nowina",
-        "Pracownik portu chce usłyszeć, co rybak wie o ostatnim połowie.",
+        "Pracownik portu chce usłyszeć, co rybak albo tragarz nabrzeża wie o ostatnim połowie.",
         "dockhand",
         "dockhand",
         ("zadanie", "port", "nabrzeze", "nabrzeże", "rybak", "nowina"),
-        "Pracownik portu: Porozmawiaj z rybakiem i sprawdź, co słychać nad wodą.",
+        "Pracownik portu: Porozmawiaj z rybakiem albo tragarzem nabrzeża i sprawdź, co słychać nad wodą.",
         "Pracownik portu: Jeszcze nie mam wieści z nabrzeża.",
         "Pracownik portu: Dobrze. Teraz wiem, co trzeba przenieść i gdzie.",
-        [{"type": "talk", "target": "fisherman", "count": 1, "current": 0}],
+        [{"type": "talk", "target": ("fisherman", "dockhand"), "count": 1, "current": 0}],
         {"gold": 9, "rep": 2},
     ),
     "pilgrim_escort": Quest(
@@ -774,8 +814,10 @@ class QuestManager:
         quest = QUESTS.get(quest_id)
         if quest is None or quest_id not in char.active_quests:
             return False
-        current = int(char.active_quests[quest_id].get("current", 0))
-        return current >= quest.objectives[0]["count"]
+        if not quest.objectives:
+            return False
+        state = char.active_quests[quest_id]
+        return all(_objective_progress(state, index, quest) >= objective["count"] for index, objective in enumerate(quest.objectives))
 
     def progress(self, char: Character, obj_type: str, target: str, amount: int = 1) -> list[str]:
         messages: list[str] = []
@@ -783,12 +825,16 @@ class QuestManager:
             quest = QUESTS.get(qid)
             if quest is None:
                 continue
-            for obj in quest.objectives:
-                if obj["type"] == obj_type and obj["target"] == target:
-                    current = int(state.get("current", 0))
-                    state["current"] = min(obj["count"], current + amount)
-                    if state["current"] >= obj["count"]:
-                        messages.append(f"<green>[Zadanie: {quest.title}] Cel osiągnięty!</green>")
+            for index, obj in enumerate(quest.objectives):
+                if obj["type"] != obj_type or not _target_matches(obj["target"], target):
+                    continue
+                key = _objective_key(index)
+                current = _objective_progress(state, index, quest)
+                new_value = min(obj["count"], current + amount)
+                state[key] = new_value
+                _refresh_current_total(state, quest)
+                if current < obj["count"] and new_value >= obj["count"]:
+                    messages.append(f"<green>[Zadanie: {quest.title}] Cel osiągnięty!</green>")
         return messages
 
     def complete_if_ready(self, char: Character, quest_id: str, event_bus=None) -> str:
@@ -823,9 +869,8 @@ class QuestManager:
                 if quest is None:
                     lines.append(f"- {qid}: nieznane zadanie")
                     continue
-                objective = quest.objectives[0]
-                current = int(state.get("current", 0))
-                count = objective["count"]
+                total_current = int(state.get("current", 0))
+                total_count = sum(objective["count"] for objective in quest.objectives)
                 reward = quest.rewards
                 reward_text = []
                 if "gold" in reward:
@@ -833,7 +878,18 @@ class QuestManager:
                 if "rep" in reward:
                     reward_text.append(f"{reward['rep']} rep")
                 suffix = f" (nagroda: {', '.join(reward_text)})" if reward_text else ""
-                lines.append(f"- {quest.title}: {quest.description} [{current}/{count}]{suffix}")
+                lines.append(f"- {quest.title}: {quest.description} [{total_current}/{total_count}]{suffix}")
+                if len(quest.objectives) > 1:
+                    lines.append("  Cele:")
+                    for index, objective in enumerate(quest.objectives, start=1):
+                        current = _objective_progress(state, index - 1, quest)
+                        target_text = _format_target(objective["target"])
+                        lines.append(f"  {index}. {_objective_label(objective['type'])} -> {target_text} [{current}/{objective['count']}]")
+                else:
+                    objective = quest.objectives[0]
+                    current = _objective_progress(state, 0, quest)
+                    target_text = _format_target(objective["target"])
+                    lines.append(f"  Cel: {_objective_label(objective['type'])} -> {target_text} [{current}/{objective['count']}]")
 
         if char.completed_quests:
             lines.append("Ukończone zadania:")

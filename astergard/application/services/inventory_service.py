@@ -22,10 +22,24 @@ class InventoryView:
 
     def render(self) -> str:
         return (
-            f"Wyposażenie: {self.equipment}\n"
-            f"Plecak: {self.backpack}\n"
-            f"Waga: {self.current_weight:.1f}/{self.max_weight:.1f} kg"
+            f"Wyposażenie przy tobie: {self.equipment}\n"
+            f"W plecaku niesiesz: {self.backpack}\n"
+            f"Obciążenie: {self._load_description()}"
         )
+
+    def _load_description(self) -> str:
+        if self.max_weight <= 0:
+            return "nie do określenia"
+        ratio = self.current_weight / self.max_weight
+        if ratio < 0.25:
+            return "niewielkie"
+        if ratio < 0.5:
+            return "umiarkowane"
+        if ratio < 0.75:
+            return "duże"
+        if ratio < 1.0:
+            return "bardzo duże"
+        return "przekroczone"
 
 
 @dataclass(slots=True)
@@ -120,24 +134,24 @@ class InventoryService:
     def put_item(self, character: Character, phrase: str | None, index: int, event_bus=None, location: Location | None = None) -> str:
         item_name, container_name = split_relation(phrase, {"do", "w", "we"})
         if not item_name or not container_name:
-            return "Użycie: włóż <przedmiot> do <pojemnik>."
+            return "Spróbuj: włóż <przedmiot> do <pojemnik>."
         item = find_item(character.inventory, item_name, index)
         if item is None:
             return "Nie masz takiego przedmiotu."
         container_ref = self.find_container_ref(character, container_name, location=location)
         if container_ref is None:
-            return "Nie widzisz takiego pojemnika."
+            return "Nie widzisz takiego pojemnika. Szukaj w plecaku, sakwie, worku albo na ziemi."
         return self._move_inventory_item_to_container(character, item, container_ref.item, event_bus)
 
     def transfer_item(self, character: Character, phrase: str | None, index: int, event_bus=None, location: Location | None = None) -> str:
         if not phrase:
-            return "Użycie: przełóż <przedmiot> z <pojemnika> do <pojemnika>."
+            return "Spróbuj: przełóż <przedmiot> z <pojemnika> do <pojemnika>."
         item_and_source, target_name = split_relation(phrase, {"do", "w", "we"})
         if not item_and_source or not target_name:
-            return "Użycie: przełóż <przedmiot> z <pojemnika> do <pojemnika>."
+            return "Spróbuj: przełóż <przedmiot> z <pojemnika> do <pojemnika>."
         item_name, source_name = split_relation(item_and_source, {"z", "ze"})
         if not item_name or not source_name:
-            return "Użycie: przełóż <przedmiot> z <pojemnika> do <pojemnika>."
+            return "Spróbuj: przełóż <przedmiot> z <pojemnika> do <pojemnika>."
         source_ref = self.find_container_ref(character, source_name, location=location)
         target_ref = self.find_container_ref(character, target_name, location=location)
         if source_ref is None:
@@ -165,13 +179,13 @@ class InventoryService:
     def give_item(self, character: Character, npcs: NPCManager, quests: QuestManager, phrase: str | None, index: int, event_bus=None) -> str:
         item_name, npc_name = split_relation(phrase, {"npc", "recipient", "komu", "dla"})
         if not item_name or not npc_name:
-            return "Użycie: daj <przedmiot> <osobie>."
+            return "Spróbuj: daj <przedmiot> <osobie>."
         item = find_item(character.inventory, item_name, index)
         if item is None:
             return "Nie masz takiego przedmiotu."
         npc = next((candidate for candidate in npcs.by_room(character.room_id) if tokens_match(npc_name, f"{candidate.name} {candidate.vnum}")), None)
         if npc is None:
-            return "Nie widzisz takiej osoby."
+            return "Nie ma tu takiej osoby."
         character.inventory.remove(item)
         npc.character.inventory.append(item)
         if item.vnum == "wolf_pelt" and "wolf_pelt" in character.active_quests:
@@ -179,7 +193,15 @@ class InventoryService:
         for quest in QUESTS.values():
             if quest.id not in character.active_quests:
                 continue
-            if not any(obj["type"] == "give" and obj["target"] == (item.vnum or item.name) for obj in quest.objectives):
+            if not any(
+                obj["type"] == "give"
+                and (
+                    tokens_match(item.vnum or item.name, obj["target"])
+                    if isinstance(obj["target"], str)
+                    else any(tokens_match(item.vnum or item.name, target) for target in obj["target"])
+                )
+                for obj in quest.objectives
+            ):
                 continue
             quests.progress(character, "give", item.vnum or item.name)
             if event_bus is not None:
@@ -194,10 +216,10 @@ class InventoryService:
     def take_from_container(self, character: Character, phrase: str | None, index: int, event_bus=None, location: Location | None = None) -> str:
         item_name, container_name = split_relation(phrase, {"z", "ze"})
         if not item_name or not container_name:
-            return "Użycie: wyjmij <przedmiot> z <pojemnik>."
+            return "Spróbuj: wyjmij <przedmiot> z <pojemnik>."
         container_ref = self.find_container_ref(character, container_name, location=location)
         if container_ref is None:
-            return "Nie widzisz takiego pojemnika."
+            return "Nie widzisz takiego pojemnika. Szukaj w plecaku, sakwie, worku albo na ziemi."
         container = container_ref.item
         if not container.is_container:
             return "To nie jest pojemnik."
@@ -246,7 +268,7 @@ class InventoryService:
             return "Co chcesz obejrzeć?"
         container_ref = self.find_container_ref(character, container_name, index=index, location=location)
         if container_ref is None:
-            return "Nie widzisz takiego pojemnika."
+            return "Nie widzisz takiego pojemnika. Szukaj w plecaku, sakwie, worku albo na ziemi."
         container = container_ref.item
         if not container.is_container:
             return "To nie jest pojemnik."
@@ -269,13 +291,16 @@ class InventoryService:
             return "Co chcesz założyć?"
         item = find_item(character.inventory, name, index)
         if item is None or not item.is_wearable():
-            return "Nie możesz tego założyć."
+            return f"{name} nie jest częścią wyposażenia, którą możesz założyć."
         slot = item.normalized_slot()
         if slot is None:
-            return "Nie możesz tego założyć."
+            return f"{item.name} nie ma miejsca na ciele, które można by na siebie nałożyć."
         old = character.equipment.get(slot)
         if old is not None:
-            return f"Masz już coś na slocie {equipment_slot_label(slot)}."
+            slot_name = equipment_slot_label(slot)
+            if slot_name == "amulet":
+                slot_name = "amuletu"
+            return f"Na miejscu {slot_name} już coś nosisz."
         character.inventory.remove(item)
         character.equipment[slot] = item
         if event_bus is not None:
@@ -293,14 +318,14 @@ class InventoryService:
                 if event_bus is not None:
                     event_bus.emit(DomainEventType.ITEM_UNEQUIPPED, username=character.username, slot=slot, item=item.vnum or item.name)
                 return f"Zdejmujesz {item.name}."
-        return "Nie masz tego na sobie."
+        return "Nie masz tego na sobie. Sprawdź, czy szukasz właściwej rzeczy albo właściwego miejsca."
 
     def consume_item(self, character: Character, name: str | None, index: int, event_bus=None) -> str:
         if not name:
             return "Czego chcesz użyć?"
         item = find_item(character.inventory, name, index)
         if item is None or not item.is_consumable:
-            return "Nie możesz tego użyć."
+            return f"{name} nie da się użyć w ten sposób."
         self._apply_consumable_effects(character, item)
         character.inventory.remove(item)
         if event_bus is not None:
@@ -366,11 +391,8 @@ class InventoryService:
         return item.display_name()
 
     def _render_equipment(self, character: Character) -> str:
-        parts = []
-        for slot in EQUIPMENT_SLOTS:
-            item = character.equipment.get(slot)
-            parts.append(f"{equipment_slot_label(slot)}: {item.display_name() if item is not None else 'brak'}")
-        return "; ".join(parts)
+        worn = [item.display_name() for item in character.equipped_items().values()]
+        return ", ".join(worn) if worn else "brak"
 
     def _apply_consumable_effects(self, character: Character, item: Item) -> None:
         stamina = int(item.effects_on_consume.get("restore_stamina", 0))

@@ -29,7 +29,7 @@ class CombatApplicationService:
             return "Kogo chcesz zaatakować?"
         npc = find_npc_in_manager(ctx.npcs, ctx.character.room_id, target_name)
         if npc is None:
-            return "Nie widzisz takiego celu."
+            return "Nie ma tu takiego celu."
         result = ctx.combat.attack(ctx.character, npc.character)
         ctx.event_bus.emit(DomainEventType.COMBAT_ATTACKED, username=ctx.character.username, character=ctx.character, target=npc.vnum, room_id=ctx.character.room_id, defender_dead=result.defender_dead, message=result.message)
         message = result.message

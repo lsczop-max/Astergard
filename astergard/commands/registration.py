@@ -17,39 +17,42 @@ from astergard.commands.engine import PermissionLevel
 CommandDefinitionTuple = tuple[str, list[str], str, str, float, bool, str] | tuple[str, list[str], str, str, float, bool, str, PermissionLevel]
 
 COMMAND_DEFINITIONS: dict[str, CommandDefinitionTuple] = {
-    "look": ("Eksploracja", ["look", "l", "ob", "sp", "spojrz", "spójrz", "obejrzyj", "popatrz", "patrz", "zobacz"], "Opisuje obecną lokację albo wskazany cel.", "spojrz [cel]", 0.0, False, "cel"),
-    "move": ("Eksploracja", [], "Przemieszcza postać.", "polnoc", 0.2, False, "kierunek"),
+    "look": ("Eksploracja", ["look", "l", "ob", "sp", "spojrz", "spójrz", "obejrzyj", "ogladnij", "oglądnij", "popatrz", "patrz", "zerknij", "zobacz"], "Opisuje obecną lokację albo wskazany cel.", "spojrz [cel]", 0.0, False, "cel"),
+    "move": ("Eksploracja", ["wejdz", "zejdz", "wroc", "dalej", "do srodka", "na zewnatrz", "na polnoc", "na poludnie", "na wschod", "na zachod", "na gore", "na dol", "w gore", "w dol"], "Przemieszcza postać.", "polnoc", 0.2, False, "kierunek"),
     "search": ("Eksploracja", ["szukaj", "przeszukaj", "szperaj"], "Przeszukuje lokację kosztem kondycji.", "szukaj", 2.0, False, ""),
+    "sense": ("Eksploracja", ["zbadaj", "nasluchuj", "nasluchaj", "powachaj", "dotknij", "usiadz", "odpocznij", "rozejrzyj", "rozejrzyj sie", "obserwuj"], "Pozwala wyczuć miejsce bez mechanicznego wyliczania opcji.", "zbadaj [cel]", 0.0, False, "cel"),
     "say": ("Komunikacja", ["powiedz", "mow", "mów", "pow", "say"], "Mówi do graczy w tej samej lokacji.", "powiedz <tekst>", 0.5, True, "tekst"),
     "emote": ("Komunikacja", ["em", "emocja", "emote"], "Opisuje gest lub emocję postaci.", "em <opis>", 0.5, True, "opis"),
     "shout": ("Komunikacja", ["krzycz", "wrzasnij", "wrzaśnij", "shout"], "Krzyczy do graczy w strefie.", "krzycz <tekst>", 3.0, True, "tekst"),
     "score": ("Postać", ["cechy", "stan", "score"], "Pokazuje stan i cechy postaci.", "cechy", 0.0, False, ""),
     "profile": ("Postać", ["profil", "profile"], "Pokazuje pełny profil postaci.", "profil", 0.0, False, ""),
+    "postac": ("Postać", ["postać", "postac", "wyposazenie", "wyposażenie"], "Pokazuje aktualnie noszone wyposażenie w naturalnej formie.", "postać", 0.0, False, ""),
     "skills": ("Postać", ["umiejetnosci", "umiejętności", "um", "umki"], "Pokazuje poziomy umiejętności.", "umiejetnosci", 0.0, False, ""),
     "style": ("Walka", ["styl", "postawa"], "Ustawia albo pokazuje styl walki.", "styl [nazwa]", 0.0, False, "nazwa"),
     "reputation": ("Postać", ["reputacja"], "Pokazuje reputację u frakcji.", "reputacja", 0.0, False, ""),
-    "inventory": ("Ekwipunek", ["ekwipunek", "ekw", "plecak", "inv", "inventory", "i"], "Pokazuje ekwipunek i wyposażenie.", "ekwipunek", 0.0, False, ""),
-    "get": ("Ekwipunek", ["wez", "weź", "w", "podnies", "podnieś", "podn"], "Podnosi przedmiot z ziemi albo wyjmuje go z pojemnika, jeśli użyjesz składni z <pojemnik>.", "wez <przedmiot>", 0.5, True, "przedmiot"),
+    "inventory": ("Ekwipunek", ["ekwipunek", "ekw", "plecak", "torba", "sakwa", "worek", "pojemnik", "inv", "inventory", "i"], "Pokazuje ekwipunek i wyposażenie.", "ekwipunek", 0.0, False, ""),
+    "get": ("Ekwipunek", ["wez", "weź", "w", "podnies", "podnieś", "podn", "zabierz"], "Podnosi przedmiot z ziemi albo wyjmuje go z pojemnika, jeśli użyjesz składni z <pojemnik>.", "wez <przedmiot>", 0.5, True, "przedmiot"),
     "take_from": ("Ekwipunek", ["wyjmij", "wyciagnij", "wyciągnij"], "Wyjmuje przedmiot z pojemnika.", "wyjmij <przedmiot> z <pojemnik>", 0.5, True, "przedmiot z pojemnik"),
-    "drop": ("Ekwipunek", ["upusc", "upuść", "zostaw", "wyrzuc", "wyrzuć"], "Upuszcza przedmiot.", "upusc <przedmiot>", 0.5, True, "przedmiot"),
-    "wear": ("Ekwipunek", ["zaloz", "załóż", "ubierz", "dobadz", "dobądź", "dobyj"], "Zakłada lub dobywa przedmiot.", "zaloz <przedmiot>", 0.5, True, "przedmiot"),
+    "drop": ("Ekwipunek", ["upusc", "upuść", "zostaw", "wyrzuc", "wyrzuć", "odloz", "odłóż"], "Upuszcza przedmiot.", "upusc <przedmiot>", 0.5, True, "przedmiot"),
+    "wear": ("Ekwipunek", ["zaloz", "załóż", "ubierz", "naloz", "nałóż", "dobadz", "dobądź", "dobyj"], "Zakłada lub dobywa przedmiot.", "zaloz <przedmiot>", 0.5, True, "przedmiot"),
     "remove": ("Ekwipunek", ["zdejmij", "sciagnij", "ściągnij", "schowaj"], "Zdejmuje wyposażony przedmiot.", "zdejmij <przedmiot>", 0.5, True, "przedmiot"),
     "consume": ("Ekwipunek", ["zjedz", "wypij", "uzyj", "użyj", "skonsumuj"], "Używa przedmiotu konsumpcyjnego.", "uzyj <przedmiot>", 0.5, True, "przedmiot"),
     "put": ("Ekwipunek", ["wloz", "włóż", "wlóż", "wsadz", "wsadź", "schowajdo"], "Wkłada przedmiot do pojemnika.", "wloz <przedmiot> do <pojemnik>", 0.5, True, "przedmiot do pojemnika"),
     "transfer": ("Ekwipunek", ["przeloz", "przełóż", "przenies", "przenieś"], "Przekłada przedmiot między pojemnikami.", "przeloz <przedmiot> z <pojemnika> do <pojemnika>", 0.5, True, "przedmiot z pojemnika do pojemnika"),
-    "give_item": ("NPC", ["daj", "oddaj", "przekaz", "przekaż"], "Daje przedmiot postaci w lokacji.", "daj <przedmiot> <osobie>", 0.5, True, "przedmiot osoba"),
+    "give_item": ("NPC", ["daj", "oddaj", "przekaz", "przekaż", "przynies"], "Daje przedmiot postaci w lokacji.", "daj <przedmiot> <osobie>", 0.5, True, "przedmiot osoba"),
     "kill": ("Walka", ["zabij", "z", "atakuj", "zaatakuj", "bij"], "Atakuje NPC w lokacji.", "atakuj <cel>", 1.0, True, "cel"),
     "flee": ("Walka", ["ucieczka", "uciekaj", "uciek", "flee"], "Próbuje uciec z walki.", "ucieczka", 2.0, False, ""),
     "talk": ("NPC", ["rozmawiaj", "porozmawiaj", "gadaj"], "Rozmawia z NPC.", "rozmawiaj <npc> [o temat]", 0.5, True, "npc"),
     "quests": ("Questy", ["zadania", "questy", "dziennik", "misje"], "Pokazuje dziennik zadań.", "zadania", 0.0, False, ""),
     "offer": ("Ekonomia", ["oferta", "lista", "towary"], "Pokazuje ofertę kupca.", "oferta", 0.0, False, ""),
-    "buy": ("Ekonomia", ["kup", "kupno"], "Kupuje przedmiot od kupca.", "kup <id/nazwa>", 0.5, True, "przedmiot"),
-    "sell": ("Ekonomia", ["sprzedaj", "sprzed"], "Sprzedaje przedmiot kupcowi.", "sprzedaj <przedmiot>", 0.5, True, "przedmiot"),
-    "cast": ("Magia", ["czaruj", "rzuc", "rzuć"], "Rzuca czar.", "czaruj <czar>", 1.0, True, "czar"),
-    "craft": ("Crafting", ["craft", "stworz", "stwórz", "wykonaj", "zrob", "zrób"], "Tworzy przedmiot według receptury.", "craft <receptura>", 1.0, True, "receptura"),
+    "buy": ("Ekonomia", ["kup", "kupno", "nabyj"], "Kupuje przedmiot od kupca.", "kup <id/nazwa>", 0.5, True, "przedmiot"),
+    "sell": ("Ekonomia", ["sprzedaj", "sprzed", "zbyj"], "Sprzedaje przedmiot kupcowi.", "sprzedaj <przedmiot>", 0.5, True, "przedmiot"),
+    "cast": ("Magia", ["czaruj", "rzuc", "rzuć", "inkantuj"], "Rzuca czar.", "czaruj <czar>", 1.0, True, "czar"),
+    "craft": ("Crafting", ["craft", "stworz", "stwórz", "wykonaj", "zrob", "zrób", "wykuj"], "Tworzy przedmiot według receptury.", "craft <receptura>", 1.0, True, "receptura"),
     "ranking": ("System", ["ranking"], "Pokazuje ranking graczy.", "ranking [kategoria]", 5.0, False, "kategoria"),
     "save": ("System", ["zapisz", "save"], "Zapisuje postać.", "zapisz", 3.0, False, ""),
     "quit": ("System", ["quit", "exit", "wyjdz", "wyjdź", "koniec"], "Kończy sesję gry.", "quit", 0.0, False, ""),
+    "debug_map": ("Diagnostyka", ["debug_map", "debug"], "Wyświetla debug payload mapy dla klienta Mudlet.", "debug_map", 0.0, False, "", PermissionLevel.HELPER),
     "inspect": ("Administracja", ["inspect"], "Pokazuje stan gracza.", "inspect [gracz]", 0.0, False, "gracz", PermissionLevel.GM),
     "teleport": ("Administracja", ["teleport"], "Przenosi wskazanego gracza do lokacji.", "teleport <gracz> <lokacja>", 0.0, True, "gracz lokacja", PermissionLevel.GM),
     "goto": ("Administracja", ["goto"], "Przenosi administratora do lokacji.", "goto <lokacja>", 0.0, True, "lokacja", PermissionLevel.GM),
@@ -83,7 +86,7 @@ def build_command_bus(services) -> CommandBus:
     handlers.update(build_inventory_handlers(services.inventory_service))
     handlers.update(build_magic_crafting_handlers(services.magic_crafting_service))
     handlers.update(build_social_handlers(services.quest_service))
-    handlers.update(build_system_handlers(services.system_service))
+    handlers.update(build_system_handlers(services.system_service, services.minimap_service))
     handlers.update(build_admin_handlers(services.admin_service))
     definitions = []
     for canonical_name, definition_data in COMMAND_DEFINITIONS.items():

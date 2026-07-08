@@ -15,8 +15,8 @@ class D27ObservabilityTests(unittest.TestCase):
                 helper.admin_role = "helper"
                 await harness.execute(helper, "cechy")
                 metrics = await harness.execute(helper, "metrics")
-                self.assertIn("Metryki silnika", metrics.output)
-                self.assertIn("Komendy:", metrics.output)
+                self.assertIn("Jak pracuje świat", metrics.output)
+                self.assertIn("Ruch graczy:", metrics.output)
                 snapshot = harness.require_server().services.observability.snapshot()
                 self.assertGreaterEqual(snapshot.command_count, 2)
 
@@ -30,7 +30,7 @@ class D27ObservabilityTests(unittest.TestCase):
                 server = harness.require_server()
                 server.services.event_bus.emit(DomainEventType.CHARACTER_SPOKE, username="eventer", room_id=0)
                 events = await harness.execute(helper, "events 5")
-                self.assertIn("Event counters", events.output)
+                self.assertIn("Najczęstsze zdarzenia", events.output)
                 self.assertIn("character.spoke", events.output)
 
         asyncio.run(scenario())
@@ -43,7 +43,7 @@ class D27ObservabilityTests(unittest.TestCase):
                 server = harness.require_server()
                 server.lifecycle.tick(server.heartbeat.tick_once)
                 lag = await harness.execute(helper, "lag")
-                self.assertIn("Diagnostyka ticków", lag.output)
+                self.assertIn("Rytm świata", lag.output)
                 self.assertIn("Ostatni tick", lag.output)
 
         asyncio.run(scenario())
@@ -65,9 +65,9 @@ class D27ObservabilityTests(unittest.TestCase):
                 server = harness.require_server()
                 server.lifecycle.tick(server.heartbeat.tick_once)
                 output = await harness.execute(helper, "diagnostics")
-                self.assertIn("Metryki silnika", output.output)
-                self.assertIn("Diagnostyka ticków", output.output)
-                self.assertIn("Event counters", output.output)
+                self.assertIn("Jak pracuje świat", output.output)
+                self.assertIn("Rytm świata", output.output)
+                self.assertIn("Najczęstsze zdarzenia", output.output)
 
         asyncio.run(scenario())
 

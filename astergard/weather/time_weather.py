@@ -6,6 +6,12 @@ class TimeAndWeatherManager:
         self.tick_count = 0
         self.hour = 6
         self.weather_by_zone: dict[str, str] = {}
+        self._ambient_by_weather = {
+            "slonecznie": ["Przez gałęzie przeciska się ciepły blask.", "Ptaki krążą wyżej niż zwykle, jakby świat był dziś lżejszy."],
+            "deszcz": ["Na ziemi perli się deszcz, a koleiny błyszczą jak świeże blizny.", "Słychać miarowy szelest kropli o liście i dachy."],
+            "mgla": ["Mgła przygłusza wszystkie kroki.", "W cieniu dróg coś porusza się wolniej niż człowiek by chciał."],
+            "sniezyca": ["Płatki śniegu zaciskają drogę w białą ciszę.", "Wiatr niesie śnieg poziomo, tnąc widok na pół."],
+        }
 
     def tick(self, zones: list[str]) -> list[str]:
         self.tick_count += 1
@@ -29,3 +35,16 @@ class TimeAndWeatherManager:
 
     def regen_modifier(self, zone: str) -> float:
         return 0.5 if self.weather_by_zone.get(zone) == "sniezyca" else 1.0
+
+    def ambient_event(self, zone: str) -> str | None:
+        weather = self.weather_by_zone.get(zone)
+        if weather is None:
+            return random.choice([
+                "Wiatr przechodzi przez okolicę i zaraz znika.",
+                "Przez chwilę słychać krzyk ptaka, potem znowu pozostaje cisza.",
+                "Gdzieś dalej trzaśnie gałąź, jakby las poprawiał własny oddech.",
+            ]) if random.random() < 0.4 else None
+        choices = self._ambient_by_weather.get(weather, [])
+        if not choices or random.random() >= 0.45:
+            return None
+        return random.choice(choices)

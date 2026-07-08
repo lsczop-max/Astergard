@@ -11,8 +11,6 @@ if TYPE_CHECKING:
     from astergard.application.services.exploration_service import ExplorationService
 
 CommandHandler = Callable[[GameContext, str | None, int], Awaitable[str]]
-
-
 def build_exploration_handlers(service: ExplorationService) -> dict[str, CommandHandler]:
     async def cmd_look(ctx: GameContext, arg: str | None, index: int) -> str:
         return service.look(ctx.exploration(), arg, index)
@@ -23,11 +21,10 @@ def build_exploration_handlers(service: ExplorationService) -> dict[str, Command
     async def cmd_search(ctx: GameContext, arg: str | None, index: int) -> str:
         return service.search(ctx.exploration(), arg, index)
 
-    return {"look": cmd_look, "move": cmd_move, "search": cmd_search}
+    async def cmd_sense(ctx: GameContext, arg: str | None, index: int) -> str:
+        return service.sense(ctx.exploration(), arg, index)
 
-
+    return {"look": cmd_look, "move": cmd_move, "search": cmd_search, "sense": cmd_sense}
 def move_direct_with(service: ExplorationService, ctx: GameContext, char: Character, direction: str) -> str:
     return service.move_direct(ctx.exploration(), char, direction)
-
-
 __all__ = ["DIRECTIONS", "build_exploration_handlers", "move_direct_with", "CommandHandler"]

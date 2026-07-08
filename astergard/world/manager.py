@@ -3,6 +3,8 @@ from __future__ import annotations
 from astergard.world.content import apply_content_pack
 from astergard.world.models import Exit, Location
 
+STARTING_ROOM_ID = 14
+
 OPPOSITE = {
     "polnoc": "poludnie",
     "poludnie": "polnoc",
@@ -97,21 +99,21 @@ _CITY_BASE_NAMES = {
     59: "Kapliczka Podróżnych",
 }
 
-_REGION_PLACEHOLDERS = {
-    "Podgrodzie": "Przedmiejska zabudowa czeka na ręczne opracowanie w etapie D35.1B.",
-    "Haldun": "Rolnicza wieś i pola czekają na ręczne opracowanie w etapie D35.1B.",
-    "Osada_Mysliwych": "Łowiecka osada czeka na ręczne opracowanie w etapie D35.1B.",
-    "Forteca_Dungrim": "Graniczny garnizon czeka na ręczne opracowanie w etapie D35.1B.",
-    "Straznica_Przeleczy": "Północna strażnica czeka na ręczne opracowanie w etapie D35.1E.",
-    "Trakty": "Główne trakty handlowe czekają na ręczne opracowanie w etapie D35.1B.",
-    "Boczne_Drogi": "Przedpola Astergardu czekają na ręczne opracowanie w etapie D35.1B.",
-    "Puszcza_Ciszy": "Puszcza czeka na ręczne opracowanie w etapie D35.1C.",
-    "Knieja_Cichych_Sciezek": "Głębsza knieja czeka na ręczne opracowanie w etapie D35.1D.",
-    "Gory_Mekhara": "Góry czekają na ręczne opracowanie w etapie D35.1E.",
-    "Kopalnia_Zelaza": "Kopalnia czeka na ręczne opracowanie w etapie D35.1F.",
-    "Ruiny_Karshold": "Ruiny czekają na ręczne opracowanie w etapie D35.1G.",
-    "Jaskinie_Wilkow": "Jaskinie czekają na ręczne opracowanie w etapie D35.1F.",
-    "Bagna_Hookri": "Bagna czekają na ręczne opracowanie w etapie D35.1G.",
+_REGION_FALLBACKS = {
+    "Podgrodzie": "Przedmieścia żyją tu dymem z pieców, błotem spod kół i ruchem ludzi wracających z murów.",
+    "Haldun": "Rolnicza wieś trzyma się ziemi, studni i pracy, która zaczyna się jeszcze przed świtem.",
+    "Osada_Mysliwych": "Łowiecka osada pachnie dymem, skórą i świeżo okorowanym drewnem.",
+    "Forteca_Dungrim": "Graniczny garnizon nie śpi długo; tu liczy się warta, zapasy i porządek.",
+    "Straznica_Przeleczy": "Północna strażnica żyje meldunkami, wiatrem i ruchem karawan na stromej drodze.",
+    "Trakty": "Główne trakty są rzekami kurzu, błota i wieści niesionych między osadami.",
+    "Boczne_Drogi": "Przedpola Astergardu noszą ślady wozów, patroli i tych, którzy wolą nie jechać główną bramą.",
+    "Puszcza_Ciszy": "Puszcza tłumi głosy, ale nie ukrywa wszystkiego; tropy, popiół i wilgoć opowiadają własną historię.",
+    "Knieja_Cichych_Sciezek": "Głębsza knieja jest starsza, cięższa i mniej chętna, by oddawać drogę za darmo.",
+    "Gory_Mekhara": "Góry noszą metal, wiatr i twarde lekcje dla każdego, kto chce przejść wyżej.",
+    "Kopalnia_Zelaza": "Kopalnia żyje oddechem szybów, skrzypieniem wózków i ciężarem rudy.",
+    "Ruiny_Karshold": "Ruiny pamiętają ogień dłużej niż ludzi, którzy je spalili.",
+    "Jaskinie_Wilkow": "Jaskinie są labiryntem sierści, kości i zbyt dawno niepokojonej ciemności.",
+    "Bagna_Hookri": "Bagna Hookri oddychają mgłą, torfem i cierpliwością wszystkiego, co nie chce zostać znalezione.",
 }
 
 
@@ -119,24 +121,35 @@ class WorldManager:
     def __init__(self) -> None:
         self.locations: dict[int, Location] = {}
         self.respawn_queue: list[dict[str, object]] = []
+        self.ambient_messages_by_zone: dict[str, str] = {}
 
     def generate_world(self, seed: int = 12345) -> None:  # seed kept for API compatibility
         self.locations.clear()
         self.respawn_queue.clear()
+        self.ambient_messages_by_zone.clear()
         self._create_locations()
         self._build_region_graph()
         apply_content_pack(self.locations)
+
+    def set_ambient_message(self, zone: str, message: str) -> None:
+        if zone:
+            self.ambient_messages_by_zone[zone] = message
+
+    def pop_ambient_message(self, zone: str) -> str | None:
+        if not zone:
+            return None
+        return self.ambient_messages_by_zone.pop(zone, None)
 
     def _create_locations(self) -> None:
         for start, end, zone, label in REGION_RANGES:
             for room_id in range(start, end + 1):
                 if zone == "Centrum_Twierdza":
                     name = _CITY_BASE_NAMES[room_id]
-                    description = "Ręcznie projektowana część Twierdzy Astergard."
+                    description = "Kamienne serce Twierdzy Astergard: bruk, dym z pieców, ruch wozów i echo kroków odbite od murów."
                 else:
                     offset = room_id - start + 1
                     name = f"{label} {offset}"
-                    description = _REGION_PLACEHOLDERS[zone]
+                    description = _REGION_FALLBACKS[zone]
                 self.locations[room_id] = Location(room_id, name, description, zone)
 
     def _build_region_graph(self) -> None:
@@ -147,7 +160,7 @@ class WorldManager:
         self._build_d351e_mountains_pass_graph()
         self._build_d351f_mines_caves_graph()
         self._build_d351g_ruins_graph()
-        self._build_placeholder_region_graphs()
+        self._build_d351h_swamp_graph()
         self._build_inter_region_roads()
 
     def _build_astergard_graph(self) -> None:
@@ -463,24 +476,22 @@ class WorldManager:
         for a, b, direction in links:
             self._link(a, b, direction)
 
-    def _build_placeholder_region_graphs(self) -> None:
-        for start, end, zone, _label in REGION_RANGES[1:]:
-            if end <= 474:
-                # D35.1B-D35.1F replace the old procedural chains for outer settlements,
-                # forts, roads and Puszcza Ciszy with hand-authored topology.
-                continue
-            previous = start
-            for room_id in range(start + 1, end + 1):
-                # Drogi i biomy na razie tworzą rzadki, kręty szkielet. Szczegóły
-                # zostaną zastąpione ręcznym contentem w kolejnych etapach D35.1.
-                direction = ("wschod", "poludniowy-wschod", "poludnie", "wschod", "polnocny-wschod")[(room_id - start) % 5]
-                self._link(previous, room_id, direction)
-                previous = room_id
-            if end - start >= 6:
-                self._link(start + 1, start + 5, "poludniowy-wschod")
-                self._link(start + 3, start + 8, "poludnie")
-            if end - start >= 12:
-                self._link(start + 6, start + 12, "poludniowy-wschod")
+    def _build_d351h_swamp_graph(self) -> None:
+        # D35.1H: Bagna Hookri are wet, winding and intentionally low-visibility.
+        links = [
+            (475, 476, "wschod"), (476, 477, "wschod"), (477, 478, "poludniowy-wschod"),
+            (478, 479, "wschod"), (479, 480, "poludnie"), (480, 481, "poludnie"),
+            (481, 482, "zachod"), (482, 483, "poludniowy-zachod"), (483, 484, "zachod"),
+            (484, 485, "poludnie"), (485, 486, "wschod"), (486, 487, "wschod"),
+            (487, 488, "poludniowy-wschod"), (488, 489, "wschod"), (489, 490, "poludnie"),
+            (490, 491, "poludnie"), (491, 492, "zachod"), (492, 493, "poludniowy-zachod"),
+            (493, 494, "zachod"), (494, 495, "poludnie"), (495, 496, "wschod"),
+            (496, 497, "wschod"), (497, 498, "poludniowy-wschod"), (498, 499, "wschod"),
+            (476, 482, "poludnie"), (479, 487, "poludniowy-wschod"), (485, 492, "poludnie"),
+            (490, 496, "poludniowy-zachod"), (478, 484, "polnocny-wschod"), (494, 499, "poludniowy-wschod"),
+        ]
+        for a, b, direction in links:
+            self._link(a, b, direction)
 
     def _build_inter_region_roads(self) -> None:
         # Główne wyjścia z Astergardu do przyszłych ręcznie rozpisywanych regionów.

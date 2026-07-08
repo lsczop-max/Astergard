@@ -30,7 +30,20 @@ class CommandParser:
         "nw": "polnocny-zachod", "pnz": "polnocny-zachod",
         "se": "poludniowy-wschod", "pdw": "poludniowy-wschod",
         "sw": "poludniowy-zachod", "pdz": "poludniowy-zachod",
-        "g": "gora", "gora": "gora", "d": "dol", "dol": "dol",
+        "g": "gora", "gora": "gora", "wejdz": "gora",
+        "d": "dol", "dol": "dol", "zejdz": "dol",
+    }
+    MULTIWORD_COMMANDS: dict[tuple[str, str], str] = {
+        ("do", "srodka"): "do srodka",
+        ("na", "zewnatrz"): "na zewnatrz",
+        ("na", "polnoc"): "polnoc",
+        ("na", "poludnie"): "poludnie",
+        ("na", "wschod"): "wschod",
+        ("na", "zachod"): "zachod",
+        ("na", "gore"): "gora",
+        ("na", "dol"): "dol",
+        ("w", "gore"): "gora",
+        ("w", "dol"): "dol",
     }
 
     @staticmethod
@@ -42,6 +55,10 @@ class CommandParser:
         tokens = cls.tokenize(raw_input)
         if not tokens:
             return ParsedCommand("", None, 1)
+        if len(tokens) >= 2:
+            multiword = cls.MULTIWORD_COMMANDS.get((tokens[0], tokens[1]))
+            if multiword is not None:
+                tokens = [multiword, *tokens[2:]]
         command = cls.DIRECTIONS.get(tokens[0], tokens[0])
         rest = tokens[1:]
         index = 1

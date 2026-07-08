@@ -17,7 +17,7 @@ class MagicCraftingApplicationService:
             target_name = arg.replace("grot", "", 1).strip()
             npc = find_npc_in_manager(ctx.npcs, ctx.character.room_id, target_name)
             if npc is None:
-                return "Nie widzisz celu dla Grotu Źródła."
+                return "Nie ma tu celu dla Grotu Źródła."
             result = ctx.magic.magic_bolt(ctx.character, npc.character)
             ctx.event_bus.emit(DomainEventType.MAGIC_CAST, username=ctx.character.username, spell="grot", target=npc.vnum, result=result)
             return result

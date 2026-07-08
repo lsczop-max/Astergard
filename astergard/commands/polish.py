@@ -16,7 +16,7 @@ STOPWORDS = {
 # Small, explicit lemma table. It is intentionally conservative: it improves MUD usability
 # without pretending to be a full Polish morphological analyzer.
 LEMMA_OVERRIDES: dict[str, str] = {
-    "brame": "brama", "bramy": "brama", "brama": "brama",
+    "brame": "brama", "bramy": "brama", "brama": "brama", "bramie": "brama",
     "zolnierza": "zolnierz", "zolnierzem": "zolnierz", "zolnierzowi": "zolnierz", "zolnierzu": "zolnierz",
     "kupca": "kupiec", "kupcem": "kupiec", "kupcowi": "kupiec", "kupcu": "kupiec",
     "klucza": "klucz", "kluczem": "klucz", "kluczowi": "klucz", "kluczu": "klucz",
@@ -28,10 +28,21 @@ LEMMA_OVERRIDES: dict[str, str] = {
     "skore": "skora", "skory": "skora", "skora": "skora",
     "sakwy": "sakwa", "sakwe": "sakwa", "sakiewke": "sakiewka", "sakiewki": "sakiewka",
     "plecaka": "plecak", "plecakiem": "plecak", "plecaku": "plecak",
+    "torby": "torba", "torbe": "torba", "torbie": "torba", "torebki": "torba",
+    "worka": "worek", "workiem": "worek", "worku": "worek", "worki": "worek",
+    "pojemnika": "pojemnik", "pojemnikiem": "pojemnik", "pojemniku": "pojemnik", "pojemniki": "pojemnik",
     "skrzynie": "skrzynia", "skrzyni": "skrzynia", "skrzynia": "skrzynia",
     "skrzynke": "skrzynka", "skrzynki": "skrzynka", "skrzynce": "skrzynka",
+    "mape": "mapa", "mapy": "mapa", "mapie": "mapa",
+    "kamienia": "kamien", "kamieniu": "kamien", "kamieniem": "kamien",
+    "glazu": "glaz", "glazem": "glaz", "glazy": "glaz",
+    "korze": "kora", "kora": "kora", "kory": "kora",
+    "drzewa": "drzewo", "drzewem": "drzewo", "drzewie": "drzewo",
+    "slady": "slad", "slad": "slad", "sledy": "slad",
+    "sciezki": "sciezka", "sciezce": "sciezka", "sciezka": "sciezka",
     "drugiej": "drugi", "trzeciej": "trzeci", "czwartej": "czwarty", "piatej": "piaty",
     "polnoc": "polnoc", "poludnie": "poludnie", "wschod": "wschod", "zachod": "zachod",
+    "wejdz": "gora", "zejdz": "dol", "wroc": "wroc",
 }
 
 PUNCT_RE = re.compile(r"[^a-z0-9\- ]+")

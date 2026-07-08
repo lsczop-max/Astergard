@@ -12,6 +12,7 @@ from astergard.database.connections import SQLiteConnectionFactory
 from astergard.database.migrations import MigrationRunner
 from astergard.database.world_state_repository import WorldStateRepository
 from astergard.database.save_manifest_repository import SaveManifestRepository
+from astergard.world.manager import STARTING_ROOM_ID
 
 
 class PlayerRepository:
@@ -55,7 +56,7 @@ class PlayerRepository:
         if self.accounts.exists(username):
             return False
         password_hash, salt = self.accounts.create_credentials(username, password)
-        character = create_character_from_profile(username, profile) if profile is not None else Character(username=username)
+        character = create_character_from_profile(username, profile) if profile is not None else Character(username=username, room_id=STARTING_ROOM_ID)
         self.characters.insert_new(username, password_hash, salt, character)
         self.audit.record(username, "account_registered")
         return True

@@ -37,7 +37,7 @@ class D26AdminGMEngineTests(unittest.TestCase):
                 admin = harness.create_character("adminuser")
                 admin.admin_role = "admin"
                 result = await harness.execute(admin, "saveworld")
-                self.assertIn("World saved", result.output)
+                self.assertIn("Świat zapisano", result.output)
                 audit = await harness.execute(admin, "auditlog 5")
                 self.assertIn("saveworld", audit.output)
 
@@ -67,7 +67,10 @@ class D26AdminGMEngineTests(unittest.TestCase):
                 spawned = await harness.execute(gm, "spawnnpc wolf 0")
                 self.assertIn("Zespawnowano NPC", spawned.output)
                 self.assertGreater(len(harness.require_server().npcs.npcs), before)
+                worldstats = await harness.execute(gm, "worldstats")
+                self.assertIn("Jak wygląda świat", worldstats.output)
                 sessions = await harness.execute(gm, "listsessions")
+                self.assertIn("Kto jest teraz w świecie", sessions.output)
                 self.assertIn("spawner", sessions.output)
 
         asyncio.run(run())

@@ -419,6 +419,7 @@ def haldun_market_inventory() -> list[Item]:
         Item("chleb wiejski", "Bochen na zakwasie, jeszcze ciepły po porannym wypieku.", 0.5, 2, "haldun_country_bread", "food", is_consumable=True, effects_on_consume={"restore_stamina": 10}),
         Item("jabłka z sadu", "Koszyk kwaśnych jabłek z lokalnego sadu.", 1.0, 4, "haldun_orchard_apples", "food", is_consumable=True, effects_on_consume={"restore_stamina": 5}),
         Item("ser wiejski", "Twardy ser zawinięty w płótno.", 0.7, 5, "haldun_country_cheese", "food", is_consumable=True, effects_on_consume={"restore_stamina": 8}),
+        Item("gliniany dzban", "Dzban z ciemnej gliny, jakich używa się tylko w Haldun przy mleku i wodzie.", 1.2, 6, "haldun_clay_jug", "tool"),
         Item("worek nasion", "Mieszanka nasion gotowa na wiosenny zasiew.", 1.4, 6, "haldun_seed_sack", is_container=True, capacity=14),
     ]
 
@@ -481,6 +482,7 @@ def straznica_supply_inventory() -> list[Item]:
         Item("zwój mapy", "Zwijana mapa przełęczy z zaznaczonymi ścieżkami i punktami widokowymi.", 0.2, 8, "straznica_pass_map", "tool"),
         Item("zwój liny", "Mocny zwój liny do wozów, noszy i mocowania ładunku.", 2.6, 4, "straznica_rope", "tool"),
         Item("koc podróżny", "Gruby koc chroniący przed wiatrem na nocnym postoju.", 1.8, 5, "straznica_travel_blanket", "tool"),
+        Item("kamień znacznikowy", "Mały, poprzecinany kamień do oznaczania bezpiecznych punktów na przełęczy.", 0.9, 7, "straznica_marker_stone", "tool"),
     ]
 
 
@@ -580,6 +582,7 @@ def bagna_herbal_inventory() -> list[Item]:
         Item("torfowe ziele", "Wilgotne, ostre ziele zebrane na skraju mokradła.", 0.1, 4, "bagna_bog_herb", "food", is_consumable=True, effects_on_consume={"restore_stamina": 4}),
         Item("suszone pałki", "Szkliście suche pałki i sitowie do naparów.", 0.2, 3, "bagna_reed_bundle", "tool"),
         Item("maść przeciw wilgoci", "Lepka maść chroniąca skórę przed mokradłem.", 0.3, 5, "bagna_moisture_salve", "tool"),
+        Item("torfowy knot", "Knot nasączony torfem, pali się długo i niewesoło.", 0.2, 4, "bagna_turf_wick", "tool"),
     ]
 
 

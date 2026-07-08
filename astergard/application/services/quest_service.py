@@ -25,7 +25,7 @@ class QuestApplicationService:
             return "Z kim chcesz rozmawiać?"
         npc = find_npc_in_manager(ctx.npcs, ctx.character.room_id, arg)
         if npc is None:
-            return "Nie widzisz takiej osoby."
+            return "Nie ma tu takiej osoby."
         normalized = normalize_phrase(arg, drop_stopwords=True)
         for quest in QUESTS.values():
             if quest.completion_npc == npc.vnum and self.quests.is_ready(ctx.character, quest.id):
@@ -51,6 +51,13 @@ class QuestApplicationService:
 
         progress_messages = self.quests.progress(ctx.character, "talk", npc.vnum)
         if progress_messages:
+            for quest_id in list(ctx.character.active_quests):
+                active_quest = QUESTS.get(quest_id)
+                if active_quest is None or active_quest.completion_npc != npc.vnum:
+                    continue
+                if self.quests.is_ready(ctx.character, active_quest.id):
+                    completion = self.quests.complete_if_ready(ctx.character, active_quest.id, ctx.event_bus)
+                    return "\n".join(progress_messages + [completion])
             return "\n".join(progress_messages + [npc.dialogue("default", ctx.character.reputation.get(npc.faction, 0))])
 
         return npc.dialogue("default", ctx.character.reputation.get(npc.faction, 0))

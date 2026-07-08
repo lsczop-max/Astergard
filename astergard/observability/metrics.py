@@ -96,16 +96,16 @@ class ObservabilityService:
         snap = self.snapshot()
         return "\n".join(
             [
-                "Metryki silnika:",
-                f"Uptime: {snap.uptime_seconds:.2f}s",
-                f"Eventy: {snap.event_count} (błędy handlerów: {snap.event_errors})",
-                f"Komendy: {snap.command_count} (błędy: {snap.command_errors})",
-                f"Śr. czas komendy: {snap.average_command_ms:.3f} ms",
-                f"Max czas komendy: {snap.max_command_ms:.3f} ms",
-                f"Ticki: {snap.tick_count}",
-                f"Śr. czas ticka: {snap.average_tick_ms:.3f} ms",
-                f"Max czas ticka: {snap.max_tick_ms:.3f} ms",
-                f"Zadania schedulera: {snap.scheduler_tasks} (błędy: {snap.scheduler_errors})",
+                "Jak pracuje świat:",
+                f"Czas działania: {snap.uptime_seconds:.2f}s",
+                f"Wydarzenia: {snap.event_count} (błędy: {snap.event_errors})",
+                f"Ruch graczy: {snap.command_count} (błędy: {snap.command_errors})",
+                f"Średni czas komendy: {snap.average_command_ms:.3f} ms",
+                f"Najdłuższa komenda: {snap.max_command_ms:.3f} ms",
+                f"Ticki świata: {snap.tick_count}",
+                f"Średni czas ticka: {snap.average_tick_ms:.3f} ms",
+                f"Najdłuższy tick: {snap.max_tick_ms:.3f} ms",
+                f"Zegar świata: {snap.scheduler_tasks} zadań (błędy: {snap.scheduler_errors})",
             ]
         )
 
@@ -113,7 +113,7 @@ class ObservabilityService:
         limit = max(1, min(limit, 100))
         if not self.event_counts:
             return "Brak eventów."
-        lines = ["Event counters:"]
+        lines = ["Najczęstsze zdarzenia:"]
         for event_type, count in self.event_counts.most_common(limit):
             lines.append(f"{event_type}: {count}")
         return "\n".join(lines)
@@ -126,10 +126,10 @@ class ObservabilityService:
         latest = ticks[-1]
         return "\n".join(
             [
-                "Diagnostyka ticków:",
-                f"Ostatni tick: {latest.tick} / {latest.duration_ms:.3f} ms / {'OK' if latest.ok else 'FAIL'}",
-                f"Najwolniejszy tick: {slowest.tick} / {slowest.duration_ms:.3f} ms / {'OK' if slowest.ok else 'FAIL'}",
-                f"Liczba błędów schedulera: {len(self.scheduler.errors)}",
+                "Rytm świata:",
+                f"Ostatni tick: {latest.tick} / {latest.duration_ms:.3f} ms / {'OK' if latest.ok else 'BŁĄD'}",
+                f"Najwolniejszy tick: {slowest.tick} / {slowest.duration_ms:.3f} ms / {'OK' if slowest.ok else 'BŁĄD'}",
+                f"Błędy zegara: {len(self.scheduler.errors)}",
             ]
         )
 

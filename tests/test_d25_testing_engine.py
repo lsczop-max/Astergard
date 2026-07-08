@@ -36,7 +36,7 @@ class TestingEngineTests(unittest.TestCase):
                 character = harness.create_character("tester")
                 transcript = await harness.execute(character, "spojrz")
                 self.assertEqual(transcript.command, "spojrz")
-                self.assertIn("Widoczne wyjścia", transcript.output)
+                self.assertIn("Drogi stąd", transcript.output)
 
         asyncio.run(run())
 
@@ -49,11 +49,11 @@ class TestingEngineTests(unittest.TestCase):
                     character,
                     [
                         ScenarioStep("cechy", ("Kondycja",)),
-                        ScenarioStep("pomoc", ("Dostępne komendy",)),
+                        ScenarioStep("pomoc", ("Co możesz zrobić",)),
                     ],
                 )
                 self.assertEqual(len(result.transcripts), 2)
-                self.assertIn("Dostępne komendy", result.output_text)
+                self.assertIn("Co możesz zrobić", result.output_text)
 
         asyncio.run(run())
 

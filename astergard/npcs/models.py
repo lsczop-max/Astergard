@@ -78,6 +78,8 @@ class NPC:
         lines = self.dialogue_tree.get(topic) or self.dialogue_tree.get("default") or ["Milczy."]
         if reputation < 0 and len(lines) > 1:
             return lines[1]
+        if reputation > 4 and len(lines) > 2:
+            return lines[2]
         return lines[0]
 
     def scene_line(self) -> str:
@@ -97,10 +99,26 @@ class NPCFactory:
             npc.daily_schedule = self._daily_schedule_for(npc.vnum)
         if not npc.dialogue_tree:
             npc.dialogue_tree = {
-                "default": [f"{npc.name.capitalize()} milczy i obserwuje otoczenie."],
-                "praca": [f"{npc.name.capitalize()} mówi krótko o swojej codziennej robocie."],
-                "miejsce": [f"{npc.name.capitalize()} zna to miejsce lepiej niż własne buty."],
-                "plotki": [f"{npc.name.capitalize()} nie ufa plotkom, ale coś jednak słyszał."],
+                "default": [
+                    f"{npc.name.capitalize()} mierzy cię spojrzeniem i wraca do swoich spraw.",
+                    f"{npc.name.capitalize()} odpowiada niechętnie, jak ktoś przyzwyczajony do nieproszonych pytań.",
+                    f"{npc.name.capitalize()} po chwili mięknie i zdradza odrobinę więcej, niż planował.",
+                ],
+                "praca": [
+                    f"{npc.name.capitalize()} mówi o robocie bez ozdób, jak ktoś, kto wie, ile kosztuje dzień spóźnienia.",
+                    f"{npc.name.capitalize()} dodaje kilka szczegółów o codziennym trudzie i narzędziach.",
+                    f"{npc.name.capitalize()} opowiada o pracy tak, jakby była częścią pogody w tym miejscu.",
+                ],
+                "miejsce": [
+                    f"{npc.name.capitalize()} zna to miejsce lepiej niż własne buty.",
+                    f"{npc.name.capitalize()} wskazuje skróty, zdradliwe przejścia i rzeczy, których lepiej nie dotykać.",
+                    f"{npc.name.capitalize()} wspomina historię miejsca tak, jakby sam ją tu przechowywał.",
+                ],
+                "plotki": [
+                    f"{npc.name.capitalize()} nie ufa plotkom, ale coś jednak słyszał.",
+                    f"{npc.name.capitalize()} podaje jedną świeżą wieść i jedną, której woli nie powtarzać głośno.",
+                    f"{npc.name.capitalize()} dorzuca jeszcze nazwisko, miejsce i połowę prawdy.",
+                ],
             }
         apply_threat_profile(npc.character, profile)
         return npc

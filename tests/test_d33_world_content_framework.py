@@ -18,13 +18,13 @@ class D33WorldContentFrameworkTests(unittest.TestCase):
         self.assertTrue(any(item.vnum == "iron_key" for item in world.locations[0].items))
         self.assertGreaterEqual(len(make_content_pack()), 6)
 
-    def test_look_lists_inspectable_details_in_start_room(self) -> None:
+    def test_look_shows_room_story_without_menu_like_hints(self) -> None:
         async def run() -> None:
             with TestGameHarness() as harness:
                 char = harness.create_character("d33_look")
                 transcript = await harness.execute(char, "spojrz")
                 self.assertIn("Brama Dymnych Chorągwi", transcript.output)
-                self.assertIn("Możesz obejrzeć", transcript.output)
+                self.assertNotIn("Możesz obejrzeć", transcript.output)
                 self.assertIn("brama", transcript.output)
 
         asyncio.run(run())
@@ -45,9 +45,33 @@ class D33WorldContentFrameworkTests(unittest.TestCase):
                 await harness.execute(char, "poludnie")
                 transcript = await harness.execute(char, "spojrz")
                 self.assertIn("Trakt Przy Murze", transcript.output)
-                self.assertIn("Możesz obejrzeć", transcript.output)
+                self.assertNotIn("Możesz obejrzeć", transcript.output)
                 detail = await harness.execute(char, "spojrz na mur")
                 self.assertIn("szczeliny obserwacyjne", detail.output)
+
+    def test_sense_commands_expose_senses_and_respect_context(self) -> None:
+        async def run() -> None:
+            with TestGameHarness() as harness:
+                char = harness.create_character("d33_sense")
+                char.room_id = 21
+                smell = await harness.execute(char, "powachaj")
+                self.assertTrue("Pachnie" in smell.output or "Czujesz" in smell.output)
+                touch = await harness.execute(char, "dotknij kamienia")
+                self.assertIn("Kamień", touch.output)
+
+        asyncio.run(run())
+
+    def test_ambient_world_message_is_rendered_once(self) -> None:
+        async def run() -> None:
+            with TestGameHarness() as harness:
+                server = harness.require_server()
+                char = harness.create_character("d33_ambient")
+                zone = server.world.locations[char.room_id].zone
+                server.world.set_ambient_message(zone, "Przeleci kruk nad bramą.")
+                first = await harness.execute(char, "spojrz")
+                self.assertIn("Przeleci kruk", first.output)
+                second = await harness.execute(char, "spojrz")
+                self.assertNotIn("Przeleci kruk", second.output)
 
         asyncio.run(run())
 

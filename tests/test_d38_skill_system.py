@@ -17,6 +17,7 @@ class SkillSystemTests(unittest.TestCase):
                 gender_description="kobieta",
                 age="27",
                 origin="uczeń rzemieślnika",
+                childhood="miasto",
                 birth_region="Astergard",
                 culture="miejską",
                 religion="wyznanie społeczne",

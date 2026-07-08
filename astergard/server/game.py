@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import os
 
 from astergard.application.bootstrap import GameBootstrapper, GameServices
 from astergard.application.context_assembler import GameContextAssembler
@@ -15,6 +16,7 @@ from astergard.commands.helpers import find_item, find_npc
 from astergard.items.models import Item
 from astergard.npcs.models import NPC
 from astergard.server.context import GameContext
+from astergard.utils import describe_gold
 
 
 class GameServer:
@@ -23,8 +25,10 @@ class GameServer:
     cmd_say: CommandFunc
     cmd_emote: CommandFunc
     cmd_shout: CommandFunc
+    cmd_sense: CommandFunc
     cmd_score: CommandFunc
     cmd_profile: CommandFunc
+    cmd_postac: CommandFunc
     cmd_skills: CommandFunc
     cmd_inventory: CommandFunc
     cmd_get: CommandFunc
@@ -47,22 +51,25 @@ class GameServer:
     cmd_save: CommandFunc
     cmd_quit: CommandFunc
 
-    """Network-facing orchestration layer.
+    """Network-facing orchestration layer."""
 
-    D8 keeps command construction inside the bootstrap/CommandBus path. The
-    server exposes compatibility methods by binding to dispatcher entries, not
-    by importing concrete command functions or the application service graph.
-    """
-
-    def __init__(self, db_path: str = "mud.db") -> None:
+    def __init__(self, db_path: str = "mud.db", mudlet_map_enabled: bool | None = None) -> None:
         self.clients: dict[asyncio.StreamWriter, Character] = {}
         self.services: GameServices = GameBootstrapper(db_path).build()
+        self.mudlet_map_enabled = self._resolve_mudlet_map_enabled(mudlet_map_enabled)
+        self.services.minimap_service.enabled = self.mudlet_map_enabled
         self._expose_services()
         self.context_assembler = GameContextAssembler(self.services, self.get_players_in_room, self.move_direct, self.get_all_players)
         self.heartbeat = HeartbeatService(self.services, lambda: list(self.clients.values()))
         self.lifecycle = EngineLifecycle(self.services, lambda: list(self.clients.values()), self.services.event_bus, self.services.scheduler)
         self.session_flow = SessionFlow(self.services, self.make_context, self.prompt)
         self._install_compatibility_methods()
+
+    @staticmethod
+    def _resolve_mudlet_map_enabled(mudlet_map_enabled: bool | None) -> bool:
+        if mudlet_map_enabled is not None:
+            return mudlet_map_enabled
+        return os.getenv("ASTERGARD_MUDLET_MAP", "").strip().lower() in {"1", "true", "yes", "on"}
 
     def _expose_services(self) -> None:
         self.repo = self.services.repo
@@ -81,8 +88,8 @@ class GameServer:
     def _install_compatibility_methods(self) -> None:
         aliases = {
             "cmd_look": "look", "cmd_move": "polnoc", "cmd_say": "powiedz",
-            "cmd_emote": "em", "cmd_shout": "krzycz", "cmd_score": "cechy",
-            "cmd_profile": "profil", "cmd_skills": "umiejetnosci", "cmd_inventory": "ekwipunek", "cmd_get": "wez",
+            "cmd_emote": "em", "cmd_shout": "krzycz", "cmd_sense": "zbadaj", "cmd_score": "cechy",
+            "cmd_profile": "profil", "cmd_postac": "postac", "cmd_skills": "umiejetnosci", "cmd_inventory": "ekwipunek", "cmd_get": "wez",
             "cmd_drop": "upusc", "cmd_wear": "zaloz", "cmd_remove": "zdejmij",
             "cmd_kill": "zabij", "cmd_flee": "ucieczka", "cmd_talk": "rozmawiaj",
             "cmd_quests": "zadania", "cmd_offer": "oferta", "cmd_buy": "kup",
@@ -113,9 +120,10 @@ class GameServer:
         return list(self.clients.values())
 
     def prompt(self, character: Character) -> str:
-        max_stamina = character.stats.max_kondycja
         health = overall_health_desc(character.wounds)
-        return f"[Kondycja: {character.stats.kondycja}/{max_stamina}] [Stan: {health}] [Złoto: {character.gold}] > "
+        stamina = character.stats.describe_kondycja()
+        gold = describe_gold(character.gold)
+        return f"[{stamina}] [Stan: {health}] [Złoto: {gold}] > "
 
     async def start(self, host: str = "0.0.0.0", port: int = 4000) -> None:
         heartbeat_task = asyncio.create_task(self.global_heartbeat())

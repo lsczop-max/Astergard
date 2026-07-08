@@ -6,7 +6,7 @@ from astergard.server.context import GameContext
 from astergard.combat.manager import COMBAT_STYLES, normalize_combat_style
 from astergard.characters.creation import ORIGIN_DEFINITIONS
 from astergard.characters.professions import profession_label
-from astergard.rules.skills import all_skill_definitions, skill_threshold
+from astergard.rules.skills import all_skill_definitions
 
 CommandHandler = Callable[[GameContext, str | None, int], Awaitable[str]]
 
@@ -24,58 +24,75 @@ def _skill_desc(level: int) -> str:
 
 
 def build_character_sheet_handlers() -> dict[str, CommandHandler]:
-    async def cmd_score(ctx: GameContext, arg: str | None, index: int) -> str:
-        stats = ctx.character.stats
+    def _identity_lines(ctx: GameContext) -> list[str]:
         origin = ORIGIN_DEFINITIONS.get(ctx.character.origin)
         origin_name = origin.label if origin is not None else (ctx.character.origin or "brak")
+        lines = [
+            f"Nazywasz się {ctx.character.name or ctx.character.username}.",
+            f"Masz {ctx.character.age or 'nieznany'} lat.",
+            f"Twoje pochodzenie to {origin_name}.",
+        ]
+        if ctx.character.birth_region:
+            lines.append(f"Twoim miejscem urodzenia jest {ctx.character.birth_region}.")
+        if ctx.character.culture:
+            lines.append(f"Twoja kultura to {ctx.character.culture}.")
+        if ctx.character.religion:
+            lines.append(f"Wyznajesz: {ctx.character.religion}.")
+        if ctx.character.gender_description:
+            lines.append(f"Opis, jaki nosisz przy sobie: {ctx.character.gender_description}.")
+        return lines
+
+    def _background_lines(ctx: GameContext) -> list[str]:
+        origin = ORIGIN_DEFINITIONS.get(ctx.character.origin)
+        origin_name = origin.label if origin is not None else (ctx.character.origin or "brak")
+        lines = [
+            f"Ścieżka główna: {profession_label(ctx.character.main_profession)}.",
+            f"Ścieżka poboczna: {profession_label(ctx.character.secondary_profession)}.",
+            f"Reputacja startowa: {ctx.character.starting_reputation}.",
+            f"Reputacja globalna: {ctx.character.global_reputation}.",
+        ]
+        if ctx.character.appearance:
+            lines.append(f"Wygląd: {ctx.character.appearance}.")
+        if ctx.character.history:
+            lines.append(f"Historia: {ctx.character.history}.")
+        if origin_name:
+            lines.append(f"Korzenie: {origin_name}.")
+        return lines
+
+    async def cmd_postac(ctx: GameContext, arg: str | None, index: int) -> str:
+        return ctx.character.equipment_summary()
+
+    async def cmd_score(ctx: GameContext, arg: str | None, index: int) -> str:
+        stats = ctx.character.stats
         return (
-            f"Imię: {ctx.character.name or ctx.character.username}\n"
-            f"Opis postaci: {ctx.character.gender_description or 'brak'}\n"
-            f"Wiek: {ctx.character.age or 'brak'}\n"
-            f"Pochodzenie: {origin_name}\n"
-            f"Region urodzenia: {ctx.character.birth_region or 'brak'}\n"
-            f"Kultura: {ctx.character.culture or 'brak'}\n"
-            f"Religia: {ctx.character.religion or 'brak'}\n"
-            f"Profesja główna: {profession_label(ctx.character.main_profession)}\n"
-            f"Profesja dodatkowa: {profession_label(ctx.character.secondary_profession)}\n"
-            f"Siła: {stats.describe_stat(stats.sila)}\n"
-            f"Zręczność: {stats.describe_stat(stats.zrecznosc)}\n"
-            f"Kondycja: {stats.kondycja}/{stats.max_kondycja}\n"
-            f"Styl walki: {ctx.character.combat_style}"
+            "Kto jesteś:\n"
+            + "\n".join(_identity_lines(ctx))
+            + "\n\n"
+            "Jak walczysz:\n"
+            f"Siła: {stats.describe_stat(stats.sila)}.\n"
+            f"Zręczność: {stats.describe_stat(stats.zrecznosc)}.\n"
+            f"Kondycja: {stats.describe_kondycja()}.\n"
+            f"Styl walki: {ctx.character.combat_style}."
         )
 
     async def cmd_profile(ctx: GameContext, arg: str | None, index: int) -> str:
-        origin = ORIGIN_DEFINITIONS.get(ctx.character.origin)
-        origin_name = origin.label if origin is not None else (ctx.character.origin or "brak")
         starter_inventory = ", ".join(item.display_name() for item in ctx.character.inventory) or "brak"
-        equipment = ctx.character.equipment_summary()
         return (
-            f"Imię: {ctx.character.name or ctx.character.username}\n"
-            f"Opis postaci: {ctx.character.gender_description or 'brak'}\n"
-            f"Wiek: {ctx.character.age or 'brak'}\n"
-            f"Pochodzenie: {origin_name}\n"
-            f"Region urodzenia: {ctx.character.birth_region or 'brak'}\n"
-            f"Kultura: {ctx.character.culture or 'brak'}\n"
-            f"Religia / wyznanie: {ctx.character.religion or 'brak'}\n"
-            f"Profesja główna: {profession_label(ctx.character.main_profession)}\n"
-            f"Profesja dodatkowa: {profession_label(ctx.character.secondary_profession)}\n"
-            f"Wygląd: {ctx.character.appearance or 'brak'}\n"
-            f"Historia: {ctx.character.history or 'brak'}\n"
-            f"Reputacja startowa: {ctx.character.starting_reputation}\n"
-            f"Reputacja globalna: {ctx.character.global_reputation}\n"
-            f"Ekwipunek startowy: {starter_inventory}\n"
-            f"Wyposażenie: {equipment}"
+            "O tobie:\n"
+            + "\n".join(_identity_lines(ctx))
+            + "\n\n"
+            "Twoja droga:\n"
+            + "\n".join(_background_lines(ctx))
+            + "\n\n"
+            f"Na początku niesiesz: {starter_inventory}.\n"
+            f"Na sobie masz teraz: {ctx.character.equipment_summary()}"
         )
 
     async def cmd_skills(ctx: GameContext, arg: str | None, index: int) -> str:
         lines: list[str] = []
         for definition in all_skill_definitions():
-            data = ctx.character.skills.values.get(definition.key, {"level": 1, "progress": 0})
-            threshold = skill_threshold(definition.key, data["level"])
-            lines.append(
-                f"{definition.label}: {_skill_desc(data['level'])} "
-                f"({data['progress']}/{threshold})"
-            )
+            level = ctx.character.skills.level(definition.key)
+            lines.append(f"{definition.label}: {_skill_desc(level)}")
         return "\n".join(lines)
 
 
@@ -96,13 +113,13 @@ def build_character_sheet_handlers() -> dict[str, CommandHandler]:
         wanted = "\n".join(f"- {entry}" for entry in ctx.character.wanted_posts[:5]) or "brak"
         factions = "\n".join(f"{name}: {value}" for name, value in sorted(ctx.character.reputation.items())) or "brak"
         return (
-            f"Tytuł: {ctx.character.title}\n"
-            f"Sława: {ctx.character.renown}\n"
-            f"Reputacja globalna: {ctx.character.global_reputation}\n"
-            f"Reputacja lokalna: {local}\n"
-            f"Przestępstwa: {crimes}\n"
-            f"Listy gończe:\n{wanted}\n"
-            f"Frakcje:\n{factions}"
+            f"Twoje imię w świecie: {ctx.character.title}.\n"
+            f"Rozgłos: {ctx.character.renown}.\n"
+            f"Jak mówią o tobie ludzie: {ctx.character.global_reputation}.\n\n"
+            f"W różnych miejscach pamiętają cię tak: {local}.\n"
+            f"Na twoim koncie zapisano: {crimes}.\n\n"
+            f"Jeśli ktoś cię szuka, zostawia takie ślady:\n{wanted}\n\n"
+            f"Stosunek frakcji do ciebie:\n{factions}"
         )
 
-    return {"score": cmd_score, "profile": cmd_profile, "skills": cmd_skills, "style": cmd_style, "reputation": cmd_reputation}
+    return {"score": cmd_score, "profile": cmd_profile, "postac": cmd_postac, "skills": cmd_skills, "style": cmd_style, "reputation": cmd_reputation}

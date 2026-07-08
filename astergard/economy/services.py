@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 from astergard.characters.models import Character
+from astergard.commands.polish import normalize_phrase, tokens_match
 from astergard.items.models import Item
 from astergard.npcs.models import NPC
 from astergard.rules.economy import EconomyRules, default_economy_rules
+
 
 class EconomyService:
     def __init__(self, rules: EconomyRules | None = None) -> None:
@@ -24,8 +26,26 @@ class EconomyService:
     def sell_price(self, item: Item) -> int:
         return self.rules.sell_price(item.value)
 
+    def _find_shop_item(self, items: list[Item], query: str) -> tuple[Item | None, str | None]:
+        normalized = normalize_phrase(query, drop_stopwords=True)
+        if not normalized:
+            return None, None
+        exact = [item for item in items if normalize_phrase(item.name, drop_stopwords=True) == normalized or normalize_phrase(item.vnum or "", drop_stopwords=True) == normalized]
+        if len(exact) == 1:
+            return exact[0], None
+        if len(exact) > 1:
+            return None, "To pasuje do kilku rzeczy: " + ", ".join(item.name for item in exact) + "."
+        partial = [item for item in items if tokens_match(normalized, f"{item.name} {item.vnum or ''}")]
+        if len(partial) == 1:
+            return partial[0], None
+        if len(partial) > 1:
+            return None, "To pasuje do kilku rzeczy: " + ", ".join(item.name for item in partial) + "."
+        return None, None
+
     def buy(self, char: Character, merchant: NPC, item_name: str) -> str:
-        item = next((i for i in merchant.shop_inventory if item_name in i.name), None)
+        item, ambiguity = self._find_shop_item(merchant.shop_inventory, item_name)
+        if ambiguity:
+            return ambiguity
         if not item:
             return "Kupiec nie ma takiego towaru."
         price = self.buy_price(item, char.reputation.get(merchant.faction, 0))
@@ -40,7 +60,9 @@ class EconomyService:
         return f"Kupujesz {item.name} za {price} monet."
 
     def sell(self, char: Character, merchant: NPC, item_name: str) -> str:
-        item = next((i for i in char.inventory if item_name in i.name), None)
+        item, ambiguity = self._find_shop_item(char.inventory, item_name)
+        if ambiguity:
+            return ambiguity
         if not item:
             return "Nie masz takiego przedmiotu."
         price = self.sell_price(item)

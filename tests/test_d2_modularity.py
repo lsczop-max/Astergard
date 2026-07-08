@@ -24,7 +24,7 @@ class D2ModularityTests(unittest.TestCase):
         char = server.repo.load("missing") if False else __import__("astergard.characters.models", fromlist=["Character"]).Character("tester")
         ctx = server.make_context(char)
         result: str = asyncio.run(cast(Coroutine[Any, Any, str], server.cmd_inventory(ctx, None, 1)))
-        self.assertIn("Wyposażenie", result)
+        self.assertIn("Wyposażenie przy tobie", result)
 
     def test_server_game_is_orchestration_layer(self) -> None:
         from pathlib import Path

@@ -65,6 +65,28 @@ class TacticalCombatTests(unittest.TestCase):
         self.assertGreater(light_result.effective_damage, heavy_result.effective_damage)
         self.assertEqual(heavy_result.body_part, "korpus")
 
+    def test_heavier_armor_slows_and_opens_defense_windows(self) -> None:
+        attacker = self._base_combatant("attacker")
+        defender_light = self._base_combatant("light")
+        defender_heavy = self._base_combatant("heavy")
+        defender_heavy.equipment["glowa"] = Item("hełm", "", 2.8, 18, "helm", "armor", "glowa", protection=1)
+        defender_heavy.equipment["korpus"] = Item("zbroja", "", 4.0, 25, "armor", "armor", "korpus", protection=3)
+
+        combat = CombatManager(FixedRandom(randint_values=[10, 1, 10, 1], random_values=[0.99, 0.99, 0.99, 0.99]))
+        light_initiative = combat.initiative_score(defender_light)
+        combat = CombatManager(FixedRandom(randint_values=[10, 1, 10, 1], random_values=[0.99, 0.99, 0.99, 0.99]))
+        heavy_initiative = combat.initiative_score(defender_heavy)
+        self.assertLess(heavy_initiative, light_initiative)
+
+        combat = CombatManager(FixedRandom(randint_values=[20, 1, 20, 1], random_values=[0.99, 0.99, 0.99, 0.99]))
+        combat.choose_body_part = lambda: "korpus"  # type: ignore[method-assign]
+        light_result = combat.attack(attacker, defender_light)
+        combat = CombatManager(FixedRandom(randint_values=[20, 1, 20, 1], random_values=[0.99, 0.99, 0.99, 0.99]))
+        combat.choose_body_part = lambda: "korpus"  # type: ignore[method-assign]
+        heavy_result = combat.attack(self._base_combatant("attacker2"), defender_heavy)
+        self.assertLess(heavy_result.defense_score, light_result.defense_score)
+        self.assertGreaterEqual(light_result.attack_score, heavy_result.attack_score)
+
     def test_weapon_reach_changes_hit_score(self) -> None:
         spear_fighter = self._base_combatant("spear")
         spear_fighter.equipment["prawa_reka"] = Item("włócznia", "", 2.2, 20, "spear", "weapon", "prawa_reka", damage_type="kluta", base_damage=5, reach=2, initiative_modifier=0, parry_bonus=0)

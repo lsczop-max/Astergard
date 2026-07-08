@@ -31,10 +31,22 @@ class D29PolishParserTests(unittest.TestCase):
             char = Character("alias")
             ctx = server.make_context(char)
             out = await server.dispatcher.execute_line(ctx, "ob")
-            self.assertIn("Widoczne wyjścia", out)
+            self.assertIn("Drogi stąd", out)
             inv = await server.dispatcher.execute_line(ctx, "ekw")
-            self.assertIn("Plecak", inv)
+            self.assertIn("W plecaku niesiesz", inv)
+            sense = await server.dispatcher.execute_line(ctx, "nasluchuj")
+            self.assertTrue("Słyszysz" in sense or "Wiatr" in sense or "Pachnie" in sense)
+            help_text = await server.dispatcher.execute_line(ctx, "pomoc zbroja")
+            self.assertIn("Jak nosisz rzeczy", help_text)
         asyncio.run(run())
+
+    def test_parser_understands_multiword_direction_phrases(self) -> None:
+        north = CommandParser.parse("na północ")
+        up = CommandParser.parse("w górę")
+        inward = CommandParser.parse("do środka")
+        self.assertEqual(north.command, "polnoc")
+        self.assertEqual(up.command, "gora")
+        self.assertEqual(inward.command, "do srodka")
 
     def test_diacritic_item_matching_allows_declined_forms(self) -> None:
         async def run() -> None:
