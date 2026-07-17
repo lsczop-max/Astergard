@@ -168,7 +168,7 @@ MAIN_PROFESSIONS: dict[str, ProfessionDefinition] = {
         "berserker",
         "berserker",
         "Rzuca ciężar ciała w walkę i liczy na to, że przeciwnik pęknie pierwszy.",
-        skill_bonuses={"bron_dwureczna": 2, "morale": 1},
+        skill_bonuses={"bron_dwureczna": 1, "morale": 1},
         equipment_factory=lambda: {"prawa_reka": battle_axe()},
         combat_style="brutalny",
     ),
@@ -276,7 +276,7 @@ def profession_menu_text() -> str:
     for index, definition in enumerate(ADDITIONAL_PROFESSIONS.values(), start=1):
         lines.append(f"{index}. {definition.label} - {definition.description}")
     lines.append("")
-    lines.append("Profesja dodatkowa jest opcjonalna. Wpisz 0, brak albo pozostaw pusty wpis.")
+    lines.append("Wpisz numer albo nazwę. Profesja dodatkowa jest opcjonalna: użyj 0, brak albo zostaw puste pole.")
     return "\n".join(lines)
 
 

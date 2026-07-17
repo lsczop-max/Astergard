@@ -19,12 +19,9 @@ class SkillSystemTests(unittest.TestCase):
                 origin="uczeń rzemieślnika",
                 childhood="miasto",
                 birth_region="Astergard",
-                culture="miejską",
-                religion="wyznanie społeczne",
                 main_profession="lucznik",
                 secondary_profession="bard",
                 appearance="Szczupła kobieta z prostym łukiem przewieszonym przez ramię.",
-                history="Od lat ćwiczyła strzał i pieśni, pomagając w karczmach i na traktach.",
             )
             self.assertTrue(repo.register("mira", "secret", profile))
             char = repo.load("mira")

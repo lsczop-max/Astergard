@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from astergard.gmcp import gmcp_negotiation_packet
+
 
 class ANSI:
     GOLD = "\033[1;33m"
@@ -71,6 +73,18 @@ async def send_to_client(writer: Any, text: str, prompt: str | None = None) -> N
     await send_text(writer, text)
     if prompt is not None:
         await send_prompt(writer, prompt)
+
+
+async def send_gmcp(writer: Any, packet: bytes) -> None:
+    try:
+        writer.write(packet)
+        await writer.drain()
+    except (ConnectionResetError, BrokenPipeError, RuntimeError, asyncio.CancelledError):
+        raise
+
+
+async def send_gmcp_negotiation(writer: Any) -> None:
+    await send_gmcp(writer, gmcp_negotiation_packet())
 
 
 # asyncio intentionally imported late enough for static tools and explicit enough for runtime exception matching.

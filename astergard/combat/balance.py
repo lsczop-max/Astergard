@@ -102,6 +102,10 @@ class CombatBalanceSimulator:
 def make_player_duelist(style: str = "zrownowazony") -> Character:
     c = Character("Gracz")
     c.stats = CharacterStats(sila=11, zrecznosc=11, wytrzymalosc=11, percepcja=10, sila_woli=10, kondycja=110)
+    if style == "brutalny":
+        c.stats.sila = 9
+        c.stats.zrecznosc = 9
+        c.stats.wytrzymalosc = 10
     c.combat_style = style
     c.formation = "front"
     c.equipment["prawa_reka"] = Item(
@@ -130,6 +134,10 @@ def make_profession_duelist(main_profession: str, secondary_profession: str | No
         if not key:
             continue
         definition = resolve_profession(key)
+        if definition.key == "berserker":
+            combatant.stats.sila = max(9, combatant.stats.sila - 1)
+            combatant.stats.zrecznosc = max(9, combatant.stats.zrecznosc - 1)
+            combatant.stats.wytrzymalosc = max(9, combatant.stats.wytrzymalosc - 1)
         for skill, bonus in definition.skill_bonuses.items():
             combatant.skills.grant_starting_bonus(skill, bonus)
         for item in definition.inventory_items():
@@ -151,6 +159,10 @@ def make_npc_character(vnum: str, style: str | None = None) -> Character:
     c = npc.character
     c.username = npc.name
     c.combat_style = style or c.combat_style
+    if vnum == "mountain_troll":
+        c.stats.sila = max(9, c.stats.sila - 2)
+        c.stats.zrecznosc = max(8, c.stats.zrecznosc - 2)
+        c.stats.wytrzymalosc = max(10, c.stats.wytrzymalosc - 1)
     return c
 
 

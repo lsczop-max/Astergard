@@ -1,0 +1,26 @@
+[
+  {
+    "id": "small_shield",
+    "name": "mała tarcza",
+    "block_modifier": 0.8,
+    "enabled": true
+  },
+  {
+    "id": "medium_shield",
+    "name": "średnia tarcza",
+    "block_modifier": 1.0,
+    "enabled": true
+  },
+  {
+    "id": "large_shield",
+    "name": "duża tarcza",
+    "block_modifier": 1.2,
+    "enabled": true
+  },
+  {
+    "id": "pavise",
+    "name": "pawęż",
+    "block_modifier": 1.4,
+    "enabled": true
+  }
+]

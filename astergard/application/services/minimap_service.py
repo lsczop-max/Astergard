@@ -19,6 +19,7 @@ class MinimapService:
             "room_id": room.id,
             "name": room.name,
             "zone": room.zone,
+            "coords": {"x": getattr(room, "map_x", 0), "y": getattr(room, "map_y", 0), "z": getattr(room, "map_z", 0)},
             "exits": {
                 direction: exit_data.target_room
                 for direction, exit_data in sorted(room.exits.items())
@@ -67,6 +68,11 @@ class MinimapService:
             "current_room_id": character.room_id if location is None else location.id,
             "current_room_name": "" if location is None else location.name,
             "current_zone": "" if location is None else location.zone,
+            "current_coords": {
+                "x": 0 if location is None else location.map_x,
+                "y": 0 if location is None else location.map_y,
+                "z": 0 if location is None else location.map_z,
+            },
             "rooms": rooms,
         }
 
@@ -91,6 +97,11 @@ class MinimapService:
             "current_room_id": current_room_id,
             "current_room_name": current_room_name,
             "current_zone": current_zone,
+            "current_coords": {
+                "x": 0 if location is None else location.map_x,
+                "y": 0 if location is None else location.map_y,
+                "z": 0 if location is None else location.map_z,
+            },
             "exits": exits,
             "nearby_rooms": self._nearby_rooms(world, current_room_id, radius=radius),
         }

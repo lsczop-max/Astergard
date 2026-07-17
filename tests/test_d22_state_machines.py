@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import unittest
+from unittest.mock import patch
 
 from astergard.characters.models import Character
+from astergard.combat.hit_locations import BodyLocation, BodyLocationGroup, HitLocationOutcome
 from astergard.combat.manager import CombatManager
 from astergard.npcs.models import NPCFactory
 from astergard.server.session import ClientConnection
@@ -70,8 +72,18 @@ class StateMachineTests(unittest.TestCase):
         defender.stats.zrecznosc = 1
         defender.wounds["glowa"] = 3
         manager = CombatManager()
-        manager.choose_body_part = lambda: "glowa"  # type: ignore[method-assign]
-        result = manager.attack(attacker, defender)
+        fixed_hit_location = HitLocationOutcome(
+            location=BodyLocation.HEAD,
+            location_group=BodyLocationGroup.HEAD_GROUP,
+            base_weight=1.0,
+            weapon_weight_modifier=1.0,
+            quality_modifier=1.0,
+            attack_type_modifier=1.0,
+            final_weight=1.0,
+            reason_code="TEST",
+        )
+        with patch("astergard.combat.manager.resolve_hit_location", return_value=fixed_hit_location):
+            result = manager.attack(attacker, defender)
         self.assertTrue(result.defender_dead)
         self.assertEqual(defender.state, CharacterState.DEAD.value)
         self.assertFalse(defender.is_alive)

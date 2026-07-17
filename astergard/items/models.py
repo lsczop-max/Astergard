@@ -145,6 +145,12 @@ class Item:
     parry_bonus: int = 0
     shield_block: int = 0
     id: str = field(default_factory=lambda: uuid4().hex)
+    presentation_category: str | None = None
+    scene_position: str | None = None
+    forms: dict[str, str] = field(default_factory=dict)
+    weapon_profile_id: str | None = None
+    armor_profile_id: str | None = None
+    shield_profile_id: str | None = None
 
     def total_weight(self) -> float:
         return self.weight + sum(item.total_weight() for item in self.contains)
@@ -153,6 +159,21 @@ class Item:
         if self.durability <= 0 and self.item_type in {"weapon", "armor", "shield"}:
             return f"{self.name} (zniszczony)"
         return self.name
+
+    def scene_category(self) -> str:
+        if self.presentation_category:
+            return self.presentation_category
+        if self.item_type in {"weapon", "armor", "shield", "food", "tool"}:
+            return "portable_item"
+        if self.item_type == "furniture":
+            return "furniture"
+        if self.item_type == "resource":
+            return "resource"
+        if self.item_type == "corpse":
+            return "corpse"
+        if self.is_container:
+            return "container"
+        return "portable_item"
 
     def is_wearable(self) -> bool:
         if self.wearable is not None:
@@ -197,6 +218,12 @@ class Item:
             "parry_bonus": self.parry_bonus,
             "shield_block": self.shield_block,
             "id": self.id,
+            "presentation_category": self.presentation_category,
+            "scene_position": self.scene_position,
+            "forms": dict(self.forms),
+            "weapon_profile_id": self.weapon_profile_id,
+            "armor_profile_id": self.armor_profile_id,
+            "shield_profile_id": self.shield_profile_id,
         }
 
     @classmethod
@@ -230,28 +257,34 @@ class Item:
             parry_bonus=int(data.get("parry_bonus", 0)),
             shield_block=int(data.get("shield_block", 0)),
             id=str(data.get("id", uuid4().hex)),
+            presentation_category=data.get("presentation_category"),
+            scene_position=data.get("scene_position"),
+            forms=dict(data.get("forms", {})),
+            weapon_profile_id=data.get("weapon_profile_id"),
+            armor_profile_id=data.get("armor_profile_id"),
+            shield_profile_id=data.get("shield_profile_id"),
         )
 
 
 def starter_items() -> list[Item]:
     return [
-        Item("prosty miecz", "Krótki miecz o zużytej rękojeści.", 1.8, 25, "simple_sword", "weapon", "bron_glowna", wearable=True, weapon_type="miecz", damage_type="cieta", base_damage=4, reach=1, initiative_modifier=1, parry_bonus=1),
-        Item("drewniana tarcza", "Tarcza z ciemnego drewna.", 2.5, 15, "wooden_shield", "shield", "tarcza", wearable=True, weapon_type="tarcza", protection=1, shield_block=3),
-        Item("skórzana kurtka", "Utwardzana kurtka podróżna.", 3.0, 20, "leather_jacket", "armor", "korpus", wearable=True, armor_value=1, protection=1),
+        Item("prosty miecz", "Krótki miecz o zużytej rękojeści.", 1.8, 25, "simple_sword", "weapon", "bron_glowna", wearable=True, weapon_type="miecz", damage_type="cieta", base_damage=4, reach=1, initiative_modifier=1, parry_bonus=1, weapon_profile_id="garrison_short_sword"),
+        Item("drewniana tarcza", "Tarcza z ciemnego drewna.", 2.5, 15, "wooden_shield", "shield", "tarcza", wearable=True, weapon_type="tarcza", protection=1, shield_block=3, shield_profile_id="small_shield"),
+        Item("skórzana kurtka", "Utwardzana kurtka podróżna.", 3.0, 20, "leather_jacket", "armor", "korpus", wearable=True, armor_value=1, protection=1, armor_profile_id="light_armor"),
         Item("chleb", "Twardy bochen podróżny.", 0.4, 2, "bread", "food", is_consumable=True, effects_on_consume={"restore_stamina": 12}),
     ]
 
 
 def dueling_blade() -> Item:
-    return Item("szpada ćwiczebna", "Lekka broń do nauki fechtunku.", 1.4, 18, "dueling_blade", "weapon", "bron_glowna", wearable=True, weapon_type="szpada", damage_type="cieta", base_damage=4, reach=1, initiative_modifier=2, parry_bonus=2)
+    return Item("szpada ćwiczebna", "Lekka broń do nauki fechtunku.", 1.4, 18, "dueling_blade", "weapon", "bron_glowna", wearable=True, weapon_type="szpada", damage_type="cieta", base_damage=4, reach=1, initiative_modifier=2, parry_bonus=2, weapon_profile_id="court_sabre")
 
 
 def training_spear() -> Item:
-    return Item("włócznia treningowa", "Prosta włócznia do nauki dystansu i kontroli przestrzeni.", 2.4, 16, "training_spear", "weapon", "bron_glowna", wearable=True, weapon_type="włócznia", damage_type="kluta", base_damage=4, reach=2, initiative_modifier=0, parry_bonus=0)
+    return Item("włócznia treningowa", "Prosta włócznia do nauki dystansu i kontroli przestrzeni.", 2.4, 16, "training_spear", "weapon", "bron_glowna", wearable=True, weapon_type="włócznia", damage_type="kluta", base_damage=4, reach=2, initiative_modifier=0, parry_bonus=0, weapon_profile_id="watch_spear")
 
 
 def battle_axe() -> Item:
-    return Item("topór bojowy", "Cięższy topór do bezpośredniego starcia.", 3.4, 22, "battle_axe", "weapon", "bron_glowna", wearable=True, weapon_type="topór", damage_type="obuchowa", base_damage=5, reach=1, initiative_modifier=0, parry_bonus=0)
+    return Item("topór bojowy", "Cięższy topór do bezpośredniego starcia.", 3.4, 22, "battle_axe", "weapon", "bron_glowna", wearable=True, weapon_type="topór", damage_type="obuchowa", base_damage=5, reach=1, initiative_modifier=0, parry_bonus=0, weapon_profile_id="battle_axe")
 
 
 def hunting_bow() -> Item:

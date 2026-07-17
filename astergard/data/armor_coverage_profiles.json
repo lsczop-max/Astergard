@@ -1,0 +1,169 @@
+[
+  {
+    "profile_id": "unarmored",
+    "name": "ubranie",
+    "armor_material": "cloth",
+    "armor_category": "clothing",
+    "layer_order": 0,
+    "coverage_fraction": 0.0,
+    "location_fractions": {},
+    "kind": "armor",
+    "enabled": true,
+    "legacy": false
+  },
+  {
+    "profile_id": "light_armor",
+    "name": "lekki pancerz",
+    "armor_material": "leather",
+    "armor_category": "light",
+    "layer_order": 10,
+    "coverage_fraction": 1.0,
+    "location_fractions": {
+      "CHEST": 0.9,
+      "ABDOMEN": 0.8,
+      "BACK": 0.8,
+      "LEFT_SHOULDER": 0.6,
+      "RIGHT_SHOULDER": 0.6,
+      "LEFT_ARM": 0.5,
+      "RIGHT_ARM": 0.5,
+      "LEFT_THIGH": 0.35,
+      "RIGHT_THIGH": 0.35,
+      "LEFT_LEG": 0.2,
+      "RIGHT_LEG": 0.2
+    },
+    "kind": "armor",
+    "enabled": true,
+    "legacy": false
+  },
+  {
+    "profile_id": "medium_armor",
+    "name": "średni pancerz",
+    "armor_material": "mail",
+    "armor_category": "medium",
+    "layer_order": 20,
+    "coverage_fraction": 1.0,
+    "location_fractions": {
+      "CHEST": 1.0,
+      "ABDOMEN": 1.0,
+      "BACK": 1.0,
+      "LEFT_SHOULDER": 0.8,
+      "RIGHT_SHOULDER": 0.8,
+      "LEFT_ARM": 0.65,
+      "RIGHT_ARM": 0.65,
+      "LEFT_HAND": 0.25,
+      "RIGHT_HAND": 0.25,
+      "LEFT_THIGH": 0.5,
+      "RIGHT_THIGH": 0.5,
+      "LEFT_LEG": 0.3,
+      "RIGHT_LEG": 0.3
+    },
+    "kind": "armor",
+    "enabled": true,
+    "legacy": false
+  },
+  {
+    "profile_id": "heavy_armor",
+    "name": "ciężki pancerz",
+    "armor_material": "plate",
+    "armor_category": "heavy",
+    "layer_order": 30,
+    "coverage_fraction": 1.0,
+    "location_fractions": {
+      "HEAD": 0.25,
+      "NECK": 0.45,
+      "CHEST": 1.0,
+      "ABDOMEN": 1.0,
+      "BACK": 1.0,
+      "LEFT_SHOULDER": 1.0,
+      "RIGHT_SHOULDER": 1.0,
+      "LEFT_ARM": 0.85,
+      "RIGHT_ARM": 0.85,
+      "LEFT_HAND": 0.5,
+      "RIGHT_HAND": 0.5,
+      "LEFT_THIGH": 0.75,
+      "RIGHT_THIGH": 0.75,
+      "LEFT_LEG": 0.6,
+      "RIGHT_LEG": 0.6
+    },
+    "kind": "armor",
+    "enabled": true,
+    "legacy": false
+  },
+  {
+    "profile_id": "small_shield",
+    "name": "mała tarcza",
+    "armor_material": "wood",
+    "armor_category": "shield",
+    "layer_order": 100,
+    "coverage_fraction": 1.0,
+    "location_fractions": {
+      "LEFT_SHOULDER": 0.55,
+      "LEFT_ARM": 0.85,
+      "LEFT_HAND": 0.75,
+      "CHEST": 0.25,
+      "ABDOMEN": 0.15,
+      "BACK": 0.10
+    },
+    "kind": "shield",
+    "enabled": true,
+    "legacy": false
+  },
+  {
+    "profile_id": "medium_shield",
+    "name": "średnia tarcza",
+    "armor_material": "wood",
+    "armor_category": "shield",
+    "layer_order": 100,
+    "coverage_fraction": 1.0,
+    "location_fractions": {
+      "LEFT_SHOULDER": 0.70,
+      "LEFT_ARM": 0.95,
+      "LEFT_HAND": 0.90,
+      "CHEST": 0.35,
+      "ABDOMEN": 0.25,
+      "BACK": 0.15
+    },
+    "kind": "shield",
+    "enabled": true,
+    "legacy": false
+  },
+  {
+    "profile_id": "large_shield",
+    "name": "duża tarcza",
+    "armor_material": "wood",
+    "armor_category": "shield",
+    "layer_order": 100,
+    "coverage_fraction": 1.0,
+    "location_fractions": {
+      "LEFT_SHOULDER": 0.85,
+      "LEFT_ARM": 1.0,
+      "LEFT_HAND": 1.0,
+      "CHEST": 0.45,
+      "ABDOMEN": 0.35,
+      "BACK": 0.25
+    },
+    "kind": "shield",
+    "enabled": true,
+    "legacy": false
+  },
+  {
+    "profile_id": "pavise",
+    "name": "pawęż",
+    "armor_material": "wood",
+    "armor_category": "shield",
+    "layer_order": 100,
+    "coverage_fraction": 1.0,
+    "location_fractions": {
+      "LEFT_SHOULDER": 0.95,
+      "LEFT_ARM": 1.0,
+      "LEFT_HAND": 1.0,
+      "CHEST": 0.60,
+      "ABDOMEN": 0.50,
+      "BACK": 0.40,
+      "RIGHT_SHOULDER": 0.20
+    },
+    "kind": "shield",
+    "enabled": true,
+    "legacy": false
+  }
+]

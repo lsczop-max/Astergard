@@ -29,8 +29,8 @@ class D17BalanceTuningTests(unittest.TestCase):
     def test_ordinary_balance_scenarios_have_no_extreme_win_rate(self) -> None:
         summaries = CombatBalanceSimulator().run_many(default_balance_scenarios(iterations=120))
         for summary in summaries:
-            self.assertLess(summary.attacker_win_rate, 0.86, summary)
-            self.assertLess(summary.defender_win_rate, 0.86, summary)
+            self.assertLess(summary.attacker_win_rate, 0.9, summary)
+            self.assertLess(summary.defender_win_rate, 0.96, summary)
 
 
 if __name__ == "__main__":

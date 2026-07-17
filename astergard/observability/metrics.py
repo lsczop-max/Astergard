@@ -97,22 +97,20 @@ class ObservabilityService:
         return "\n".join(
             [
                 "Jak pracuje świat:",
-                f"Czas działania: {snap.uptime_seconds:.2f}s",
-                f"Wydarzenia: {snap.event_count} (błędy: {snap.event_errors})",
-                f"Ruch graczy: {snap.command_count} (błędy: {snap.command_errors})",
-                f"Średni czas komendy: {snap.average_command_ms:.3f} ms",
-                f"Najdłuższa komenda: {snap.max_command_ms:.3f} ms",
-                f"Ticki świata: {snap.tick_count}",
-                f"Średni czas ticka: {snap.average_tick_ms:.3f} ms",
-                f"Najdłuższy tick: {snap.max_tick_ms:.3f} ms",
-                f"Zegar świata: {snap.scheduler_tasks} zadań (błędy: {snap.scheduler_errors})",
+                f"Świat trwa już od {snap.uptime_seconds:.2f} s.",
+                f"Zapisano {snap.event_count} zdarzeń, z czego {snap.event_errors} zakończyły się błędem.",
+                f"Ruch graczy: zarejestrowano {snap.command_count} komend, a {snap.command_errors} z nich potknęły się po drodze.",
+                f"Przeciętna komenda trwa {snap.average_command_ms:.3f} ms, a najdłuższa {snap.max_command_ms:.3f} ms.",
+                f"Zegar świata odliczył {snap.tick_count} tików.",
+                f"Przeciętny tik trwa {snap.average_tick_ms:.3f} ms, a najdłuższy {snap.max_tick_ms:.3f} ms.",
+                f"W kolejce czeka {snap.scheduler_tasks} zadań, a {snap.scheduler_errors} z nich sprawiło kłopot.",
             ]
         )
 
     def render_events(self, limit: int = 20) -> str:
         limit = max(1, min(limit, 100))
         if not self.event_counts:
-            return "Brak eventów."
+            return "Nie zapisano jeszcze żadnych zdarzeń."
         lines = ["Najczęstsze zdarzenia:"]
         for event_type, count in self.event_counts.most_common(limit):
             lines.append(f"{event_type}: {count}")
@@ -121,15 +119,15 @@ class ObservabilityService:
     def render_lag(self) -> str:
         ticks = list(self.tick_metrics)
         if not ticks:
-            return "Brak danych ticków."
+            return "Brakuje jeszcze danych o rytmie świata."
         slowest = max(ticks, key=lambda metric: metric.duration_ms)
         latest = ticks[-1]
         return "\n".join(
             [
                 "Rytm świata:",
-                f"Ostatni tick: {latest.tick} / {latest.duration_ms:.3f} ms / {'OK' if latest.ok else 'BŁĄD'}",
-                f"Najwolniejszy tick: {slowest.tick} / {slowest.duration_ms:.3f} ms / {'OK' if slowest.ok else 'BŁĄD'}",
-                f"Błędy zegara: {len(self.scheduler.errors)}",
+                f"Ostatni tick był {latest.duration_ms:.3f} ms i zakończył się {'pomyślnie' if latest.ok else 'błędem'}.",
+                f"Najwolniejszy tick trwał {slowest.duration_ms:.3f} ms i zakończył się {'pomyślnie' if slowest.ok else 'błędem'}.",
+                f"Zegar świata zgromadził {len(self.scheduler.errors)} błędów.",
             ]
         )
 

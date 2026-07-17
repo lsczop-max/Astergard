@@ -8,23 +8,44 @@ from astergard.application.bootstrap import GameServices
 from astergard.characters.creation import (
     CharacterCreationError,
     CharacterCreationProfile,
+    beard_prompt_text,
     build_appearance_summary,
+    build_appearance_prompt_text,
+    birth_region_prompt_text,
     childhood_prompt_text,
     creation_closing_text,
     creation_opening_text,
+    eyes_prompt_text,
+    gait_prompt_text,
+    hair_prompt_text,
+    height_prompt_text,
+    origin_prompt_text,
+    resolve_beard,
+    resolve_build,
+    resolve_birth_region,
+    resolve_eyes,
+    resolve_gait,
     resolve_origin,
+    resolve_hair,
     resolve_childhood,
+    resolve_height,
+    resolve_scars,
+    resolve_tattoos,
+    scars_prompt_text,
+    tattoos_prompt_text,
     validate_age,
     validate_text,
 )
 from astergard.characters.professions import (
     ProfessionError,
     build_selection,
+    profession_menu_text,
 )
 from astergard.characters.models import Character
 from astergard.commands.parser import CommandParser
+from astergard.gmcp import core_hello_packet, room_info_packet
 from astergard.server.context import GameContext
-from astergard.utils import send_prompt, send_text
+from astergard.utils import send_gmcp, send_gmcp_negotiation, send_prompt, send_text
 
 
 @dataclass(slots=True)
@@ -46,12 +67,31 @@ class SessionFlow:
         self.context_factory = context_factory
         self.prompt_renderer = prompt_renderer
         self.map_payload_enabled = bool(getattr(self.services.minimap_service, "enabled", False))
+        self._gmcp_announced_writers: set[int] = set()
 
     async def _read_line(self, reader: asyncio.StreamReader) -> str:
         return (await reader.readline()).decode("utf-8").strip()
 
     def _map_update_enabled(self) -> bool:
         return self.map_payload_enabled
+
+    def _writer_key(self, writer: asyncio.StreamWriter) -> int:
+        return id(writer)
+
+    async def _ensure_gmcp_ready(self, writer: asyncio.StreamWriter) -> None:
+        key = self._writer_key(writer)
+        if key in self._gmcp_announced_writers:
+            return
+        await send_gmcp_negotiation(writer)
+        await send_gmcp(writer, core_hello_packet())
+        self._gmcp_announced_writers.add(key)
+
+    async def _send_room_info(self, writer: asyncio.StreamWriter, context: GameContext) -> None:
+        location = context.world.get_location(context.character.room_id)
+        if location is None:
+            return
+        await self._ensure_gmcp_ready(writer)
+        await send_gmcp(writer, room_info_packet(location, context.world))
 
     async def _send_full_map_debug(
         self,
@@ -124,111 +164,91 @@ class SessionFlow:
             writer,
             "— Skąd przybywasz? ",
             lambda value: resolve_origin(value).key,
-            "Karczmarz przez chwilę milczy. Potem wskazuje na zewnątrz, jakby znał wszystkie drogi świata. "
-            "Wystarczy jedno słowo albo nazwa miejsca: mieszczanin Astergardu, chłop z Podgrodzia, dziecko traktu, uczeń rzemieślnika, były strażnik, rybak znad rzeki albo włóczęga.\n",
+            origin_prompt_text(),
         )
         childhood = await self._prompt_validated(
             reader,
             writer,
             "— Gdzie dorastałeś? ",
             lambda value: resolve_childhood(value).key,
-            childhood_prompt_text() + "\n",
+            childhood_prompt_text(),
         )
         birth_region = await self._prompt_validated(
             reader,
             writer,
             "— W jakim regionie stawiałeś pierwsze kroki? ",
-            lambda value: validate_text(
-                "Region urodzenia",
-                value,
-                min_length=2,
-                max_length=80,
-            ),
-            "Kronikarz odsuwa kubek i czeka cierpliwie. ",
-        )
-        culture = await self._prompt_validated(
-            reader,
-            writer,
-            "— Jaką kulturę nosisz w sobie? ",
-            lambda value: validate_text("Kultura", value, min_length=2, max_length=80),
-            "Karczmarz poprawia rękawy. ",
-        )
-        religion = await self._prompt_validated(
-            reader,
-            writer,
-            "— Komu składasz modlitwy? ",
-            lambda value: validate_text("Religia", value, min_length=2, max_length=80),
-            "Kronikarz nie podnosi wzroku znad księgi. ",
+            lambda value: resolve_birth_region(value).label,
+            birth_region_prompt_text(),
         )
         main_profession = await self._prompt_validated(
             reader,
             writer,
             "— Czym zajmowałeś się dotąd? ",
             lambda value: build_selection(value).main_profession,
-            "Karczmarz przesuwa w twoją stronę kubek. ",
+            profession_menu_text(),
         )
         secondary_profession = await self._prompt_validated(
             reader,
             writer,
             "— Czy nauczyłeś się jeszcze czegoś przy okazji? Jeśli nie, wpisz brak. ",
             lambda value: build_selection(main_profession, value).secondary_profession,
-            "Kronikarz stawia obok świeżą kartkę. ",
+            profession_menu_text(),
         )
         build = await self._prompt_validated(
             reader,
             writer,
             "— Jakiej jesteś budowy? ",
-            lambda value: validate_text("Budowa", value, min_length=2, max_length=80),
-            "Karczmarz zerka na twoją sylwetkę, nie na twoją historię. ",
+            lambda value: resolve_build(value).label,
+            build_appearance_prompt_text(),
         )
         height = await self._prompt_validated(
             reader,
             writer,
             "— Jakiego jesteś wzrostu? ",
-            lambda value: validate_text("Wzrost", value, min_length=2, max_length=80),
-            "Kronikarz zanurza pióro ponownie. ",
+            lambda value: resolve_height(value).label,
+            height_prompt_text(),
         )
         hair = await self._prompt_validated(
             reader,
             writer,
             "— Jak wyglądają twoje włosy? ",
-            lambda value: validate_text("Włosy", value, min_length=2, max_length=120),
-            "Karczmarz kiwa głową na znak, że to ważniejsza rzecz, niż się wydaje. ",
+            lambda value: resolve_hair(value).label,
+            hair_prompt_text(),
         )
         beard = await self._prompt_validated(
             reader,
             writer,
             "— Nosisz brodę? Jeśli nie, wpisz brak. ",
-            lambda value: validate_text("Brodę", value, min_length=2, max_length=120),
-            "Kronikarz uśmiecha się pod nosem. ",
+            lambda value: resolve_beard(value).label,
+            beard_prompt_text(),
         )
         scars = await self._prompt_validated(
             reader,
             writer,
             "— Masz blizny? Jeśli nie, wpisz brak. ",
-            lambda value: validate_text("Blizny", value, min_length=2, max_length=120),
-            "Karczmarz nie naciska. ",
+            lambda value: resolve_scars(value).label,
+            scars_prompt_text(),
         )
         eyes = await self._prompt_validated(
             reader,
             writer,
             "— Jakiego koloru są twoje oczy? ",
-            lambda value: validate_text("Oczy", value, min_length=2, max_length=80),
-            "Kronikarz spogląda na ciebie uważniej. ",
+            lambda value: resolve_eyes(value).label,
+            eyes_prompt_text(),
         )
         tattoos = await self._prompt_validated(
             reader,
             writer,
             "— Masz tatuaże? Jeśli nie, wpisz brak. ",
-            lambda value: validate_text("Tatuaże", value, min_length=2, max_length=120),
-            "Karczmarz składa dłonie na blacie. ",
+            lambda value: resolve_tattoos(value).label,
+            tattoos_prompt_text(),
         )
         gait = await self._prompt_validated(
             reader,
             writer,
             "— Jak się poruszasz? ",
-            lambda value: validate_text("Chód", value, min_length=2, max_length=120),
-            "Kronikarz odsuwa pergamin i czeka na ostatni szczegół. ",
+            lambda value: resolve_gait(value).label,
+            gait_prompt_text(),
         )
         appearance = build_appearance_summary(
             name=name,
@@ -249,12 +269,9 @@ class SessionFlow:
             origin=origin,
             childhood=childhood,
             birth_region=birth_region,
-            culture=culture,
-            religion=religion,
             main_profession=main_profession,
             secondary_profession=secondary_profession or None,
             appearance=appearance,
-            history="Zapisano w księdze podróżnych podczas pierwszej nocy w Karczmie pod Żurawiem.",
         )
 
     async def login(
@@ -292,10 +309,12 @@ class SessionFlow:
         context: GameContext,
     ) -> None:
         context.character.visit_current_room()
+        await self._ensure_gmcp_ready(writer)
         await send_text(
             writer,
             await self.services.dispatcher.commands["look"](context, None, 1),
         )
+        await self._send_room_info(writer, context)
         await self._send_full_map_debug(writer, context)
         await send_prompt(writer, self.prompt_renderer(context.character))
 
@@ -311,6 +330,7 @@ class SessionFlow:
             if not raw:
                 await send_prompt(writer, self.prompt_renderer(character))
                 continue
+            before_room_id = character.room_id
             parsed = CommandParser.parse(raw)
             spec = (
                 self.services.dispatcher.registry.get(parsed.command)
@@ -322,6 +342,8 @@ class SessionFlow:
             output = await self.services.dispatcher.execute_line(context, raw)
             if output:
                 await send_text(writer, output)
+            if character.room_id != before_room_id:
+                await self._send_room_info(writer, context)
             if needs_full_map:
                 await self._send_full_map_debug(writer, context)
             elif needs_minimap_update:

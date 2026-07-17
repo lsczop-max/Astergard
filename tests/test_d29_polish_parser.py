@@ -31,7 +31,7 @@ class D29PolishParserTests(unittest.TestCase):
             char = Character("alias")
             ctx = server.make_context(char)
             out = await server.dispatcher.execute_line(ctx, "ob")
-            self.assertIn("Drogi stąd", out)
+            self.assertIn("Brama Dymnych Chorągwi", out)
             inv = await server.dispatcher.execute_line(ctx, "ekw")
             self.assertIn("W plecaku niesiesz", inv)
             sense = await server.dispatcher.execute_line(ctx, "nasluchuj")

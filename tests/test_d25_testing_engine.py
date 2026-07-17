@@ -36,7 +36,8 @@ class TestingEngineTests(unittest.TestCase):
                 character = harness.create_character("tester")
                 transcript = await harness.execute(character, "spojrz")
                 self.assertEqual(transcript.command, "spojrz")
-                self.assertIn("Drogi stąd", transcript.output)
+                self.assertIn("Brama Dymnych Chorągwi", transcript.output)
+                self.assertNotIn("drogi stąd", transcript.output.lower())
 
         asyncio.run(run())
 

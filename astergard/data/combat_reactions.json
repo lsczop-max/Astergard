@@ -1,0 +1,15 @@
+[
+  {
+    "id": "riposte_reaction",
+    "name": "Riposta",
+    "reaction_type": "RIPOSTE",
+    "trigger_types": ["SUCCESSFUL_PARRY"],
+    "required_technique_id": "riposte",
+    "required_defense_style": "PARRY",
+    "required_weapon_tags": ["parry_capable", "agile"],
+    "required_weapon_specializations": [],
+    "enabled": true,
+    "priority": 100,
+    "consumes_reaction_window": true
+  }
+]

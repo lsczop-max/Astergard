@@ -55,7 +55,7 @@ class HeartbeatService:
 
     def process_combat_rounds(self) -> None:
         entities: dict[str, Character] = {player.username: player for player in self.players()}
-        entities.update({npc.id: npc.character for npc in self.services.npcs.npcs.values()})
+        entities.update({getattr(npc.character, "combat_identity", npc.id): npc.character for npc in self.services.npcs.npcs.values()})
         self.services.combat.process_active_round(entities)
         for npc in list(self.services.npcs.npcs.values()):
             if not npc.character.is_alive:
@@ -77,4 +77,4 @@ class HeartbeatService:
                 self.services.event_bus.emit("npc.died", npc_id=npc.id, vnum=npc.vnum, room_id=npc.room_id)
         for player in self.players():
             if not player.is_alive:
-                self.services.combat.stop_for(player.username)
+                self.services.combat.end_fight(player.username, reason="DEATH", entities=entities)

@@ -15,6 +15,7 @@ from astergard.npcs.manager import NPCManager
 from astergard.quests.manager import QuestManager
 from astergard.world.manager import WorldManager
 from astergard.engine.events import EventBus
+from astergard.weather.time_weather import TimeAndWeatherManager
 
 
 @dataclass(slots=True)
@@ -22,6 +23,7 @@ class ExplorationContext:
     character: Character
     event_bus: EventBus
     world: WorldManager
+    weather: TimeAndWeatherManager
     npcs: NPCManager
     players_in_room: Callable[[int], list[Character]]
     current_command: str | None = None
@@ -44,6 +46,7 @@ class CombatContext:
     factions: FactionManager
     quests: QuestManager
     move_direct: Callable[[Character, str], str]
+    players_in_room: Callable[[int], list[Character]] | None = None
 
 
 @dataclass(slots=True)

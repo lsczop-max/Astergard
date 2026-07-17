@@ -19,6 +19,8 @@ telnet 127.0.0.1 4000
 
 Nowa postać zaczyna w karczmie, a tworzenie postaci odbywa się w dialogu z karczmarzem i kronikarzem, bez klasycznego menu kreatora.
 
+Walka jest opisana narracyjnie: system rozróżnia perspektywę napastnika, obrońcy i obserwatora, a komunikaty wynikają z rzeczywistego rozstrzygnięcia mechanicznego.
+
 ## Najczęstsze komendy
 
 - `spojrz`
@@ -30,9 +32,12 @@ Nowa postać zaczyna w karczmie, a tworzenie postaci odbywa się w dialogu z kar
 - `gora`, `dol`
 - `powiedz tekst`
 - `ekwipunek`
+- `stan`
 - `pomoc zbroja`
 - `zaloz miecz`
 - `atakuj wilk`
+- `styl ofensywny`
+- `uciekaj polnoc`
 - `rozmawiaj kupiec o wilki`
 - `zbadaj`, `nasluchuj`, `nasluchaj`, `powachaj`, `dotknij`, `rozejrzyj`
 - `zadania`
@@ -45,6 +50,12 @@ Nowa postać zaczyna w karczmie, a tworzenie postaci odbywa się w dialogu z kar
 ## O projekcie
 
 Astergard zachowuje własny świat, własne lore i własne rozwiązania. Dokumentacja historyczna oraz notatki z kolejnych iteracji są w plikach `AUDIT_*.md` i pozostałych dokumentach projektu.
+
+## Klient Mudlet
+
+Oficjalny pakiet kliencki Mudlet dla Astergardu znajduje się w:
+
+- [client/mudlet/README.md](/home/lukasz/Dokumenty/astergard_d34_world_area/client/mudlet/README.md)
 
 ## Testy
 

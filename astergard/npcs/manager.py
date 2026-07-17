@@ -190,6 +190,8 @@ class NPCManager:
         if zone is not None:
             npc.zone = zone
         npc.home_room_id = room_id
+        npc.character.room_id = room_id
+        npc.character.combat_identity = npc.id
         self.npcs[npc.id] = npc
         loc.npc_ids.append(npc.id)
         return npc
@@ -291,6 +293,7 @@ class NPCManager:
                 if destination is not None and npc.id not in destination.npc_ids:
                     destination.npc_ids.append(npc.id)
                 npc.room_id = next_room
+                npc.character.room_id = next_room
                 return NPCActionEvent("move", npc.id, next_room, f"{npc.name} przechodzi na {direction}.")
             current = self.world.get_location(room_id)
             if current is None:
@@ -417,6 +420,7 @@ class NPCManager:
         if target and npc.id not in target.npc_ids:
             target.npc_ids.append(npc.id)
         npc.room_id = target_room
+        npc.character.room_id = target_room
         return NPCActionEvent("patrol", npc.id, target_room, f"{npc.name} odchodzi na {direction}.")
 
     def _aggression_tick(
@@ -429,9 +433,10 @@ class NPCManager:
         if target is None:
             return None
         if combat is not None:
-            combat.start(npc.id, target.username)
-        npc.character.enter_combat()
-        target.enter_combat()
+            combat.start_fight(npc.character, target)
+        else:
+            npc.character.enter_combat()
+            target.enter_combat()
         return NPCActionEvent(
             "aggression",
             npc.id,
@@ -458,9 +463,10 @@ class NPCManager:
         if target is None:
             return None
         if combat is not None:
-            combat.start(npc.id, target.username)
-        npc.character.enter_combat()
-        target.enter_combat()
+            combat.start_fight(npc.character, target)
+        else:
+            npc.character.enter_combat()
+            target.enter_combat()
         return NPCActionEvent(
             "guard_aggression",
             npc.id,

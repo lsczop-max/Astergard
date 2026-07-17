@@ -5,6 +5,7 @@ from typing import TypedDict
 
 from astergard.characters.models import Character
 from astergard.engine.events import DomainEventType
+from astergard.narrative import join_prose
 
 
 class QuestObjective(TypedDict):
@@ -859,42 +860,45 @@ class QuestManager:
 
     def render(self, char: Character) -> str:
         if not char.active_quests and not char.completed_quests:
-            return "Nie masz aktywnych zadań."
+            return "Nie masz aktywnych zadań. Nie nosisz teraz żadnej obietnicy do spełnienia."
 
         lines: list[str] = []
         if char.active_quests:
-            lines.append("Aktywne zadania:")
+            lines.append("W dzienniku wciąż są sprawy, które czekają na domknięcie.")
             for qid, state in sorted(char.active_quests.items()):
                 quest = QUESTS.get(qid)
                 if quest is None:
-                    lines.append(f"- {qid}: nieznane zadanie")
+                    lines.append(f"{qid}: wspomnienie zadania, którego nie umiesz już nazwać.")
                     continue
                 total_current = int(state.get("current", 0))
                 total_count = sum(objective["count"] for objective in quest.objectives)
+                progress = total_current / total_count if total_count else 0
                 reward = quest.rewards
-                reward_text = []
+                reward_text: list[str] = []
                 if "gold" in reward:
-                    reward_text.append(f"{reward['gold']} złota")
+                    reward_text.append(f"{reward['gold']} monet")
                 if "rep" in reward:
-                    reward_text.append(f"{reward['rep']} rep")
-                suffix = f" (nagroda: {', '.join(reward_text)})" if reward_text else ""
-                lines.append(f"- {quest.title}: {quest.description} [{total_current}/{total_count}]{suffix}")
-                if len(quest.objectives) > 1:
-                    lines.append("  Cele:")
-                    for index, objective in enumerate(quest.objectives, start=1):
-                        current = _objective_progress(state, index - 1, quest)
-                        target_text = _format_target(objective["target"])
-                        lines.append(f"  {index}. {_objective_label(objective['type'])} -> {target_text} [{current}/{objective['count']}]")
+                    reward_text.append(f"{reward['rep']} reputacji")
+                reward_clause = f" W nagrodę czeka {join_prose(reward_text)}." if reward_text else ""
+                if progress < 0.33:
+                    mood = "Ledwie zaczęte, ale już zapisane w pamięci."
+                elif progress < 0.66:
+                    mood = "Sprawa jest w toku i widać, że zmierza ku końcowi."
+                elif progress < 1.0:
+                    mood = "Został ostatni krok, zanim opowieść się domknie."
                 else:
-                    objective = quest.objectives[0]
-                    current = _objective_progress(state, 0, quest)
-                    target_text = _format_target(objective["target"])
-                    lines.append(f"  Cel: {_objective_label(objective['type'])} -> {target_text} [{current}/{objective['count']}]")
+                    mood = "Zadanie wygląda na gotowe do oddania."
+                lines.append(f"{quest.title}. {quest.description} {mood}{reward_clause}")
+                objective_lines = [
+                    f"{_objective_label(objective['type'])}: {_format_target(objective['target'])}"
+                    for objective in quest.objectives
+                ]
+                lines.append("Cele: " + join_prose(objective_lines) + ".")
 
         if char.completed_quests:
-            lines.append("Ukończone zadania:")
+            lines.append("To, co już domknąłeś, zostaje za tobą jak cicha blizna.")
             for qid in char.completed_quests:
                 quest = QUESTS.get(qid)
-                lines.append(f"- {quest.title if quest else qid}")
+                lines.append(quest.title if quest else qid)
 
         return "\n".join(lines)

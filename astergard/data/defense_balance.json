@@ -1,0 +1,16 @@
+{
+  "soft_cap": 70.0,
+  "maximum_probability": 0.85,
+  "attack_pressure_weight": 0.35,
+  "sequence_multipliers": [
+    1.0,
+    0.5,
+    0.25
+  ],
+  "minimum_probability": 0.0,
+  "tie_break_order": [
+    "SHIELD_BLOCK",
+    "PARRY",
+    "DODGE"
+  ]
+}

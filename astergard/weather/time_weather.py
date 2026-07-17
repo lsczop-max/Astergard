@@ -1,16 +1,33 @@
 from __future__ import annotations
+
+from datetime import date
 import random
+
+from astergard.narrative import describe_season, describe_time_of_day, describe_weather, describe_world_state
+
+
+def _season_for_month(month: int) -> str:
+    if month in {3, 4, 5}:
+        return "wiosna"
+    if month in {6, 7, 8}:
+        return "lato"
+    if month in {9, 10, 11}:
+        return "jesien"
+    return "zima"
 
 class TimeAndWeatherManager:
     def __init__(self) -> None:
         self.tick_count = 0
         self.hour = 6
+        self.season = _season_for_month(date.today().month)
+        self.world_state = "spokojnie"
         self.weather_by_zone: dict[str, str] = {}
         self._ambient_by_weather = {
-            "slonecznie": ["Przez gałęzie przeciska się ciepły blask.", "Ptaki krążą wyżej niż zwykle, jakby świat był dziś lżejszy."],
-            "deszcz": ["Na ziemi perli się deszcz, a koleiny błyszczą jak świeże blizny.", "Słychać miarowy szelest kropli o liście i dachy."],
-            "mgla": ["Mgła przygłusza wszystkie kroki.", "W cieniu dróg coś porusza się wolniej niż człowiek by chciał."],
-            "sniezyca": ["Płatki śniegu zaciskają drogę w białą ciszę.", "Wiatr niesie śnieg poziomo, tnąc widok na pół."],
+            "slonecznie": ["Przez gałęzie przeciska się ciepły blask.", "Ptaki krążą wyżej niż zwykle, a na kamieniach szybko schnie woda."],
+            "deszcz": ["Na ziemi perli się deszcz, a koleiny błyszczą od nowej wody.", "Krople uderzają o dachy, płachty i liście z równym szelestem."],
+            "burza": ["Grzmot przechodzi gdzieś nad okolicą.", "Wiatr wciska deszcz w każdą szczelinę, a luźne płótna trzepoczą przy ścianach."],
+            "mgla": ["Mgła przygłusza wszystkie kroki.", "Zacierają się krawędzie drogi, okien i dalszych murów."],
+            "sniezyca": ["Płatki śniegu zaciskają drogę w białą ciszę.", "Wiatr niesie śnieg poziomo i zasypuje ślady."],
         }
 
     def tick(self, zones: list[str]) -> list[str]:
@@ -19,9 +36,9 @@ class TimeAndWeatherManager:
         if self.tick_count % 60 == 0:
             self.hour = (self.hour + 1) % 24
             if self.hour == 6:
-                messages.append("<gold>Słońce wschodzi nad rubieżami Imperium...</gold>")
+                messages.append("<gold>Świt rozlewa się nad rubieżami i budzi świat do życia.</gold>")
             if self.hour == 20:
-                messages.append("<indigo>Cień nocy okrywa świat...</indigo>")
+                messages.append("<indigo>Noc zsuwa się na ziemię i zamyka ostatnie odgłosy dnia.</indigo>")
         if self.tick_count % 240 == 0:
             for zone in zones:
                 weather = random.choice(["slonecznie", "deszcz", "mgla"])
@@ -40,11 +57,23 @@ class TimeAndWeatherManager:
         weather = self.weather_by_zone.get(zone)
         if weather is None:
             return random.choice([
-                "Wiatr przechodzi przez okolicę i zaraz znika.",
-                "Przez chwilę słychać krzyk ptaka, potem znowu pozostaje cisza.",
-                "Gdzieś dalej trzaśnie gałąź, jakby las poprawiał własny oddech.",
+                "Ktoś zamyka okiennice po drugiej stronie ulicy.",
+                "Pies przebiega przez przejście i znika za rogiem.",
+                "Gdzieś dalej trzaśnie gałąź, a potem wraca zwykły ruch ulicy.",
             ]) if random.random() < 0.4 else None
         choices = self._ambient_by_weather.get(weather, [])
         if not choices or random.random() >= 0.45:
             return None
         return random.choice(choices)
+
+    def describe_time_layer(self) -> str:
+        return describe_time_of_day(self.hour)
+
+    def describe_weather_layer(self, zone: str) -> str:
+        return describe_weather(self.weather_by_zone.get(zone))
+
+    def describe_season_layer(self) -> str:
+        return describe_season(self.season)
+
+    def describe_world_state_layer(self) -> str:
+        return describe_world_state(self.world_state)

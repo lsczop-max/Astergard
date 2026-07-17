@@ -2,7 +2,11 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import Any
+
+from astergard.characters.careers import CareerUserProfile
 from astergard.items.models import EQUIPMENT_SLOTS, EquipmentSet, Item, starter_items
+from astergard.rules.combat_specialization import CombatSpecializationLoadout
+from astergard.rules.combat_specialization import defense_style_label, resolve_active_defense_style
 from astergard.rules.skills import (
     apply_skill_use,
     apply_starting_skill_bonus,
@@ -15,6 +19,23 @@ from astergard.rules.skills import (
 from astergard.state import CHARACTER_STATE_MACHINE, CharacterState, parse_character_state
 
 BODY_PARTS = ["glowa", "korpus", "prawa_reka", "lewa_reka", "prawa_noga", "lewa_noga"]
+
+
+def _normalize_unique_texts(values: object) -> tuple[str, ...]:
+    if not isinstance(values, (list, tuple, set)):
+        return ()
+    normalized: list[str] = []
+    seen: set[str] = set()
+    for value in values:
+        text = str(value).strip()
+        if not text:
+            continue
+        key = text.casefold()
+        if key in seen:
+            continue
+        seen.add(key)
+        normalized.append(text)
+    return tuple(normalized)
 
 
 @dataclass
@@ -144,6 +165,14 @@ class Character:
     active_effects: list[Effect] = field(default_factory=list)
     active_quests: dict[str, dict[str, int]] = field(default_factory=dict)
     completed_quests: list[str] = field(default_factory=list)
+    career_id: str | None = None
+    organization_id: str | None = None
+    school_id: str | None = None
+    organization_rank: int | None = None
+    combat_identity: str | None = None
+    active_defense_style: str | None = None
+    combat_specializations: CombatSpecializationLoadout = field(default_factory=CombatSpecializationLoadout)
+    known_techniques: tuple[str, ...] = field(default_factory=tuple)
     is_alive: bool = True
     in_combat: bool = False
     combat_style: str = "zrownowazony"
@@ -158,8 +187,43 @@ class Character:
             self.visited_room_ids = {int(room_id) for room_id in self.visited_room_ids}
         if not isinstance(self.equipment, EquipmentSet):
             self.equipment = EquipmentSet.from_dict(self.equipment)
+        if not isinstance(self.combat_specializations, CombatSpecializationLoadout):
+            self.combat_specializations = CombatSpecializationLoadout.from_dict(self.combat_specializations)
+        self.career_id = None if self.career_id is None else (str(self.career_id).strip() or None)
+        self.organization_id = None if self.organization_id is None else (str(self.organization_id).strip() or None)
+        self.school_id = None if self.school_id is None else (str(self.school_id).strip() or None)
+        if self.organization_rank is not None:
+            text = str(self.organization_rank).strip()
+            self.organization_rank = None if not text else int(text)
+        self.combat_identity = None if self.combat_identity is None else (str(self.combat_identity).strip() or None)
+        resolved_defense_style = resolve_active_defense_style(self.active_defense_style)
+        self.active_defense_style = resolved_defense_style.value if resolved_defense_style is not None else None
+        self.known_techniques = _normalize_unique_texts(self.known_techniques)
         for slot in EQUIPMENT_SLOTS:
             self.equipment.setdefault(slot, None)
+
+    @property
+    def awans(self) -> int | None:
+        return self.organization_rank
+
+    @awans.setter
+    def awans(self, value: int | str | None) -> None:
+        if value is None:
+            self.organization_rank = None
+            return
+        text = str(value).strip()
+        self.organization_rank = None if not text else int(text)
+
+    def career_profile(self) -> CareerUserProfile:
+        return CareerUserProfile(
+            career_id=self.career_id,
+            organization_id=self.organization_id,
+            school_id=self.school_id,
+            organization_rank=self.organization_rank,
+        )
+
+    def active_defense_style_label(self) -> str:
+        return defense_style_label(self.active_defense_style)
 
     def add_local_reputation(self, zone: str, amount: int) -> None:
         self.local_reputation[zone] = self.local_reputation.get(zone, 0) + amount
@@ -196,6 +260,15 @@ class Character:
 
     def equipped_items(self) -> dict[str, Item]:
         return {slot: item for slot, item in self.equipment.items() if item is not None}
+
+    def has_light_source(self) -> bool:
+        def item_emits_light(item: Item) -> bool:
+            text = f"{item.name} {item.vnum or ''}".lower()
+            return any(token in text for token in ("latarnia", "pochodnia", "lampa", "swieca", "świeca", "lazik"))
+
+        if any(item_emits_light(item) for item in self.equipped_items().values()):
+            return True
+        return any(item_emits_light(item) for item in self.inventory)
 
     def _describe_equipped_piece(self, slot: str, item: Item) -> str:
         slot_labels = {
@@ -304,9 +377,6 @@ class Character:
         for slot in ("bron_glowna", "bron_pomocnicza", "prawa_reka", "lewa_reka"):
             item = self.equipment.get(slot)
             if item is not None and item.item_type == "weapon" and item.durability > 0:
-                return item
-        for item in self.inventory:
-            if item.item_type == "weapon" and item.durability > 0:
                 return item
         return None
 

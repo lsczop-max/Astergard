@@ -24,9 +24,9 @@ class D26AdminGMEngineTests(unittest.TestCase):
                 gm.admin_role = "gm"
                 target = harness.create_character("target", room_id=0)
                 inspect_result = await harness.execute(gm, "inspect target")
-                self.assertIn("Gracz: target", inspect_result.output)
+                self.assertIn("Przed tobą stoi zapis o target", inspect_result.output)
                 teleport_result = await harness.execute(gm, "teleport target 5")
-                self.assertIn("Teleportowano target", teleport_result.output)
+                self.assertIn("target zostaje przeniesiony do lokacji 5", teleport_result.output)
                 self.assertEqual(target.room_id, 5)
 
         asyncio.run(run())
@@ -53,7 +53,7 @@ class D26AdminGMEngineTests(unittest.TestCase):
                 self.assertIn("confirm", denied.output)
                 self.assertTrue(target.is_alive)
                 killed = await harness.execute(admin, "adminkill victim confirm")
-                self.assertIn("Zabito victim", killed.output)
+                self.assertIn("victim przestaje oddychać", killed.output)
                 self.assertFalse(target.is_alive)
 
         asyncio.run(run())
@@ -65,7 +65,7 @@ class D26AdminGMEngineTests(unittest.TestCase):
                 gm.admin_role = "gm"
                 before = len(harness.require_server().npcs.npcs)
                 spawned = await harness.execute(gm, "spawnnpc wolf 0")
-                self.assertIn("Zespawnowano NPC", spawned.output)
+                self.assertIn("Przywołano wilk", spawned.output)
                 self.assertGreater(len(harness.require_server().npcs.npcs), before)
                 worldstats = await harness.execute(gm, "worldstats")
                 self.assertIn("Jak wygląda świat", worldstats.output)

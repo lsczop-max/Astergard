@@ -74,11 +74,11 @@ class CommandDispatcher:
             spec = self.registry.get(parsed.command)
             if spec is None:
                 error = "unknown_command"
-                return "Nie rozumiem takiego polecenia."
+                return "Nie rozpoznajesz takiego polecenia."
             command_name = spec.name
             if not has_permission(context, spec.metadata.permission):
                 error = "permission_denied"
-                return "Nie masz uprawnień do tego polecenia."
+                return "Nie masz uprawnień do tej komendy. Ta komenda pozostaje przed tobą zamknięta."
             if spec.metadata.argument.required and not parsed.argument:
                 error = "missing_argument"
                 return f"Brakuje argumentu: {spec.metadata.argument.name}. Spróbuj: {spec.metadata.usage}"
@@ -86,7 +86,7 @@ class CommandDispatcher:
             remaining = self.cooldowns.remaining(actor_id, spec.name, spec.metadata.cooldown_seconds)
             if remaining > 0:
                 error = "cooldown"
-                return f"Jeszcze nie możesz użyć tej komendy. Poczekaj {remaining:.1f} s."
+                return f"Jeszcze nie czas na tę komendę. Poczekaj {remaining:.1f} s."
 
             output = await spec.handler(context, parsed.argument, parsed.index)
             self.cooldowns.mark_used(actor_id, spec.name)
@@ -94,7 +94,7 @@ class CommandDispatcher:
             return colorize(output)
         except Exception as exc:
             error = f"{type(exc).__name__}: {exc}"
-            return colorize(f"<red>Coś poszło nie tak podczas wykonywania komendy: {exc}</red>")
+            return colorize(f"<red>Komenda rozsypała się po drodze: {exc}</red>")
         finally:
             if observability is not None:
                 observability.record_command(

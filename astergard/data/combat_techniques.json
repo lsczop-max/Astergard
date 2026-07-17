@@ -1,0 +1,82 @@
+{
+  "techniques": [
+    {
+      "id": "riposte",
+      "name": "Riposta",
+      "description": "Szybki kontrruch po przyjęciu ciosu.",
+      "required_weapon_classes": ["LIGHT", "MEDIUM"],
+      "required_weapon_specializations": ["miecze", "szable", "sztylety"],
+      "required_defense_specializations": ["parowanie"],
+      "required_skill_percent": 60,
+      "required_skill_source": "DEFENSE_SPECIALIZATION",
+      "enabled": true,
+      "stamina_cost": 0,
+      "cooldown_seconds": 0
+    },
+    {
+      "id": "disarm",
+      "name": "Rozbrojenie",
+      "description": "Kontrolowany ruch wymierzony w broń przeciwnika.",
+      "required_weapon_classes": ["LIGHT", "MEDIUM", "POLEARM"],
+      "required_weapon_specializations": ["miecze", "szable", "wlocznie", "halabardy"],
+      "required_defense_specializations": [],
+      "required_skill_percent": 60,
+      "required_skill_source": "WEAPON_SPECIALIZATION",
+      "enabled": true,
+      "stamina_cost": 0,
+      "cooldown_seconds": 0
+    },
+    {
+      "id": "stun",
+      "name": "Ogłuszenie",
+      "description": "Uderzenie nastawione na wstrząs i utratę równowagi.",
+      "required_weapon_classes": ["HEAVY"],
+      "required_weapon_specializations": ["mloty", "bulawy", "cepy"],
+      "required_defense_specializations": [],
+      "required_skill_percent": 60,
+      "required_skill_source": "WEAPON_SPECIALIZATION",
+      "enabled": true,
+      "stamina_cost": 0,
+      "cooldown_seconds": 0
+    },
+    {
+      "id": "guard_break",
+      "name": "Przełamanie gardy",
+      "description": "Silne uderzenie rozbijające ustawioną obronę.",
+      "required_weapon_classes": ["MEDIUM", "HEAVY", "POLEARM"],
+      "required_weapon_specializations": ["topory", "mloty", "halabardy"],
+      "required_defense_specializations": [],
+      "required_skill_percent": 60,
+      "required_skill_source": "WEAPON_SPECIALIZATION",
+      "enabled": true,
+      "stamina_cost": 0,
+      "cooldown_seconds": 0
+    },
+    {
+      "id": "armor_pierce",
+      "name": "Przebicie pancerza",
+      "description": "Precyzyjny atak nastawiony na znalezienie słabego miejsca w zbroi.",
+      "required_weapon_classes": ["MEDIUM", "HEAVY", "POLEARM"],
+      "required_weapon_specializations": ["topory", "mloty", "wlocznie", "halabardy"],
+      "required_defense_specializations": [],
+      "required_skill_percent": 60,
+      "required_skill_source": "WEAPON_SPECIALIZATION",
+      "enabled": true,
+      "stamina_cost": 0,
+      "cooldown_seconds": 0
+    },
+    {
+      "id": "counterattack",
+      "name": "Kontratak",
+      "description": "Natychmiastowa odpowiedź po skutecznej obronie.",
+      "required_weapon_classes": ["LIGHT", "MEDIUM"],
+      "required_weapon_specializations": ["miecze", "szable", "sztylety"],
+      "required_defense_specializations": ["parowanie"],
+      "required_skill_percent": 40,
+      "required_skill_source": "DEFENSE_SPECIALIZATION",
+      "enabled": true,
+      "stamina_cost": 0,
+      "cooldown_seconds": 0
+    }
+  ]
+}

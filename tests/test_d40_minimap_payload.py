@@ -88,14 +88,14 @@ class MinimapPayloadTests(unittest.TestCase):
             send_to_client(
                 cast(Any, writer),
                 "Żołnierz Kuźnia Brama Dymnych Chorągwi",
-                "[w pełni sił] [Stan: zdrowy] [Złoto: bez pieniędzy] > ",
+                "w pełni sił, jest w pełni sił, bez pieniędzy. > ",
             )
         )
         self.assertEqual(
             writer.chunks[0],
             "Żołnierz Kuźnia Brama Dymnych Chorągwi\r\n".encode("utf-8"),
         )
-        self.assertEqual(writer.chunks[1], "[w pełni sił] [Stan: zdrowy] [Złoto: bez pieniędzy] > ".encode("utf-8"))
+        self.assertEqual(writer.chunks[1], "w pełni sił, jest w pełni sił, bez pieniędzy. > ".encode("utf-8"))
 
     def test_map_payload_is_off_by_default(self) -> None:
         with TestGameHarness() as harness:
@@ -122,8 +122,9 @@ class MinimapPayloadTests(unittest.TestCase):
                 )
             )
             initial_text = writer.text()
+            expected_prompt = server.prompt(login.character)
             self.assertNotIn("<MAP_JSON>", initial_text)
-            self.assertEqual(initial_text.count("[w pełni sił]"), 1)
+            self.assertEqual(initial_text.count(expected_prompt), 1)
 
             writer.clear()
             move_reader = FakeReader.from_text_lines(["poludnie"])
@@ -135,9 +136,9 @@ class MinimapPayloadTests(unittest.TestCase):
                 )
             )
             moved_text = writer.text()
-            self.assertIn("Wychodzisz na poludnie.", moved_text)
+            self.assertIn("Kierujesz się na południe.", moved_text)
             self.assertNotIn("<MAP_JSON>", moved_text)
-            self.assertEqual(moved_text.count("[w pełni sił]"), 1)
+            self.assertEqual(moved_text.count(expected_prompt), 1)
 
     def test_map_payload_is_enabled_via_env(self) -> None:
         with patch.dict(os.environ, {"ASTERGARD_MUDLET_MAP": "1"}, clear=False):
@@ -165,10 +166,11 @@ class MinimapPayloadTests(unittest.TestCase):
                     )
                 )
                 initial_text = writer.text()
+                expected_prompt = server.prompt(login.character)
                 self.assertIn("<MAP_JSON>", initial_text)
                 self.assertIn('"type":"full_map_debug"', initial_text)
-                self.assertEqual(initial_text.count("[w pełni sił]"), 1)
-                self.assertLess(initial_text.index("<MAP_JSON>"), initial_text.index("[w pełni sił]"))
+                self.assertEqual(initial_text.count(expected_prompt), 1)
+                self.assertLess(initial_text.index("<MAP_JSON>"), initial_text.index(expected_prompt))
 
                 writer.clear()
                 move_reader = FakeReader.from_text_lines(["poludnie"])
@@ -180,11 +182,11 @@ class MinimapPayloadTests(unittest.TestCase):
                     )
                 )
                 moved_text = writer.text()
-                self.assertIn("Wychodzisz na poludnie.", moved_text)
+                self.assertIn("Kierujesz się na południe.", moved_text)
                 self.assertIn("<MAP_JSON>", moved_text)
                 self.assertIn('"type":"map_update"', moved_text)
                 self.assertNotIn('"type":"full_map_debug"', moved_text)
-                self.assertEqual(moved_text.count("[w pełni sił]"), 1)
+                self.assertEqual(moved_text.count(expected_prompt), 1)
 
     def test_debug_map_command_sends_full_payload_only_when_enabled(self) -> None:
         with patch.dict(os.environ, {"ASTERGARD_MUDLET_MAP": "1"}, clear=False):
@@ -213,7 +215,7 @@ class MinimapPayloadTests(unittest.TestCase):
                     )
                 )
                 debug_text = writer.text()
-                self.assertIn("Wysyłam pełny podgląd mapy.", debug_text)
+                self.assertIn("Wysyłam podgląd mapy.", debug_text)
                 self.assertIn("<MAP_JSON>", debug_text)
                 self.assertIn('"type":"full_map_debug"', debug_text)
 

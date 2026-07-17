@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import time
 from collections.abc import Awaitable, Callable
+from difflib import get_close_matches
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
@@ -68,7 +69,14 @@ class CommandRegistry:
             self._specs[normalized] = spec
 
     def get(self, alias: str) -> CommandSpec | None:
-        return self._specs.get(normalize_phrase(alias))
+        normalized = normalize_phrase(alias)
+        spec = self._specs.get(normalized)
+        if spec is not None:
+            return spec
+        matches = get_close_matches(normalized, self._specs.keys(), n=1, cutoff=0.84)
+        if matches:
+            return self._specs[matches[0]]
+        return None
 
     def all_specs(self) -> list[CommandSpec]:
         return sorted(self._canonical_specs.values(), key=lambda spec: (spec.metadata.group, spec.name))
@@ -119,13 +127,14 @@ def render_help(registry: CommandRegistry, command_name: str | None = None, cont
         if normalized in {"zbroja", "wyposazenie", "wyposażenie", "armor", "pancerz"}:
             return (
                 "Jak nosisz rzeczy:\n"
-                "Na ciele masz miejsce na głowę, szyję, tułów, plecy, ręce, dłonie, pas, nogi i stopy.\n"
-                "Broń główna, broń pomocnicza, tarcza, pierścienie i amulet noszą się osobno.\n"
-                "Zakładasz rzeczy komendą załóż, a zdejmujesz komendą zdejmij."
+                "O rynsztunku:\n"
+                "Na ciele możesz nosić hełm, pancerz, rękawice, pas, buty i drobiazgi przy sobie.\n"
+                "Bronie trzymasz w dłoniach, tarcza odpoczywa przy boku, a pierścienie i amulet spoczywają osobno.\n"
+                "Gdy chcesz coś wziąć na siebie, użyj komendy załóż. Gdy chcesz to zdjąć, użyj zdejmij."
             )
         spec = registry.get(command_name)
         if spec is None:
-            return "Nie ma takiej komendy w pomocy."
+            return "Nie odnajdujesz takiej komendy w księdze."
         aliases = ", ".join(spec.aliases)
         return f"{spec.metadata.canonical_name}: {spec.metadata.description}\nJak to zrobić: {spec.metadata.usage}\nZnane nazwy: {aliases}"
 
@@ -134,7 +143,7 @@ def render_help(registry: CommandRegistry, command_name: str | None = None, cont
         if context is not None and not has_permission(context, spec.metadata.permission):
             continue
         grouped.setdefault(spec.metadata.group, []).append(spec)
-    lines = ["Co możesz zrobić:"]
+    lines = ["Księga podróżnika", "", "Co możesz zrobić:"]
     for group, specs in grouped.items():
         lines.append(f"\n{group}")
         for spec in specs:

@@ -1,0 +1,34 @@
+[
+  {
+    "id": "unarmored",
+    "name": "ubranie",
+    "dodge_modifier": 1.0,
+    "block_modifier": 1.0,
+    "parry_modifier": 1.0,
+    "enabled": true
+  },
+  {
+    "id": "light_armor",
+    "name": "lekki pancerz",
+    "dodge_modifier": 0.95,
+    "block_modifier": 1.0,
+    "parry_modifier": 0.95,
+    "enabled": true
+  },
+  {
+    "id": "medium_armor",
+    "name": "średni pancerz",
+    "dodge_modifier": 0.60,
+    "block_modifier": 0.85,
+    "parry_modifier": 0.80,
+    "enabled": true
+  },
+  {
+    "id": "heavy_armor",
+    "name": "ciężki pancerz",
+    "dodge_modifier": 0.00,
+    "block_modifier": 0.70,
+    "parry_modifier": 0.60,
+    "enabled": true
+  }
+]

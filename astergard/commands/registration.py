@@ -42,6 +42,7 @@ COMMAND_DEFINITIONS: dict[str, CommandDefinitionTuple] = {
     "give_item": ("NPC", ["daj", "oddaj", "przekaz", "przekaż", "przynies"], "Daje przedmiot postaci w lokacji.", "daj <przedmiot> <osobie>", 0.5, True, "przedmiot osoba"),
     "kill": ("Walka", ["zabij", "z", "atakuj", "zaatakuj", "bij"], "Atakuje NPC w lokacji.", "atakuj <cel>", 1.0, True, "cel"),
     "flee": ("Walka", ["ucieczka", "uciekaj", "uciek", "flee"], "Próbuje uciec z walki.", "ucieczka", 2.0, False, ""),
+    "defense_style": ("Walka", ["bron sie", "bron się", "ustaw obrone", "ustaw obronę"], "Ustawia aktywny styl obrony.", "bron sie <unikami|parowaniem|tarczą>", 0.0, False, "styl"),
     "talk": ("NPC", ["rozmawiaj", "porozmawiaj", "gadaj"], "Rozmawia z NPC.", "rozmawiaj <npc> [o temat]", 0.5, True, "npc"),
     "quests": ("Questy", ["zadania", "questy", "dziennik", "misje"], "Pokazuje dziennik zadań.", "zadania", 0.0, False, ""),
     "offer": ("Ekonomia", ["oferta", "lista", "towary"], "Pokazuje ofertę kupca.", "oferta", 0.0, False, ""),

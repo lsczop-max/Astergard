@@ -150,7 +150,7 @@ class CraftingService:
 
     def craft(self, char: Character, recipe_id: str) -> str:
         if not recipe_id:
-            return "Co chcesz stworzyć?"
+            return "Nie podajesz żadnej receptury."
         recipe = self._find_recipe(recipe_id)
         if not recipe:
             known = ", ".join(recipe.output.name for recipe in RECIPES.values())

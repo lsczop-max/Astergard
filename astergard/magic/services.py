@@ -18,7 +18,7 @@ class MagicService:
 
     def cast_strength(self, caster: Character) -> str:
         if caster.stats.kondycja < self.rules.strength_spell_stamina_cost:
-            return "Brakuje ci kondycji."
+            return "Brakuje ci sił, by podtrzymać czar."
         caster.stats.kondycja -= self.rules.strength_spell_stamina_cost
         self.add_or_refresh(caster, Effect("Wzmocnienie", "sila", self.rules.strength_spell_bonus, self.rules.strength_spell_duration_ticks))
         return "<green>Czujesz, jak siła napływa do mięśni.</green>"
@@ -35,7 +35,7 @@ class MagicService:
 
     def magic_bolt(self, caster: Character, defender: Character) -> str:
         if caster.stats.kondycja < self.rules.magic_bolt_stamina_cost:
-            return "Brakuje ci kondycji."
+            return "Brakuje ci sił, by utrzymać magię."
         caster.stats.kondycja -= self.rules.magic_bolt_stamina_cost
         if caster.stats.sila_woli + random.randint(1, self.rules.magic_bolt_roll_sides) <= defender.stats.sila_woli + random.randint(1, self.rules.magic_bolt_roll_sides):
             return "Grot Źródła gaśnie, zanim dosięga celu."

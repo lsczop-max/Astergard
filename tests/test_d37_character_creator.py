@@ -65,6 +65,63 @@ class CharacterCreatorTests(unittest.TestCase):
 
         asyncio.run(run())
 
+    def test_new_character_flow_supports_numbered_choice_menus(self) -> None:
+        async def run() -> None:
+            with GameHarness() as harness:
+                reader = FakeReader.from_text_lines(
+                    [
+                        "numeryczny_gracz",
+                        "sekret",
+                        "Ala",
+                        "kobieta",
+                        "24",
+                        "2",
+                        "1",
+                        "2",
+                        "6",
+                        "5",
+                        "2",
+                        "3",
+                        "1",
+                        "1",
+                        "2",
+                        "1",
+                        "1",
+                        "1",
+                    ]
+                )
+                writer = FakeWriter()
+                result = await harness.require_server().session_flow.login(cast(Any, reader), cast(Any, writer))
+                assert result.character is not None
+                char = result.character
+                self.assertEqual(char.origin, "chlop_z_podgrodzia")
+                self.assertEqual(char.childhood, "wies")
+                self.assertEqual(char.birth_region, "Podgrodzie")
+                self.assertEqual(char.main_profession, "lucznik")
+                self.assertEqual(char.secondary_profession, "bard")
+                self.assertIn("szczupła", char.appearance)
+                self.assertIn("wysoka", char.appearance)
+                self.assertIn("ciemne i spięte", char.appearance)
+                self.assertIn("blizna na dłoni", char.appearance)
+                self.assertIn("szare", char.appearance)
+                transcript = writer.text()
+                self.assertIn("Pochodzenie:", transcript)
+                self.assertIn("1. mieszczanin Astergardu", transcript)
+                self.assertIn("Dzieciństwo:", transcript)
+                self.assertIn("Region urodzenia:", transcript)
+                self.assertIn("Budowa:", transcript)
+                self.assertIn("Wzrost:", transcript)
+                self.assertIn("Włosy:", transcript)
+                self.assertIn("Broda:", transcript)
+                self.assertIn("Blizny:", transcript)
+                self.assertIn("Oczy:", transcript)
+                self.assertIn("Tatuaże:", transcript)
+                self.assertIn("Chód:", transcript)
+                self.assertIn("Profesje główne:", transcript)
+                self.assertIn("Wpisz numer albo nazwę.", transcript)
+
+        asyncio.run(run())
+
     def test_profile_roundtrip_persists_creator_data_and_professions(self) -> None:
         with tempfile.NamedTemporaryFile() as tmp:
             repo = PlayerRepository(tmp.name)
@@ -75,12 +132,9 @@ class CharacterCreatorTests(unittest.TestCase):
                 origin="mieszczanin Astergardu",
                 childhood="miasto",
                 birth_region="Astergard",
-                culture="miejską",
-                religion="wyznanie społeczne",
                 main_profession="szermierz",
                 secondary_profession="kowal",
                 appearance="Krótko ostrzyżony kupiecki syn w czystym płaszczu.",
-                history="Syn cechowego pisarza, który zna miejskie zwyczaje i handlowe skróty.",
             )
             self.assertTrue(repo.register("creator", "pw", profile))
             char = repo.load("creator")
@@ -139,12 +193,9 @@ class CharacterCreatorTests(unittest.TestCase):
                 origin="mieszczanin Astergardu",
                 childhood="miasto",
                 birth_region="Astergard",
-                culture="miejską",
-                religion="wyznanie społeczne",
                 main_profession="wojownik",
                 secondary_profession=None,
                 appearance="Wygląd",
-                history="Poprawna historia o właściwej długości.",
             )
 
         with self.assertRaises(ProfessionError):
@@ -155,12 +206,9 @@ class CharacterCreatorTests(unittest.TestCase):
                 origin="mieszczanin Astergardu",
                 childhood="miasto",
                 birth_region="Astergard",
-                culture="miejską",
-                religion="wyznanie społeczne",
                 main_profession="nieznana",
                 secondary_profession=None,
                 appearance="Wygląd",
-                history="Poprawna historia o właściwej długości.",
             )
 
         with self.assertRaises(ProfessionError):
@@ -171,12 +219,9 @@ class CharacterCreatorTests(unittest.TestCase):
                 origin="mieszczanin Astergardu",
                 childhood="miasto",
                 birth_region="Astergard",
-                culture="miejską",
-                religion="wyznanie społeczne",
                 main_profession="wojownik",
                 secondary_profession="wojownik",
                 appearance="Wygląd",
-                history="Poprawna historia o właściwej długości.",
             )
 
     def test_duplicate_secondary_profession_is_blocked(self) -> None:
@@ -199,8 +244,6 @@ class CharacterCreatorTests(unittest.TestCase):
                         "mieszczanin Astergardu",
                         "miasto",
                         "Astergard",
-                        "mieszczańska",
-                        "wyznanie społeczne",
                         "wojownik",
                         "0",
                         "krępy",
@@ -209,7 +252,7 @@ class CharacterCreatorTests(unittest.TestCase):
                         "krótka broda",
                         "stara blizna na policzku",
                         "piwne",
-                        "brak",
+                        "1",
                         "pewnym krokiem",
                     ]
                 )

@@ -28,7 +28,8 @@ class D5ServiceSplitTests(unittest.TestCase):
         char = Character("look")
         ctx = server.make_context(char)
         result: str = asyncio.run(cast(Coroutine[Any, Any, str], server.cmd_look(ctx, None, 1)))
-        self.assertIn("Drogi stąd", result)
+        self.assertIn("Brama Dymnych Chorągwi", result)
+        self.assertNotIn("drogi stąd", result.lower())
 
     def test_communication_handler_delegates_to_service(self) -> None:
         server = self.make_server()

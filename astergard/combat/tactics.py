@@ -174,7 +174,7 @@ def profession_tactical_modifiers(character: Character, weapon: Item | None) -> 
             modifiers = TacticalModifiers(attack=1, defense=1, initiative=1)
     elif profession == "berserker":
         if weapon_skill == "bron_dwureczna":
-            modifiers = TacticalModifiers(attack=1, damage=2)
+            modifiers = TacticalModifiers(attack=-1, damage=0)
     elif profession == "lucznik":
         if weapon_skill == "luki":
             modifiers = TacticalModifiers(attack=2, initiative=1)

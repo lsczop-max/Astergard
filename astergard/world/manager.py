@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from collections import deque
+
 from astergard.world.content import apply_content_pack
 from astergard.world.models import Exit, Location
 
@@ -35,6 +37,39 @@ REGION_RANGES: tuple[tuple[int, int, str, str], ...] = (
     (455, 474, "Jaskinie_Wilkow", "Jaskinie Wilków"),
     (475, 499, "Bagna_Hookri", "Bagna Hookri"),
 )
+
+REGION_LABELS: dict[str, str] = {zone: label for _, _, zone, label in REGION_RANGES}
+
+REGION_MAP_ORIGINS: dict[str, tuple[int, int, int]] = {
+    "Centrum_Twierdza": (0, 0, 0),
+    "Podgrodzie": (40, 0, 0),
+    "Haldun": (80, 10, 0),
+    "Osada_Mysliwych": (120, 10, 0),
+    "Forteca_Dungrim": (160, 0, 1),
+    "Straznica_Przeleczy": (200, 18, 1),
+    "Trakty": (240, 0, 0),
+    "Boczne_Drogi": (280, -10, 0),
+    "Puszcza_Ciszy": (320, 0, 0),
+    "Knieja_Cichych_Sciezek": (360, 10, 0),
+    "Gory_Mekhara": (400, 18, 1),
+    "Kopalnia_Zelaza": (440, 18, 2),
+    "Ruiny_Karshold": (480, -10, 0),
+    "Jaskinie_Wilkow": (520, -10, 2),
+    "Bagna_Hookri": (560, -20, 0),
+}
+
+MAP_DIRECTION_DELTAS: dict[str, tuple[int, int, int]] = {
+    "polnoc": (0, 1, 0),
+    "poludnie": (0, -1, 0),
+    "wschod": (1, 0, 0),
+    "zachod": (-1, 0, 0),
+    "polnocny-wschod": (1, 1, 0),
+    "polnocny-zachod": (-1, 1, 0),
+    "poludniowy-wschod": (1, -1, 0),
+    "poludniowy-zachod": (-1, -1, 0),
+    "gora": (0, 0, 1),
+    "dol": (0, 0, -1),
+}
 
 _CITY_BASE_NAMES = {
     0: "Brama Dymnych Chorągwi",
@@ -130,6 +165,7 @@ class WorldManager:
         self._create_locations()
         self._build_region_graph()
         apply_content_pack(self.locations)
+        self._assign_map_coordinates()
 
     def set_ambient_message(self, zone: str, message: str) -> None:
         if zone:
@@ -145,7 +181,10 @@ class WorldManager:
             for room_id in range(start, end + 1):
                 if zone == "Centrum_Twierdza":
                     name = _CITY_BASE_NAMES[room_id]
-                    description = "Kamienne serce Twierdzy Astergard: bruk, dym z pieców, ruch wozów i echo kroków odbite od murów."
+                    if room_id == 15:
+                        description = "Tyły Karczmy należy do wąskiego zaplecza za kuchennym wejściem. Przy ścianie stoją puste beczki, skrzynie po warzywach i poplamiony stół do czyszczenia kufli."
+                    else:
+                        description = "Kamienne serce Twierdzy Astergard: bruk, dym z pieców, ruch wozów i echo kroków odbite od murów."
                 else:
                     offset = room_id - start + 1
                     name = f"{label} {offset}"
@@ -508,6 +547,59 @@ class WorldManager:
         ]
         for a, b, direction in roads:
             self._link(a, b, direction)
+
+    def _assign_map_coordinates(self) -> None:
+        for _, _, zone, _ in REGION_RANGES:
+            room_ids = sorted(room_id for room_id, loc in self.locations.items() if loc.zone == zone)
+            if not room_ids:
+                continue
+            anchor = room_ids[0]
+            base_x, base_y, base_z = REGION_MAP_ORIGINS.get(zone, (0, 0, 0))
+            assigned: dict[int, tuple[int, int, int]] = {anchor: (base_x, base_y, base_z)}
+            occupied: set[tuple[int, int, int]] = {(base_x, base_y, base_z)}
+            queue: deque[int] = deque([anchor])
+            while queue:
+                room_id = queue.popleft()
+                loc = self.locations[room_id]
+                origin = assigned[room_id]
+                for direction, exit_ in sorted(loc.exits.items()):
+                    target = self.locations.get(exit_.target_room)
+                    if target is None or target.zone != zone or target.id in assigned:
+                        continue
+                    delta = MAP_DIRECTION_DELTAS.get(direction)
+                    if delta is None:
+                        continue
+                    desired = (origin[0] + delta[0], origin[1] + delta[1], origin[2] + delta[2])
+                    coords = self._nearest_free_coords(desired, occupied)
+                    assigned[target.id] = coords
+                    occupied.add(coords)
+                    queue.append(target.id)
+            for index, room_id in enumerate(room_ids):
+                if room_id in assigned:
+                    continue
+                fallback = (base_x + (index % 8), base_y - (index // 8), base_z)
+                coords = self._nearest_free_coords(fallback, occupied)
+                assigned[room_id] = coords
+                occupied.add(coords)
+            for room_id, (x, y, z) in assigned.items():
+                loc = self.locations[room_id]
+                loc.map_x = x
+                loc.map_y = y
+                loc.map_z = z
+
+    def _nearest_free_coords(self, desired: tuple[int, int, int], occupied: set[tuple[int, int, int]]) -> tuple[int, int, int]:
+        if desired not in occupied:
+            return desired
+        for radius in range(1, 12):
+            for dx in range(-radius, radius + 1):
+                for dy in range(-radius, radius + 1):
+                    for dz in range(-1, 2):
+                        if abs(dx) + abs(dy) + abs(dz) > radius + 1:
+                            continue
+                        candidate = (desired[0] + dx, desired[1] + dy, desired[2] + dz)
+                        if candidate not in occupied:
+                            return candidate
+        return (desired[0] + 13, desired[1] + 13, desired[2])
 
     def _link(self, a: int, b: int, direction: str) -> None:
         if a not in self.locations or b not in self.locations:

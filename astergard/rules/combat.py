@@ -20,7 +20,7 @@ class CombatRules:
         "ofensywny": CombatStyle("ofensywny", attack_modifier=2, defense_modifier=-1, stamina_cost_modifier=1, damage_modifier=1, label="ofensywnym natarciem"),
         "defensywny": CombatStyle("defensywny", attack_modifier=-1, defense_modifier=1, initiative_modifier=-1, stamina_cost_modifier=0, label="defensywną postawą"),
         "ostrozny": CombatStyle("ostrozny", attack_modifier=0, defense_modifier=1, initiative_modifier=1, label="ostrożnym krokiem"),
-        "brutalny": CombatStyle("brutalny", attack_modifier=3, defense_modifier=-1, initiative_modifier=-1, stamina_cost_modifier=1, damage_modifier=2, label="brutalnym zamachem"),
+        "brutalny": CombatStyle("brutalny", attack_modifier=3, defense_modifier=-1, initiative_modifier=-1, stamina_cost_modifier=1, damage_modifier=0, label="brutalnym zamachem"),
     })
     low_stamina_divisor: int = 5
     low_stamina_initiative_penalty: int = 4

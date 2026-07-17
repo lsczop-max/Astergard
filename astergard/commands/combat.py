@@ -18,4 +18,7 @@ def build_combat_handlers(service: CombatApplicationService) -> dict[str, Comman
     async def cmd_flee(ctx: GameContext, arg: str | None, index: int) -> str:
         return service.flee(ctx.combat_context())
 
-    return {"kill": cmd_kill, "flee": cmd_flee}
+    async def cmd_defense_style(ctx: GameContext, arg: str | None, index: int) -> str:
+        return service.set_defense_style(ctx.combat_context(), arg)
+
+    return {"kill": cmd_kill, "flee": cmd_flee, "defense_style": cmd_defense_style}

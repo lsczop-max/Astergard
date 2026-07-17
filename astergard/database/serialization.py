@@ -1,10 +1,107 @@
 from __future__ import annotations
 
 import json
+import warnings
 from typing import Any
 
 from astergard.characters.models import Character, CharacterSkills, CharacterStats, Effect
+from astergard.characters.careers import CareerLookupError, resolve_career, resolve_organization, resolve_school
 from astergard.items.models import EquipmentSet, Item, EQUIPMENT_SLOTS
+from astergard.rules.combat_specialization import CombatSpecializationLoadout
+from astergard.rules.combat_specialization import resolve_active_defense_style
+
+
+def _optional_int(value: object) -> int | None:
+    if value is None:
+        return None
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, int):
+        return value
+    text = str(value).strip()
+    if not text:
+        return None
+    return int(text)
+
+
+def _optional_text(value: object) -> str | None:
+    if value is None:
+        return None
+    text = str(value).strip()
+    return text or None
+
+
+def _optional_active_defense_style(value: object) -> str | None:
+    if value is None:
+        resolved = None
+    elif isinstance(value, str):
+        resolved = resolve_active_defense_style(value)
+    else:
+        resolved = resolve_active_defense_style(str(value))
+    if value is not None and resolved is None:
+        warnings.warn(f"Nieznany aktywny styl obrony w zapisie postaci: {value}. Wpis został wyczyszczony.", stacklevel=2)
+    return resolved.value if resolved is not None else None
+
+
+def _clean_career_path(data: object) -> dict[str, Any]:
+    if not isinstance(data, dict):
+        return {"career_id": None, "organization_id": None, "school_id": None, "organization_rank": None}
+
+    career_id = _optional_text(data.get("career_id"))
+    organization_id = _optional_text(data.get("organization_id"))
+    school_id = _optional_text(data.get("school_id"))
+    rank_raw = data.get("organization_rank", data.get("awans"))
+    organization_rank = _optional_int(rank_raw)
+
+    if career_id is not None:
+        try:
+            resolve_career(career_id)
+        except CareerLookupError:
+            warnings.warn(f"Nieznane powołanie w zapisie postaci: {career_id}. Wpis został wyczyszczony.", stacklevel=2)
+            return {"career_id": None, "organization_id": None, "school_id": None, "organization_rank": None}
+
+    if organization_id is not None:
+        try:
+            organization = resolve_organization(organization_id)
+        except CareerLookupError:
+            warnings.warn(f"Nieznana organizacja w zapisie postaci: {organization_id}. Wpis został wyczyszczony.", stacklevel=2)
+            organization_id = None
+            school_id = None
+            organization_rank = None
+        else:
+            if career_id is None or organization.career_id != career_id:
+                warnings.warn(
+                    f"Organizacja {organization_id} nie pasuje do powołania {career_id}. Organizacja została wyczyszczona.",
+                    stacklevel=2,
+                )
+                organization_id = None
+                school_id = None
+                organization_rank = None
+
+    if school_id is not None:
+        try:
+            school = resolve_school(school_id)
+        except CareerLookupError:
+            warnings.warn(f"Nieznana szkoła w zapisie postaci: {school_id}. Wpis został wyczyszczony.", stacklevel=2)
+            school_id = None
+        else:
+            if organization_id is None or school.organization != organization_id:
+                warnings.warn(
+                    f"Szkoła {school_id} nie pasuje do organizacji {organization_id}. Szkoła została wyczyszczona.",
+                    stacklevel=2,
+                )
+                school_id = None
+
+    if organization_rank is not None and organization_id is None:
+        warnings.warn("Ranga bez organizacji w zapisie postaci została wyczyszczona.", stacklevel=2)
+        organization_rank = None
+
+    return {
+        "career_id": career_id,
+        "organization_id": organization_id,
+        "school_id": school_id,
+        "organization_rank": organization_rank,
+    }
 
 
 class CharacterStateSerializer:
@@ -29,6 +126,19 @@ class CharacterStateSerializer:
             "appearance": char.appearance,
             "history": char.history,
             "starting_reputation": char.starting_reputation,
+            "career_path": {
+                "career_id": char.career_id,
+                "organization_id": char.organization_id,
+                "school_id": char.school_id,
+                "organization_rank": char.organization_rank,
+            },
+            "active_defense_style": char.active_defense_style,
+            "combat_learning": {
+                "known_weapon_specializations": list(char.combat_specializations.weapon_specializations),
+                "known_defense_specializations": list(char.combat_specializations.defense_specializations),
+                "known_additional_skills": list(char.combat_specializations.additional_skills),
+                "known_techniques": list(char.known_techniques),
+            },
         }
         return (
             char.room_id,
@@ -99,10 +209,35 @@ class CharacterStateSerializer:
             char.appearance = str(profile_raw.get("appearance", ""))
             char.history = str(profile_raw.get("history", ""))
             char.starting_reputation = int(profile_raw.get("starting_reputation", 0) or 0)
+            career_path = _clean_career_path(profile_raw.get("career_path", {}))
+            char.career_id = career_path["career_id"]
+            char.organization_id = career_path["organization_id"]
+            char.school_id = career_path["school_id"]
+            char.organization_rank = career_path["organization_rank"]
+            char.active_defense_style = _optional_active_defense_style(profile_raw.get("active_defense_style"))
+            combat_learning = profile_raw.get("combat_learning", {})
+            if isinstance(combat_learning, dict):
+                char.combat_specializations = CombatSpecializationLoadout(
+                    weapon_specializations=tuple(str(value) for value in combat_learning.get("known_weapon_specializations", []) if str(value).strip()),
+                    defense_specializations=tuple(str(value) for value in combat_learning.get("known_defense_specializations", []) if str(value).strip()),
+                    additional_skills=tuple(str(value) for value in combat_learning.get("known_additional_skills", []) if str(value).strip()),
+                )
+                char.known_techniques = tuple(
+                    text
+                    for text in (str(value).strip() for value in combat_learning.get("known_techniques", []) if str(value).strip())
+                    if text
+                )
         visited_raw = json.loads(row[20]) if len(row) > 20 and row[20] else []
         if isinstance(visited_raw, list):
             char.visited_room_ids = {int(room_id) for room_id in visited_raw}
         else:
             char.visited_room_ids = set()
         char.sync_state_from_flags()
+        if char.in_combat:
+            warnings.warn(
+                f"Przejściowy stan walki postaci {username} został wyczyszczony podczas odczytu.",
+                stacklevel=2,
+            )
+            char.in_combat = False
+            char.sync_state_from_flags()
         return char

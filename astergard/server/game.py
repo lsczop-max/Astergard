@@ -15,6 +15,7 @@ from astergard.commands.exploration import DIRECTIONS, move_direct_with
 from astergard.commands.helpers import find_item, find_npc
 from astergard.items.models import Item
 from astergard.npcs.models import NPC
+from astergard.server.gmcp_bridge import send_room_info_for_character
 from astergard.server.context import GameContext
 from astergard.utils import describe_gold
 
@@ -111,7 +112,9 @@ class GameServer:
         return find_npc(self.make_context(Character("lookup")), room_id, name)
 
     def move_direct(self, char: Character, direction: str) -> str:
-        return move_direct_with(self.services.exploration_service, self.make_context(char), char, direction)
+        result = move_direct_with(self.services.exploration_service, self.make_context(char), char, direction)
+        send_room_info_for_character(self, char)
+        return result
 
     def get_players_in_room(self, room_id: int) -> list[Character]:
         return [char for char in self.clients.values() if char.room_id == room_id and char.is_alive]
@@ -123,7 +126,7 @@ class GameServer:
         health = overall_health_desc(character.wounds)
         stamina = character.stats.describe_kondycja()
         gold = describe_gold(character.gold)
-        return f"[{stamina}] [Stan: {health}] [Złoto: {gold}] > "
+        return f"{stamina}, {health}, {gold}. > "
 
     async def start(self, host: str = "0.0.0.0", port: int = 4000) -> None:
         heartbeat_task = asyncio.create_task(self.global_heartbeat())

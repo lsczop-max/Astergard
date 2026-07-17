@@ -6,6 +6,7 @@ from pathlib import Path
 
 from astergard.characters.models import Character, CharacterStats
 from astergard.combat.manager import CombatManager, normalize_combat_style
+from astergard.items.models import Item
 from astergard.database.repository import PlayerRepository
 
 
@@ -56,9 +57,10 @@ class D15CombatStyleTests(unittest.TestCase):
         attacker.stats.zrecznosc = 20
         defender.stats.zrecznosc = 1
         attacker.combat_style = "brutalny"
+        attacker.equipment["prawa_reka"] = Item("miecz", "", 1.0, 1, "brutal_sword", item_type="weapon", slot="prawa_reka", weapon_type="miecz", base_damage=4, parry_bonus=1)
         combat = CombatManager(FixedRandom(randint_values=[20, 1, 1, 50], random_values=[0.99, 0.99, 0.99]))
         result = combat.attack(attacker, defender)
-        self.assertIn("brutalnym", result.observer_message or result.message)
+        self.assertIn("gwałtow", result.observer_message or result.message)
 
     def test_combat_style_is_persisted(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

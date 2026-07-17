@@ -44,6 +44,8 @@ class CommandParser:
         ("na", "dol"): "dol",
         ("w", "gore"): "gora",
         ("w", "dol"): "dol",
+        ("bron", "sie"): "bron sie",
+        ("ustaw", "obrone"): "ustaw obrone",
     }
 
     @staticmethod

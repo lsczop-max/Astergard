@@ -39,18 +39,18 @@ class AdminService:
             return denied
         target = self._find_player(ctx, target_name) if target_name else ctx.character
         if target is None:
-            return AdminCommandResult(False, "Nie znaleziono gracza.")
+            return AdminCommandResult(False, "Nie odnajdujesz takiego gracza.")
         self.audit.record(ctx.character.username, "inspect", target=target.username)
         return AdminCommandResult(
             True,
             "\n".join(
                 [
-                    f"Gracz: {target.username}",
-                    f"Lokacja: {target.room_id}",
-                    f"Kondycja: {target.stats.kondycja}/{target.stats.max_kondycja}",
-                    f"Złoto: {target.gold}",
-                    f"Stan: {target.state}",
-                    f"Rola admin: {role_for_actor(target).name}",
+                    f"Przed tobą stoi zapis o {target.username}.",
+                    f"Znajduje się w lokacji {target.room_id}.",
+                    f"Kondycja postaci wynosi {target.stats.kondycja} z możliwych {target.stats.max_kondycja}.",
+                    f"Ma przy sobie {target.gold} złota.",
+                    f"Jego stan to {target.state}.",
+                    f"Rola admina: {role_for_actor(target).name}.",
                 ]
             ),
         )
@@ -64,7 +64,7 @@ class AdminService:
             return AdminCommandResult(False, "Spróbuj: teleport <gracz> <lokacja>")
         target = self._find_player(ctx, parts[0])
         if target is None:
-            return AdminCommandResult(False, "Nie znaleziono gracza.")
+            return AdminCommandResult(False, "Nie odnajdujesz takiego gracza.")
         try:
             room_id = int(parts[1])
         except ValueError:
@@ -74,7 +74,7 @@ class AdminService:
         old_room = target.room_id
         target.room_id = room_id
         self.audit.record(ctx.character.username, "teleport", target=target.username, from_room=old_room, to_room=room_id)
-        return AdminCommandResult(True, f"Teleportowano {target.username} do lokacji {room_id}.")
+        return AdminCommandResult(True, f"{target.username} zostaje przeniesiony do lokacji {room_id}.")
 
     def goto(self, ctx: Any, arg: str | None) -> AdminCommandResult:
         denied = self.ensure(ctx.character, AdminRole.GM)
@@ -89,7 +89,7 @@ class AdminService:
         old_room = ctx.character.room_id
         ctx.character.room_id = room_id
         self.audit.record(ctx.character.username, "goto", from_room=old_room, to_room=room_id)
-        return AdminCommandResult(True, f"Przeniesiono cię do lokacji {room_id}.")
+        return AdminCommandResult(True, f"Przenosisz się do lokacji {room_id}.")
 
     def summon(self, ctx: Any, arg: str | None) -> AdminCommandResult:
         denied = self.ensure(ctx.character, AdminRole.GM)
@@ -97,11 +97,11 @@ class AdminService:
             return denied
         target = self._find_player(ctx, (arg or "").strip())
         if target is None:
-            return AdminCommandResult(False, "Nie znaleziono gracza.")
+            return AdminCommandResult(False, "Nie odnajdujesz takiego gracza.")
         old_room = target.room_id
         target.room_id = ctx.character.room_id
         self.audit.record(ctx.character.username, "summon", target=target.username, from_room=old_room, to_room=target.room_id)
-        return AdminCommandResult(True, f"Przyzwano {target.username}.")
+        return AdminCommandResult(True, f"{target.username} zostaje przywołany.")
 
     def heal(self, ctx: Any, arg: str | None) -> AdminCommandResult:
         denied = self.ensure(ctx.character, AdminRole.GM)
@@ -114,7 +114,7 @@ class AdminService:
             target.state = "alive"
             target.sync_flags_from_state()
         self.audit.record(ctx.character.username, "heal", target=target.username)
-        return AdminCommandResult(True, f"Uleczono {target.username}.")
+        return AdminCommandResult(True, f"{target.username} odzyskuje pełnię sił.")
 
     def kill(self, ctx: Any, arg: str | None, confirmed: bool = False) -> AdminCommandResult:
         denied = self.ensure(ctx.character, AdminRole.ADMIN)
@@ -122,12 +122,12 @@ class AdminService:
             return denied
         target = self._find_player(ctx, (arg or "").strip())
         if target is None:
-            return AdminCommandResult(False, "Nie znaleziono gracza.")
+            return AdminCommandResult(False, "Nie odnajdujesz takiego gracza.")
         if not confirmed:
-            return AdminCommandResult(False, "Komenda destrukcyjna. Użyj: kill <gracz> confirm")
+            return AdminCommandResult(False, "To polecenie jest nieodwracalne. Użyj: kill <gracz> confirm")
         target.die()
         self.audit.record(ctx.character.username, "kill", target=target.username)
-        return AdminCommandResult(True, f"Zabito {target.username}.")
+        return AdminCommandResult(True, f"{target.username} przestaje oddychać.")
 
     def give(self, ctx: Any, arg: str | None) -> AdminCommandResult:
         denied = self.ensure(ctx.character, AdminRole.GM)
@@ -138,12 +138,12 @@ class AdminService:
             return AdminCommandResult(False, "Spróbuj: give <gracz> <item>")
         target = self._find_player(ctx, parts[0])
         if target is None:
-            return AdminCommandResult(False, "Nie znaleziono gracza.")
+            return AdminCommandResult(False, "Nie odnajdujesz takiego gracza.")
         item_name = parts[1].strip()
         item = self._item_from_name(item_name)
         target.inventory.append(item)
         self.audit.record(ctx.character.username, "give", target=target.username, item=item.name)
-        return AdminCommandResult(True, f"Dodano {item.name} do ekwipunku {target.username}.")
+        return AdminCommandResult(True, f"{item.name} trafia do ekwipunku {target.username}.")
 
     def setstat(self, ctx: Any, arg: str | None) -> AdminCommandResult:
         denied = self.ensure(ctx.character, AdminRole.ADMIN)
@@ -154,7 +154,7 @@ class AdminService:
             return AdminCommandResult(False, "Spróbuj: setstat <gracz> <stat> <wartość>")
         target = self._find_player(ctx, parts[0])
         if target is None:
-            return AdminCommandResult(False, "Nie znaleziono gracza.")
+            return AdminCommandResult(False, "Nie odnajdujesz takiego gracza.")
         stat = parts[1]
         if not hasattr(target.stats, stat):
             return AdminCommandResult(False, "Nie ma takiej cechy.")
@@ -164,7 +164,7 @@ class AdminService:
             return AdminCommandResult(False, "Wartość musi być liczbą.")
         setattr(target.stats, stat, value)
         self.audit.record(ctx.character.username, "setstat", target=target.username, stat=stat, value=value)
-        return AdminCommandResult(True, f"Ustawiono {stat}={value} dla {target.username}.")
+        return AdminCommandResult(True, f"Cechę {stat} ustawiono dla {target.username}.")
 
     def spawnnpc(self, ctx: Any, arg: str | None) -> AdminCommandResult:
         denied = self.ensure(ctx.character, AdminRole.GM)
@@ -182,9 +182,9 @@ class AdminService:
                 return AdminCommandResult(False, "ID lokacji musi być liczbą.")
         npc = ctx.admin.npcs.spawn(vnum, room_id)
         if npc is None:
-            return AdminCommandResult(False, "Nie udało się zespawnować NPC.")
+            return AdminCommandResult(False, "Nie udało się przywołać NPC.")
         self.audit.record(ctx.character.username, "spawnnpc", vnum=vnum, room_id=room_id, npc_id=npc.id)
-        return AdminCommandResult(True, f"Zespawnowano NPC: {npc.name} ({npc.id}).")
+        return AdminCommandResult(True, f"Przywołano {npc.name} ({npc.id}).")
 
     def saveworld(self, ctx: Any) -> AdminCommandResult:
         denied = self.ensure(ctx.character, AdminRole.ADMIN)
@@ -203,7 +203,7 @@ class AdminService:
             path = ctx.admin.save_load.create_checkpoint("admin_checkpoint")
         except Exception as exc:
             self.audit.record(ctx.character.username, "checkpoint", success=False, error=str(exc))
-            return AdminCommandResult(False, f"Checkpoint nieudany: {exc}")
+            return AdminCommandResult(False, f"Nie udało się utworzyć punktu zapisu: {exc}")
         self.audit.record(ctx.character.username, "checkpoint", success=True, path=str(path))
         return AdminCommandResult(True, f"Utworzono punkt zapisu: {path}")
 
@@ -219,7 +219,7 @@ class AdminService:
         try:
             ctx.admin.repo.restore_backup(Path(source))
         except Exception as exc:
-            return AdminCommandResult(False, f"Restore nieudany: {exc}")
+            return AdminCommandResult(False, f"Nie udało się przywrócić zapisu: {exc}")
         self.audit.record(ctx.character.username, "restore", source=source)
         return AdminCommandResult(True, "Przywrócono zapis świata.")
 
@@ -235,10 +235,10 @@ class AdminService:
             "\n".join(
                 [
                     "Jak wygląda świat:",
-                    f"Lokacje: {len(world.locations)}",
-                    f"NPC w ruchu: {len(npcs.npcs)}",
-                    f"Oczekujące odrodzenia: {len(world.respawn_queue)}",
-                    f"Graczy online: {len(ctx.admin.all_players())}",
+                    f"Lokacji jest {len(world.locations)}.",
+                    f"W ruchu pozostaje {len(npcs.npcs)} NPC.",
+                    f"Na odrodzenie czeka {len(world.respawn_queue)} wpisów.",
+                    f"Obecnych graczy jest {len(ctx.admin.all_players())}.",
                 ]
             ),
         )
@@ -253,7 +253,7 @@ class AdminService:
             limit = 10
         entries = self.audit.recent(limit)
         if not entries:
-            return AdminCommandResult(True, "Audit log jest pusty.")
+            return AdminCommandResult(True, "Dziennik audytu jest pusty.")
         lines = [f"{entry.created_at} {entry.actor} {entry.action} {entry.payload}" for entry in entries]
         return AdminCommandResult(True, "\n".join(lines))
 

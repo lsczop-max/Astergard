@@ -1,0 +1,20 @@
+{
+  "files": [
+    "main.lua",
+    "installer.lua",
+    "README.md",
+    "manifest.json",
+    "src/bootstrap.lua",
+    "src/core/init.lua",
+    "src/core/json.lua",
+    "src/gmcp/init.lua",
+    "src/mapper/init.lua",
+    "src/movement/init.lua",
+    "src/gui/init.lua",
+    "src/updater/init.lua",
+    "tools/smoke_test.lua"
+  ],
+  "manifest_version": "0.1.0",
+  "map_version": "0.1.0",
+  "package": "Astergard"
+}

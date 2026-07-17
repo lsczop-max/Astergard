@@ -18,9 +18,9 @@ class SystemCommandService:
         ctx.repo.save(ctx.character)
         ctx.event_bus.emit(DomainEventType.CHARACTER_SAVED, username=ctx.character.username, room_id=ctx.character.room_id, reason="quit")
         ctx.character.die()
-        return "Postać znika w mroku."
+        return "Twoja postać odchodzi w ciszę."
 
     def debug_map(self, ctx: SystemContext, minimap_service: MinimapService) -> str:
         if not minimap_service.enabled:
-            return "Podgląd mapy jest wyłączony. Ustaw ASTERGARD_MUDLET_MAP=1."
-        return "Wysyłam pełny podgląd mapy."
+            return "Podgląd mapy jest jeszcze ukryty."
+        return "Wysyłam podgląd mapy."

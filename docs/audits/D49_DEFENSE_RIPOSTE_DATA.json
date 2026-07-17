@@ -1,0 +1,2977 @@
+{
+  "armor_probes": {
+    "heavy_armor": {
+      "accepted_rate": 1.0,
+      "candidate_effective_value_mean": {
+        "DODGE": 0.0,
+        "PARRY": 44.099999999999184,
+        "SHIELD_BLOCK": 51.449999999999264
+      },
+      "candidate_first_by_type": {
+        "SHIELD_BLOCK": 1000
+      },
+      "candidate_second_by_type": {
+        "PARRY": 1000
+      },
+      "candidate_third_by_type": {
+        "DODGE": 1000
+      },
+      "candidate_tried_by_type": {
+        "PARRY": 1000,
+        "SHIELD_BLOCK": 1000
+      },
+      "defended": 493,
+      "defense_attempt_by_type": {
+        "DODGE": 507,
+        "PARRY": 600,
+        "SHIELD_BLOCK": 1000
+      },
+      "defense_attempts_total": 2107,
+      "defense_first_attempts": 1000,
+      "defense_first_failures": 600,
+      "defense_position_by_type": {
+        "DODGE": {
+          "3": 507
+        },
+        "PARRY": {
+          "2": 600
+        },
+        "SHIELD_BLOCK": {
+          "1": 1000
+        }
+      },
+      "defense_second_attempts": 600,
+      "defense_second_failures": 507,
+      "defense_success_by_type": {
+        "PARRY": 93,
+        "SHIELD_BLOCK": 400
+      },
+      "defense_third_attempts": 507,
+      "defense_third_failures": 507,
+      "fingerprint_expression_rate": 0.0,
+      "hits": 507,
+      "misses": 0,
+      "neighbor_mean": 0.0,
+      "primary_damage": 1023,
+      "primary_wounds": 306,
+      "reaction_damage": 0,
+      "reaction_wounds": 0,
+      "riposte_available": 93,
+      "riposte_defended": 0,
+      "riposte_executed": 93,
+      "riposte_hits": 93,
+      "riposte_kills": 0,
+      "riposte_share_damage": 0.0,
+      "riposte_share_wounds": 0.0,
+      "same_area_mean": 0.0,
+      "target_defeated": 0,
+      "total_actions": 1000,
+      "total_damage": 1023,
+      "total_wounds": 306,
+      "trials": 1000,
+      "unique_fingerprint_rate": 0.0
+    },
+    "light_armor": {
+      "accepted_rate": 1.0,
+      "candidate_effective_value_mean": {
+        "DODGE": 67.54499999999871,
+        "PARRY": 69.82499999999871,
+        "SHIELD_BLOCK": 73.5
+      },
+      "candidate_first_by_type": {
+        "SHIELD_BLOCK": 1000
+      },
+      "candidate_second_by_type": {
+        "PARRY": 1000
+      },
+      "candidate_third_by_type": {
+        "DODGE": 1000
+      },
+      "candidate_tried_by_type": {
+        "DODGE": 1000,
+        "PARRY": 1000,
+        "SHIELD_BLOCK": 1000
+      },
+      "defended": 543,
+      "defense_attempt_by_type": {
+        "DODGE": 518,
+        "PARRY": 612,
+        "SHIELD_BLOCK": 1000
+      },
+      "defense_attempts_total": 2130,
+      "defense_first_attempts": 1000,
+      "defense_first_failures": 612,
+      "defense_position_by_type": {
+        "DODGE": {
+          "3": 518
+        },
+        "PARRY": {
+          "2": 612
+        },
+        "SHIELD_BLOCK": {
+          "1": 1000
+        }
+      },
+      "defense_second_attempts": 612,
+      "defense_second_failures": 518,
+      "defense_success_by_type": {
+        "DODGE": 61,
+        "PARRY": 94,
+        "SHIELD_BLOCK": 388
+      },
+      "defense_third_attempts": 518,
+      "defense_third_failures": 457,
+      "fingerprint_expression_rate": 0.0,
+      "hits": 457,
+      "misses": 0,
+      "neighbor_mean": 0.0,
+      "primary_damage": 1484,
+      "primary_wounds": 457,
+      "reaction_damage": 0,
+      "reaction_wounds": 0,
+      "riposte_available": 94,
+      "riposte_defended": 0,
+      "riposte_executed": 94,
+      "riposte_hits": 94,
+      "riposte_kills": 0,
+      "riposte_share_damage": 0.0,
+      "riposte_share_wounds": 0.0,
+      "same_area_mean": 0.0,
+      "target_defeated": 0,
+      "total_actions": 1000,
+      "total_damage": 1484,
+      "total_wounds": 457,
+      "trials": 1000,
+      "unique_fingerprint_rate": 0.0
+    },
+    "medium_armor": {
+      "accepted_rate": 1.0,
+      "candidate_effective_value_mean": {
+        "DODGE": 41.94000000000006,
+        "PARRY": 58.800000000001006,
+        "SHIELD_BLOCK": 62.47499999999899
+      },
+      "candidate_first_by_type": {
+        "SHIELD_BLOCK": 1000
+      },
+      "candidate_second_by_type": {
+        "PARRY": 1000
+      },
+      "candidate_third_by_type": {
+        "DODGE": 1000
+      },
+      "candidate_tried_by_type": {
+        "DODGE": 1000,
+        "PARRY": 1000,
+        "SHIELD_BLOCK": 1000
+      },
+      "defended": 532,
+      "defense_attempt_by_type": {
+        "DODGE": 514,
+        "PARRY": 608,
+        "SHIELD_BLOCK": 1000
+      },
+      "defense_attempts_total": 2122,
+      "defense_first_attempts": 1000,
+      "defense_first_failures": 608,
+      "defense_position_by_type": {
+        "DODGE": {
+          "3": 514
+        },
+        "PARRY": {
+          "2": 608
+        },
+        "SHIELD_BLOCK": {
+          "1": 1000
+        }
+      },
+      "defense_second_attempts": 608,
+      "defense_second_failures": 514,
+      "defense_success_by_type": {
+        "DODGE": 46,
+        "PARRY": 94,
+        "SHIELD_BLOCK": 392
+      },
+      "defense_third_attempts": 514,
+      "defense_third_failures": 468,
+      "fingerprint_expression_rate": 0.0,
+      "hits": 468,
+      "misses": 0,
+      "neighbor_mean": 0.0,
+      "primary_damage": 1266,
+      "primary_wounds": 468,
+      "reaction_damage": 0,
+      "reaction_wounds": 0,
+      "riposte_available": 94,
+      "riposte_defended": 0,
+      "riposte_executed": 94,
+      "riposte_hits": 94,
+      "riposte_kills": 0,
+      "riposte_share_damage": 0.0,
+      "riposte_share_wounds": 0.0,
+      "same_area_mean": 0.0,
+      "target_defeated": 0,
+      "total_actions": 1000,
+      "total_damage": 1266,
+      "total_wounds": 468,
+      "trials": 1000,
+      "unique_fingerprint_rate": 0.0
+    },
+    "unarmored": {
+      "accepted_rate": 1.0,
+      "candidate_effective_value_mean": {
+        "DODGE": 72.90000000000033,
+        "PARRY": 73.5,
+        "SHIELD_BLOCK": 73.5
+      },
+      "candidate_first_by_type": {
+        "SHIELD_BLOCK": 1000
+      },
+      "candidate_second_by_type": {
+        "PARRY": 1000
+      },
+      "candidate_third_by_type": {
+        "DODGE": 1000
+      },
+      "candidate_tried_by_type": {
+        "DODGE": 1000,
+        "PARRY": 1000,
+        "SHIELD_BLOCK": 1000
+      },
+      "defended": 627,
+      "defense_attempt_by_type": {
+        "DODGE": 502,
+        "PARRY": 591,
+        "SHIELD_BLOCK": 1000
+      },
+      "defense_attempts_total": 2093,
+      "defense_first_attempts": 1000,
+      "defense_first_failures": 591,
+      "defense_position_by_type": {
+        "DODGE": {
+          "3": 502
+        },
+        "PARRY": {
+          "2": 591
+        },
+        "SHIELD_BLOCK": {
+          "1": 1000
+        }
+      },
+      "defense_second_attempts": 591,
+      "defense_second_failures": 502,
+      "defense_success_by_type": {
+        "DODGE": 129,
+        "PARRY": 89,
+        "SHIELD_BLOCK": 409
+      },
+      "defense_third_attempts": 502,
+      "defense_third_failures": 373,
+      "fingerprint_expression_rate": 0.0,
+      "hits": 373,
+      "misses": 0,
+      "neighbor_mean": 0.0,
+      "primary_damage": 1492,
+      "primary_wounds": 373,
+      "reaction_damage": 0,
+      "reaction_wounds": 0,
+      "riposte_available": 89,
+      "riposte_defended": 0,
+      "riposte_executed": 89,
+      "riposte_hits": 89,
+      "riposte_kills": 0,
+      "riposte_share_damage": 0.0,
+      "riposte_share_wounds": 0.0,
+      "same_area_mean": 0.0,
+      "target_defeated": 0,
+      "total_actions": 1000,
+      "total_damage": 1492,
+      "total_wounds": 373,
+      "trials": 1000,
+      "unique_fingerprint_rate": 0.0
+    }
+  },
+  "duel_results": {
+    "A": {
+      "A": {
+        "attacker_win_rate": 0.65,
+        "attacker_wins": 65,
+        "average_actions": 15.45,
+        "average_defenses_per_round": 3.857677902621723,
+        "average_rounds": 8.01,
+        "average_total_damage": 61.8,
+        "average_total_wounds": 27.78,
+        "average_winner_remaining_health": 87.96,
+        "defended": 0,
+        "defender_win_rate": 0.35,
+        "defender_wins": 35,
+        "defense_attempt_by_type": {
+          "DODGE": 1545,
+          "PARRY": 1545
+        },
+        "defense_attempts": 3090,
+        "defense_success_by_type": {},
+        "draw_rate": 0.0,
+        "draws": 0,
+        "hits": 1545,
+        "limit_exceeded": 0,
+        "median_rounds": 8.0,
+        "misses": 0,
+        "riposte_available": 0,
+        "riposte_damage": 0,
+        "riposte_defended": 0,
+        "riposte_executed": 0,
+        "riposte_hits": 0,
+        "riposte_kill_finishes": 0,
+        "riposte_share_damage": 0.0,
+        "riposte_share_wounds": 0.0,
+        "riposte_wounds": 0,
+        "target_defeated": 100,
+        "trials": 100
+      },
+      "B": {
+        "attacker_win_rate": 0.0,
+        "attacker_wins": 0,
+        "average_actions": 18.84,
+        "average_defenses_per_round": 2.9873417721518987,
+        "average_rounds": 9.48,
+        "average_total_damage": 37.92,
+        "average_total_wounds": 18.86,
+        "average_winner_remaining_health": 82.08,
+        "defended": 936,
+        "defender_win_rate": 1.0,
+        "defender_wins": 100,
+        "defense_attempt_by_type": {
+          "DODGE": 948,
+          "PARRY": 948,
+          "SHIELD_BLOCK": 936
+        },
+        "defense_attempts": 2832,
+        "defense_success_by_type": {
+          "SHIELD_BLOCK": 936
+        },
+        "draw_rate": 0.0,
+        "draws": 0,
+        "hits": 948,
+        "limit_exceeded": 0,
+        "median_rounds": 9.0,
+        "misses": 0,
+        "riposte_available": 0,
+        "riposte_damage": 0,
+        "riposte_defended": 0,
+        "riposte_executed": 0,
+        "riposte_hits": 0,
+        "riposte_kill_finishes": 0,
+        "riposte_share_damage": 0.0,
+        "riposte_share_wounds": 0.0,
+        "riposte_wounds": 0,
+        "target_defeated": 100,
+        "trials": 100
+      },
+      "C": {
+        "attacker_win_rate": 0.0,
+        "attacker_wins": 0,
+        "average_actions": 18.59,
+        "average_defenses_per_round": 2.9630411826821543,
+        "average_rounds": 9.47,
+        "average_total_damage": 37.88,
+        "average_total_wounds": 19.43,
+        "average_winner_remaining_health": 82.12,
+        "defended": 912,
+        "defender_win_rate": 1.0,
+        "defender_wins": 100,
+        "defense_attempt_by_type": {
+          "DODGE": 947,
+          "PARRY": 947,
+          "SHIELD_BLOCK": 912
+        },
+        "defense_attempts": 2806,
+        "defense_success_by_type": {
+          "SHIELD_BLOCK": 912
+        },
+        "draw_rate": 0.0,
+        "draws": 0,
+        "hits": 947,
+        "limit_exceeded": 0,
+        "median_rounds": 9.0,
+        "misses": 0,
+        "riposte_available": 0,
+        "riposte_damage": 0,
+        "riposte_defended": 0,
+        "riposte_executed": 0,
+        "riposte_hits": 0,
+        "riposte_kill_finishes": 0,
+        "riposte_share_damage": 0.0,
+        "riposte_share_wounds": 0.0,
+        "riposte_wounds": 0,
+        "target_defeated": 100,
+        "trials": 100
+      },
+      "D": {
+        "attacker_win_rate": 0.0,
+        "attacker_wins": 0,
+        "average_actions": 6.82,
+        "average_defenses_per_round": 2.847645429362881,
+        "average_rounds": 3.61,
+        "average_total_damage": 13.84,
+        "average_total_wounds": 7.12,
+        "average_winner_remaining_health": 80.72,
+        "defended": 336,
+        "defender_win_rate": 1.0,
+        "defender_wins": 100,
+        "defense_attempt_by_type": {
+          "DODGE": 346,
+          "PARRY": 682
+        },
+        "defense_attempts": 1028,
+        "defense_success_by_type": {
+          "PARRY": 336
+        },
+        "draw_rate": 0.0,
+        "draws": 0,
+        "hits": 346,
+        "limit_exceeded": 0,
+        "median_rounds": 3.0,
+        "misses": 0,
+        "riposte_available": 336,
+        "riposte_damage": 1200,
+        "riposte_defended": 0,
+        "riposte_executed": 300,
+        "riposte_hits": 300,
+        "riposte_kill_finishes": 0,
+        "riposte_share_damage": 0.8670520231213873,
+        "riposte_share_wounds": 0.8834269662921348,
+        "riposte_wounds": 629,
+        "target_defeated": 35,
+        "trials": 100
+      },
+      "F": {
+        "attacker_win_rate": 0.0,
+        "attacker_wins": 0,
+        "average_actions": 18.86,
+        "average_defenses_per_round": 2.914720812182741,
+        "average_rounds": 9.85,
+        "average_total_damage": 29.55,
+        "average_total_wounds": 19.83,
+        "average_winner_remaining_health": 80.6,
+        "defended": 901,
+        "defender_win_rate": 1.0,
+        "defender_wins": 100,
+        "defense_attempt_by_type": {
+          "DODGE": 1886,
+          "PARRY": 985
+        },
+        "defense_attempts": 2871,
+        "defense_success_by_type": {
+          "DODGE": 901
+        },
+        "draw_rate": 0.0,
+        "draws": 0,
+        "hits": 985,
+        "limit_exceeded": 0,
+        "median_rounds": 9.0,
+        "misses": 0,
+        "riposte_available": 0,
+        "riposte_damage": 0,
+        "riposte_defended": 0,
+        "riposte_executed": 0,
+        "riposte_hits": 0,
+        "riposte_kill_finishes": 0,
+        "riposte_share_damage": 0.0,
+        "riposte_share_wounds": 0.0,
+        "riposte_wounds": 0,
+        "target_defeated": 100,
+        "trials": 100
+      },
+      "G": {
+        "attacker_win_rate": 0.0,
+        "attacker_wins": 0,
+        "average_actions": 8.66,
+        "average_defenses_per_round": 3.759381898454746,
+        "average_rounds": 4.53,
+        "average_total_damage": 25.59,
+        "average_total_wounds": 13.37,
+        "average_winner_remaining_health": 97.35,
+        "defended": 311,
+        "defender_win_rate": 1.0,
+        "defender_wins": 100,
+        "defense_attempt_by_type": {
+          "DODGE": 866,
+          "PARRY": 837
+        },
+        "defense_attempts": 1703,
+        "defense_success_by_type": {
+          "DODGE": 29,
+          "PARRY": 282
+        },
+        "draw_rate": 0.0,
+        "draws": 0,
+        "hits": 555,
+        "limit_exceeded": 0,
+        "median_rounds": 4.0,
+        "misses": 0,
+        "riposte_available": 0,
+        "riposte_damage": 0,
+        "riposte_defended": 0,
+        "riposte_executed": 0,
+        "riposte_hits": 0,
+        "riposte_kill_finishes": 0,
+        "riposte_share_damage": 0.0,
+        "riposte_share_wounds": 0.0,
+        "riposte_wounds": 0,
+        "target_defeated": 100,
+        "trials": 100
+      }
+    },
+    "B": {
+      "A": {
+        "attacker_win_rate": 1.0,
+        "attacker_wins": 100,
+        "average_actions": 19.95,
+        "average_defenses_per_round": 2.981132075471698,
+        "average_rounds": 10.07,
+        "average_total_damage": 40.28,
+        "average_total_wounds": 20.31,
+        "average_winner_remaining_health": 79.72,
+        "defended": 988,
+        "defender_win_rate": 0.0,
+        "defender_wins": 0,
+        "defense_attempt_by_type": {
+          "DODGE": 1007,
+          "PARRY": 1007,
+          "SHIELD_BLOCK": 988
+        },
+        "defense_attempts": 3002,
+        "defense_success_by_type": {
+          "SHIELD_BLOCK": 988
+        },
+        "draw_rate": 0.0,
+        "draws": 0,
+        "hits": 1007,
+        "limit_exceeded": 0,
+        "median_rounds": 9.0,
+        "misses": 0,
+        "riposte_available": 0,
+        "riposte_damage": 0,
+        "riposte_defended": 0,
+        "riposte_executed": 0,
+        "riposte_hits": 0,
+        "riposte_kill_finishes": 0,
+        "riposte_share_damage": 0.0,
+        "riposte_share_wounds": 0.0,
+        "riposte_wounds": 0,
+        "target_defeated": 100,
+        "trials": 100
+      },
+      "B": {
+        "attacker_win_rate": 0.0,
+        "attacker_wins": 0,
+        "average_actions": 160.0,
+        "average_defenses_per_round": 2.0,
+        "average_rounds": 80,
+        "average_total_damage": 0.0,
+        "average_total_wounds": 0.0,
+        "average_winner_remaining_health": 0.0,
+        "defended": 16000,
+        "defender_win_rate": 0.0,
+        "defender_wins": 0,
+        "defense_attempt_by_type": {
+          "SHIELD_BLOCK": 16000
+        },
+        "defense_attempts": 16000,
+        "defense_success_by_type": {
+          "SHIELD_BLOCK": 16000
+        },
+        "draw_rate": 1.0,
+        "draws": 100,
+        "hits": 0,
+        "limit_exceeded": 100,
+        "median_rounds": 80.0,
+        "misses": 0,
+        "riposte_available": 0,
+        "riposte_damage": 0,
+        "riposte_defended": 0,
+        "riposte_executed": 0,
+        "riposte_hits": 0,
+        "riposte_kill_finishes": 0,
+        "riposte_share_damage": 0.0,
+        "riposte_share_wounds": 0.0,
+        "riposte_wounds": 0,
+        "target_defeated": 0,
+        "trials": 100
+      },
+      "C": {
+        "attacker_win_rate": 0.0,
+        "attacker_wins": 0,
+        "average_actions": 160.0,
+        "average_defenses_per_round": 2.0,
+        "average_rounds": 80,
+        "average_total_damage": 0.0,
+        "average_total_wounds": 0.0,
+        "average_winner_remaining_health": 0.0,
+        "defended": 16000,
+        "defender_win_rate": 0.0,
+        "defender_wins": 0,
+        "defense_attempt_by_type": {
+          "SHIELD_BLOCK": 16000
+        },
+        "defense_attempts": 16000,
+        "defense_success_by_type": {
+          "SHIELD_BLOCK": 16000
+        },
+        "draw_rate": 1.0,
+        "draws": 100,
+        "hits": 0,
+        "limit_exceeded": 100,
+        "median_rounds": 80.0,
+        "misses": 0,
+        "riposte_available": 0,
+        "riposte_damage": 0,
+        "riposte_defended": 0,
+        "riposte_executed": 0,
+        "riposte_hits": 0,
+        "riposte_kill_finishes": 0,
+        "riposte_share_damage": 0.0,
+        "riposte_share_wounds": 0.0,
+        "riposte_wounds": 0,
+        "target_defeated": 0,
+        "trials": 100
+      },
+      "D": {
+        "attacker_win_rate": 0.0,
+        "attacker_wins": 0,
+        "average_actions": 156.71,
+        "average_defenses_per_round": 2.0487307054471233,
+        "average_rounds": 78.39,
+        "average_total_damage": 8.11,
+        "average_total_wounds": 6.23,
+        "average_winner_remaining_health": 0,
+        "defended": 15282,
+        "defender_win_rate": 0.18,
+        "defender_wins": 18,
+        "defense_attempt_by_type": {
+          "DODGE": 389,
+          "PARRY": 8221,
+          "SHIELD_BLOCK": 7450
+        },
+        "defense_attempts": 16060,
+        "defense_success_by_type": {
+          "PARRY": 7832,
+          "SHIELD_BLOCK": 7450
+        },
+        "draw_rate": 0.82,
+        "draws": 82,
+        "hits": 389,
+        "limit_exceeded": 82,
+        "median_rounds": 80.0,
+        "misses": 0,
+        "riposte_available": 7832,
+        "riposte_damage": 812,
+        "riposte_defended": 7423,
+        "riposte_executed": 7826,
+        "riposte_hits": 403,
+        "riposte_kill_finishes": 0,
+        "riposte_share_damage": 1.0012330456226881,
+        "riposte_share_wounds": 0.9839486356340289,
+        "riposte_wounds": 613,
+        "target_defeated": 7,
+        "trials": 100
+      },
+      "F": {
+        "attacker_win_rate": 0.0,
+        "attacker_wins": 0,
+        "average_actions": 160.0,
+        "average_defenses_per_round": 2.0,
+        "average_rounds": 80,
+        "average_total_damage": 0.0,
+        "average_total_wounds": 0.0,
+        "average_winner_remaining_health": 0.0,
+        "defended": 16000,
+        "defender_win_rate": 0.0,
+        "defender_wins": 0,
+        "defense_attempt_by_type": {
+          "DODGE": 8000,
+          "SHIELD_BLOCK": 8000
+        },
+        "defense_attempts": 16000,
+        "defense_success_by_type": {
+          "DODGE": 8000,
+          "SHIELD_BLOCK": 8000
+        },
+        "draw_rate": 1.0,
+        "draws": 100,
+        "hits": 0,
+        "limit_exceeded": 100,
+        "median_rounds": 80.0,
+        "misses": 0,
+        "riposte_available": 0,
+        "riposte_damage": 0,
+        "riposte_defended": 0,
+        "riposte_executed": 0,
+        "riposte_hits": 0,
+        "riposte_kill_finishes": 0,
+        "riposte_share_damage": 0.0,
+        "riposte_share_wounds": 0.0,
+        "riposte_wounds": 0,
+        "target_defeated": 0,
+        "trials": 100
+      },
+      "G": {
+        "attacker_win_rate": 0.64,
+        "attacker_wins": 64,
+        "average_actions": 81.18,
+        "average_defenses_per_round": 2.5336444007858545,
+        "average_rounds": 40.72,
+        "average_total_damage": 19.61,
+        "average_total_wounds": 13.45,
+        "average_winner_remaining_health": 45.5,
+        "defended": 7384,
+        "defender_win_rate": 0.0,
+        "defender_wins": 0,
+        "defense_attempt_by_type": {
+          "DODGE": 4072,
+          "PARRY": 2199,
+          "SHIELD_BLOCK": 4046
+        },
+        "defense_attempts": 10317,
+        "defense_success_by_type": {
+          "DODGE": 1873,
+          "PARRY": 1465,
+          "SHIELD_BLOCK": 4046
+        },
+        "draw_rate": 0.36,
+        "draws": 36,
+        "hits": 734,
+        "limit_exceeded": 36,
+        "median_rounds": 23.0,
+        "misses": 0,
+        "riposte_available": 0,
+        "riposte_damage": 0,
+        "riposte_defended": 0,
+        "riposte_executed": 0,
+        "riposte_hits": 0,
+        "riposte_kill_finishes": 0,
+        "riposte_share_damage": 0.0,
+        "riposte_share_wounds": 0.0,
+        "riposte_wounds": 0,
+        "target_defeated": 64,
+        "trials": 100
+      }
+    },
+    "C": {
+      "A": {
+        "attacker_win_rate": 1.0,
+        "attacker_wins": 100,
+        "average_actions": 17.9,
+        "average_defenses_per_round": 2.9584245076586435,
+        "average_rounds": 9.14,
+        "average_total_damage": 36.56,
+        "average_total_wounds": 18.08,
+        "average_winner_remaining_health": 83.44,
+        "defended": 876,
+        "defender_win_rate": 0.0,
+        "defender_wins": 0,
+        "defense_attempt_by_type": {
+          "DODGE": 914,
+          "PARRY": 914,
+          "SHIELD_BLOCK": 876
+        },
+        "defense_attempts": 2704,
+        "defense_success_by_type": {
+          "SHIELD_BLOCK": 876
+        },
+        "draw_rate": 0.0,
+        "draws": 0,
+        "hits": 914,
+        "limit_exceeded": 0,
+        "median_rounds": 9.0,
+        "misses": 0,
+        "riposte_available": 0,
+        "riposte_damage": 0,
+        "riposte_defended": 0,
+        "riposte_executed": 0,
+        "riposte_hits": 0,
+        "riposte_kill_finishes": 0,
+        "riposte_share_damage": 0.0,
+        "riposte_share_wounds": 0.0,
+        "riposte_wounds": 0,
+        "target_defeated": 100,
+        "trials": 100
+      },
+      "B": {
+        "attacker_win_rate": 0.0,
+        "attacker_wins": 0,
+        "average_actions": 160.0,
+        "average_defenses_per_round": 2.0,
+        "average_rounds": 80,
+        "average_total_damage": 0.0,
+        "average_total_wounds": 0.0,
+        "average_winner_remaining_health": 0.0,
+        "defended": 16000,
+        "defender_win_rate": 0.0,
+        "defender_wins": 0,
+        "defense_attempt_by_type": {
+          "SHIELD_BLOCK": 16000
+        },
+        "defense_attempts": 16000,
+        "defense_success_by_type": {
+          "SHIELD_BLOCK": 16000
+        },
+        "draw_rate": 1.0,
+        "draws": 100,
+        "hits": 0,
+        "limit_exceeded": 100,
+        "median_rounds": 80.0,
+        "misses": 0,
+        "riposte_available": 0,
+        "riposte_damage": 0,
+        "riposte_defended": 0,
+        "riposte_executed": 0,
+        "riposte_hits": 0,
+        "riposte_kill_finishes": 0,
+        "riposte_share_damage": 0.0,
+        "riposte_share_wounds": 0.0,
+        "riposte_wounds": 0,
+        "target_defeated": 0,
+        "trials": 100
+      },
+      "C": {
+        "attacker_win_rate": 0.0,
+        "attacker_wins": 0,
+        "average_actions": 160.0,
+        "average_defenses_per_round": 2.0,
+        "average_rounds": 80,
+        "average_total_damage": 0.0,
+        "average_total_wounds": 0.0,
+        "average_winner_remaining_health": 0.0,
+        "defended": 16000,
+        "defender_win_rate": 0.0,
+        "defender_wins": 0,
+        "defense_attempt_by_type": {
+          "SHIELD_BLOCK": 16000
+        },
+        "defense_attempts": 16000,
+        "defense_success_by_type": {
+          "SHIELD_BLOCK": 16000
+        },
+        "draw_rate": 1.0,
+        "draws": 100,
+        "hits": 0,
+        "limit_exceeded": 100,
+        "median_rounds": 80.0,
+        "misses": 0,
+        "riposte_available": 0,
+        "riposte_damage": 0,
+        "riposte_defended": 0,
+        "riposte_executed": 0,
+        "riposte_hits": 0,
+        "riposte_kill_finishes": 0,
+        "riposte_share_damage": 0.0,
+        "riposte_share_wounds": 0.0,
+        "riposte_wounds": 0,
+        "target_defeated": 0,
+        "trials": 100
+      },
+      "D": {
+        "attacker_win_rate": 0.0,
+        "attacker_wins": 0,
+        "average_actions": 160.0,
+        "average_defenses_per_round": 2.0,
+        "average_rounds": 80,
+        "average_total_damage": 0.0,
+        "average_total_wounds": 0.0,
+        "average_winner_remaining_health": 0.0,
+        "defended": 16000,
+        "defender_win_rate": 0.0,
+        "defender_wins": 0,
+        "defense_attempt_by_type": {
+          "PARRY": 8568,
+          "SHIELD_BLOCK": 7432
+        },
+        "defense_attempts": 16000,
+        "defense_success_by_type": {
+          "PARRY": 8568,
+          "SHIELD_BLOCK": 7432
+        },
+        "draw_rate": 1.0,
+        "draws": 100,
+        "hits": 0,
+        "limit_exceeded": 100,
+        "median_rounds": 80.0,
+        "misses": 0,
+        "riposte_available": 8568,
+        "riposte_damage": 0,
+        "riposte_defended": 8568,
+        "riposte_executed": 8568,
+        "riposte_hits": 0,
+        "riposte_kill_finishes": 0,
+        "riposte_share_damage": 0.0,
+        "riposte_share_wounds": 0.0,
+        "riposte_wounds": 0,
+        "target_defeated": 0,
+        "trials": 100
+      },
+      "F": {
+        "attacker_win_rate": 0.0,
+        "attacker_wins": 0,
+        "average_actions": 160.0,
+        "average_defenses_per_round": 2.0,
+        "average_rounds": 80,
+        "average_total_damage": 0.0,
+        "average_total_wounds": 0.0,
+        "average_winner_remaining_health": 0.0,
+        "defended": 16000,
+        "defender_win_rate": 0.0,
+        "defender_wins": 0,
+        "defense_attempt_by_type": {
+          "DODGE": 8000,
+          "SHIELD_BLOCK": 8000
+        },
+        "defense_attempts": 16000,
+        "defense_success_by_type": {
+          "DODGE": 8000,
+          "SHIELD_BLOCK": 8000
+        },
+        "draw_rate": 1.0,
+        "draws": 100,
+        "hits": 0,
+        "limit_exceeded": 100,
+        "median_rounds": 80.0,
+        "misses": 0,
+        "riposte_available": 0,
+        "riposte_damage": 0,
+        "riposte_defended": 0,
+        "riposte_executed": 0,
+        "riposte_hits": 0,
+        "riposte_kill_finishes": 0,
+        "riposte_share_damage": 0.0,
+        "riposte_share_wounds": 0.0,
+        "riposte_wounds": 0,
+        "target_defeated": 0,
+        "trials": 100
+      },
+      "G": {
+        "attacker_win_rate": 0.64,
+        "attacker_wins": 64,
+        "average_actions": 81.56,
+        "average_defenses_per_round": 2.532780892030222,
+        "average_rounds": 41.03,
+        "average_total_damage": 20.44,
+        "average_total_wounds": 13.81,
+        "average_winner_remaining_health": 43.5625,
+        "defended": 7396,
+        "defender_win_rate": 0.0,
+        "defender_wins": 0,
+        "defense_attempt_by_type": {
+          "DODGE": 4103,
+          "PARRY": 2236,
+          "SHIELD_BLOCK": 4053
+        },
+        "defense_attempts": 10392,
+        "defense_success_by_type": {
+          "DODGE": 1867,
+          "PARRY": 1476,
+          "SHIELD_BLOCK": 4053
+        },
+        "draw_rate": 0.36,
+        "draws": 36,
+        "hits": 760,
+        "limit_exceeded": 36,
+        "median_rounds": 23.0,
+        "misses": 0,
+        "riposte_available": 0,
+        "riposte_damage": 0,
+        "riposte_defended": 0,
+        "riposte_executed": 0,
+        "riposte_hits": 0,
+        "riposte_kill_finishes": 0,
+        "riposte_share_damage": 0.0,
+        "riposte_share_wounds": 0.0,
+        "riposte_wounds": 0,
+        "target_defeated": 64,
+        "trials": 100
+      }
+    },
+    "D": {
+      "A": {
+        "attacker_win_rate": 1.0,
+        "attacker_wins": 100,
+        "average_actions": 6.67,
+        "average_defenses_per_round": 2.8441926345609065,
+        "average_rounds": 3.53,
+        "average_total_damage": 13.48,
+        "average_total_wounds": 6.48,
+        "average_winner_remaining_health": 81.36,
+        "defended": 330,
+        "defender_win_rate": 0.0,
+        "defender_wins": 0,
+        "defense_attempt_by_type": {
+          "DODGE": 337,
+          "PARRY": 667
+        },
+        "defense_attempts": 1004,
+        "defense_success_by_type": {
+          "PARRY": 330
+        },
+        "draw_rate": 0.0,
+        "draws": 0,
+        "hits": 337,
+        "limit_exceeded": 0,
+        "median_rounds": 3.0,
+        "misses": 0,
+        "riposte_available": 330,
+        "riposte_damage": 1196,
+        "riposte_defended": 0,
+        "riposte_executed": 299,
+        "riposte_hits": 299,
+        "riposte_kill_finishes": 0,
+        "riposte_share_damage": 0.887240356083086,
+        "riposte_share_wounds": 0.9861111111111112,
+        "riposte_wounds": 639,
+        "target_defeated": 28,
+        "trials": 100
+      },
+      "B": {
+        "attacker_win_rate": 0.11,
+        "attacker_wins": 11,
+        "average_actions": 158.32,
+        "average_defenses_per_round": 2.0361202323819145,
+        "average_rounds": 79.18,
+        "average_total_damage": 5.25,
+        "average_total_wounds": 4.28,
+        "average_winner_remaining_health": 0,
+        "defended": 15542,
+        "defender_win_rate": 0.0,
+        "defender_wins": 0,
+        "defense_attempt_by_type": {
+          "DODGE": 290,
+          "PARRY": 8204,
+          "SHIELD_BLOCK": 7628
+        },
+        "defense_attempts": 16122,
+        "defense_success_by_type": {
+          "PARRY": 7914,
+          "SHIELD_BLOCK": 7628
+        },
+        "draw_rate": 0.89,
+        "draws": 89,
+        "hits": 290,
+        "limit_exceeded": 89,
+        "median_rounds": 80.0,
+        "misses": 0,
+        "riposte_available": 7914,
+        "riposte_damage": 557,
+        "riposte_defended": 7605,
+        "riposte_executed": 7913,
+        "riposte_hits": 308,
+        "riposte_kill_finishes": 0,
+        "riposte_share_damage": 1.0609523809523809,
+        "riposte_share_wounds": 1.0700934579439252,
+        "riposte_wounds": 458,
+        "target_defeated": 4,
+        "trials": 100
+      },
+      "C": {
+        "attacker_win_rate": 0.0,
+        "attacker_wins": 0,
+        "average_actions": 160.0,
+        "average_defenses_per_round": 2.0,
+        "average_rounds": 80,
+        "average_total_damage": 0.0,
+        "average_total_wounds": 0.0,
+        "average_winner_remaining_health": 0.0,
+        "defended": 16000,
+        "defender_win_rate": 0.0,
+        "defender_wins": 0,
+        "defense_attempt_by_type": {
+          "PARRY": 8381,
+          "SHIELD_BLOCK": 7619
+        },
+        "defense_attempts": 16000,
+        "defense_success_by_type": {
+          "PARRY": 8381,
+          "SHIELD_BLOCK": 7619
+        },
+        "draw_rate": 1.0,
+        "draws": 100,
+        "hits": 0,
+        "limit_exceeded": 100,
+        "median_rounds": 80.0,
+        "misses": 0,
+        "riposte_available": 8381,
+        "riposte_damage": 0,
+        "riposte_defended": 8381,
+        "riposte_executed": 8381,
+        "riposte_hits": 0,
+        "riposte_kill_finishes": 0,
+        "riposte_share_damage": 0.0,
+        "riposte_share_wounds": 0.0,
+        "riposte_wounds": 0,
+        "target_defeated": 0,
+        "trials": 100
+      },
+      "D": {
+        "attacker_win_rate": 0.0,
+        "attacker_wins": 0,
+        "average_actions": 160.0,
+        "average_defenses_per_round": 2.0,
+        "average_rounds": 80,
+        "average_total_damage": 0.0,
+        "average_total_wounds": 0.0,
+        "average_winner_remaining_health": 0.0,
+        "defended": 16000,
+        "defender_win_rate": 0.0,
+        "defender_wins": 0,
+        "defense_attempt_by_type": {
+          "DODGE": 809,
+          "PARRY": 15191
+        },
+        "defense_attempts": 16000,
+        "defense_success_by_type": {
+          "DODGE": 809,
+          "PARRY": 15191
+        },
+        "draw_rate": 1.0,
+        "draws": 100,
+        "hits": 0,
+        "limit_exceeded": 100,
+        "median_rounds": 80.0,
+        "misses": 0,
+        "riposte_available": 15166,
+        "riposte_damage": 0,
+        "riposte_defended": 15166,
+        "riposte_executed": 15166,
+        "riposte_hits": 0,
+        "riposte_kill_finishes": 0,
+        "riposte_share_damage": 0.0,
+        "riposte_share_wounds": 0.0,
+        "riposte_wounds": 0,
+        "target_defeated": 0,
+        "trials": 100
+      },
+      "F": {
+        "attacker_win_rate": 0.0,
+        "attacker_wins": 0,
+        "average_actions": 160.0,
+        "average_defenses_per_round": 2.0,
+        "average_rounds": 80,
+        "average_total_damage": 0.0,
+        "average_total_wounds": 0.0,
+        "average_winner_remaining_health": 0.0,
+        "defended": 16000,
+        "defender_win_rate": 0.0,
+        "defender_wins": 0,
+        "defense_attempt_by_type": {
+          "DODGE": 8000,
+          "PARRY": 8000
+        },
+        "defense_attempts": 16000,
+        "defense_success_by_type": {
+          "DODGE": 8000,
+          "PARRY": 8000
+        },
+        "draw_rate": 1.0,
+        "draws": 100,
+        "hits": 0,
+        "limit_exceeded": 100,
+        "median_rounds": 80.0,
+        "misses": 0,
+        "riposte_available": 8000,
+        "riposte_damage": 0,
+        "riposte_defended": 8000,
+        "riposte_executed": 8000,
+        "riposte_hits": 0,
+        "riposte_kill_finishes": 0,
+        "riposte_share_damage": 0.0,
+        "riposte_share_wounds": 0.0,
+        "riposte_wounds": 0,
+        "target_defeated": 0,
+        "trials": 100
+      },
+      "G": {
+        "attacker_win_rate": 0.45,
+        "attacker_wins": 45,
+        "average_actions": 93.78,
+        "average_defenses_per_round": 2.170248989146627,
+        "average_rounds": 46.99,
+        "average_total_damage": 7.51,
+        "average_total_wounds": 4.64,
+        "average_winner_remaining_health": 44.8,
+        "defended": 9119,
+        "defender_win_rate": 0.0,
+        "defender_wins": 0,
+        "defense_attempt_by_type": {
+          "DODGE": 4695,
+          "PARRY": 5503
+        },
+        "defense_attempts": 10198,
+        "defense_success_by_type": {
+          "DODGE": 3875,
+          "PARRY": 5244
+        },
+        "draw_rate": 0.55,
+        "draws": 55,
+        "hits": 259,
+        "limit_exceeded": 55,
+        "median_rounds": 80.0,
+        "misses": 0,
+        "riposte_available": 4683,
+        "riposte_damage": 697,
+        "riposte_defended": 4412,
+        "riposte_executed": 4668,
+        "riposte_hits": 256,
+        "riposte_kill_finishes": 0,
+        "riposte_share_damage": 0.9280958721704394,
+        "riposte_share_wounds": 0.959051724137931,
+        "riposte_wounds": 445,
+        "target_defeated": 17,
+        "trials": 100
+      }
+    },
+    "F": {
+      "A": {
+        "attacker_win_rate": 1.0,
+        "attacker_wins": 100,
+        "average_actions": 19.51,
+        "average_defenses_per_round": 2.909892262487757,
+        "average_rounds": 10.21,
+        "average_total_damage": 30.36,
+        "average_total_wounds": 20.42,
+        "average_winner_remaining_health": 79.52,
+        "defended": 939,
+        "defender_win_rate": 0.0,
+        "defender_wins": 0,
+        "defense_attempt_by_type": {
+          "DODGE": 1951,
+          "PARRY": 1020
+        },
+        "defense_attempts": 2971,
+        "defense_success_by_type": {
+          "DODGE": 931,
+          "PARRY": 8
+        },
+        "draw_rate": 0.0,
+        "draws": 0,
+        "hits": 1012,
+        "limit_exceeded": 0,
+        "median_rounds": 9.0,
+        "misses": 0,
+        "riposte_available": 0,
+        "riposte_damage": 0,
+        "riposte_defended": 0,
+        "riposte_executed": 0,
+        "riposte_hits": 0,
+        "riposte_kill_finishes": 0,
+        "riposte_share_damage": 0.0,
+        "riposte_share_wounds": 0.0,
+        "riposte_wounds": 0,
+        "target_defeated": 100,
+        "trials": 100
+      },
+      "B": {
+        "attacker_win_rate": 0.0,
+        "attacker_wins": 0,
+        "average_actions": 160.0,
+        "average_defenses_per_round": 2.0,
+        "average_rounds": 80,
+        "average_total_damage": 0.0,
+        "average_total_wounds": 0.0,
+        "average_winner_remaining_health": 0.0,
+        "defended": 16000,
+        "defender_win_rate": 0.0,
+        "defender_wins": 0,
+        "defense_attempt_by_type": {
+          "DODGE": 8000,
+          "SHIELD_BLOCK": 8000
+        },
+        "defense_attempts": 16000,
+        "defense_success_by_type": {
+          "DODGE": 8000,
+          "SHIELD_BLOCK": 8000
+        },
+        "draw_rate": 1.0,
+        "draws": 100,
+        "hits": 0,
+        "limit_exceeded": 100,
+        "median_rounds": 80.0,
+        "misses": 0,
+        "riposte_available": 0,
+        "riposte_damage": 0,
+        "riposte_defended": 0,
+        "riposte_executed": 0,
+        "riposte_hits": 0,
+        "riposte_kill_finishes": 0,
+        "riposte_share_damage": 0.0,
+        "riposte_share_wounds": 0.0,
+        "riposte_wounds": 0,
+        "target_defeated": 0,
+        "trials": 100
+      },
+      "C": {
+        "attacker_win_rate": 0.0,
+        "attacker_wins": 0,
+        "average_actions": 160.0,
+        "average_defenses_per_round": 2.0,
+        "average_rounds": 80,
+        "average_total_damage": 0.0,
+        "average_total_wounds": 0.0,
+        "average_winner_remaining_health": 0.0,
+        "defended": 16000,
+        "defender_win_rate": 0.0,
+        "defender_wins": 0,
+        "defense_attempt_by_type": {
+          "DODGE": 8000,
+          "SHIELD_BLOCK": 8000
+        },
+        "defense_attempts": 16000,
+        "defense_success_by_type": {
+          "DODGE": 8000,
+          "SHIELD_BLOCK": 8000
+        },
+        "draw_rate": 1.0,
+        "draws": 100,
+        "hits": 0,
+        "limit_exceeded": 100,
+        "median_rounds": 80.0,
+        "misses": 0,
+        "riposte_available": 0,
+        "riposte_damage": 0,
+        "riposte_defended": 0,
+        "riposte_executed": 0,
+        "riposte_hits": 0,
+        "riposte_kill_finishes": 0,
+        "riposte_share_damage": 0.0,
+        "riposte_share_wounds": 0.0,
+        "riposte_wounds": 0,
+        "target_defeated": 0,
+        "trials": 100
+      },
+      "D": {
+        "attacker_win_rate": 0.0,
+        "attacker_wins": 0,
+        "average_actions": 160.0,
+        "average_defenses_per_round": 2.0,
+        "average_rounds": 80,
+        "average_total_damage": 0.0,
+        "average_total_wounds": 0.0,
+        "average_winner_remaining_health": 0.0,
+        "defended": 16000,
+        "defender_win_rate": 0.0,
+        "defender_wins": 0,
+        "defense_attempt_by_type": {
+          "DODGE": 8000,
+          "PARRY": 8000
+        },
+        "defense_attempts": 16000,
+        "defense_success_by_type": {
+          "DODGE": 8000,
+          "PARRY": 8000
+        },
+        "draw_rate": 1.0,
+        "draws": 100,
+        "hits": 0,
+        "limit_exceeded": 100,
+        "median_rounds": 80.0,
+        "misses": 0,
+        "riposte_available": 8000,
+        "riposte_damage": 0,
+        "riposte_defended": 8000,
+        "riposte_executed": 8000,
+        "riposte_hits": 0,
+        "riposte_kill_finishes": 0,
+        "riposte_share_damage": 0.0,
+        "riposte_share_wounds": 0.0,
+        "riposte_wounds": 0,
+        "target_defeated": 0,
+        "trials": 100
+      },
+      "F": {
+        "attacker_win_rate": 0.0,
+        "attacker_wins": 0,
+        "average_actions": 160.0,
+        "average_defenses_per_round": 2.0,
+        "average_rounds": 80,
+        "average_total_damage": 0.0,
+        "average_total_wounds": 0.0,
+        "average_winner_remaining_health": 0.0,
+        "defended": 16000,
+        "defender_win_rate": 0.0,
+        "defender_wins": 0,
+        "defense_attempt_by_type": {
+          "DODGE": 16000
+        },
+        "defense_attempts": 16000,
+        "defense_success_by_type": {
+          "DODGE": 16000
+        },
+        "draw_rate": 1.0,
+        "draws": 100,
+        "hits": 0,
+        "limit_exceeded": 100,
+        "median_rounds": 80.0,
+        "misses": 0,
+        "riposte_available": 0,
+        "riposte_damage": 0,
+        "riposte_defended": 0,
+        "riposte_executed": 0,
+        "riposte_hits": 0,
+        "riposte_kill_finishes": 0,
+        "riposte_share_damage": 0.0,
+        "riposte_share_wounds": 0.0,
+        "riposte_wounds": 0,
+        "target_defeated": 0,
+        "trials": 100
+      },
+      "G": {
+        "attacker_win_rate": 0.01,
+        "attacker_wins": 1,
+        "average_actions": 158.89,
+        "average_defenses_per_round": 2.3570799244808054,
+        "average_rounds": 79.45,
+        "average_total_damage": 17.07,
+        "average_total_wounds": 8.73,
+        "average_winner_remaining_health": 20,
+        "defended": 14972,
+        "defender_win_rate": 0.0,
+        "defender_wins": 0,
+        "defense_attempt_by_type": {
+          "DODGE": 15889,
+          "PARRY": 2838
+        },
+        "defense_attempts": 18727,
+        "defense_success_by_type": {
+          "DODGE": 13051,
+          "PARRY": 1921
+        },
+        "draw_rate": 0.99,
+        "draws": 99,
+        "hits": 917,
+        "limit_exceeded": 99,
+        "median_rounds": 80.0,
+        "misses": 0,
+        "riposte_available": 0,
+        "riposte_damage": 0,
+        "riposte_defended": 0,
+        "riposte_executed": 0,
+        "riposte_hits": 0,
+        "riposte_kill_finishes": 0,
+        "riposte_share_damage": 0.0,
+        "riposte_share_wounds": 0.0,
+        "riposte_wounds": 0,
+        "target_defeated": 1,
+        "trials": 100
+      }
+    },
+    "G": {
+      "A": {
+        "attacker_win_rate": 1.0,
+        "attacker_wins": 100,
+        "average_actions": 8.26,
+        "average_defenses_per_round": 3.7453703703703702,
+        "average_rounds": 4.32,
+        "average_total_damage": 24.37,
+        "average_total_wounds": 12.85,
+        "average_winner_remaining_health": 98.4,
+        "defended": 297,
+        "defender_win_rate": 0.0,
+        "defender_wins": 0,
+        "defense_attempt_by_type": {
+          "DODGE": 826,
+          "PARRY": 792
+        },
+        "defense_attempts": 1618,
+        "defense_success_by_type": {
+          "DODGE": 34,
+          "PARRY": 263
+        },
+        "draw_rate": 0.0,
+        "draws": 0,
+        "hits": 529,
+        "limit_exceeded": 0,
+        "median_rounds": 4.0,
+        "misses": 0,
+        "riposte_available": 0,
+        "riposte_damage": 0,
+        "riposte_defended": 0,
+        "riposte_executed": 0,
+        "riposte_hits": 0,
+        "riposte_kill_finishes": 0,
+        "riposte_share_damage": 0.0,
+        "riposte_share_wounds": 0.0,
+        "riposte_wounds": 0,
+        "target_defeated": 100,
+        "trials": 100
+      },
+      "B": {
+        "attacker_win_rate": 0.0,
+        "attacker_wins": 0,
+        "average_actions": 89.11,
+        "average_defenses_per_round": 2.5167935512763098,
+        "average_rounds": 44.66,
+        "average_total_damage": 21.18,
+        "average_total_wounds": 14.02,
+        "average_winner_remaining_health": 39.59322033898305,
+        "defended": 8131,
+        "defender_win_rate": 0.59,
+        "defender_wins": 59,
+        "defense_attempt_by_type": {
+          "DODGE": 4466,
+          "PARRY": 2329,
+          "SHIELD_BLOCK": 4445
+        },
+        "defense_attempts": 11240,
+        "defense_success_by_type": {
+          "DODGE": 2137,
+          "PARRY": 1549,
+          "SHIELD_BLOCK": 4445
+        },
+        "draw_rate": 0.41,
+        "draws": 41,
+        "hits": 780,
+        "limit_exceeded": 41,
+        "median_rounds": 27.0,
+        "misses": 0,
+        "riposte_available": 0,
+        "riposte_damage": 0,
+        "riposte_defended": 0,
+        "riposte_executed": 0,
+        "riposte_hits": 0,
+        "riposte_kill_finishes": 0,
+        "riposte_share_damage": 0.0,
+        "riposte_share_wounds": 0.0,
+        "riposte_wounds": 0,
+        "target_defeated": 59,
+        "trials": 100
+      },
+      "C": {
+        "attacker_win_rate": 0.0,
+        "attacker_wins": 0,
+        "average_actions": 91.16,
+        "average_defenses_per_round": 2.5034965034965033,
+        "average_rounds": 45.76,
+        "average_total_damage": 20.12,
+        "average_total_wounds": 13.42,
+        "average_winner_remaining_health": 40.280701754385966,
+        "defended": 8370,
+        "defender_win_rate": 0.57,
+        "defender_wins": 57,
+        "defense_attempt_by_type": {
+          "DODGE": 4576,
+          "PARRY": 2340,
+          "SHIELD_BLOCK": 4540
+        },
+        "defense_attempts": 11456,
+        "defense_success_by_type": {
+          "DODGE": 2236,
+          "PARRY": 1594,
+          "SHIELD_BLOCK": 4540
+        },
+        "draw_rate": 0.43,
+        "draws": 43,
+        "hits": 746,
+        "limit_exceeded": 43,
+        "median_rounds": 27.0,
+        "misses": 0,
+        "riposte_available": 0,
+        "riposte_damage": 0,
+        "riposte_defended": 0,
+        "riposte_executed": 0,
+        "riposte_hits": 0,
+        "riposte_kill_finishes": 0,
+        "riposte_share_damage": 0.0,
+        "riposte_share_wounds": 0.0,
+        "riposte_wounds": 0,
+        "target_defeated": 57,
+        "trials": 100
+      },
+      "D": {
+        "attacker_win_rate": 0.0,
+        "attacker_wins": 0,
+        "average_actions": 80.9,
+        "average_defenses_per_round": 2.1942321912743408,
+        "average_rounds": 40.57,
+        "average_total_damage": 7.01,
+        "average_total_wounds": 4.63,
+        "average_winner_remaining_health": 40.888888888888886,
+        "defended": 7830,
+        "defender_win_rate": 0.54,
+        "defender_wins": 54,
+        "defense_attempt_by_type": {
+          "DODGE": 4054,
+          "PARRY": 4848
+        },
+        "defense_attempts": 8902,
+        "defense_success_by_type": {
+          "DODGE": 3242,
+          "PARRY": 4588
+        },
+        "draw_rate": 0.46,
+        "draws": 46,
+        "hits": 260,
+        "limit_exceeded": 46,
+        "median_rounds": 9.0,
+        "misses": 0,
+        "riposte_available": 4036,
+        "riposte_damage": 758,
+        "riposte_defended": 3767,
+        "riposte_executed": 4018,
+        "riposte_hits": 251,
+        "riposte_kill_finishes": 0,
+        "riposte_share_damage": 1.0813124108416547,
+        "riposte_share_wounds": 0.9136069114470843,
+        "riposte_wounds": 423,
+        "target_defeated": 22,
+        "trials": 100
+      },
+      "F": {
+        "attacker_win_rate": 0.0,
+        "attacker_wins": 0,
+        "average_actions": 157.78,
+        "average_defenses_per_round": 2.3594423320659064,
+        "average_rounds": 78.9,
+        "average_total_damage": 16.11,
+        "average_total_wounds": 8.06,
+        "average_winner_remaining_health": 20,
+        "defended": 14886,
+        "defender_win_rate": 0.02,
+        "defender_wins": 2,
+        "defense_attempt_by_type": {
+          "DODGE": 15778,
+          "PARRY": 2838
+        },
+        "defense_attempts": 18616,
+        "defense_success_by_type": {
+          "DODGE": 12940,
+          "PARRY": 1946
+        },
+        "draw_rate": 0.98,
+        "draws": 98,
+        "hits": 892,
+        "limit_exceeded": 98,
+        "median_rounds": 80.0,
+        "misses": 0,
+        "riposte_available": 0,
+        "riposte_damage": 0,
+        "riposte_defended": 0,
+        "riposte_executed": 0,
+        "riposte_hits": 0,
+        "riposte_kill_finishes": 0,
+        "riposte_share_damage": 0.0,
+        "riposte_share_wounds": 0.0,
+        "riposte_wounds": 0,
+        "target_defeated": 2,
+        "trials": 100
+      },
+      "G": {
+        "attacker_win_rate": 0.43,
+        "attacker_wins": 43,
+        "average_actions": 30.14,
+        "average_defenses_per_round": 3.1510791366906474,
+        "average_rounds": 15.29,
+        "average_total_damage": 21.49,
+        "average_total_wounds": 14.3,
+        "average_winner_remaining_health": 79.5,
+        "defended": 2451,
+        "defender_win_rate": 0.47,
+        "defender_wins": 47,
+        "defense_attempt_by_type": {
+          "DODGE": 3014,
+          "PARRY": 1804
+        },
+        "defense_attempts": 4818,
+        "defense_success_by_type": {
+          "DODGE": 1210,
+          "PARRY": 1241
+        },
+        "draw_rate": 0.1,
+        "draws": 10,
+        "hits": 563,
+        "limit_exceeded": 10,
+        "median_rounds": 7.0,
+        "misses": 0,
+        "riposte_available": 0,
+        "riposte_damage": 0,
+        "riposte_defended": 0,
+        "riposte_executed": 0,
+        "riposte_hits": 0,
+        "riposte_kill_finishes": 0,
+        "riposte_share_damage": 0.0,
+        "riposte_share_wounds": 0.0,
+        "riposte_wounds": 0,
+        "target_defeated": 90,
+        "trials": 100
+      }
+    }
+  },
+  "meta": {
+    "duel_trials": 100,
+    "full_duel_configurations": 42,
+    "full_duel_total": 4200,
+    "max_rounds": 80,
+    "single_action_configurations": 20,
+    "single_action_total": 20000,
+    "single_trials": 1000,
+    "supported_builds": [
+      "A",
+      "B",
+      "C",
+      "D",
+      "F",
+      "G"
+    ],
+    "unsupported_builds": [
+      "E"
+    ]
+  },
+  "riposte_comparisons": {
+    "C": {
+      "with_riposte": {
+        "attacker_win_rate": 0.0,
+        "attacker_wins": 0,
+        "average_actions": 160.0,
+        "average_defenses_per_round": 2.0,
+        "average_rounds": 80,
+        "average_total_damage": 0.0,
+        "average_total_wounds": 0.0,
+        "average_winner_remaining_health": 0.0,
+        "defended": 16000,
+        "defender_win_rate": 0.0,
+        "defender_wins": 0,
+        "defense_attempt_by_type": {
+          "SHIELD_BLOCK": 16000
+        },
+        "defense_attempts": 16000,
+        "defense_success_by_type": {
+          "SHIELD_BLOCK": 16000
+        },
+        "draw_rate": 1.0,
+        "draws": 100,
+        "hits": 0,
+        "limit_exceeded": 100,
+        "median_rounds": 80.0,
+        "misses": 0,
+        "riposte_available": 0,
+        "riposte_damage": 0,
+        "riposte_defended": 0,
+        "riposte_executed": 0,
+        "riposte_hits": 0,
+        "riposte_kill_finishes": 0,
+        "riposte_share_damage": 0.0,
+        "riposte_share_wounds": 0.0,
+        "riposte_wounds": 0,
+        "target_defeated": 0,
+        "trials": 100
+      },
+      "without_riposte": {
+        "attacker_win_rate": 0.0,
+        "attacker_wins": 0,
+        "average_actions": 160.0,
+        "average_defenses_per_round": 2.0,
+        "average_rounds": 80,
+        "average_total_damage": 0.0,
+        "average_total_wounds": 0.0,
+        "average_winner_remaining_health": 0.0,
+        "defended": 16000,
+        "defender_win_rate": 0.0,
+        "defender_wins": 0,
+        "defense_attempt_by_type": {
+          "SHIELD_BLOCK": 16000
+        },
+        "defense_attempts": 16000,
+        "defense_success_by_type": {
+          "SHIELD_BLOCK": 16000
+        },
+        "draw_rate": 1.0,
+        "draws": 100,
+        "hits": 0,
+        "limit_exceeded": 100,
+        "median_rounds": 80.0,
+        "misses": 0,
+        "riposte_available": 0,
+        "riposte_damage": 0,
+        "riposte_defended": 0,
+        "riposte_executed": 0,
+        "riposte_hits": 0,
+        "riposte_kill_finishes": 0,
+        "riposte_share_damage": 0.0,
+        "riposte_share_wounds": 0.0,
+        "riposte_wounds": 0,
+        "target_defeated": 0,
+        "trials": 100
+      }
+    },
+    "D": {
+      "with_riposte": {
+        "attacker_win_rate": 0.0,
+        "attacker_wins": 0,
+        "average_actions": 160.0,
+        "average_defenses_per_round": 2.0,
+        "average_rounds": 80,
+        "average_total_damage": 0.0,
+        "average_total_wounds": 0.0,
+        "average_winner_remaining_health": 0.0,
+        "defended": 16000,
+        "defender_win_rate": 0.0,
+        "defender_wins": 0,
+        "defense_attempt_by_type": {
+          "DODGE": 1021,
+          "PARRY": 14979
+        },
+        "defense_attempts": 16000,
+        "defense_success_by_type": {
+          "DODGE": 1021,
+          "PARRY": 14979
+        },
+        "draw_rate": 1.0,
+        "draws": 100,
+        "hits": 0,
+        "limit_exceeded": 100,
+        "median_rounds": 80.0,
+        "misses": 0,
+        "riposte_available": 14956,
+        "riposte_damage": 0,
+        "riposte_defended": 14956,
+        "riposte_executed": 14956,
+        "riposte_hits": 0,
+        "riposte_kill_finishes": 0,
+        "riposte_share_damage": 0.0,
+        "riposte_share_wounds": 0.0,
+        "riposte_wounds": 0,
+        "target_defeated": 0,
+        "trials": 100
+      },
+      "without_riposte": {
+        "attacker_win_rate": 0.0,
+        "attacker_wins": 0,
+        "average_actions": 160.0,
+        "average_defenses_per_round": 2.0,
+        "average_rounds": 80,
+        "average_total_damage": 0.0,
+        "average_total_wounds": 0.0,
+        "average_winner_remaining_health": 0.0,
+        "defended": 16000,
+        "defender_win_rate": 0.0,
+        "defender_wins": 0,
+        "defense_attempt_by_type": {
+          "PARRY": 16000
+        },
+        "defense_attempts": 16000,
+        "defense_success_by_type": {
+          "PARRY": 16000
+        },
+        "draw_rate": 1.0,
+        "draws": 100,
+        "hits": 0,
+        "limit_exceeded": 100,
+        "median_rounds": 80.0,
+        "misses": 0,
+        "riposte_available": 0,
+        "riposte_damage": 0,
+        "riposte_defended": 0,
+        "riposte_executed": 0,
+        "riposte_hits": 0,
+        "riposte_kill_finishes": 0,
+        "riposte_share_damage": 0.0,
+        "riposte_share_wounds": 0.0,
+        "riposte_wounds": 0,
+        "target_defeated": 0,
+        "trials": 100
+      }
+    },
+    "F": {
+      "with_riposte": {
+        "attacker_win_rate": 0.0,
+        "attacker_wins": 0,
+        "average_actions": 160.0,
+        "average_defenses_per_round": 2.0,
+        "average_rounds": 80,
+        "average_total_damage": 0.0,
+        "average_total_wounds": 0.0,
+        "average_winner_remaining_health": 0.0,
+        "defended": 16000,
+        "defender_win_rate": 0.0,
+        "defender_wins": 0,
+        "defense_attempt_by_type": {
+          "DODGE": 16000
+        },
+        "defense_attempts": 16000,
+        "defense_success_by_type": {
+          "DODGE": 16000
+        },
+        "draw_rate": 1.0,
+        "draws": 100,
+        "hits": 0,
+        "limit_exceeded": 100,
+        "median_rounds": 80.0,
+        "misses": 0,
+        "riposte_available": 0,
+        "riposte_damage": 0,
+        "riposte_defended": 0,
+        "riposte_executed": 0,
+        "riposte_hits": 0,
+        "riposte_kill_finishes": 0,
+        "riposte_share_damage": 0.0,
+        "riposte_share_wounds": 0.0,
+        "riposte_wounds": 0,
+        "target_defeated": 0,
+        "trials": 100
+      },
+      "without_riposte": {
+        "attacker_win_rate": 0.0,
+        "attacker_wins": 0,
+        "average_actions": 160.0,
+        "average_defenses_per_round": 2.0,
+        "average_rounds": 80,
+        "average_total_damage": 0.0,
+        "average_total_wounds": 0.0,
+        "average_winner_remaining_health": 0.0,
+        "defended": 16000,
+        "defender_win_rate": 0.0,
+        "defender_wins": 0,
+        "defense_attempt_by_type": {
+          "DODGE": 16000
+        },
+        "defense_attempts": 16000,
+        "defense_success_by_type": {
+          "DODGE": 16000
+        },
+        "draw_rate": 1.0,
+        "draws": 100,
+        "hits": 0,
+        "limit_exceeded": 100,
+        "median_rounds": 80.0,
+        "misses": 0,
+        "riposte_available": 0,
+        "riposte_damage": 0,
+        "riposte_defended": 0,
+        "riposte_executed": 0,
+        "riposte_hits": 0,
+        "riposte_kill_finishes": 0,
+        "riposte_share_damage": 0.0,
+        "riposte_share_wounds": 0.0,
+        "riposte_wounds": 0,
+        "target_defeated": 0,
+        "trials": 100
+      }
+    }
+  },
+  "single_results": {
+    "A": {
+      "accepted_rate": 1.0,
+      "candidate_effective_value_mean": {
+        "DODGE": 36.75,
+        "PARRY": 36.75,
+        "SHIELD_BLOCK": 0.0
+      },
+      "candidate_first_by_type": {
+        "DODGE": 1000
+      },
+      "candidate_second_by_type": {
+        "PARRY": 1000
+      },
+      "candidate_third_by_type": {},
+      "candidate_tried_by_type": {
+        "DODGE": 1000,
+        "PARRY": 1000
+      },
+      "defended": 0,
+      "defense_attempt_by_type": {
+        "DODGE": 1000,
+        "PARRY": 1000
+      },
+      "defense_attempts_total": 2000,
+      "defense_first_attempts": 1000,
+      "defense_first_failures": 1000,
+      "defense_position_by_type": {
+        "DODGE": {
+          "1": 1000
+        },
+        "PARRY": {
+          "2": 1000
+        }
+      },
+      "defense_second_attempts": 1000,
+      "defense_second_failures": 1000,
+      "defense_success_by_type": {},
+      "defense_third_attempts": 0,
+      "defense_third_failures": 0,
+      "fingerprint_expression_rate": 0.0,
+      "hits": 1000,
+      "misses": 0,
+      "neighbor_mean": 0.0,
+      "primary_damage": 4000,
+      "primary_wounds": 1000,
+      "reaction_damage": 0,
+      "reaction_wounds": 0,
+      "riposte_available": 0,
+      "riposte_defended": 0,
+      "riposte_executed": 0,
+      "riposte_hits": 0,
+      "riposte_kills": 0,
+      "riposte_share_damage": 0.0,
+      "riposte_share_wounds": 0.0,
+      "same_area_mean": 0.0,
+      "target_defeated": 0,
+      "total_actions": 1000,
+      "total_damage": 4000,
+      "total_wounds": 1000,
+      "trials": 1000,
+      "unique_fingerprint_rate": 0.0
+    },
+    "B": {
+      "accepted_rate": 1.0,
+      "candidate_effective_value_mean": {
+        "DODGE": 0.0,
+        "PARRY": 0.0,
+        "SHIELD_BLOCK": 85.75
+      },
+      "candidate_first_by_type": {
+        "SHIELD_BLOCK": 1000
+      },
+      "candidate_second_by_type": {
+        "DODGE": 1000
+      },
+      "candidate_third_by_type": {
+        "PARRY": 1000
+      },
+      "candidate_tried_by_type": {
+        "SHIELD_BLOCK": 1000
+      },
+      "defended": 1000,
+      "defense_attempt_by_type": {
+        "SHIELD_BLOCK": 1000
+      },
+      "defense_attempts_total": 1000,
+      "defense_first_attempts": 1000,
+      "defense_first_failures": 0,
+      "defense_position_by_type": {
+        "SHIELD_BLOCK": {
+          "1": 1000
+        }
+      },
+      "defense_second_attempts": 0,
+      "defense_second_failures": 0,
+      "defense_success_by_type": {
+        "SHIELD_BLOCK": 1000
+      },
+      "defense_third_attempts": 0,
+      "defense_third_failures": 0,
+      "fingerprint_expression_rate": 0.0,
+      "hits": 0,
+      "misses": 0,
+      "neighbor_mean": 0.0,
+      "primary_damage": 0,
+      "primary_wounds": 0,
+      "reaction_damage": 0,
+      "reaction_wounds": 0,
+      "riposte_available": 0,
+      "riposte_defended": 0,
+      "riposte_executed": 0,
+      "riposte_hits": 0,
+      "riposte_kills": 0,
+      "riposte_share_damage": 0.0,
+      "riposte_share_wounds": 0.0,
+      "same_area_mean": 0.0,
+      "target_defeated": 0,
+      "total_actions": 1000,
+      "total_damage": 0,
+      "total_wounds": 0,
+      "trials": 1000,
+      "unique_fingerprint_rate": 0.0
+    },
+    "C": {
+      "accepted_rate": 1.0,
+      "candidate_effective_value_mean": {
+        "DODGE": 20.97000000000003,
+        "PARRY": 58.800000000001006,
+        "SHIELD_BLOCK": 104.12500000000001
+      },
+      "candidate_first_by_type": {
+        "SHIELD_BLOCK": 1000
+      },
+      "candidate_second_by_type": {
+        "PARRY": 1000
+      },
+      "candidate_third_by_type": {
+        "DODGE": 1000
+      },
+      "candidate_tried_by_type": {
+        "DODGE": 1000,
+        "PARRY": 1000,
+        "SHIELD_BLOCK": 1000
+      },
+      "defended": 1000,
+      "defense_attempt_by_type": {
+        "SHIELD_BLOCK": 1000
+      },
+      "defense_attempts_total": 1000,
+      "defense_first_attempts": 1000,
+      "defense_first_failures": 0,
+      "defense_position_by_type": {
+        "SHIELD_BLOCK": {
+          "1": 1000
+        }
+      },
+      "defense_second_attempts": 0,
+      "defense_second_failures": 0,
+      "defense_success_by_type": {
+        "SHIELD_BLOCK": 1000
+      },
+      "defense_third_attempts": 0,
+      "defense_third_failures": 0,
+      "fingerprint_expression_rate": 0.0,
+      "hits": 0,
+      "misses": 0,
+      "neighbor_mean": 0.0,
+      "primary_damage": 0,
+      "primary_wounds": 0,
+      "reaction_damage": 0,
+      "reaction_wounds": 0,
+      "riposte_available": 0,
+      "riposte_defended": 0,
+      "riposte_executed": 0,
+      "riposte_hits": 0,
+      "riposte_kills": 0,
+      "riposte_share_damage": 0.0,
+      "riposte_share_wounds": 0.0,
+      "same_area_mean": 0.0,
+      "target_defeated": 0,
+      "total_actions": 1000,
+      "total_damage": 0,
+      "total_wounds": 0,
+      "trials": 1000,
+      "unique_fingerprint_rate": 0.0
+    },
+    "D": {
+      "accepted_rate": 1.0,
+      "candidate_effective_value_mean": {
+        "DODGE": 92.33999999999779,
+        "PARRY": 139.64999999999742,
+        "SHIELD_BLOCK": 0.0
+      },
+      "candidate_first_by_type": {
+        "PARRY": 1000
+      },
+      "candidate_second_by_type": {
+        "DODGE": 1000
+      },
+      "candidate_third_by_type": {},
+      "candidate_tried_by_type": {
+        "DODGE": 1000,
+        "PARRY": 1000
+      },
+      "defended": 1000,
+      "defense_attempt_by_type": {
+        "PARRY": 1000
+      },
+      "defense_attempts_total": 1000,
+      "defense_first_attempts": 1000,
+      "defense_first_failures": 0,
+      "defense_position_by_type": {
+        "PARRY": {
+          "1": 1000
+        }
+      },
+      "defense_second_attempts": 0,
+      "defense_second_failures": 0,
+      "defense_success_by_type": {
+        "PARRY": 1000
+      },
+      "defense_third_attempts": 0,
+      "defense_third_failures": 0,
+      "fingerprint_expression_rate": 0.0,
+      "hits": 0,
+      "misses": 0,
+      "neighbor_mean": 0.0,
+      "primary_damage": 0,
+      "primary_wounds": 0,
+      "reaction_damage": 0,
+      "reaction_wounds": 0,
+      "riposte_available": 1000,
+      "riposte_defended": 0,
+      "riposte_executed": 1000,
+      "riposte_hits": 1000,
+      "riposte_kills": 0,
+      "riposte_share_damage": 0.0,
+      "riposte_share_wounds": 0.0,
+      "same_area_mean": 0.0,
+      "target_defeated": 0,
+      "total_actions": 1000,
+      "total_damage": 0,
+      "total_wounds": 0,
+      "trials": 1000,
+      "unique_fingerprint_rate": 0.0
+    },
+    "F": {
+      "accepted_rate": 1.0,
+      "candidate_effective_value_mean": {
+        "DODGE": 122.50000000000001,
+        "PARRY": 44.099999999999184,
+        "SHIELD_BLOCK": 0.0
+      },
+      "candidate_first_by_type": {
+        "DODGE": 1000
+      },
+      "candidate_second_by_type": {
+        "PARRY": 1000
+      },
+      "candidate_third_by_type": {},
+      "candidate_tried_by_type": {
+        "DODGE": 1000,
+        "PARRY": 1000
+      },
+      "defended": 1000,
+      "defense_attempt_by_type": {
+        "DODGE": 1000
+      },
+      "defense_attempts_total": 1000,
+      "defense_first_attempts": 1000,
+      "defense_first_failures": 0,
+      "defense_position_by_type": {
+        "DODGE": {
+          "1": 1000
+        }
+      },
+      "defense_second_attempts": 0,
+      "defense_second_failures": 0,
+      "defense_success_by_type": {
+        "DODGE": 1000
+      },
+      "defense_third_attempts": 0,
+      "defense_third_failures": 0,
+      "fingerprint_expression_rate": 0.0,
+      "hits": 0,
+      "misses": 0,
+      "neighbor_mean": 0.0,
+      "primary_damage": 0,
+      "primary_wounds": 0,
+      "reaction_damage": 0,
+      "reaction_wounds": 0,
+      "riposte_available": 0,
+      "riposte_defended": 0,
+      "riposte_executed": 0,
+      "riposte_hits": 0,
+      "riposte_kills": 0,
+      "riposte_share_damage": 0.0,
+      "riposte_share_wounds": 0.0,
+      "same_area_mean": 0.0,
+      "target_defeated": 0,
+      "total_actions": 1000,
+      "total_damage": 0,
+      "total_wounds": 0,
+      "trials": 1000,
+      "unique_fingerprint_rate": 0.0
+    },
+    "G": {
+      "accepted_rate": 1.0,
+      "candidate_effective_value_mean": {
+        "DODGE": 35.549999999999756,
+        "PARRY": 27.43999999999957,
+        "SHIELD_BLOCK": 0.0
+      },
+      "candidate_first_by_type": {
+        "DODGE": 1000
+      },
+      "candidate_second_by_type": {
+        "PARRY": 1000
+      },
+      "candidate_third_by_type": {},
+      "candidate_tried_by_type": {
+        "DODGE": 1000,
+        "PARRY": 1000
+      },
+      "defended": 657,
+      "defense_attempt_by_type": {
+        "DODGE": 1000,
+        "PARRY": 965
+      },
+      "defense_attempts_total": 1965,
+      "defense_first_attempts": 1000,
+      "defense_first_failures": 965,
+      "defense_position_by_type": {
+        "DODGE": {
+          "1": 1000
+        },
+        "PARRY": {
+          "2": 965
+        }
+      },
+      "defense_second_attempts": 965,
+      "defense_second_failures": 343,
+      "defense_success_by_type": {
+        "DODGE": 35,
+        "PARRY": 622
+      },
+      "defense_third_attempts": 0,
+      "defense_third_failures": 0,
+      "fingerprint_expression_rate": 0.0,
+      "hits": 343,
+      "misses": 0,
+      "neighbor_mean": 0.0,
+      "primary_damage": 961,
+      "primary_wounds": 343,
+      "reaction_damage": 0,
+      "reaction_wounds": 0,
+      "riposte_available": 0,
+      "riposte_defended": 0,
+      "riposte_executed": 0,
+      "riposte_hits": 0,
+      "riposte_kills": 0,
+      "riposte_share_damage": 0.0,
+      "riposte_share_wounds": 0.0,
+      "same_area_mean": 0.0,
+      "target_defeated": 0,
+      "total_actions": 1000,
+      "total_damage": 961,
+      "total_wounds": 343,
+      "trials": 1000,
+      "unique_fingerprint_rate": 0.0
+    }
+  },
+  "weapon_probes": {
+    "battle_axe": {
+      "accepted_rate": 1.0,
+      "candidate_effective_value_mean": {
+        "DODGE": 73.5,
+        "PARRY": 22.049999999999592,
+        "SHIELD_BLOCK": 0.0
+      },
+      "candidate_first_by_type": {
+        "DODGE": 1000
+      },
+      "candidate_second_by_type": {
+        "PARRY": 1000
+      },
+      "candidate_third_by_type": {},
+      "candidate_tried_by_type": {
+        "DODGE": 1000,
+        "PARRY": 1000
+      },
+      "defended": 535,
+      "defense_attempt_by_type": {
+        "DODGE": 1000,
+        "PARRY": 521
+      },
+      "defense_attempts_total": 1521,
+      "defense_first_attempts": 1000,
+      "defense_first_failures": 521,
+      "defense_position_by_type": {
+        "DODGE": {
+          "1": 1000
+        },
+        "PARRY": {
+          "2": 521
+        }
+      },
+      "defense_second_attempts": 521,
+      "defense_second_failures": 465,
+      "defense_success_by_type": {
+        "DODGE": 479,
+        "PARRY": 56
+      },
+      "defense_third_attempts": 0,
+      "defense_third_failures": 0,
+      "fingerprint_expression_rate": 0.0,
+      "hits": 465,
+      "misses": 0,
+      "neighbor_mean": 0.0,
+      "primary_damage": 1860,
+      "primary_wounds": 465,
+      "reaction_damage": 0,
+      "reaction_wounds": 0,
+      "riposte_available": 0,
+      "riposte_defended": 0,
+      "riposte_executed": 0,
+      "riposte_hits": 0,
+      "riposte_kills": 0,
+      "riposte_share_damage": 0.0,
+      "riposte_share_wounds": 0.0,
+      "same_area_mean": 0.0,
+      "target_defeated": 0,
+      "total_actions": 1000,
+      "total_damage": 1860,
+      "total_wounds": 465,
+      "trials": 1000,
+      "unique_fingerprint_rate": 0.0
+    },
+    "court_sabre": {
+      "accepted_rate": 1.0,
+      "candidate_effective_value_mean": {
+        "DODGE": 73.5,
+        "PARRY": 69.82499999999871,
+        "SHIELD_BLOCK": 0.0
+      },
+      "candidate_first_by_type": {
+        "DODGE": 1000
+      },
+      "candidate_second_by_type": {
+        "PARRY": 1000
+      },
+      "candidate_third_by_type": {},
+      "candidate_tried_by_type": {
+        "DODGE": 1000,
+        "PARRY": 1000
+      },
+      "defended": 563,
+      "defense_attempt_by_type": {
+        "DODGE": 1000,
+        "PARRY": 518
+      },
+      "defense_attempts_total": 1518,
+      "defense_first_attempts": 1000,
+      "defense_first_failures": 518,
+      "defense_position_by_type": {
+        "DODGE": {
+          "1": 1000
+        },
+        "PARRY": {
+          "2": 518
+        }
+      },
+      "defense_second_attempts": 518,
+      "defense_second_failures": 437,
+      "defense_success_by_type": {
+        "DODGE": 482,
+        "PARRY": 81
+      },
+      "defense_third_attempts": 0,
+      "defense_third_failures": 0,
+      "fingerprint_expression_rate": 0.0,
+      "hits": 437,
+      "misses": 0,
+      "neighbor_mean": 0.0,
+      "primary_damage": 1748,
+      "primary_wounds": 437,
+      "reaction_damage": 0,
+      "reaction_wounds": 0,
+      "riposte_available": 81,
+      "riposte_defended": 0,
+      "riposte_executed": 81,
+      "riposte_hits": 81,
+      "riposte_kills": 0,
+      "riposte_share_damage": 0.0,
+      "riposte_share_wounds": 0.0,
+      "same_area_mean": 0.0,
+      "target_defeated": 0,
+      "total_actions": 1000,
+      "total_damage": 1748,
+      "total_wounds": 437,
+      "trials": 1000,
+      "unique_fingerprint_rate": 0.0
+    },
+    "duelist_dagger": {
+      "accepted_rate": 1.0,
+      "candidate_effective_value_mean": {
+        "DODGE": 73.5,
+        "PARRY": 66.15000000000096,
+        "SHIELD_BLOCK": 0.0
+      },
+      "candidate_first_by_type": {
+        "DODGE": 1000
+      },
+      "candidate_second_by_type": {
+        "PARRY": 1000
+      },
+      "candidate_third_by_type": {},
+      "candidate_tried_by_type": {
+        "DODGE": 1000,
+        "PARRY": 1000
+      },
+      "defended": 531,
+      "defense_attempt_by_type": {
+        "DODGE": 1000,
+        "PARRY": 541
+      },
+      "defense_attempts_total": 1541,
+      "defense_first_attempts": 1000,
+      "defense_first_failures": 541,
+      "defense_position_by_type": {
+        "DODGE": {
+          "1": 1000
+        },
+        "PARRY": {
+          "2": 541
+        }
+      },
+      "defense_second_attempts": 541,
+      "defense_second_failures": 469,
+      "defense_success_by_type": {
+        "DODGE": 459,
+        "PARRY": 72
+      },
+      "defense_third_attempts": 0,
+      "defense_third_failures": 0,
+      "fingerprint_expression_rate": 0.0,
+      "hits": 469,
+      "misses": 0,
+      "neighbor_mean": 0.0,
+      "primary_damage": 1876,
+      "primary_wounds": 469,
+      "reaction_damage": 0,
+      "reaction_wounds": 0,
+      "riposte_available": 72,
+      "riposte_defended": 0,
+      "riposte_executed": 72,
+      "riposte_hits": 72,
+      "riposte_kills": 0,
+      "riposte_share_damage": 0.0,
+      "riposte_share_wounds": 0.0,
+      "same_area_mean": 0.0,
+      "target_defeated": 0,
+      "total_actions": 1000,
+      "total_damage": 1876,
+      "total_wounds": 469,
+      "trials": 1000,
+      "unique_fingerprint_rate": 0.0
+    },
+    "garrison_short_sword": {
+      "accepted_rate": 1.0,
+      "candidate_effective_value_mean": {
+        "DODGE": 73.5,
+        "PARRY": 73.5,
+        "SHIELD_BLOCK": 0.0
+      },
+      "candidate_first_by_type": {
+        "DODGE": 1000
+      },
+      "candidate_second_by_type": {
+        "PARRY": 1000
+      },
+      "candidate_third_by_type": {},
+      "candidate_tried_by_type": {
+        "DODGE": 1000,
+        "PARRY": 1000
+      },
+      "defended": 559,
+      "defense_attempt_by_type": {
+        "DODGE": 1000,
+        "PARRY": 509
+      },
+      "defense_attempts_total": 1509,
+      "defense_first_attempts": 1000,
+      "defense_first_failures": 509,
+      "defense_position_by_type": {
+        "DODGE": {
+          "1": 1000
+        },
+        "PARRY": {
+          "2": 509
+        }
+      },
+      "defense_second_attempts": 509,
+      "defense_second_failures": 441,
+      "defense_success_by_type": {
+        "DODGE": 491,
+        "PARRY": 68
+      },
+      "defense_third_attempts": 0,
+      "defense_third_failures": 0,
+      "fingerprint_expression_rate": 0.0,
+      "hits": 441,
+      "misses": 0,
+      "neighbor_mean": 0.0,
+      "primary_damage": 1764,
+      "primary_wounds": 441,
+      "reaction_damage": 0,
+      "reaction_wounds": 0,
+      "riposte_available": 68,
+      "riposte_defended": 0,
+      "riposte_executed": 68,
+      "riposte_hits": 68,
+      "riposte_kills": 0,
+      "riposte_share_damage": 0.0,
+      "riposte_share_wounds": 0.0,
+      "same_area_mean": 0.0,
+      "target_defeated": 0,
+      "total_actions": 1000,
+      "total_damage": 1764,
+      "total_wounds": 441,
+      "trials": 1000,
+      "unique_fingerprint_rate": 0.0
+    },
+    "war_flail": {
+      "accepted_rate": 1.0,
+      "candidate_effective_value_mean": {
+        "DODGE": 73.5,
+        "PARRY": 0.0,
+        "SHIELD_BLOCK": 0.0
+      },
+      "candidate_first_by_type": {
+        "DODGE": 1000
+      },
+      "candidate_second_by_type": {
+        "PARRY": 1000
+      },
+      "candidate_third_by_type": {},
+      "candidate_tried_by_type": {
+        "DODGE": 1000
+      },
+      "defended": 474,
+      "defense_attempt_by_type": {
+        "DODGE": 1000,
+        "PARRY": 526
+      },
+      "defense_attempts_total": 1526,
+      "defense_first_attempts": 1000,
+      "defense_first_failures": 526,
+      "defense_position_by_type": {
+        "DODGE": {
+          "1": 1000
+        },
+        "PARRY": {
+          "2": 526
+        }
+      },
+      "defense_second_attempts": 526,
+      "defense_second_failures": 526,
+      "defense_success_by_type": {
+        "DODGE": 474
+      },
+      "defense_third_attempts": 0,
+      "defense_third_failures": 0,
+      "fingerprint_expression_rate": 0.0,
+      "hits": 526,
+      "misses": 0,
+      "neighbor_mean": 0.0,
+      "primary_damage": 2104,
+      "primary_wounds": 526,
+      "reaction_damage": 0,
+      "reaction_wounds": 0,
+      "riposte_available": 0,
+      "riposte_defended": 0,
+      "riposte_executed": 0,
+      "riposte_hits": 0,
+      "riposte_kills": 0,
+      "riposte_share_damage": 0.0,
+      "riposte_share_wounds": 0.0,
+      "same_area_mean": 0.0,
+      "target_defeated": 0,
+      "total_actions": 1000,
+      "total_damage": 2104,
+      "total_wounds": 526,
+      "trials": 1000,
+      "unique_fingerprint_rate": 0.0
+    },
+    "war_hammer": {
+      "accepted_rate": 1.0,
+      "candidate_effective_value_mean": {
+        "DODGE": 73.5,
+        "PARRY": 0.0,
+        "SHIELD_BLOCK": 0.0
+      },
+      "candidate_first_by_type": {
+        "DODGE": 1000
+      },
+      "candidate_second_by_type": {
+        "PARRY": 1000
+      },
+      "candidate_third_by_type": {},
+      "candidate_tried_by_type": {
+        "DODGE": 1000
+      },
+      "defended": 488,
+      "defense_attempt_by_type": {
+        "DODGE": 1000,
+        "PARRY": 512
+      },
+      "defense_attempts_total": 1512,
+      "defense_first_attempts": 1000,
+      "defense_first_failures": 512,
+      "defense_position_by_type": {
+        "DODGE": {
+          "1": 1000
+        },
+        "PARRY": {
+          "2": 512
+        }
+      },
+      "defense_second_attempts": 512,
+      "defense_second_failures": 512,
+      "defense_success_by_type": {
+        "DODGE": 488
+      },
+      "defense_third_attempts": 0,
+      "defense_third_failures": 0,
+      "fingerprint_expression_rate": 0.0,
+      "hits": 512,
+      "misses": 0,
+      "neighbor_mean": 0.0,
+      "primary_damage": 2048,
+      "primary_wounds": 512,
+      "reaction_damage": 0,
+      "reaction_wounds": 0,
+      "riposte_available": 0,
+      "riposte_defended": 0,
+      "riposte_executed": 0,
+      "riposte_hits": 0,
+      "riposte_kills": 0,
+      "riposte_share_damage": 0.0,
+      "riposte_share_wounds": 0.0,
+      "same_area_mean": 0.0,
+      "target_defeated": 0,
+      "total_actions": 1000,
+      "total_damage": 2048,
+      "total_wounds": 512,
+      "trials": 1000,
+      "unique_fingerprint_rate": 0.0
+    },
+    "war_mace": {
+      "accepted_rate": 1.0,
+      "candidate_effective_value_mean": {
+        "DODGE": 73.5,
+        "PARRY": 0.0,
+        "SHIELD_BLOCK": 0.0
+      },
+      "candidate_first_by_type": {
+        "DODGE": 1000
+      },
+      "candidate_second_by_type": {
+        "PARRY": 1000
+      },
+      "candidate_third_by_type": {},
+      "candidate_tried_by_type": {
+        "DODGE": 1000
+      },
+      "defended": 484,
+      "defense_attempt_by_type": {
+        "DODGE": 1000,
+        "PARRY": 516
+      },
+      "defense_attempts_total": 1516,
+      "defense_first_attempts": 1000,
+      "defense_first_failures": 516,
+      "defense_position_by_type": {
+        "DODGE": {
+          "1": 1000
+        },
+        "PARRY": {
+          "2": 516
+        }
+      },
+      "defense_second_attempts": 516,
+      "defense_second_failures": 516,
+      "defense_success_by_type": {
+        "DODGE": 484
+      },
+      "defense_third_attempts": 0,
+      "defense_third_failures": 0,
+      "fingerprint_expression_rate": 0.0,
+      "hits": 516,
+      "misses": 0,
+      "neighbor_mean": 0.0,
+      "primary_damage": 2064,
+      "primary_wounds": 516,
+      "reaction_damage": 0,
+      "reaction_wounds": 0,
+      "riposte_available": 0,
+      "riposte_defended": 0,
+      "riposte_executed": 0,
+      "riposte_hits": 0,
+      "riposte_kills": 0,
+      "riposte_share_damage": 0.0,
+      "riposte_share_wounds": 0.0,
+      "same_area_mean": 0.0,
+      "target_defeated": 0,
+      "total_actions": 1000,
+      "total_damage": 2064,
+      "total_wounds": 516,
+      "trials": 1000,
+      "unique_fingerprint_rate": 0.0
+    },
+    "war_staff": {
+      "accepted_rate": 1.0,
+      "candidate_effective_value_mean": {
+        "DODGE": 73.5,
+        "PARRY": 58.800000000001006,
+        "SHIELD_BLOCK": 0.0
+      },
+      "candidate_first_by_type": {
+        "DODGE": 1000
+      },
+      "candidate_second_by_type": {
+        "PARRY": 1000
+      },
+      "candidate_third_by_type": {},
+      "candidate_tried_by_type": {
+        "DODGE": 1000,
+        "PARRY": 1000
+      },
+      "defended": 543,
+      "defense_attempt_by_type": {
+        "DODGE": 1000,
+        "PARRY": 537
+      },
+      "defense_attempts_total": 1537,
+      "defense_first_attempts": 1000,
+      "defense_first_failures": 537,
+      "defense_position_by_type": {
+        "DODGE": {
+          "1": 1000
+        },
+        "PARRY": {
+          "2": 537
+        }
+      },
+      "defense_second_attempts": 537,
+      "defense_second_failures": 457,
+      "defense_success_by_type": {
+        "DODGE": 463,
+        "PARRY": 80
+      },
+      "defense_third_attempts": 0,
+      "defense_third_failures": 0,
+      "fingerprint_expression_rate": 0.0,
+      "hits": 457,
+      "misses": 0,
+      "neighbor_mean": 0.0,
+      "primary_damage": 1828,
+      "primary_wounds": 457,
+      "reaction_damage": 0,
+      "reaction_wounds": 0,
+      "riposte_available": 0,
+      "riposte_defended": 0,
+      "riposte_executed": 0,
+      "riposte_hits": 0,
+      "riposte_kills": 0,
+      "riposte_share_damage": 0.0,
+      "riposte_share_wounds": 0.0,
+      "same_area_mean": 0.0,
+      "target_defeated": 0,
+      "total_actions": 1000,
+      "total_damage": 1828,
+      "total_wounds": 457,
+      "trials": 1000,
+      "unique_fingerprint_rate": 0.0
+    },
+    "watch_halberd": {
+      "accepted_rate": 1.0,
+      "candidate_effective_value_mean": {
+        "DODGE": 73.5,
+        "PARRY": 29.400000000000503,
+        "SHIELD_BLOCK": 0.0
+      },
+      "candidate_first_by_type": {
+        "DODGE": 1000
+      },
+      "candidate_second_by_type": {
+        "PARRY": 1000
+      },
+      "candidate_third_by_type": {},
+      "candidate_tried_by_type": {
+        "DODGE": 1000,
+        "PARRY": 1000
+      },
+      "defended": 535,
+      "defense_attempt_by_type": {
+        "DODGE": 1000,
+        "PARRY": 521
+      },
+      "defense_attempts_total": 1521,
+      "defense_first_attempts": 1000,
+      "defense_first_failures": 521,
+      "defense_position_by_type": {
+        "DODGE": {
+          "1": 1000
+        },
+        "PARRY": {
+          "2": 521
+        }
+      },
+      "defense_second_attempts": 521,
+      "defense_second_failures": 465,
+      "defense_success_by_type": {
+        "DODGE": 479,
+        "PARRY": 56
+      },
+      "defense_third_attempts": 0,
+      "defense_third_failures": 0,
+      "fingerprint_expression_rate": 0.0,
+      "hits": 465,
+      "misses": 0,
+      "neighbor_mean": 0.0,
+      "primary_damage": 1860,
+      "primary_wounds": 465,
+      "reaction_damage": 0,
+      "reaction_wounds": 0,
+      "riposte_available": 0,
+      "riposte_defended": 0,
+      "riposte_executed": 0,
+      "riposte_hits": 0,
+      "riposte_kills": 0,
+      "riposte_share_damage": 0.0,
+      "riposte_share_wounds": 0.0,
+      "same_area_mean": 0.0,
+      "target_defeated": 0,
+      "total_actions": 1000,
+      "total_damage": 1860,
+      "total_wounds": 465,
+      "trials": 1000,
+      "unique_fingerprint_rate": 0.0
+    },
+    "watch_spear": {
+      "accepted_rate": 1.0,
+      "candidate_effective_value_mean": {
+        "DODGE": 73.5,
+        "PARRY": 58.800000000001006,
+        "SHIELD_BLOCK": 0.0
+      },
+      "candidate_first_by_type": {
+        "DODGE": 1000
+      },
+      "candidate_second_by_type": {
+        "PARRY": 1000
+      },
+      "candidate_third_by_type": {},
+      "candidate_tried_by_type": {
+        "DODGE": 1000,
+        "PARRY": 1000
+      },
+      "defended": 514,
+      "defense_attempt_by_type": {
+        "DODGE": 1000,
+        "PARRY": 536
+      },
+      "defense_attempts_total": 1536,
+      "defense_first_attempts": 1000,
+      "defense_first_failures": 536,
+      "defense_position_by_type": {
+        "DODGE": {
+          "1": 1000
+        },
+        "PARRY": {
+          "2": 536
+        }
+      },
+      "defense_second_attempts": 536,
+      "defense_second_failures": 486,
+      "defense_success_by_type": {
+        "DODGE": 464,
+        "PARRY": 50
+      },
+      "defense_third_attempts": 0,
+      "defense_third_failures": 0,
+      "fingerprint_expression_rate": 0.0,
+      "hits": 486,
+      "misses": 0,
+      "neighbor_mean": 0.0,
+      "primary_damage": 1944,
+      "primary_wounds": 486,
+      "reaction_damage": 0,
+      "reaction_wounds": 0,
+      "riposte_available": 0,
+      "riposte_defended": 0,
+      "riposte_executed": 0,
+      "riposte_hits": 0,
+      "riposte_kills": 0,
+      "riposte_share_damage": 0.0,
+      "riposte_share_wounds": 0.0,
+      "same_area_mean": 0.0,
+      "target_defeated": 0,
+      "total_actions": 1000,
+      "total_damage": 1944,
+      "total_wounds": 486,
+      "trials": 1000,
+      "unique_fingerprint_rate": 0.0
+    }
+  }
+}

@@ -30,7 +30,7 @@ START_CONTENT: tuple[LocationContent, ...] = (
         description=(
             "Wąska brama wciska trakt między kamienny mur i czarne belki strażnicy. "
             "Na hakach wiszą mokre płaszcze wartowników, a w koleinach stoi brunatna woda. "
-            "Miasto zaczyna się tu nie od rynku, lecz od kontroli, chłodu i zapachu starego żelaza."
+            "Od krat, łańcuchów i okutych wrót ciągnie zapach wilgotnego żelaza."
         ),
         inspectables={
             "brama": "Brama jest okuta żelazem. W rysach drewna zebrał się pył drogi i sadza z pochodni.",
@@ -172,6 +172,15 @@ _DETAILS = (
     "Na wysokości pasa ciągnie się rysa po ostrzu, długa i zbyt równa, by była przypadkowa.",
 )
 
+_CITY_OPENERS = (
+    lambda name, a, b, detail, atmosphere: f"{a} {atmosphere} {detail}",
+    lambda name, a, b, detail, atmosphere: f"{b} {atmosphere} {detail}",
+    lambda name, a, b, detail, atmosphere: f"Między fasadami {name.lower()} {a[:1].lower() + a[1:]} {atmosphere.lower()} {detail.lower()}",
+    lambda name, a, b, detail, atmosphere: f"Przy {name.lower()} {b[:1].lower() + b[1:]} {atmosphere.lower()} {detail.lower()}",
+    lambda name, a, b, detail, atmosphere: f"W {name.lower()} {a[:1].lower() + a[1:]} i {b[:1].lower() + b[1:]} {atmosphere.lower()} {detail.lower()}",
+    lambda name, a, b, detail, atmosphere: f"{detail} W takich miejscach {name.lower()} zwykle brzmi sucho, ale dziś trzyma się naturalnie.",
+)
+
 _DISTRICT_OVERRIDES: dict[int, LocationContent] = {
     2: LocationContent(
         room_id=2,
@@ -179,12 +188,12 @@ _DISTRICT_OVERRIDES: dict[int, LocationContent] = {
         description=(
             "Sercem miasta jest szeroki plac, na którym spotykają się kupcy, żołnierze i ludzie bez stałego zajęcia. "
             "Bruk jest tu lepiej utrzymany niż w bocznych ulicach, lecz wciąż nosi ślady kół i końskich podków. "
-            "Nad wszystkim wiszą mokre flagi i dym z pieców, a echo kroków odbija się od fasad jak od wnętrza studni."
+            "Nad wszystkim wiszą mokre flagi i dym z pieców, a echo kroków odbija się od fasad."
         ),
         inspectables={
             "studnia fontanna": "Kamienna studnia ma niski cembrowinowy krąg i żelazny kubeł na łańcuchu. Woda jest zimna i lekko słona od miejskiego pyłu.",
             "ogloszenia tablica słup": "Na słupie wiszą wyblakłe ogłoszenia o targach, straży i zaginionych rzeczach. Dwa z nich są dopisane ręką pisarza, nie urzędnika.",
-            "straz żołnierze ludzie": "Plac należy do wszystkich i nikogo. Straż patrzy tu nie na tłum, lecz na kieszenie i dłonie.",
+            "straz żołnierze ludzie": "Przy studni stoją ławy i skrzynie targowe. Straż patrzy raczej na ręce niż na twarze.",
         },
         items=(
             Item("ława targowa", "Niska, ciężka ława z ciemnego drewna. Służyła kupcom i czekającym klientom.", 5.0, 8, "market_bench_02", item_type="furniture"),
@@ -215,7 +224,7 @@ _DISTRICT_OVERRIDES: dict[int, LocationContent] = {
         description=(
             "Karczma stoi ciężko przy ulicy, z niskim dachem i szerokim wejściem od głównego szlaku w mieście. "
             "Przez otwarte okna wypływa zapach warzonego piwa, tłuszczu i mokrych płaszczy. "
-            "To miejsce jest głośne tylko wtedy, gdy jeszcze nie zapadła noc albo gdy ktoś właśnie postawił ostatni kubek na stole."
+            "Przy stołach słychać urywane rozmowy, ktoś odstawia kufel z brzękiem, a od paleniska idzie zapach pieczonego mięsa i mokrego drewna."
         ),
         inspectables={
             "lada karczmarz": "Lada jest gładka od łokci i kubków. Za nią wiszą haczyki na kufle, lecz połowa z nich jest pusta.",
@@ -227,6 +236,19 @@ _DISTRICT_OVERRIDES: dict[int, LocationContent] = {
             Item("miska gulaszu", "Gliniasta miska z resztką gulaszu. Jeszcze ciepła.", 0.8, 3, "tavern_stew_bowl_14", item_type="food", is_consumable=True, effects_on_consume={"restore_stamina": 16}),
             Item("dębowa ława", "Ława, która pamięta więcej rozmów niż niejeden urzędnik.", 6.0, 9, "tavern_oak_bench_14", item_type="furniture"),
         ),
+    ),
+    15: LocationContent(
+        room_id=15,
+        name="Tyły Karczmy",
+        description=(
+            "Tyły Karczmy należy do wąskiego zaplecza za kuchennym wejściem. "
+            "Przy ścianie stoją puste beczki, skrzynie po warzywach i poplamiony stół do czyszczenia kufli."
+        ),
+        inspectables={
+            "ludzie przechodnie mieszkancy mieszkańcy": "Najczęściej przewijają się tu ludzie z kuchni, tragarze i ci, którzy wolą wejść od tyłu niż przez salę.",
+            "beczki skrzynie": "Beczki są lekkie i suche, a skrzynie noszą ślady po mokrych warzywach i workach z solą.",
+            "stol kufle": "Stół ma nacięcia po nożach i ślady po piwie wycieranym byle szmatą.",
+        },
     ),
     25: LocationContent(
         room_id=25,
@@ -288,7 +310,7 @@ _DISTRICT_OVERRIDES: dict[int, LocationContent] = {
         description=(
             "Most łączy oba brzegi niewielkiej rzeki, która wcina się w miasto jak cienki, żywy nóż. "
             "Deski są mokre od mgły i rzeki, a pod spodem słychać tylko szum wody, zbyt cichy, by uspokoić człowieka przyzwyczajonego do kamiennych murów. "
-            "To miejsce wygląda skromnie, ale bez niego port i targ oddzieliłaby długa droga wokół bagiennych brzegów."
+            "Bez niego port i targ oddzieliłaby długa droga wokół bagiennych brzegów."
         ),
         inspectables={
             "rzeka woda": "Rzeka jest wąska, lecz szybka. Niesie patyki, pianę i czasem całe gałęzie z górnego biegu.",
@@ -568,7 +590,7 @@ _DISTRICT_OVERRIDES: dict[int, LocationContent] = {
         name="Brama Dungrim",
         description=(
             "Forteca Dungrim stoi na drodze jak zaciśnięta pięść. Brama jest wąska, wzmocniona żelazem i patrzona przez ludzi, którzy nie zadają pytań dwa razy. "
-            "To miejsce żyje rozkazem, zapasem i obawą przed tym, co może przyjść z traktu albo z pustki za nim."
+            "Przy przejeździe stoją beczki, skrzynie i tablice z rozkazami, a nad bramą wiszą ciężkie łańcuchy."
         ),
         inspectables={
             "brama trakt": "Brama została zaprojektowana tak, by zatrzymać wóz, znużyć konia i rozgniewać kupca.",
@@ -914,10 +936,8 @@ def _district_content(room_id: int, index: int, name: str) -> LocationContent:
         return override
     feature_a = _FEATURES[index % len(_FEATURES)]
     feature_b = _FEATURES[(index + 3) % len(_FEATURES)]
-    description = (
-        f"{name} należy do gęstego, roboczego serca twierdzy. {_ATMOSPHERE[index % len(_ATMOSPHERE)]} "
-        f"{_DETAILS[index % len(_DETAILS)]}"
-    )
+    opener = _CITY_OPENERS[index % len(_CITY_OPENERS)](name, feature_a[1], feature_b[1], _DETAILS[index % len(_DETAILS)], _ATMOSPHERE[index % len(_ATMOSPHERE)])
+    description = opener[0].upper() + opener[1:] if opener else name
     inspectables = {
         feature_a[0]: feature_a[1],
         feature_b[0]: feature_b[1],
@@ -1033,11 +1053,11 @@ _D351B_ZONE_DATA: dict[str, tuple[range, tuple[str, ...], str, str, tuple[str, s
 }
 
 _D351B_ATMOSPHERE = (
-    "Nie ma tu nic przypadkowego: droga, zabudowania i ludzie istnieją dzięki twierdzy, ale nie są jej częścią.",
-    "Powietrze niesie pył, dym i ciężki zapach pracy, której nie widać z murów miasta.",
-    "To miejsce jest zbyt zwyczajne, by lekceważyć jego znaczenie; tędy przechodzą towary, plotki i strach.",
-    "Dalej od bram Astergardu cisza robi się szersza, a każdy skręt drogi zaczyna mieć własną cenę.",
-    "Lokalni znają skróty, lecz obcy szybko rozumie, że mapa nie zastąpi pamięci nóg.",
+    "Przy bramach stoją beczki, skrzynie i płoty naprawiane po zimie.",
+    "Pył, dym i zapach wilgotnego drewna wiszą nisko między domami.",
+    "Towary, głosy i biegnące dzieci mijają się tu bez chwili przerwy.",
+    "Od bram miasta dalej słychać stuk kół, nawoływania i psy przy płotach.",
+    "Skróty znają głównie ci, którzy codziennie mijają ten sam kamień milowy.",
 )
 
 _TRACT_ITEM_MAP: dict[int, tuple[Item, ...]] = {
@@ -1109,7 +1129,7 @@ def _tract_profile_for(name: str, _index: int) -> tuple[str, dict[str, str]]:
         )
     if any(marker in lowered for marker in ("popas", "zajazd", "ognisko", "postoj", "postoju")):
         return (
-            "To miejsce służy odpoczynkowi, naprawie uprzęży i cichym rozmowom przy ogniu.",
+            "Przy ogniu stoją skrzynki, kubki i uprząż zdjęta z wozów.",
             {
                 "ognisko": "Kamienie przy ognisku są czarne od wielu drobnych postojów.",
                 "sakwa": "Rozłożone sakwy, kubki i garnki wskazują, że ktoś tu nocował dosłownie przed chwilą.",
@@ -1498,7 +1518,7 @@ _FORTRESS_CONTENT: dict[int, LocationContent] = {
         inspectables={
             "prycze skrzynie": "Prycze są ustawione równo, a skrzynie stoją pod ścianą z numerami kompanii.",
             "tablica rozkaz": "Na tablicy wiszą krótkie rozkazy i zmiany wart, zapisane dużymi literami.",
-            "buty pasy": "Buty, pasy i mokre płaszcze schną tutaj szybciej niż charakter nowicjusza.",
+            "buty pasy": "Buty, pasy i mokre płaszcze wiszą przy ścianie obok zbroi i uprzęży.",
         },
         items=(Item("posłanie koszarowe", "Skręcone posłanie i koc odłożony po zmianie.", 1.8, 3, "dungrim_barracks_roll_116"),),
     ),
@@ -1617,11 +1637,63 @@ def _d351b_content(room_id: int, index: int, name: str, label: str, terrain: str
         return _HALDUN_CONTENT[room_id]
     if room_id in _FORTRESS_CONTENT:
         return _FORTRESS_CONTENT[room_id]
+    if room_id == 60:
+        return LocationContent(
+            room_id=60,
+            name="Błotna Brama",
+            description=(
+                "Błotna Brama trzyma południowy wjazd podgrodzia. "
+                "W wysokich odgrodach odcisnęły się koła wozów, a przy zawiasach widać świeżą smołę i naprawiane po zimie deski. "
+                "To tutaj ruch zwalnia, bo każdy musi minąć wartę, palenisko i szeroką koleinę pełną brunatnej wody."
+            ),
+            inspectables={
+                "brama wjazd": "Brama jest ciężka, obita żelazem i ciągle obmacana przez dłonie wartowników. Widać na niej ślady po linach, mokrym błocie i uderzeniach kół.",
+                "warta wartownicy": "Wartownicy siedzą tu bliżej ognia niż muru. Pilnują nie tyle samej drogi, ile tego, kto wjeżdża i z czym wraca.",
+                "koleina błoto woda": "Najgłębsza koleina zbiera wodę z całego przedmieścia. Kto w niej stanie, zostawia po sobie ślad na długo.",
+            },
+            items=(
+                Item("drewniane wiadro", "Wiadro z grubych klepek, dobre do noszenia wody albo zboża.", 1.1, 3, "bucket_60", item_type="tool"),
+                Item("wóz furmański", "Zniszczony wóz na szerokich kołach, wciąż gotowy do krótkiego kursu przez błoto.", 48.0, 25, "podgrodzie_cart_60", item_type="furniture"),
+                Item("złamane koło wozu", "Pęknięte koło zdjęte z wozu. Da się je jeszcze naprawić u dobrego kowala.", 7.0, 6, "podgrodzie_broken_wheel_60", item_type="tool"),
+            ),
+        )
+    if room_id == 95:
+        return LocationContent(
+            room_id=95,
+            name="Wschodnia Furta Łowców",
+            description=(
+                "Wschodnia furta otwiera się na wąski przesmyk między palisadą a pierwszymi drzewami. "
+                "Z jednej strony stoi suszarnia skór, z drugiej wiszą pęki sidła i świeżo obrane kłody. "
+                "To wejście do osady działa bardziej jak punkt wymiany niż prawdziwa brama: tu oddaje się zwierzynę, odbiera narzędzia i liczy, kto wrócił z lasu."
+            ),
+            inspectables={
+                "furta palisada": "Furta jest niska i praktyczna, z szerokimi zawiasami oraz śladami po częstym otwieraniu. Na belce widać nacięcia od noży i haków.",
+                "suszarnia skory": "Z suszarni dobiega ostry zapach dymu i tłuszczu. Skóry wiszą tam tak gęsto, że tworzą niemal drugą ścianę.",
+                "sidła kłody": "Przy furcie leżą sidła, kołki i kawałki świeżego drewna. Wszystko jest przygotowane do szybkiego wyjścia w las.",
+            },
+            items=(Item("wiązka sideł", "Zbiór sideł z powrozem i pętlami.", 1.0, 7, "hunter_traps_95", item_type="tool"),),
+        )
     if 135 <= room_id <= 179:
+        if room_id == 135:
+            return LocationContent(
+                room_id=135,
+                name="Kapliczka Podróżnych za Murem",
+                description=(
+                    "Kamienna kapliczka stoi przy rozjeździe, trochę cofnięta od traktu, żeby wozy nie rozbijały jej przy każdym mijaniu. "
+                    "Nad niszami wiszą woski i drobne dary zostawione przez ludzi, którzy chcą bezpiecznie minąć kolejne mile. "
+                    "Miejsce służy odpoczynkowi, modlitwie i sprawdzeniu uprzęży, zanim droga znów zawęzi się między mokrą ziemią a rowem."
+                ),
+                inspectables={
+                    "kamien kapliczka": "Kamień jest wygładzony od dłoni i deszczu. W niszach stoją wypalone świece, kawałki sznurka i kilka monet zostawionych na szczęście.",
+                    "ofiary świece wosk": "Ofiary są skromne: garść ziarna, kawałek wstążki, odłamek kości albo świeca dopalona do połowy.",
+                    "trakt rozjazd": "Rozjazd rozsuwa drogę na dwa niepewne kierunki. Kapliczka stoi dokładnie tam, gdzie podróżny musi na chwilę zwolnić.",
+                },
+                items=_TRACT_ITEM_MAP.get(room_id, ()),
+                hidden_items=(),
+            )
         lead, inspectables = _tract_profile_for(name, index)
         description = (
-            f"{name} leży w strefie: {label}. {lead} "
-            f"{_D351B_ATMOSPHERE[index % len(_D351B_ATMOSPHERE)]}"
+            f"{name}. {lead} {_D351B_ATMOSPHERE[index % len(_D351B_ATMOSPHERE)]}"
         )
         tract_items = _TRACT_ITEM_MAP.get(room_id, ())
         tract_hidden_items: tuple[tuple[Item, int], ...] = ()
@@ -1629,8 +1701,7 @@ def _d351b_content(room_id: int, index: int, name: str, label: str, terrain: str
             tract_hidden_items = ((Item("miedziana moneta", "Brudna miedziana moneta zgubiona przy drodze.", 0.01, 1, f"road_copper_{room_id}"), 8),)
         return LocationContent(room_id=room_id, name=name, description=description, inspectables=inspectables, items=tract_items, hidden_items=tract_hidden_items)
     description = (
-        f"{name} leży w strefie: {label}. To {terrain}, ukształtowany przez codzienny ruch ludzi, wozów i patroli. "
-        f"{_D351B_ATMOSPHERE[index % len(_D351B_ATMOSPHERE)]}"
+        f"{name}. {feature_a[1]} {_D351B_ATMOSPHERE[index % len(_D351B_ATMOSPHERE)]}"
     )
     inspectables = {feature_a[0]: feature_a[1], feature_b[0]: feature_b[1], feature_c[0]: feature_c[1]}
     items: tuple[Item, ...] = ()
@@ -1766,8 +1837,7 @@ def _d351c_forest_content(room_id: int, index: int, name: str) -> LocationConten
     feature_b = _D351C_FEATURES[(index + 3) % len(_D351C_FEATURES)]
     feature_c = _D351C_FEATURES[(index + 5) % len(_D351C_FEATURES)]
     description = (
-        f"{name} należy do Puszczy Ciszy, pierwszego wielkiego lasu poza bezpiecznym ruchem traktów. "
-        f"{_D351C_ATMOSPHERE[index % len(_D351C_ATMOSPHERE)]} "
+        f"{name}. {_D351C_ATMOSPHERE[index % len(_D351C_ATMOSPHERE)]} "
         "Ścieżka istnieje tu tylko dlatego, że wiele stóp powtarzało ten sam błąd przez lata."
     )
     inspectables = {
@@ -1872,11 +1942,11 @@ _D351D_NAMES = (
 )
 
 _D351D_ATMOSPHERE = (
-    "Knieja nie tłumi dźwięków jak puszcza; ona je połyka, a potem oddaje w niewłaściwym miejscu.",
-    "Dawny trakt istnieje tu już tylko jako różnica w gęstości mchu i kierunku, w którym rosną młode pnie.",
-    "Powietrze jest cięższe, chłodniejsze i wyraźnie starsze niż przy zwykłych leśnych drogach.",
-    "Każde przejście wygląda możliwie, ale tylko niektóre prowadzą dalej niż do mokrego dołu albo ściany jałowców.",
-    "To miejsce nie straszy krzykiem. Straszy tym, że nic nie musi krzyczeć, żeby człowiek zaczął iść szybciej.",
+    "Dźwięk urywa się tu szybko między pniami i krzakami.",
+    "Dawny trakt zdradzają tylko ugnieciony mech i równiej rosnące młode pnie.",
+    "Powietrze jest cięższe i chłodniejsze niż przy zwykłych leśnych drogach.",
+    "Wiele przejść kończy się mokrym dołem albo ścianą jałowców.",
+    "Gałęzie, korzenie i ciemne zagłębienia zmuszają do krótszych kroków.",
 )
 
 _D351D_FEATURES = (
@@ -1896,8 +1966,7 @@ def _d351d_deep_forest_content(room_id: int, index: int, name: str) -> LocationC
     feature_b = _D351D_FEATURES[(index + 2) % len(_D351D_FEATURES)]
     feature_c = _D351D_FEATURES[(index + 5) % len(_D351D_FEATURES)]
     description = (
-        f"{name} leży w Kniei Cichych Ścieżek, głębszej i mniej uczęszczanej niż Puszcza Ciszy. "
-        f"{_D351D_ATMOSPHERE[index % len(_D351D_ATMOSPHERE)]} "
+        f"{name}. {_D351D_ATMOSPHERE[index % len(_D351D_ATMOSPHERE)]} "
         "Drogę wyznaczają tu nie tablice, lecz pamięć, nacięcia w korze i ostrożność ludzi, którzy wrócili."
     )
     inspectables = {feature_a[0]: feature_a[1], feature_b[0]: feature_b[1], feature_c[0]: feature_c[1]}
@@ -2004,7 +2073,7 @@ def _d351e_pass_content(room_id: int, index: int, name: str) -> LocationContent:
             name=name,
             description=(
                 "Wieża Zwiadowców stoi wyżej niż reszta przejazdu i patrzy na szlak, zanim ten zdąży skręcić ku śniegu. "
-                "To miejsce służy bardziej obserwacji niż obronie, ale w przełęczy jedno bez drugiego długo nie działa."
+                "Wieża stoi wyżej niż reszta przejazdu. Z jej okien widać skręt szlaku, śnieżne języki między skałami i dalekie ogniska na dole."
             ),
             inspectables={
                 "luneta okno": "Przy oknie leży luneta z porysowaną soczewką. Zwiadowcy używają jej do liczenia karawan i śledzenia chmur.",
@@ -2088,11 +2157,11 @@ def _d351e_pass_content(room_id: int, index: int, name: str) -> LocationContent:
             name=name,
             description=(
                 "Kaplica Przełęczy jest mała i surowa, ale podróżni zostawiają tu świece, kamyki i krótkie modlitwy. "
-                "To miejsce nie zatrzymuje wiatru, tylko pozwala ludziom wziąć oddech przed następnym podejściem."
+                "W kapliczce stoją świece, kamyki i mały dzwonek, a wiatr porusza tylko wstęgami przy wejściu."
             ),
             inspectables={
                 "misa świece": "W kamiennej misie stoją świece, skrawki wosku i kilka drobnych monet.",
-                "wstęgi dzwonek": "Wstęgi przy wejściu trzepoczą nawet wtedy, gdy wiatr wydaje się cichnąć.",
+                "wstęgi dzwonek": "Wstęgi przy wejściu trzepoczą nawet przy słabszym wietrze.",
                 "kamień cisza": "Kamień jest tu gładszy od reszty strażnicy, bo ludzie odruchowo ściszają głos.",
             },
             items=(
@@ -2136,9 +2205,8 @@ def _d351e_pass_content(room_id: int, index: int, name: str) -> LocationContent:
     feature_a = _D351E_PASS_FEATURES[index % len(_D351E_PASS_FEATURES)]
     feature_b = _D351E_PASS_FEATURES[(index + 2) % len(_D351E_PASS_FEATURES)]
     description = (
-        f"{name} należy do Strażnicy Przełęczy, kamiennego wąskiego gardła między Astergardem a Mekharą. "
-        f"{_D351E_PASS_ATMOSPHERE[index % len(_D351E_PASS_ATMOSPHERE)]} "
-        "To miejsce ma więcej wspólnego z rygorem niż z chwałą: liczy wozy, ludzi i zapasy, zanim pozwoli im wejść w góry."
+        f"{name}. {_D351E_PASS_ATMOSPHERE[index % len(_D351E_PASS_ATMOSPHERE)]} "
+        "Przy przejeździe stoją tablice z rozkazami, listy opłat i stosy zapasowych belek."
     )
     inspectables = {feature_a[0]: feature_a[1], feature_b[0]: feature_b[1], "znaki rozkazy tablice": "Tablice są krótkie: opłaty, zakazy, ostrzeżenia przed śniegiem i lista tych, którzy nie wrócili."}
     return LocationContent(room_id=room_id, name=name, description=description, inspectables=inspectables)
@@ -2149,8 +2217,7 @@ def _d351e_mountain_content(room_id: int, index: int, name: str) -> LocationCont
     feature_b = _D351E_MOUNTAIN_FEATURES[(index + 3) % len(_D351E_MOUNTAIN_FEATURES)]
     feature_c = _D351E_MOUNTAIN_FEATURES[(index + 5) % len(_D351E_MOUNTAIN_FEATURES)]
     description = (
-        f"{name} leży w Górach Mekhara, gdzie droga jest bardziej umową z terenem niż ludzkim dziełem. "
-        f"{_D351E_MOUNTAIN_ATMOSPHERE[index % len(_D351E_MOUNTAIN_ATMOSPHERE)]} "
+        f"{name}. {_D351E_MOUNTAIN_ATMOSPHERE[index % len(_D351E_MOUNTAIN_ATMOSPHERE)]} "
         "Każdy zakos odsłania inną cenę przejścia: czas, ostrożność albo krew."
     )
     inspectables = {feature_a[0]: feature_a[1], feature_b[0]: feature_b[1], feature_c[0]: feature_c[1]}
@@ -2191,7 +2258,7 @@ _D351F_MINE_ATMOSPHERE = (
     "Stempli jest tu więcej niż zaufania. Każdy trzyma skałę, lecz żaden nie wygląda na wieczny.",
     "Czerwonawe żyły w kamieniu przypominają zaschnięte rany góry, z których ludzie uczynili dochód.",
     "Światło lamp nie rozprasza ciemności, tylko pokazuje, gdzie zaczyna się następna.",
-    "To miejsce nie jest opuszczone; raczej czeka, aż ktoś znów uzna żelazo za warte ryzyka.",
+    "W korytarzach stoją stemple, lampy i świeże kliny wbite w skałę.",
 )
 
 _D351F_CAVE_ATMOSPHERE = (
@@ -2228,8 +2295,7 @@ def _d351f_mine_content(room_id: int, index: int, name: str) -> LocationContent:
     feature_b = _D351F_MINE_FEATURES[(index + 3) % len(_D351F_MINE_FEATURES)]
     feature_c = _D351F_MINE_FEATURES[(index + 5) % len(_D351F_MINE_FEATURES)]
     description = (
-        f"{name} należy do Kopalni Żelaza pod Mekharą, miejsca, gdzie Astergard płaci za broń ciemnością i pyłem. "
-        f"{_D351F_MINE_ATMOSPHERE[index % len(_D351F_MINE_ATMOSPHERE)]} "
+        f"{name}. {_D351F_MINE_ATMOSPHERE[index % len(_D351F_MINE_ATMOSPHERE)]} "
         "Każdy chodnik ma tu praktyczny sens: prowadzi do rudy, powietrza, wody albo wyjścia, jeśli góra pozwoli."
     )
     inspectables = {feature_a[0]: feature_a[1], feature_b[0]: feature_b[1], feature_c[0]: feature_c[1]}
@@ -2247,9 +2313,8 @@ def _d351f_cave_content(room_id: int, index: int, name: str) -> LocationContent:
     feature_b = _D351F_CAVE_FEATURES[(index + 2) % len(_D351F_CAVE_FEATURES)]
     feature_c = _D351F_CAVE_FEATURES[(index + 4) % len(_D351F_CAVE_FEATURES)]
     description = (
-        f"{name} należy do Jaskiń Wilków, naturalnego labiryntu przy starych sztolniach. "
-        f"{_D351F_CAVE_ATMOSPHERE[index % len(_D351F_CAVE_ATMOSPHERE)]} "
-        "Człowiek jest tu intruzem: zbyt głośnym, zbyt prostym i zbyt wolnym."
+        f"{name}. {_D351F_CAVE_ATMOSPHERE[index % len(_D351F_CAVE_ATMOSPHERE)]} "
+        "Na kamieniach widać ślady łap, otarte krawędzie i resztki sierści zaczepione o ostre odłamy skały."
     )
     inspectables = {feature_a[0]: feature_a[1], feature_b[0]: feature_b[1], feature_c[0]: feature_c[1]}
     items: tuple[Item, ...] = ()
@@ -2300,10 +2365,9 @@ def _d351g_ruins_content(room_id: int, index: int, name: str) -> LocationContent
     feature_b = _D351G_RUINS_FEATURES[(index + 3) % len(_D351G_RUINS_FEATURES)]
     feature_c = _D351G_RUINS_FEATURES[(index + 5) % len(_D351G_RUINS_FEATURES)]
     description = (
-        f"{name} należy do Ruin Karshold, dawnej twierdzy granicznej spalonej podczas wojny, "
-        f"o której miejscowi mówią tylko wtedy, gdy ogień w palenisku jest już niski. "
+        f"{name}. Dawna twierdza graniczna spłonęła tu podczas wojny; w murach widać nadpalone kamienie, odłupane blanki i czarny osad. "
         f"{_D351G_RUINS_ATMOSPHERE[index % len(_D351G_RUINS_ATMOSPHERE)]} "
-        "To miejsce nie służy już obronie granicy; teraz broni tylko własnych sekretów."
+        "Przy ziemi leżą zwęglone belki, a w szczelinach murów trzyma się sadza."
     )
     inspectables = {
         feature_a[0]: feature_a[1],
@@ -2358,8 +2422,7 @@ def _d351h_swamp_content(room_id: int, index: int, name: str) -> LocationContent
     feature_b = _D351H_SWAMP_FEATURES[(index + 2) % len(_D351H_SWAMP_FEATURES)]
     feature_c = _D351H_SWAMP_FEATURES[(index + 5) % len(_D351H_SWAMP_FEATURES)]
     description = (
-        f"{name} należy do Bagien Hookri, rozległego mokradła na skraju starych traktów i zapomnianych ruin. "
-        f"{_D351H_SWAMP_ATMOSPHERE[index % len(_D351H_SWAMP_ATMOSPHERE)]} "
+        f"{name}. {_D351H_SWAMP_ATMOSPHERE[index % len(_D351H_SWAMP_ATMOSPHERE)]} "
         "To teren, który nie potrzebuje murów ani straży; sam wybiera, kogo przepuści dalej."
     )
     inspectables = {
@@ -2415,3 +2478,22 @@ def apply_content_pack(locations: dict[int, Location], content_pack: tuple[Locat
         for item, difficulty in content.hidden_items:
             if all(getattr(hidden.get("data"), "vnum", None) != item.vnum for hidden in loc.hidden_elements):
                 loc.hidden_elements.append({"type": "item", "data": item, "difficulty": difficulty})
+    from astergard.narrative import infer_exit_kind
+
+    for loc in locations.values():
+        for exit_ in loc.exits.values():
+            if not exit_.kind:
+                exit_.kind = infer_exit_kind(loc.zone, next((direction for direction, candidate in loc.exits.items() if candidate is exit_), ""), loc.name)
+        for item in loc.items:
+            if not item.presentation_category:
+                item.presentation_category = item.scene_category()
+            if not item.scene_position:
+                item.scene_position = {
+                    "portable_item": "na ziemi",
+                    "corpse": "na ziemi",
+                    "furniture": "pod ścianą",
+                    "container": "pod ścianą",
+                    "resource": "w otoczeniu",
+                    "fixture": "w otoczeniu",
+                    "scenery": "w otoczeniu",
+                }.get(item.presentation_category, "na ziemi")

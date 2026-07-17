@@ -2,11 +2,14 @@ from __future__ import annotations
 
 import json
 import sqlite3
+import warnings
 from typing import Any
 
 from astergard.database.connections import SQLiteConnectionFactory
 from astergard.items.models import Item
 from astergard.npcs.models import NPC, NPCFactory
+from astergard.rules.combat_specialization import resolve_active_defense_style
+from astergard.state import CharacterState, parse_character_state
 from astergard.world.manager import WorldManager
 from astergard.world.models import Exit
 
@@ -91,6 +94,13 @@ class WorldStateRepository:
                         "is_door": exit_.is_door,
                         "is_locked": exit_.is_locked,
                         "key_vnum": exit_.key_vnum,
+                        "kind": exit_.kind,
+                        "description": exit_.description,
+                        "visible": exit_.visible,
+                        "width": exit_.width,
+                        "slope": exit_.slope,
+                        "material": exit_.material,
+                        "requirements": list(exit_.requirements),
                     }
                     for direction, exit_ in loc.exits.items()
                 },
@@ -126,6 +136,13 @@ class WorldStateRepository:
                             is_door=bool(data.get("is_door", False)),
                             is_locked=bool(data.get("is_locked", False)),
                             key_vnum=data.get("key_vnum"),
+                            kind=str(data.get("kind", "")),
+                            description=str(data.get("description", "")),
+                            visible=bool(data.get("visible", True)),
+                            width=str(data.get("width", "normal")),
+                            slope=str(data.get("slope", "plaski")),
+                            material=str(data.get("material", "")),
+                            requirements=tuple(str(item) for item in data.get("requirements", []) if isinstance(item, str)),
                         )
                         for direction, data in exits.items()
                         if isinstance(data, dict)
@@ -159,6 +176,8 @@ class WorldStateRepository:
                 npc.is_merchant = bool(npc_payload.get("is_merchant", npc.is_merchant))
                 npc.merchant_gold = int(npc_payload.get("merchant_gold", npc.merchant_gold))
                 npc.shop_inventory = [Item.from_dict(item) for item in npc_payload.get("shop_inventory", []) if isinstance(item, dict)]
+                npc.character.room_id = npc.room_id
+                npc.character.combat_identity = npc.id
                 char_payload = npc_payload.get("character")
                 if isinstance(char_payload, dict):
                     self._hydrate_npc_character(npc, char_payload)
@@ -207,17 +226,17 @@ class WorldStateRepository:
             "is_merchant": npc.is_merchant,
             "merchant_gold": npc.merchant_gold,
             "shop_inventory": [item.to_dict() for item in npc.shop_inventory],
-                "character": {
-                    "stats": npc.character.stats.__dict__,
-                    "skills": npc.character.skills.to_dict(),
-                    "inventory": [item.to_dict() for item in npc.character.inventory],
-                    "equipment": {slot: item.to_dict() if item is not None else None for slot, item in npc.character.equipment.items()},
-                    "wounds": npc.character.wounds,
+            "character": {
+                "stats": npc.character.stats.__dict__,
+                "skills": npc.character.skills.to_dict(),
+                "inventory": [item.to_dict() for item in npc.character.inventory],
+                "equipment": {slot: item.to_dict() if item is not None else None for slot, item in npc.character.equipment.items()},
+                "wounds": npc.character.wounds,
                 "gold": npc.character.gold,
                 "is_alive": npc.character.is_alive,
-                "in_combat": npc.character.in_combat,
                 "combat_style": npc.character.combat_style,
-                "state": npc.character.state,
+                "active_defense_style": npc.character.active_defense_style,
+                "state": CharacterState.DEAD.value if not npc.character.is_alive else CharacterState.ALIVE.value,
             },
         }
 
@@ -241,10 +260,30 @@ class WorldStateRepository:
             npc.character.wounds = {str(part): int(level) for part, level in wounds.items()}
         npc.character.gold = int(data.get("gold", npc.character.gold))
         if "state" in data:
-            npc.character.state = str(data["state"])
-            npc.character.sync_flags_from_state()
+            legacy_state = parse_character_state(str(data["state"]))
+            npc.character.is_alive = legacy_state is not CharacterState.DEAD
+            if legacy_state is CharacterState.IN_COMBAT or bool(data.get("in_combat", False)):
+                warnings.warn(
+                    f"Przejściowy stan walki NPC {npc.id} został wyczyszczony podczas odczytu świata.",
+                    stacklevel=2,
+                )
+            npc.character.in_combat = False
+            npc.character.sync_state_from_flags()
         else:
             npc.character.is_alive = bool(data.get("is_alive", npc.character.is_alive))
-            npc.character.in_combat = bool(data.get("in_combat", npc.character.in_combat))
+            if bool(data.get("in_combat", False)):
+                warnings.warn(
+                    f"Przejściowy stan walki NPC {npc.id} został wyczyszczony podczas odczytu świata.",
+                    stacklevel=2,
+                )
+            npc.character.in_combat = False
             npc.character.sync_state_from_flags()
         npc.character.combat_style = str(data.get("combat_style", npc.character.combat_style))
+        active_defense_style = data.get("active_defense_style")
+        resolved_defense_style = resolve_active_defense_style(active_defense_style)
+        if active_defense_style is not None and resolved_defense_style is None:
+            warnings.warn(
+                f"Nieznany aktywny styl obrony NPC {npc.id} został wyczyszczony podczas odczytu świata.",
+                stacklevel=2,
+            )
+        npc.character.active_defense_style = resolved_defense_style.value if resolved_defense_style is not None else None

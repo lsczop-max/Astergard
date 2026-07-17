@@ -44,6 +44,167 @@ from astergard.npcs.threat import apply_threat_profile, threat_for_vnum
 from astergard.state import NPC_STATE_MACHINE, NPCState, parse_npc_state
 
 
+def _phase_from_hour(hour: int | None) -> str:
+    if hour is None:
+        return "dzień"
+    hour = hour % 24
+    if 4 <= hour < 7:
+        return "świt"
+    if 7 <= hour < 11:
+        return "poranek"
+    if 11 <= hour < 16:
+        return "dzień"
+    if 16 <= hour < 20:
+        return "wieczór"
+    return "noc"
+
+
+def _lower_first(text: str) -> str:
+    return text[:1].lower() + text[1:] if text else text
+
+
+def _pick_fragment(options: tuple[str, ...], key: str) -> str:
+    if not options:
+        return ""
+    return options[sum(ord(ch) for ch in key) % len(options)]
+
+
+_SCENE_FRAGMENTS: dict[str, dict[str, tuple[str, ...]]] = {
+    "świt": {
+        "default": (
+            "otwiera okiennice",
+            "zamiata próg",
+            "rozpala piec",
+            "sprawdza zamki",
+            "wyprowadza zwierzęta",
+        ),
+        "deszcz": (
+            "strząsa wodę z kaptura",
+            "przykrywa towary płótnem",
+            "domyka okiennice",
+        ),
+        "wiatr": (
+            "przytrzymuje płaszcz przed podmuchem",
+            "poprawia chorągiewkę",
+            "dociska skrzynię do ściany",
+        ),
+        "mróz": (
+            "trze dłonie i dmucha w palce",
+            "rozbija cienki lód na kałuży",
+            "sprawdza, czy woda w wiadrze nie zamarzła",
+        ),
+        "upał": (
+            "otwiera szerzej drzwi",
+            "szuka cienia pod okapem",
+            "zwalnia krok, zanim słońce dobrze wejdzie na bruk",
+        ),
+    },
+    "dzień": {
+        "default": (
+            "układa towary",
+            "przelicza monety",
+            "wyciera blat",
+            "sprawdza zapasy",
+            "nawołuje klientów",
+            "obchodzi plac",
+            "naprawia uprząż",
+        ),
+        "deszcz": (
+            "ściąga kaptur nisko na czoło",
+            "przykrywa skrzynki płótnem",
+            "zbiera towar spod okapu",
+        ),
+        "wiatr": (
+            "przytrzymuje drzwi",
+            "prostuje szyld",
+            "dociska płachtę do lady",
+        ),
+        "mróz": (
+            "rozgrzewa dłonie nad kubkiem",
+            "dmucha w palce",
+            "otrząsa szron z płaszcza",
+        ),
+        "upał": (
+            "przenosi pracę w cień",
+            "otwiera szerzej okno",
+            "zwalnia tempo i ociera pot z czoła",
+        ),
+    },
+    "wieczór": {
+        "default": (
+            "przykrywa towary płótnem",
+            "zamyka okiennice",
+            "zapala pochodnię",
+            "zlicza zapasy",
+            "odprowadza gości",
+        ),
+        "deszcz": (
+            "osłania wejście przed deszczem",
+            "otrząsa wodę z ramion",
+            "przesuwa skrzynki pod dach",
+        ),
+        "wiatr": (
+            "sprawdza zasuwę przy drzwiach",
+            "podnosi kołnierz",
+            "przywiązuje luźną płachtę",
+        ),
+        "mróz": (
+            "dokłada drewna do paleniska",
+            "zamyka szczelniej wejście",
+            "ustawia świecę bliżej okna",
+        ),
+        "upał": (
+            "zostawia otwarte okno",
+            "przesiada się bliżej chłodniejszej ściany",
+            "powoli porządkuje ladę, zanim zrobi się duszno",
+        ),
+    },
+    "noc": {
+        "default": (
+            "patroluje przejście",
+            "nasłuchuje kroków",
+            "dogląda ognia",
+            "zamyka drzwi po ostatnich gościach",
+            "siedzi przy ścianie i czeka na zmianę",
+        ),
+        "deszcz": (
+            "patrzy przez mokrą szybę",
+            "nasłuchuje deszczu na dachu",
+            "trzyma się bliżej ognia",
+        ),
+        "wiatr": (
+            "sprawdza zasuwę i zasłony",
+            "przytrzymuje płonącą latarnię",
+            "zamyka okiennice, nim podmuch je wyrwie",
+        ),
+        "mróz": (
+            "rozgrzewa dłonie przy ogniu",
+            "dmucha na palce",
+            "zaciąga płaszcz ciaśniej pod szyję",
+        ),
+        "upał": (
+            "stoi przy otwartym oknie",
+            "szuka chłodu przy progu",
+            "odsuwa krzesło od dusznej ściany",
+        ),
+    },
+}
+
+
+def _weather_hint(weather: str | None) -> str:
+    if weather == "deszcz":
+        return "deszcz"
+    if weather == "burza":
+        return "wiatr"
+    if weather == "mgla":
+        return "noc"
+    if weather == "sniezyca":
+        return "mróz"
+    if weather == "slonecznie":
+        return "upał"
+    return "default"
+
+
 @dataclass(slots=True)
 class NPC:
     vnum: str
@@ -68,6 +229,9 @@ class NPC:
     daily_activity: str = ""
     daily_target_room_id: int | None = None
     daily_phase: str = ""
+    presentation_category: str = "npc"
+    scene_position: str | None = None
+    forms: dict[str, str] = field(default_factory=dict)
 
     def transition_ai_state(self, target: str | NPCState) -> None:
         current = parse_npc_state(self.ai_state)
@@ -82,11 +246,25 @@ class NPC:
             return lines[2]
         return lines[0]
 
-    def scene_line(self) -> str:
-        if not self.daily_activity:
-            return self.short_desc
-        activity = self.daily_activity[:1].lower() + self.daily_activity[1:]
-        return f"{self.name[:1].upper() + self.name[1:]} {activity}"
+    def scene_line(self, time_of_day: int | None = None, weather: str | None = None, zone: str | None = None) -> str:
+        base = self.short_desc.strip().rstrip(".")
+        phase = self.daily_phase or _phase_from_hour(time_of_day)
+        activity = self.daily_activity.strip().rstrip(".")
+        if not activity:
+            activity = self.daily_schedule.get(phase, self.daily_schedule.get("dzień", "")).strip().rstrip(".")
+        if self.vnum == "podgrodzie_kowal" and phase == "noc" and activity:
+            return f"Kowal {_lower_first(activity)}."
+        weather_key = _weather_hint(weather)
+        fragment_pool = _SCENE_FRAGMENTS.get(phase, _SCENE_FRAGMENTS["dzień"])
+        key = f"{self.vnum}:{self.id}:{phase}:{weather_key}:{zone or self.zone}"
+        fragment = _pick_fragment(fragment_pool.get(weather_key) or fragment_pool["default"], key)
+        if activity and fragment:
+            return f"{base}, {fragment} i {_lower_first(activity)}."
+        if activity:
+            return f"{base}, {_lower_first(activity)}."
+        if fragment:
+            return f"{base}, {fragment}."
+        return base
 
 
 class NPCFactory:
@@ -110,7 +288,7 @@ class NPCFactory:
                     f"{npc.name.capitalize()} opowiada o pracy tak, jakby była częścią pogody w tym miejscu.",
                 ],
                 "miejsce": [
-                    f"{npc.name.capitalize()} zna to miejsce lepiej niż własne buty.",
+                    f"{npc.name.capitalize()} zna te przejścia lepiej niż własne buty.",
                     f"{npc.name.capitalize()} wskazuje skróty, zdradliwe przejścia i rzeczy, których lepiej nie dotykać.",
                     f"{npc.name.capitalize()} wspomina historię miejsca tak, jakby sam ją tu przechowywał.",
                 ],
@@ -1732,7 +1910,7 @@ class NPCFactory:
             },
             "puszcza_lowca": {
                 "name": "łowca",
-                "short_desc": "Łowca stał się zbyt pewny, że las należy do niego.",
+                "short_desc": "Łowca chodzi po lesie pewnie, jakby znał każdy jego zakręt.",
                 "long_desc": "Nie ufa nikomu, strzela pierwszy i pyta później, przez co sam coraz bardziej przypomina to, na co polował.",
                 "room_id": 252,
                 "zone": "Puszcza_Ciszy",
@@ -2030,7 +2208,7 @@ class NPCFactory:
             "dungrim_lieutenant": {
                 "name": "oficer",
                 "short_desc": "Oficer prowadzi raporty, zmiany i krótkie odprawy przy mapie.",
-                "long_desc": "Należy do tych ludzi, którzy mówią mało, ale ich głos wystarcza, by koszary zamilkły.",
+                "long_desc": "Mówi mało, a jego głos wystarcza, by koszary zamilkły.",
                 "room_id": 118,
                 "stats": CharacterStats(12, 11, 12, 11, 11, 120),
                 "ai_state": "GUARD",

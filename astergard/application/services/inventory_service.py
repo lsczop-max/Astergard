@@ -11,6 +11,7 @@ from astergard.items.models import Item
 from astergard.npcs.manager import NPCManager
 from astergard.quests.manager import QuestManager, QUESTS
 from astergard.world.models import Location
+from astergard.narrative import describe_load, join_prose
 
 
 @dataclass(slots=True)
@@ -28,18 +29,7 @@ class InventoryView:
         )
 
     def _load_description(self) -> str:
-        if self.max_weight <= 0:
-            return "nie do określenia"
-        ratio = self.current_weight / self.max_weight
-        if ratio < 0.25:
-            return "niewielkie"
-        if ratio < 0.5:
-            return "umiarkowane"
-        if ratio < 0.75:
-            return "duże"
-        if ratio < 1.0:
-            return "bardzo duże"
-        return "przekroczone"
+        return describe_load(self.current_weight, self.max_weight)
 
 
 @dataclass(slots=True)
@@ -53,7 +43,7 @@ class InventoryService:
     """Application service for inventory, equipment and container use cases."""
 
     def render_inventory(self, character: Character) -> str:
-        inventory = ", ".join(self._render_item_with_contents(item) for item in character.inventory) or "nic"
+        inventory = join_prose([self._render_item_with_contents(item) for item in character.inventory]) or "niczego"
         equipment = self._render_equipment(character)
         return InventoryView(
             equipment=equipment,

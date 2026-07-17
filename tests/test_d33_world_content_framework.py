@@ -42,8 +42,8 @@ class D33WorldContentFrameworkTests(unittest.TestCase):
         async def run() -> None:
             with TestGameHarness() as harness:
                 char = harness.create_character("d33_move")
-                await harness.execute(char, "poludnie")
-                transcript = await harness.execute(char, "spojrz")
+                transcript = await harness.execute(char, "poludnie")
+                self.assertIn("Kierujesz się na południe.", transcript.output)
                 self.assertIn("Trakt Przy Murze", transcript.output)
                 self.assertNotIn("Możesz obejrzeć", transcript.output)
                 detail = await harness.execute(char, "spojrz na mur")
