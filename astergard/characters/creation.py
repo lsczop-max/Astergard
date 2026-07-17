@@ -7,6 +7,7 @@ from astergard.characters.models import Character
 from astergard.characters.professions import (
     ProfessionSelection,
     build_selection,
+    migrate_legacy_profession_selection,
     resolve_profession,
 )
 from astergard.items.models import Item, starter_items
@@ -619,7 +620,8 @@ class CharacterCreationProfile:
         age_value = raw_age if isinstance(raw_age, (str, int)) else 0
         main_raw = str(data.get("main_profession", "")).strip()
         secondary_raw = str(data.get("secondary_profession", "")).strip()
-        selection = build_selection(main_raw, secondary_raw or None) if main_raw else ProfessionSelection("", "")
+        migrated_main, migrated_secondary = migrate_legacy_profession_selection(main_raw, secondary_raw or None)
+        selection = build_selection(migrated_main, migrated_secondary or None) if migrated_main else ProfessionSelection("", "")
         return cls(
             name=validate_text("Imię", str(data.get("name", "")), min_length=2, max_length=32),
             gender_description=validate_text("Opis płci", str(data.get("gender_description", "")), min_length=2, max_length=80),

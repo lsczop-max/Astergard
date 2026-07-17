@@ -19,16 +19,16 @@ class SkillSystemTests(unittest.TestCase):
                 origin="uczeń rzemieślnika",
                 childhood="miasto",
                 birth_region="Astergard",
-                main_profession="lucznik",
+                main_profession="szermierz",
                 secondary_profession="bard",
-                appearance="Szczupła kobieta z prostym łukiem przewieszonym przez ramię.",
+                appearance="Szczupła kobieta z prostym mieczem przy pasie.",
             )
             self.assertTrue(repo.register("mira", "secret", profile))
             char = repo.load("mira")
-            self.assertGreaterEqual(char.skills.level("luki"), 3)
-            self.assertGreaterEqual(char.skills.level("obserwacja"), 2)
+            self.assertGreaterEqual(char.skills.level("bron_jednoraczna"), 3)
+            self.assertGreaterEqual(char.skills.level("obserwacja"), 1)
             self.assertGreaterEqual(char.skills.level("perswazja"), 3)
-            self.assertIn("luki", char.skills.values)
+            self.assertIn("bron_jednoraczna", char.skills.values)
             self.assertIn("muzyka", char.skills.values)
 
     def test_skill_training_by_use_advances_progress_and_levels(self) -> None:

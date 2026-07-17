@@ -44,7 +44,6 @@ LIVING_WORLD_SCHEDULED_VNUMS: tuple[str, ...] = (
     "priest_aide",
     "carpenter",
     "tanner",
-    "bowyer",
     "armorer",
     "woodcutter",
     "podgrodzie_woznica",

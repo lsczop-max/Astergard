@@ -16,8 +16,6 @@ WEAPON_FAMILY_LABELS: dict[str, str] = {
     "mloty": "młot",
     "wlocznie": "włócznia",
     "bron_drzewcowa": "broń drzewcowa",
-    "luki": "łuk",
-    "kusze": "kusza",
     "improwizowana": "broń improwizowana",
     "bez_broni": "walka bez broni",
 }
@@ -59,18 +57,10 @@ def normalize_weapon_family(weapon: Item | None) -> str:
         return "bron_drzewcowa"
     if any(term in tokens for term in {"halberd", "berdysz", "gizarma", "partyzana", "polearm", "poleaxe", "glaive"}):
         return "bron_drzewcowa"
-    if weapon_type in {"łuk", "luk", "kusza", "crossbow"}:
-        if weapon_type in {"kusza", "crossbow"} or "kusz" in weapon.name.casefold():
-            return "kusze"
-        return "luki"
-    if any(term in tokens for term in {"bow", "luk", "łuk"}):
-        return "luki"
-    if any(term in tokens for term in {"crossbow", "kusza"}):
-        return "kusze"
     if weapon_type in {"proca", "miotacz", "kamień", "kij"}:
         return "improwizowana"
     if weapon.item_type == "weapon" and weapon.reach <= 1 and damage_type == "pociskowa":
-        return "luki"
+        return "improwizowana"
     return "improwizowana"
 
 

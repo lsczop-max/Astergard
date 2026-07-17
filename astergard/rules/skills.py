@@ -69,8 +69,6 @@ SKILL_DEFINITIONS: tuple[SkillDefinition, ...] = (
     _skill("bron_dwureczna", "broń dwuręczna", "combat", "Mocne prowadzenie cięższej broni.", aliases=("bron_obuchowa",)),
     _skill("wlocznie", "włócznie", "combat", "Utrzymywanie dystansu i kontroli z włócznią."),
     _skill("tarcze", "tarcze", "combat", "Używanie tarczy do obrony i przepychania linii."),
-    _skill("luki", "łuki", "combat", "Strzelanie z łuku i utrzymywanie tempa ognia."),
-    _skill("kusze", "kusze", "combat", "Obsługa kusz, naciągu i celnego strzału."),
     _skill("uniki", "uniki", "combat", "Unikanie ciosów i ustawianie się poza zasięgiem."),
     _skill("parowanie", "parowanie", "combat", "Blokowanie ciosów bronią lub odpowiednim ruchem."),
     _skill("dowodzenie", "dowodzenie", "social", "Wydawanie jasnych rozkazów i trzymanie ludzi w ryzach."),
@@ -79,11 +77,12 @@ SKILL_DEFINITIONS: tuple[SkillDefinition, ...] = (
     _skill("perswazja", "perswazja", "social", "Przekonywanie, targowanie i społeczne naciskanie.", aliases=("przekonywanie", "muzyka")),
     _skill("pierwsza_pomoc", "pierwsza pomoc", "utility", "Opatrunki, stabilizacja i szybka pomoc w terenie.", aliases=("cyrulictwo",)),
     _skill("kowalstwo", "kowalstwo", "utility", "Praca z metalem, naprawy i proste wyroby."),
-    _skill("luczarstwo", "łuczarstwo", "utility", "Naprawa łuków, cięciw i prostych elementów dystansowych."),
     _skill("oprawianie", "oprawianie", "utility", "Zdejmowanie skór i obróbka zwierzyny po łowach."),
     _skill("gotowanie", "gotowanie / prowiant", "utility", "Przygotowanie jedzenia i racji na drogę."),
     _skill("handel", "handel", "utility", "Ocena wartości, wymiana i szybkie transakcje."),
 )
+
+REMOVED_SKILL_KEYS: frozenset[str] = frozenset({"luki", "kusze", "luczarstwo"})
 
 
 _SKILL_BY_KEY: dict[str, SkillDefinition] = {definition.key: definition for definition in SKILL_DEFINITIONS}
@@ -141,6 +140,9 @@ def canonicalize_skill_values(values: Mapping[str, Mapping[str, int]] | None) ->
     unknown: dict[str, dict[str, int]] = {}
     if values:
         for raw_name, raw_state in values.items():
+            raw_key = _fold(str(raw_name))
+            if raw_key in REMOVED_SKILL_KEYS:
+                continue
             try:
                 definition = resolve_skill(raw_name)
             except ValueError:
@@ -156,6 +158,8 @@ def canonicalize_skill_values(values: Mapping[str, Mapping[str, int]] | None) ->
         state = canonical[definition.key]
         for alias in definition.aliases:
             canonical[alias] = state
+    for removed_key in REMOVED_SKILL_KEYS:
+        canonical.pop(removed_key, None)
     canonical.update(unknown)
     return canonical
 

@@ -179,8 +179,8 @@ class D351ODzikaStrefaProductionTests(unittest.TestCase):
                 char.room_id = 488
                 await asyncio.sleep(0.6)
                 hunter_offer = await harness.execute(char, "oferta")
-                self.assertIn("kołczan strzał", hunter_offer.output)
                 self.assertIn("sidła leśne", hunter_offer.output)
+                self.assertIn("nóż tropiciela", hunter_offer.output)
 
         asyncio.run(run())
 

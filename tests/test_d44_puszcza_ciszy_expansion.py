@@ -27,7 +27,7 @@ class PuszczaCiszyExpansionTests(unittest.TestCase):
             229: {"puszcza_wilk_mlody", "puszcza_pajak_lesny"},
             234: {"puszcza_wilk", "puszcza_wilk_stary", "puszcza_wataha_wilkow"},
             241: {"puszcza_jelen", "puszcza_niedzwiedz", "puszcza_niedzwiedzica"},
-            246: {"puszcza_drwal", "puszcza_bandyta", "puszcza_bandyta_lucznik"},
+            246: {"puszcza_drwal", "puszcza_bandyta"},
             252: {"puszcza_pustelnik", "puszcza_bandyta_zwiadowca", "puszcza_lowca"},
             258: {"puszcza_lowczy", "puszcza_pajak_duzy"},
             267: {"puszcza_dzik", "puszcza_bandycki_naczelnik", "puszcza_niedzwiedzi_olbrzym"},
@@ -46,7 +46,6 @@ class PuszczaCiszyExpansionTests(unittest.TestCase):
             "puszcza_niedzwiedz",
             "puszcza_niedzwiedzica",
             "puszcza_bandyta",
-            "puszcza_bandyta_lucznik",
             "puszcza_bandyta_zwiadowca",
             "puszcza_lowca",
             "puszcza_lowczy",
@@ -63,9 +62,9 @@ class PuszczaCiszyExpansionTests(unittest.TestCase):
             self.assertTrue(all(npc.zone == "Puszcza_Ciszy" for npc in room_npcs))
             tier_counts.update(npc.threat_tier for npc in room_npcs if npc.vnum in expected_combat_vnums)
 
-        self.assertEqual(sum(tier_counts.values()), 20)
+        self.assertEqual(sum(tier_counts.values()), 19)
         self.assertEqual(tier_counts["trash"], 5)
-        self.assertEqual(tier_counts["standard"], 12)
+        self.assertEqual(tier_counts["standard"], 11)
         self.assertEqual(tier_counts["elite"], 2)
         self.assertEqual(tier_counts["boss"], 1)
 

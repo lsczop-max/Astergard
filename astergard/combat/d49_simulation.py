@@ -201,8 +201,6 @@ def _base_skill_levels() -> dict[str, int]:
         "bron_jednoraczna": 60,
         "bron_dwureczna": 60,
         "wlocznie": 60,
-        "luki": 1,
-        "kusze": 1,
         "uniki": 30,
         "parowanie": 30,
         "tarcze": 30,

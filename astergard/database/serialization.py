@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import json
+import re
 import warnings
 from typing import Any
 
 from astergard.characters.models import Character, CharacterSkills, CharacterStats, Effect
 from astergard.characters.careers import CareerLookupError, resolve_career, resolve_organization, resolve_school
+from astergard.characters.professions import migrate_legacy_profession_selection
 from astergard.items.models import EquipmentSet, Item, EQUIPMENT_SLOTS
 from astergard.rules.combat_specialization import CombatSpecializationLoadout
 from astergard.rules.combat_specialization import resolve_active_defense_style
@@ -104,6 +106,75 @@ def _clean_career_path(data: object) -> dict[str, Any]:
     }
 
 
+def _is_legacy_ranged_item(item: Item | None) -> bool:
+    if item is None:
+        return False
+    tokens = {
+        token
+        for value in (item.name, item.vnum or "", item.weapon_type or "", item.damage_type or "")
+        for token in re.findall(r"[0-9a-ząćęłńóśźż]+", str(value).casefold())
+        if token
+    }
+    return item.vnum in {
+        "hunting_bow",
+        "light_crossbow",
+        "bowyer_tools",
+        "bowyer_blank_npc",
+        "straznica_scout_bow",
+        "straznica_hunter_bow",
+        "trakty_hunter_bow",
+        "puszcza_hunter_bow",
+        "puszcza_bandit_bow",
+        "bagna_hunter_bow",
+        "hunter_bow_100",
+    } or any(
+        token in {"bow", "crossbow", "bowyer", "łuk", "luk", "kusza", "kusz"}
+        or token.startswith(("strzał", "strzal", "bełt", "belt"))
+        for token in tokens
+    )
+
+
+def _migrate_profession_profile(profile_raw: dict[str, Any]) -> tuple[dict[str, Any], list[str]]:
+    migrated = dict(profile_raw)
+    warnings_out: list[str] = []
+    main_raw, secondary_raw = migrate_legacy_profession_selection(
+        str(profile_raw.get("main_profession", "")).strip(),
+        str(profile_raw.get("secondary_profession", "")).strip() or None,
+    )
+    if main_raw != str(profile_raw.get("main_profession", "")).strip():
+        warnings_out.append(
+            f"Zapis profilu postaci został zmigrowany: main_profession {profile_raw.get('main_profession', '')!r} -> {main_raw!r}."
+        )
+    if secondary_raw != (str(profile_raw.get("secondary_profession", "")).strip() or None):
+        warnings_out.append(
+            f"Zapis profilu postaci został zmigrowany: secondary_profession {profile_raw.get('secondary_profession', '')!r} -> {secondary_raw!r}."
+        )
+    migrated["main_profession"] = main_raw
+    migrated["secondary_profession"] = secondary_raw or ""
+    combat_learning = migrated.get("combat_learning", {})
+    if isinstance(combat_learning, dict):
+        combat_learning = dict(combat_learning)
+        for key in ("known_weapon_specializations", "known_defense_specializations", "known_additional_skills", "known_techniques"):
+            value = combat_learning.get(key, [])
+            if isinstance(value, list):
+                combat_learning[key] = [str(entry).strip() for entry in value if str(entry).strip()]
+        migrated["combat_learning"] = combat_learning
+    return migrated, warnings_out
+
+
+def _purge_legacy_ranged_items(items: list[Item], *, context: str, username: str) -> list[Item]:
+    kept: list[Item] = []
+    for item in items:
+        if _is_legacy_ranged_item(item):
+            warnings.warn(
+                f"Usunięto legacy przedmiot dystansowy z {context} postaci {username}: {item.vnum or item.name}.",
+                stacklevel=2,
+            )
+            continue
+        kept.append(item)
+    return kept
+
+
 class CharacterStateSerializer:
     """Serializes the durable character state to explicit SQLite JSON columns."""
 
@@ -182,12 +253,20 @@ class CharacterStateSerializer:
         char.wanted_posts = list(json.loads(row[12])) if len(row) > 12 and row[12] else []
         char.active_quests = dict(json.loads(row[13]))
         char.completed_quests = list(json.loads(row[14]))
-        char.inventory = [Item.from_dict(item) for item in json.loads(row[15])]
+        char.inventory = _purge_legacy_ranged_items([Item.from_dict(item) for item in json.loads(row[15])], context="ekwipunku", username=username)
         equipment_raw = json.loads(row[16]) if len(row) > 16 and row[16] else {}
         equipment_items = {
             slot: Item.from_dict(item) if isinstance(item, dict) else None
             for slot, item in equipment_raw.items()
         }
+        for slot, item in list(equipment_items.items()):
+            if _is_legacy_ranged_item(item):
+                assert item is not None
+                warnings.warn(
+                    f"Usunięto legacy przedmiot dystansowy z wyposażenia postaci {username}: {item.vnum or item.name}.",
+                    stacklevel=2,
+                )
+                equipment_items[slot] = None
         char.equipment = EquipmentSet.from_dict(equipment_items)
         for slot in EQUIPMENT_SLOTS:
             char.equipment.setdefault(slot, None)
@@ -196,6 +275,9 @@ class CharacterStateSerializer:
             char.combat_style = str(row[18])
         profile_raw = json.loads(row[19]) if len(row) > 19 and row[19] else {}
         if isinstance(profile_raw, dict):
+            profile_raw, migration_warnings = _migrate_profession_profile(profile_raw)
+            for message in migration_warnings:
+                warnings.warn(message, stacklevel=2)
             char.name = str(profile_raw.get("name", ""))
             char.gender_description = str(profile_raw.get("gender_description", ""))
             char.age = int(profile_raw.get("age", 0) or 0)

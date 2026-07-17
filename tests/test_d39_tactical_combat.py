@@ -170,7 +170,7 @@ class TacticalCombatTests(unittest.TestCase):
     def test_profession_balance_scenarios_stay_within_reasonable_band(self) -> None:
         simulator = CombatBalanceSimulator()
         summaries = simulator.run_many(profession_balance_scenarios(iterations=40))
-        self.assertGreaterEqual(len(summaries), 7)
+        self.assertEqual(len(summaries), 5)
         self.assertTrue(all(summary.iterations == 40 for summary in summaries))
         self.assertTrue(all(abs((summary.attacker_win_rate + summary.defender_win_rate + summary.draw_rate) - 1.0) < 1e-9 for summary in summaries))
         self.assertLessEqual(max(summary.attacker_win_rate for summary in summaries), 0.95)

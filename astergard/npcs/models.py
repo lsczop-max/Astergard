@@ -411,12 +411,6 @@ class NPCFactory:
                 "wieczór": "Chowa skóry do zadaszenia i wraca do domu.",
                 "noc": "Myje ręce i siedzi przy zamkniętej garbarni.",
             },
-            "bowyer": {
-                "świt": "Przenosi drewno łucznicze do warsztatu i wraca po klej.",
-                "dzień": "Pracuje przy łukach i zagląda na plac po strzały.",
-                "wieczór": "Składa zamówienia i wraca do stołu warsztatowego.",
-                "noc": "Siedzi przy warsztacie i sprawdza klejone ramiona łuków.",
-            },
             "armorer": {
                 "świt": "Idzie do magazynu po hełmy i wraca do stołu naprawczego.",
                 "dzień": "Dopasowuje pancerze i kontroluje stan zbroi.",
@@ -593,7 +587,7 @@ class NPCFactory:
                 "wieczór": "Zamyka interes i liczy straty po przełęczy.",
                 "noc": "Chroni to, co jeszcze nie ruszyło w drogę.",
             }
-        if vnum in {"blacksmith", "carpenter", "tanner", "bowyer", "armorer", "podgrodzie_kowal", "podgrodzie_pomocnik_kowala", "haldun_blacksmith", "dungrim_armorer", "dungrim_military_blacksmith"}:
+        if vnum in {"blacksmith", "carpenter", "tanner", "armorer", "podgrodzie_kowal", "podgrodzie_pomocnik_kowala", "haldun_blacksmith", "dungrim_armorer", "dungrim_military_blacksmith"}:
             return {
                 "świt": "Otwiera warsztat i rozpala ogień.",
                 "dzień": "Uderza młotem w rozgrzane żelazo.",
@@ -621,7 +615,7 @@ class NPCFactory:
                 "wieczór": "Wraca do ognia albo kapliczki, zanim zapadnie pełna ciemność.",
                 "noc": "Słucha lasu, bagna i tego, czego w ciemności nie warto nazywać.",
             }
-        if vnum in {"puszcza_szczur", "puszcza_kruk", "puszcza_lis", "puszcza_pies_dziki", "puszcza_wilk_mlody", "puszcza_wilk", "puszcza_jelen", "puszcza_dzik", "puszcza_pajak", "puszcza_pajak_lesny", "puszcza_pajak_duzy", "puszcza_wilk_stary", "puszcza_wataha_wilkow", "puszcza_niedzwiedz", "puszcza_niedzwiedzica", "puszcza_bandyta", "puszcza_bandyta_lucznik", "puszcza_bandyta_zwiadowca", "puszcza_lowca", "puszcza_lowczy", "puszcza_bandycki_naczelnik", "puszcza_niedzwiedzi_olbrzym", "puszcza_troll", "bagna_zaba"}:
+        if vnum in {"puszcza_szczur", "puszcza_kruk", "puszcza_lis", "puszcza_pies_dziki", "puszcza_wilk_mlody", "puszcza_wilk", "puszcza_jelen", "puszcza_dzik", "puszcza_pajak", "puszcza_pajak_lesny", "puszcza_pajak_duzy", "puszcza_wilk_stary", "puszcza_wataha_wilkow", "puszcza_niedzwiedz", "puszcza_niedzwiedzica", "puszcza_bandyta", "puszcza_bandyta_zwiadowca", "puszcza_lowca", "puszcza_lowczy", "puszcza_bandycki_naczelnik", "puszcza_niedzwiedzi_olbrzym", "puszcza_troll", "bagna_zaba"}:
             return {
                 "świt": "Wychodzi z ukrycia i szuka spokojnego miejsca.",
                 "dzień": "Przemieszcza się ostrożnie po własnym terenie.",
@@ -688,8 +682,8 @@ class NPCFactory:
             return {
                 "świt": "Sprawdza sidła i ślady przy kamieniach.",
                 "dzień": "Wypatruje zwierzyny i osłania szlak przed drobną kradzieżą.",
-                "wieczór": "Skraca drogę z łupem i liczy, ile zostało strzał.",
-                "noc": "Suszy skórę i ostrzy grot przed kolejnym wyjściem.",
+                "wieczór": "Skraca drogę z łupem i liczy, ile zostało zapasów.",
+                "noc": "Suszy skórę i porządkuje ekwipunek przed kolejnym wyjściem.",
             }
         return {
             "świt": "Rozpoczyna zwykły dzień.",
@@ -963,7 +957,7 @@ class NPCFactory:
                 "Raport krótko. Forteca nie ma czasu na ozdobniki.",
                 "Dowodzenie to zapas, dyscyplina i ludzie, którzy wiedzą, gdzie jest ich miejsce.",
                 "Stoję tam, gdzie trzeba trzymać całość razem: między bramą, dziedzińcem i murem.",
-                "Plotki o trakcie są mniej ważne niż stan bełtów i zapasów.",
+                "Plotki o trakcie są mniej ważne niż stan zapasów i ludzi w służbie.",
                 fort="Fort trzyma się na rozkazie, nie na hałasie.",
             ),
             "dungrim_lieutenant": self._social_dialogue(
@@ -1155,7 +1149,7 @@ class NPCFactory:
             ),
             "straznica_mysliwy": self._social_dialogue(
                 "Zwierzyna nie czeka na twoją historię.",
-                "Moja robota to trop, łuk i cierpliwość do kamienia.",
+                "Moja robota to trop i cierpliwość do kamienia.",
                 "Stoję tam, gdzie krawędź szlaku styka się z polowaniem.",
                 "Plotki? Na zboczu ważniejsze są ślady niż słowa.",
                 tropy="Tropy przy przełęczy mieszają ludzi, kozy i czasem coś większego.",
@@ -1183,7 +1177,7 @@ class NPCFactory:
         if vnum == "straznica_zwiadowca":
             return {
                 "glowa": Item("zwiadowczy kaptur", "Kaptur tłumiący wiatr i błysk śniegu.", 1.1, 8, "straznica_scout_hood", "armor", "glowa", protection=0),
-                "prawa_reka": Item("łuk zwiadowcy", "Lekki łuk do prowadzenia ognia z krawędzi szlaku.", 1.5, 16, "straznica_scout_bow", "weapon", "prawa_reka", damage_type="pociskowa", base_damage=4, reach=2, initiative_modifier=1, parry_bonus=0),
+                "prawa_reka": Item("krótki nóż zwiadowcy", "Krótki nóż do lin, skór i cichej roboty.", 0.8, 16, "straznica_scout_knife", "weapon", "prawa_reka", damage_type="kluta", base_damage=3, reach=1, initiative_modifier=1, parry_bonus=0),
                 "lewa_reka": Item("krótki nóż", "Nóż do lin, skór i bliskich problemów.", 0.3, 5, "straznica_scout_knife", "weapon", "lewa_reka", damage_type="kluta", base_damage=2, reach=1, initiative_modifier=1, parry_bonus=0),
             }
         if vnum == "straznica_przewodnik":
@@ -1214,7 +1208,7 @@ class NPCFactory:
         if vnum == "straznica_mysliwy":
             return {
                 "korpus": Item("futro myśliwego", "Ciepłe futro wygarbowane na wiatr i śnieg.", 2.0, 12, "straznica_hunter_fur", "armor", "korpus", protection=1),
-                "prawa_reka": Item("łuk przełęczy", "Łuk dopasowany do stromych ścieżek i cichego polowania.", 1.7, 18, "straznica_hunter_bow", "weapon", "prawa_reka", damage_type="pociskowa", base_damage=4, reach=2, initiative_modifier=1, parry_bonus=0),
+                "prawa_reka": Item("włócznia przełęczy", "Włócznia dopasowana do stromych ścieżek i osłony przejazdu.", 2.0, 18, "straznica_hunter_spear", "weapon", "prawa_reka", damage_type="kluta", base_damage=4, reach=2, initiative_modifier=0, parry_bonus=0),
             }
         return {}
 
@@ -1337,7 +1331,7 @@ class NPCFactory:
         if vnum == "trakty_mysliwy":
             return {
                 "korpus": Item("futro myśliwego", "Ciepłe futro wygarbowane na wiatr i pył.", 2.0, 12, "trakty_hunter_fur", "armor", "korpus", protection=1),
-                "prawa_reka": Item("łuk trakty", "Łuk dopasowany do polowań przy drodze.", 1.7, 18, "trakty_hunter_bow", "weapon", "prawa_reka", damage_type="pociskowa", base_damage=4, reach=2, initiative_modifier=1, parry_bonus=0),
+                "prawa_reka": Item("włócznia trakty", "Włócznia dopasowana do pracy przy drodze.", 2.0, 18, "trakty_hunter_spear", "weapon", "prawa_reka", damage_type="kluta", base_damage=4, reach=2, initiative_modifier=0, parry_bonus=0),
             }
         if vnum == "trakty_drwal":
             return {
@@ -1430,7 +1424,7 @@ class NPCFactory:
             },
             "trakty_mysliwy": {
                 "name": "myśliwy",
-                "short_desc": "Myśliwy sprzedaje strzały i kilka dobrych rad o śladach na kamieniu.",
+                "short_desc": "Myśliwy sprzedaje sidła i kilka dobrych rad o śladach na kamieniu.",
                 "long_desc": "Zna tropy kozy, wilka i człowieka, który za długo stał w jednym miejscu przy drodze.",
                 "room_id": 165,
                 "stats": CharacterStats(11, 12, 11, 11, 10, 100),
@@ -1583,7 +1577,7 @@ class NPCFactory:
         if vnum == "puszcza_mysliwy":
             return {
                 "korpus": Item("leśne futro", "Ciężkie futro odporne na wilgoć i mróz.", 2.0, 11, "puszcza_hunter_fur", "armor", "korpus", protection=1),
-                "prawa_reka": Item("łuk leśny", "Łuk do polowania na leśne zwierzęta.", 1.6, 16, "puszcza_hunter_bow", "weapon", "prawa_reka", damage_type="pociskowa", base_damage=4, reach=2, initiative_modifier=1, parry_bonus=0),
+                "prawa_reka": Item("nóż leśny", "Nóż do skórowania, lin i pracy w lesie.", 0.6, 16, "puszcza_hunter_knife", "weapon", "prawa_reka", damage_type="kluta", base_damage=3, reach=1, initiative_modifier=1, parry_bonus=0),
             }
         if vnum == "puszcza_zielarz":
             return {
@@ -1679,11 +1673,6 @@ class NPCFactory:
                 "korpus": Item("skórzana kamizelka", "Porysowana kamizelka bandyty.", 1.2, 8, "puszcza_bandit_vest", "armor", "korpus", protection=1),
                 "prawa_reka": Item("krótki miecz", "Niewygodny, ale skuteczny miecz z rabunku.", 1.8, 12, "puszcza_bandit_sword", "weapon", "prawa_reka", damage_type="cieta", base_damage=4, reach=1, initiative_modifier=1, parry_bonus=0),
             }
-        if vnum == "puszcza_bandyta_lucznik":
-            return {
-                "korpus": Item("lekka skóra", "Lekka skórzana ochrona bandyty-łucznika.", 1.0, 7, "puszcza_bandit_archer_leather", "armor", "korpus", protection=0),
-                "prawa_reka": Item("naciągnięty łuk", "Łuk do ostrzału z ukrycia.", 1.4, 11, "puszcza_bandit_bow", "weapon", "prawa_reka", damage_type="pociskowa", base_damage=4, reach=2, initiative_modifier=1, parry_bonus=0),
-            }
         if vnum == "puszcza_bandyta_zwiadowca":
             return {
                 "korpus": Item("płaszcz zwiadowcy", "Szary płaszcz do znikania w leśnym cieniu.", 1.1, 8, "puszcza_bandit_scout_cloak", "armor", "korpus", protection=0),
@@ -1727,7 +1716,7 @@ class NPCFactory:
         if vnum == "bagna_mysliwy":
             return {
                 "korpus": Item("błotne futro", "Futro zabezpieczone przed wodą i pluskiem.", 1.8, 10, "bagna_hunter_fur", "armor", "korpus", protection=1),
-                "prawa_reka": Item("łuk bagienny", "Łuk odpowiedni do polowania na mokradłach.", 1.6, 16, "bagna_hunter_bow", "weapon", "prawa_reka", damage_type="pociskowa", base_damage=4, reach=2, initiative_modifier=1, parry_bonus=0),
+                "prawa_reka": Item("włócznia bagienna", "Włócznia odpowiednia do marszu po mokradłach.", 2.0, 16, "bagna_hunter_spear", "weapon", "prawa_reka", damage_type="kluta", base_damage=4, reach=2, initiative_modifier=0, parry_bonus=0),
             }
         if vnum == "bagna_zaba":
             return {
@@ -1889,15 +1878,6 @@ class NPCFactory:
                 "zone": "Puszcza_Ciszy",
                 "stats": CharacterStats(9, 12, 9, 11, 8, 70),
                 "ai_state": "AGGRESSIVE",
-            },
-            "puszcza_bandyta_lucznik": {
-                "name": "bandyta-łucznik",
-                "short_desc": "Bandyta z łukiem pilnuje przejścia i szuka okazji do strzału.",
-                "long_desc": "Wybiera pozycję, kryje się i strzela, zanim ktokolwiek zdąży podejść zbyt blisko.",
-                "room_id": 246,
-                "zone": "Puszcza_Ciszy",
-                "stats": CharacterStats(8, 13, 8, 12, 8, 72),
-                "ai_state": "PATROL",
             },
             "puszcza_bandyta_zwiadowca": {
                 "name": "bandycki zwiadowca",
@@ -2153,7 +2133,7 @@ class NPCFactory:
             },
             "straznica_mysliwy": {
                 "name": "myśliwy",
-                "short_desc": "Myśliwy z przełęczy sprzedaje skórę, strzały i kilka dobrych rad o śniegu.",
+                "short_desc": "Myśliwy z przełęczy sprzedaje skórę, futro i kilka dobrych rad o śniegu.",
                 "long_desc": "Zna tropy kozy, wilka i człowieka, który za długo stał w jednym miejscu.",
                 "room_id": 133,
                 "stats": CharacterStats(11, 12, 11, 11, 10, 100),
@@ -3024,18 +3004,6 @@ class NPCFactory:
                 shop_inventory=skin_trader_shop_inventory(),
                 inventory=[Item("worek garbarski", "Worek na próbki skór i maści do ich konserwacji.", 0.7, 4, "skin_trader_bag", is_container=True, capacity=12)],
             )
-        if vnum == "bowyer":
-            return self._basic_npc(
-                vnum="bowyer",
-                name="łuczarz",
-                short_desc="Łuczarz niesie pod pachą giętkie drewno i klej do łuków.",
-                long_desc="Nie ufa szybkim rozwiązaniom. Łuk, jak powtarza, musi pamiętać rękę, która go zrobiła.",
-                zone="Centrum_Twierdza",
-                faction="MEEKHAN",
-                room_id=room_id,
-                stats=CharacterStats(9, 11, 9, 11, 10, 95),
-                inventory=[Item("półfabrykat łuku", "Niedokończony łuk z giętkiego drewna.", 0.7, 6, "bowyer_blank_npc", item_type="weapon", slot="prawa_reka", damage_type="pociskowa", base_damage=2, reach=2)],
-            )
         if vnum == "armorer":
             return self._basic_npc(
                 vnum="armorer",
@@ -3268,7 +3236,6 @@ class NPCFactory:
             "puszcza_niedzwiedz",
             "puszcza_niedzwiedzica",
             "puszcza_bandyta",
-            "puszcza_bandyta_lucznik",
             "puszcza_bandyta_zwiadowca",
             "puszcza_lowca",
             "puszcza_lowczy",

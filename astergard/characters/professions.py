@@ -7,12 +7,9 @@ from dataclasses import dataclass, field
 from astergard.items.models import (
     Item,
     battle_axe,
-    bowyer_tools,
     command_whistle,
     cyrulik_kit,
     dueling_blade,
-    hunting_bow,
-    light_crossbow,
     lute,
     prayer_book,
     smith_tools,
@@ -131,6 +128,13 @@ def _additional_definition(
     )
 
 
+LEGACY_MAIN_PROFESSION_MAP: dict[str, str] = {
+    "lucznik": "wojownik",
+    "kusznik": "wojownik",
+}
+LEGACY_ADDITIONAL_PROFESSION_KEYS: frozenset[str] = frozenset({"luczarz"})
+
+
 MAIN_PROFESSIONS: dict[str, ProfessionDefinition] = {
     "wojownik": _main_definition(
         "wojownik",
@@ -172,22 +176,6 @@ MAIN_PROFESSIONS: dict[str, ProfessionDefinition] = {
         equipment_factory=lambda: {"prawa_reka": battle_axe()},
         combat_style="brutalny",
     ),
-    "lucznik": _main_definition(
-        "lucznik",
-        "łucznik",
-        "Patrzy dalej niż większość ludzi i oddycha spokojnie tam, gdzie inni zaczynają się spieszyć.",
-        skill_bonuses={"luki": 2, "obserwacja": 1},
-        equipment_factory=lambda: {"prawa_reka": hunting_bow()},
-        combat_style="ofensywny",
-    ),
-    "kusznik": _main_definition(
-        "kusznik",
-        "kusznik",
-        "Pracuje metodycznie i bez pośpiechu, budując przewagę jednym pewnym strzałem.",
-        skill_bonuses={"kusze": 2, "obserwacja": 1},
-        equipment_factory=lambda: {"prawa_reka": light_crossbow()},
-        combat_style="defensywny",
-    ),
 }
 
 
@@ -227,18 +215,31 @@ ADDITIONAL_PROFESSIONS: dict[str, ProfessionDefinition] = {
         skill_bonuses={"perswazja": 2, "dowodzenie": 1},
         inventory_factory=lambda: [lute()],
     ),
-    "luczarz": _additional_definition(
-        "luczarz",
-        "łuczarz",
-        "Składa łuk z cierpliwości, drewna i dokładności większej niż u większości zbrojmistrzów.",
-        skill_bonuses={"luczarstwo": 2, "obserwacja": 1},
-        inventory_factory=lambda: [bowyer_tools()],
-    ),
 }
 
 
 def all_profession_definitions() -> list[ProfessionDefinition]:
     return [*MAIN_PROFESSIONS.values(), *ADDITIONAL_PROFESSIONS.values()]
+
+
+def migrate_legacy_profession_value(value: str, *, kind: str | None = None) -> str:
+    normalized = _fold(value)
+    if not normalized:
+        return ""
+    if kind == "main":
+        return LEGACY_MAIN_PROFESSION_MAP.get(normalized, normalized)
+    if kind == "secondary":
+        if normalized in LEGACY_MAIN_PROFESSION_MAP or normalized in LEGACY_ADDITIONAL_PROFESSION_KEYS:
+            return ""
+    return normalized
+
+
+def migrate_legacy_profession_selection(main: str, secondary: str | None = None) -> tuple[str, str | None]:
+    migrated_main = migrate_legacy_profession_value(main, kind="main")
+    migrated_secondary = migrate_legacy_profession_value(secondary or "", kind="secondary") if secondary is not None else None
+    if migrated_secondary == "":
+        migrated_secondary = None
+    return migrated_main, migrated_secondary
 
 
 def resolve_profession(value: str, *, kind: str | None = None) -> ProfessionDefinition:

@@ -107,7 +107,6 @@ class NPCManager:
         self.spawn("vagrant", 56)
         self.spawn("carpenter", 48)
         self.spawn("tanner", 49)
-        self.spawn("bowyer", 50)
         self.spawn("armorer", 51)
         self.spawn("butcher", 53)
         self.spawn("skin_trader", 54)
@@ -136,7 +135,6 @@ class NPCManager:
         self.spawn("puszcza_niedzwiedzica", 241)
         self.spawn("puszcza_drwal", 246)
         self.spawn("puszcza_bandyta", 246)
-        self.spawn("puszcza_bandyta_lucznik", 246)
         self.spawn("puszcza_pustelnik", 252)
         self.spawn("puszcza_bandyta_zwiadowca", 252)
         self.spawn("puszcza_lowca", 252)
@@ -210,13 +208,13 @@ class NPCManager:
         return "noc"
 
     def _route_depth_for(self, npc: NPC) -> int:
-        if npc.vnum in {"astergard_guard", "watch_sergeant", "podgrodzie_straznik_miejski", "haldun_wartownik", "dungrim_guard", "dungrim_patrol_guard", "dungrim_sergeant", "straznica_wartownik", "straznica_zwiadowca", "straznica_dowodca", "trakty_straznik", "puszcza_jelen", "puszcza_dzik", "puszcza_wilk", "puszcza_pajak", "puszcza_pajak_lesny", "puszcza_pajak_duzy", "puszcza_wilk_stary", "puszcza_wataha_wilkow", "puszcza_niedzwiedz", "puszcza_niedzwiedzica", "puszcza_bandyta", "puszcza_bandyta_lucznik", "puszcza_bandyta_zwiadowca", "puszcza_lowca", "puszcza_lowczy", "puszcza_bandycki_naczelnik", "puszcza_niedzwiedzi_olbrzym", "puszcza_troll", "bagna_zaba"}:
+        if npc.vnum in {"astergard_guard", "watch_sergeant", "podgrodzie_straznik_miejski", "haldun_wartownik", "dungrim_guard", "dungrim_patrol_guard", "dungrim_sergeant", "straznica_wartownik", "straznica_zwiadowca", "straznica_dowodca", "trakty_straznik", "puszcza_jelen", "puszcza_dzik", "puszcza_wilk", "puszcza_pajak", "puszcza_pajak_lesny", "puszcza_pajak_duzy", "puszcza_wilk_stary", "puszcza_wataha_wilkow", "puszcza_niedzwiedz", "puszcza_niedzwiedzica", "puszcza_bandyta", "puszcza_bandyta_zwiadowca", "puszcza_lowca", "puszcza_lowczy", "puszcza_bandycki_naczelnik", "puszcza_niedzwiedzi_olbrzym", "puszcza_troll", "bagna_zaba"}:
             return 3
-        if npc.vnum in {"podgrodzie_woznica", "podgrodzie_pielgrzym", "haldun_solt", "dungrim_commander", "dungrim_lieutenant", "straznica_przewodnik", "straznica_karawanowy", "straznica_mysliwy", "straznica_woznica", "straznica_podrozny", "straznica_pielgrzym", "trakty_przewodnik", "trakty_karawaniarz", "trakty_kurier", "trakty_woznica", "trakty_podrozny", "trakty_pielgrzym", "trakty_mysliwy", "trakty_drwal", "trakty_handlarz", "puszcza_mysliwy", "puszcza_zielarz", "puszcza_pustelnik", "puszcza_drwal", "puszcza_wilk", "puszcza_pajak", "puszcza_pajak_lesny", "puszcza_pajak_duzy", "puszcza_wilk_stary", "puszcza_wataha_wilkow", "puszcza_niedzwiedz", "puszcza_niedzwiedzica", "puszcza_bandyta", "puszcza_bandyta_lucznik", "puszcza_bandyta_zwiadowca", "puszcza_lowca", "puszcza_lowczy", "puszcza_bandycki_naczelnik", "puszcza_niedzwiedzi_olbrzym", "puszcza_troll", "bagna_zielarz", "bagna_pustelnik", "bagna_mysliwy"}:
+        if npc.vnum in {"podgrodzie_woznica", "podgrodzie_pielgrzym", "haldun_solt", "dungrim_commander", "dungrim_lieutenant", "straznica_przewodnik", "straznica_karawanowy", "straznica_mysliwy", "straznica_woznica", "straznica_podrozny", "straznica_pielgrzym", "trakty_przewodnik", "trakty_karawaniarz", "trakty_kurier", "trakty_woznica", "trakty_podrozny", "trakty_pielgrzym", "trakty_mysliwy", "trakty_drwal", "trakty_handlarz", "puszcza_mysliwy", "puszcza_zielarz", "puszcza_pustelnik", "puszcza_drwal", "puszcza_wilk", "puszcza_pajak", "puszcza_pajak_lesny", "puszcza_pajak_duzy", "puszcza_wilk_stary", "puszcza_wataha_wilkow", "puszcza_niedzwiedz", "puszcza_niedzwiedzica", "puszcza_bandyta", "puszcza_bandyta_zwiadowca", "puszcza_lowca", "puszcza_lowczy", "puszcza_bandycki_naczelnik", "puszcza_niedzwiedzi_olbrzym", "puszcza_troll", "bagna_zielarz", "bagna_pustelnik", "bagna_mysliwy"}:
             return 3
         if npc.vnum in {"innkeeper", "podgrodzie_karczmarz", "podgrodzie_karczmarka", "merchant", "customs_clerk", "fishmonger", "dockhand", "podgrodzie_handlarz", "podgrodzie_przekupka", "haldun_merchant", "haldun_wellkeeper", "haldun_blacksmith", "haldun_miller", "haldun_farmerka", "dungrim_quartermaster", "dungrim_storekeeper", "dungrim_armorer", "dungrim_military_blacksmith", "dungrim_stablemaster", "dungrim_cook", "puszcza_zielarz", "bagna_zielarz"}:
             return 2
-        if npc.vnum in {"blacksmith", "carpenter", "tanner", "bowyer", "armorer", "woodcutter", "podgrodzie_kowal", "podgrodzie_pomocnik_kowala", "fisherman", "podgrodzie_rybak", "podgrodzie_piekarz", "puszcza_drwal", "puszcza_pies_dziki", "puszcza_szczur", "puszcza_kruk", "puszcza_lis", "puszcza_wilk_mlody"}:
+        if npc.vnum in {"blacksmith", "carpenter", "tanner", "armorer", "woodcutter", "podgrodzie_kowal", "podgrodzie_pomocnik_kowala", "fisherman", "podgrodzie_rybak", "podgrodzie_piekarz", "puszcza_drwal", "puszcza_pies_dziki", "puszcza_szczur", "puszcza_kruk", "puszcza_lis", "puszcza_wilk_mlody"}:
             return 2
         if npc.vnum in {"child", "urchin", "podgrodzie_dziecko", "beggar", "vagrant", "podgrodzie_zebrak", "traveler", "podgrodzie_pielgrzym", "haldun_farmerka", "puszcza_pustelnik", "bagna_pustelnik", "trakty_zebrak"}:
             return 2

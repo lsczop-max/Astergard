@@ -46,10 +46,6 @@ def normalize_formation(value: str | None) -> str:
     return aliases.get(raw, FRONT)
 
 
-def _is_ranged_weapon(weapon: Item | None) -> bool:
-    return weapon is not None and weapon.item_type == "weapon" and weapon.reach >= 2 and weapon.damage_type == "pociskowa"
-
-
 def _weapon_skill_name(weapon: Item | None) -> str:
     if weapon is None or weapon.durability <= 0:
         return "bron_jednoraczna"
@@ -57,12 +53,6 @@ def _weapon_skill_name(weapon: Item | None) -> str:
         return "bron_dwureczna"
     if weapon.damage_type == "kluta":
         return "wlocznie"
-    if weapon.damage_type == "pociskowa":
-        if weapon.vnum and "crossbow" in weapon.vnum:
-            return "kusze"
-        if "kusz" in weapon.name.casefold():
-            return "kusze"
-        return "luki"
     return "bron_jednoraczna"
 
 
@@ -124,7 +114,7 @@ def formation_attack_modifier(attacker: Character, defender: Character, weapon: 
     if attacker_formation == RESERVE:
         return -2
     if attacker_formation == BACK and defender_formation == FRONT:
-        return 1 if _is_ranged_weapon(weapon) or (weapon is not None and weapon.reach >= 2) else -1
+        return 1 if weapon is not None and weapon.reach >= 2 else -1
     if attacker_formation == FRONT and defender_formation == BACK:
         return 2
     if defender_formation == RESERVE:
@@ -175,12 +165,6 @@ def profession_tactical_modifiers(character: Character, weapon: Item | None) -> 
     elif profession == "berserker":
         if weapon_skill == "bron_dwureczna":
             modifiers = TacticalModifiers(attack=-1, damage=0)
-    elif profession == "lucznik":
-        if weapon_skill == "luki":
-            modifiers = TacticalModifiers(attack=2, initiative=1)
-    elif profession == "kusznik":
-        if weapon_skill == "kusze":
-            modifiers = TacticalModifiers(attack=2, damage=1)
 
     if secondary == "dowodca":
         modifiers = TacticalModifiers(
@@ -225,15 +209,6 @@ def profession_tactical_modifiers(character: Character, weapon: Item | None) -> 
             damage=modifiers.damage,
             initiative=modifiers.initiative,
             morale=modifiers.morale + 2,
-            note=modifiers.note,
-        )
-    elif secondary == "luczarz" and weapon_skill in {"luki", "kusze"}:
-        modifiers = TacticalModifiers(
-            attack=modifiers.attack + 1,
-            defense=modifiers.defense,
-            damage=modifiers.damage,
-            initiative=modifiers.initiative,
-            morale=modifiers.morale,
             note=modifiers.note,
         )
     return modifiers

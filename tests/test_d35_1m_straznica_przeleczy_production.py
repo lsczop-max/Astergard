@@ -142,7 +142,7 @@ class D351MStraznicaPrzeleczyProductionTests(unittest.TestCase):
                 await asyncio.sleep(0.6)
                 hunter_offer = await harness.execute(char, "oferta")
                 self.assertIn("futro z kozicy", hunter_offer.output)
-                self.assertIn("wiązka grotów", hunter_offer.output)
+                self.assertIn("zestaw linek", hunter_offer.output)
 
         asyncio.run(run())
 

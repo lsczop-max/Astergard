@@ -134,7 +134,7 @@ _DISTRICT_NAMES = (
     "Zagroda Koźlarza", "Kładka nad Rynsztokiem", "Schody do Cystern", "Dom Snycerza", "Stary Spichlerz",
     "Kuźnia przy Murze", "Szeroka Brukowana", "Karczma pod Żurawiem", "Tyły Karczmy", "Mała Stajnia",
     "Róg Bednarzy", "Ulica Popielarzy", "Pod Bramą Solną", "Plac Wozów", "Studnia Żołnierska",
-    "Próg Lazaretu", "Izba Cyrulika", "Dziedziniec Magazynów", "Przejście pod Łukiem", "Warsztat Łuczarza",
+    "Próg Lazaretu", "Izba Cyrulika", "Dziedziniec Magazynów", "Przejście pod Sklepieniem", "Warsztat Stolarski",
     "Plac Musztry", "Cień Wieży Zachodniej", "Zbrojownia Zewnętrzna", "Pralnia przy Kanale", "Kamienny Przepust",
     "Ogród Ziół", "Szopa Rybaków", "Mały Mostek", "Skwer Dłużników", "Ulica Cieśli",
     "Boczna Furta", "Przy Słupie Ogłoszeń", "Dom Pisarza", "Schody Wartowników", "Kram Świecarza",
@@ -573,16 +573,14 @@ _DISTRICT_OVERRIDES: dict[int, LocationContent] = {
         name="Plac Tropicieli",
         description=(
             "Plac jest tylko ubitym skrawkiem ziemi między szałasami, ale tutaj ważą się ważniejsze rzeczy niż w niejednym urzędzie. "
-            "Na belkach wiszą skóry, łuki i świeżo zdjęte trofea. Mężczyźni i kobiety z osady liczą tutaj zdobycz, dzielą się mięsem i kłócą o ślady."
+            "Na belkach wiszą skóry i świeżo zdjęte trofea. Mężczyźni i kobiety z osady liczą tutaj zdobycz, dzielą się mięsem i kłócą o ślady."
         ),
         inspectables={
             "skory futra": "Skóry wiszą gęsto, suszone przy dymie. Niektóre są przeznaczone na handel, inne na własne buty i rękawice.",
-            "łuki bełty": "Łuki są proste, lecz dobrze dopasowane do zimnego lasu. Bełty i strzały mają różne długości, bo nikt nie poluje tu z jednego powodu.",
+            "futra skory": "Skóry są proste, lecz dobrze dopasowane do zimnego lasu. Każdy detal ma tu własny powód.",
             "tropy slady": "W glinie placu widać ślady psów, łasic i ludzi wracających z lasu późnym wieczorem.",
         },
         items=(
-            Item("łuk myśliwski", "Lekki łuk z ciemnego drewna.", 1.2, 15, "hunter_bow_100", item_type="weapon", slot="prawa_reka", damage_type="pociskowa", base_damage=4, reach=2),
-            Item("kołczan strzał", "Skórzany kołczan z garścią długich strzał.", 1.8, 10, "hunter_quiver_100", item_type="tool"),
         ),
     ),
     110: LocationContent(
@@ -807,13 +805,13 @@ _DISTRICT_OVERRIDES.update(
         ),
         50: LocationContent(
             room_id=50,
-            name="Warsztat Łuczarza",
+            name="Warsztat Stolarski",
             description=(
-                "Warsztat łuczarza jest pełen giętkiego drewna, kleju i cierpliwości. "
-                "Na ścianach wiszą półgotowe łuki, a na stole leżą strzały bez lotek."
+                "Warsztat stolarski jest pełen giętkiego drewna, kleju i cierpliwości. "
+                "Na ścianach wiszą półgotowe deski, a na stole leżą narzędzia bez ostrych deklaracji."
             ),
             inspectables={
-                "łuki": "Łuki wiszą na hakach, od jasnych po ciemne.",
+                "deski": "Deski wiszą na hakach, od jasnych po ciemne.",
                 "klej": "Klej pachnie żywicą i gotowanym kościem.",
             },
         ),
@@ -993,7 +991,7 @@ _D351B_ZONE_DATA: dict[str, tuple[range, tuple[str, ...], str, str, tuple[str, s
         range(95, 110),
         (
             "Wschodnia Furta Łowców", "Suszarnia Skór", "Dymne Szałasy", "Plac Tropicieli", "Chata Starszego Łowcy",
-            "Stojaki na Łuki", "Garaż dla Sań", "Rów na Odpadki", "Leśna Kapliczka", "Polana Psów",
+            "Stojaki na Drzewce", "Garaż dla Sań", "Rów na Odpadki", "Leśna Kapliczka", "Polana Psów",
             "Schron przy Dębie", "Wędzarnia Mięsa", "Skład Wnyków", "Ścieżka Ku Puszczy", "Ostatni Znak Toporem",
         ),
         "Osada Myśliwych",
@@ -1006,7 +1004,7 @@ _D351B_ZONE_DATA: dict[str, tuple[range, tuple[str, ...], str, str, tuple[str, s
         range(110, 125),
         (
             "Brama Dungrim", "Przedbramie z Wilczymi Hakami", "Dziedziniec Garnizonu", "Studnia Forteczna", "Koszary Zachodnie",
-            "Stajnie Patroli", "Skład Bełtów", "Zbrojownia Dungrim", "Wieża Sygnałowa", "Mur Nad Traktem",
+            "Stajnie Patroli", "Skład Zaopatrzenia", "Zbrojownia Dungrim", "Wieża Sygnałowa", "Mur Nad Traktem",
             "Izba Dowódcy", "Kaplica Przysiąg", "Cela Dezerterów", "Kuchnia Garnizonowa", "Wyjazd na Zachodni Trakt",
         ),
         "Forteca Dungrim",
@@ -1471,7 +1469,7 @@ _FORTRESS_CONTENT: dict[int, LocationContent] = {
         room_id=113,
         name="Studnia Forteczna",
         description=(
-            "Studnia forteczna stoi na środku dziedzińca i obsługuje nie tylko ludzi, ale i konie, kuchnię oraz magazyny. Woda jest zimna, ciężka i pilnowana prawie jak zapasy bełtów."
+            "Studnia forteczna stoi na środku dziedzińca i obsługuje nie tylko ludzi, ale i konie, kuchnię oraz magazyny. Woda jest zimna, ciężka i pilnowana prawie jak zapasy w fortecy."
         ),
         inspectables={
             "łańcuch wiadro": "Łańcuch jest nowy i ciężki, a wiadro nosi ślady po zimowej naprawie.",
@@ -1797,7 +1795,7 @@ _D351C_NAMES = (
             "Twardy Grzbiet Ziemi",
             "Kładka Mytników",
             "Ciemna Wilgoć",
-            "Miejsce Cichego Strzału",
+            "Miejsce Cichego Kroku",
             "Róg Starego Ostępu",
             "Wschodni Skraj Puszczy",
             "Grzęda Borówek",
@@ -1929,7 +1927,7 @@ def _make_d351c_content() -> tuple[LocationContent, ...]:
 
 _D351D_NAMES = (
     "Cienista Granica Kniei", "Stare Rozstaje bez Znaków", "Korytarz Cichych Leszczyn", "Zatarta Ścieżka Straży", "Kamień Trzech Nacięć",
-    "Wykrot pod Czarnym Grabem", "Suchy Parów", "Mostek z Zardzewiałym Ćwiekiem", "Głuchy Zakręt", "Łuk Pochylonych Buków",
+    "Wykrot pod Czarnym Grabem", "Suchy Parów", "Mostek z Zardzewiałym Ćwiekiem", "Głuchy Zakręt", "Zakos Pochylonych Buków",
     "Wilgotne Dno Kniei", "Mchowe Stopnie", "Ślad Dawnego Traktu", "Zarwany Przepust", "Kotlina Milczących Pni",
     "Stara Smolarnia", "Piec Węglarzy", "Leśne Popielisko", "Oczko Czarnej Wody", "Skręt pod Kruczym Gniazdem",
     "Słup Graniczny bez Herbu", "Zielona Ściana Jałowców", "Cień nad Strugą", "Bród pod Wykrotem", "Ścieżka Przemytników",
@@ -1993,7 +1991,7 @@ _D351E_MOUNTAIN_NAMES = (
     "Podnóże Mekhary", "Kamienny Zakręt", "Półka nad Ciemnym Lasem", "Ścieżka Kozich Racic", "Suchy Żleb",
     "Złamany Drogowskaz", "Stara Droga Straży", "Piargi pod Sosnami", "Wąskie Siodło", "Głaz z Żelaznym Klinem",
     "Urwisko Kruków", "Zawalony Szałas Tragarzy", "Skręt ku Srebrnej Skale", "Źródło pod Łupkiem", "Północna Ściana Jarów",
-    "Niski Próg Skalny", "Dawna Ambona Łuczników", "Kamienie po Ognisku", "Przejście pod Wiszącą Skałą", "Czerwony Osyp",
+    "Niski Próg Skalny", "Dawna Ambona Strażników", "Kamienie po Ognisku", "Przejście pod Wiszącą Skałą", "Czerwony Osyp",
     "Ślad Starej Lawiny", "Koryto Suchego Potoku", "Wysoka Półka Wartownicza", "Cień Poszarpanej Grani", "Miejsce po Mostku Linowym",
     "Skały Dymnych Ptaków", "Skręt nad Bezdennym Parowem", "Jama Niedźwiedzia", "Rozpadlina Trzech Głosów", "Kamienny Grzbiet",
     "Ścieżka pod Gołą Granią", "Zimna Nisza", "Czarny Balkon nad Doliną", "Stary Punkt Sygnałowy", "Osypisko z Rdzą",
@@ -2179,11 +2177,10 @@ def _d351e_pass_content(room_id: int, index: int, name: str) -> LocationContent:
             ),
             inspectables={
                 "tropy śnieg": "Na cienkiej warstwie śniegu widać ślady kopyt, łap i podkutych butów.",
-                "sidła strzały": "Sidła wiszą na haku obok strzał. Myśliwy trzyma wszystko blisko ręki.",
+                "sidła narzędzia": "Sidła wiszą na haku obok narzędzi. Myśliwy trzyma wszystko blisko ręki.",
                 "skóra futro": "Na belce suszą się skóry i futra, przesycone zimnym powietrzem i dymem z ognia.",
             },
             items=(
-                Item("wiązka grotów", "Wiązka prostych grotów do strzał i bełtów.", 0.7, 5, "straznica_arrowheads", "tool"),
                 Item("futro z kozicy", "Ciepłe futro z górskiej kozicy.", 1.9, 11, "straznica_chamois_fur", "armor", "korpus", protection=1),
             ),
         )

@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import tempfile
 import unittest
+import warnings
 from typing import Any, cast
 
 from astergard.characters.creation import CharacterCreationError, CharacterCreationProfile
@@ -27,7 +28,7 @@ class CharacterCreatorTests(unittest.TestCase):
                         "Podgrodzie",
                         "tradycyjna",
                         "wyznanie społeczne",
-                        "łucznik",
+                        "szermierz",
                         "bard",
                         "szczupła",
                         "wysoka",
@@ -47,15 +48,13 @@ class CharacterCreatorTests(unittest.TestCase):
                 self.assertEqual(char.origin, "chlop_z_podgrodzia")
                 self.assertEqual(char.starting_reputation, 5)
                 self.assertEqual(char.global_reputation, 5)
-                self.assertEqual(char.main_profession, "lucznik")
+                self.assertEqual(char.main_profession, "szermierz")
                 self.assertEqual(char.secondary_profession, "bard")
                 self.assertEqual(char.childhood, "wies")
                 self.assertEqual(char.combat_style, "ofensywny")
                 self.assertEqual(char.room_id, 14)
-                self.assertIn("hunting_bow", [item.vnum for item in char.equipment.values() if item is not None])
+                self.assertIn("dueling_blade", [item.vnum for item in char.equipment.values() if item is not None])
                 self.assertIn("lute", [item.vnum for item in char.inventory])
-                self.assertIn("luki", char.skills.values)
-                self.assertGreaterEqual(char.skills.values["luki"]["level"], 3)
                 self.assertIn("muzyka", char.skills.values)
                 self.assertGreaterEqual(char.skills.values["muzyka"]["level"], 3)
                 self.assertIn("Powoli odzyskujesz świadomość", writer.text())
@@ -78,8 +77,8 @@ class CharacterCreatorTests(unittest.TestCase):
                         "2",
                         "1",
                         "2",
-                        "6",
-                        "5",
+                        "szermierz",
+                        "bard",
                         "2",
                         "3",
                         "1",
@@ -97,7 +96,7 @@ class CharacterCreatorTests(unittest.TestCase):
                 self.assertEqual(char.origin, "chlop_z_podgrodzia")
                 self.assertEqual(char.childhood, "wies")
                 self.assertEqual(char.birth_region, "Podgrodzie")
-                self.assertEqual(char.main_profession, "lucznik")
+                self.assertEqual(char.main_profession, "szermierz")
                 self.assertEqual(char.secondary_profession, "bard")
                 self.assertIn("szczupła", char.appearance)
                 self.assertIn("wysoka", char.appearance)
@@ -176,6 +175,51 @@ class CharacterCreatorTests(unittest.TestCase):
             self.assertEqual(char.starting_reputation, 0)
             self.assertEqual(char.origin, "")
             self.assertEqual(char.room_id, 14)
+
+    def test_legacy_creator_profile_is_migrated_idempotently(self) -> None:
+        with tempfile.NamedTemporaryFile() as tmp:
+            repo = PlayerRepository(tmp.name)
+            self.assertTrue(repo.register("migrated", "secret"))
+            with repo.connection() as con:
+                con.execute(
+                    """
+                    UPDATE players
+                    SET creator_json=?, inventory_json=?, equipment_json=?
+                    WHERE username=?
+                    """,
+                    (
+                        '{"name":"Stary","gender_description":"kobieta","age":30,"origin":"mieszczanin_astergardu","childhood":"miasto","birth_region":"Astergard","main_profession":"lucznik","secondary_profession":"luczarz","appearance":"Stara postać","history":"","starting_reputation":0,"career_path":{"career_id":null,"organization_id":null,"school_id":null,"organization_rank":null},"active_defense_style":null,"combat_learning":{"known_weapon_specializations":[],"known_defense_specializations":[],"known_additional_skills":[],"known_techniques":[]}}',
+                        '[{"name":"stary łuk","description":"legacy","weight":1.0,"value":1,"vnum":"hunting_bow","item_type":"weapon","slot":"bron_glowna","is_container":false,"capacity":0.0,"contains":[],"wearable":true,"armor_value":0,"weapon_type":"łuk","damage_type":"pociskowa","base_damage":4,"protection":0,"durability":10.0,"max_durability":10.0,"is_consumable":false,"effects_on_consume":{},"can_be_sold_to_merchants":true,"reach":2,"initiative_modifier":0,"parry_bonus":0,"shield_block":0,"id":"legacy-bow","presentation_category":null,"scene_position":null,"forms":{},"weapon_profile_id":"hunting_bow","armor_profile_id":null,"shield_profile_id":null}]',
+                        '{"bron_glowna":{"name":"stara kusza","description":"legacy","weight":2.0,"value":1,"vnum":"light_crossbow","item_type":"weapon","slot":"bron_glowna","is_container":false,"capacity":0.0,"contains":[],"wearable":true,"armor_value":0,"weapon_type":"kusza","damage_type":"pociskowa","base_damage":5,"protection":0,"durability":10.0,"max_durability":10.0,"is_consumable":false,"effects_on_consume":{},"can_be_sold_to_merchants":true,"reach":2,"initiative_modifier":0,"parry_bonus":0,"shield_block":0,"id":"legacy-crossbow","presentation_category":null,"scene_position":null,"forms":{},"weapon_profile_id":"light_crossbow","armor_profile_id":null,"shield_profile_id":null}}',
+                        "migrated",
+                    ),
+                )
+            with warnings.catch_warnings(record=True) as captured:
+                warnings.simplefilter("always")
+                first = repo.load("migrated")
+            self.assertGreaterEqual(len(captured), 1)
+            self.assertEqual(first.main_profession, "wojownik")
+            self.assertEqual(first.secondary_profession, "")
+            self.assertTrue(all(item.vnum not in {"hunting_bow", "light_crossbow"} for item in first.inventory))
+            self.assertTrue(all(item.vnum not in {"hunting_bow", "light_crossbow"} for item in first.equipment.values() if item is not None))
+            repo.save(first)
+            second = repo.load("migrated")
+            self.assertEqual(
+                (
+                    first.main_profession,
+                    first.secondary_profession,
+                    [item.vnum for item in first.inventory],
+                    [item.vnum for item in first.equipment.values() if item is not None],
+                    first.skills.to_dict(),
+                ),
+                (
+                    second.main_profession,
+                    second.secondary_profession,
+                    [item.vnum for item in second.inventory],
+                    [item.vnum for item in second.equipment.values() if item is not None],
+                    second.skills.to_dict(),
+                ),
+            )
 
     def test_new_characters_start_in_the_inn(self) -> None:
         with tempfile.NamedTemporaryFile() as tmp:

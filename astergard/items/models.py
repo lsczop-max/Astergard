@@ -287,14 +287,6 @@ def battle_axe() -> Item:
     return Item("topór bojowy", "Cięższy topór do bezpośredniego starcia.", 3.4, 22, "battle_axe", "weapon", "bron_glowna", wearable=True, weapon_type="topór", damage_type="obuchowa", base_damage=5, reach=1, initiative_modifier=0, parry_bonus=0, weapon_profile_id="battle_axe")
 
 
-def hunting_bow() -> Item:
-    return Item("łuk myśliwski", "Lekki łuk do polowań i szkolenia z dystansu.", 1.2, 18, "hunting_bow", "weapon", "bron_glowna", wearable=True, weapon_type="łuk", damage_type="pociskowa", base_damage=4, reach=2, initiative_modifier=1, parry_bonus=0)
-
-
-def light_crossbow() -> Item:
-    return Item("kusza lekka", "Prosta kusza o umiarkowanym naciągu.", 2.8, 22, "light_crossbow", "weapon", "bron_glowna", wearable=True, weapon_type="kusza", damage_type="pociskowa", base_damage=5, reach=2, initiative_modifier=0, parry_bonus=0)
-
-
 def command_whistle() -> Item:
     return Item("gwizdek dowódcy", "Krótkie narzędzie do wydawania sygnałów i porządkowania ludzi.", 0.1, 4, "command_whistle", "tool")
 
@@ -313,10 +305,6 @@ def cyrulik_kit() -> Item:
 
 def lute() -> Item:
     return Item("lutnia", "Prosta lutnia do śpiewu i opowieści przy ogniu.", 1.5, 12, "lute", "tool")
-
-
-def bowyer_tools() -> Item:
-    return Item("narzędzia łuczarza", "Piła, klej i sznur przydatne przy strzałach i łukach.", 1.0, 9, "bowyer_tools", "tool")
 
 
 def innkeeper_shop_inventory() -> list[Item]:
@@ -488,7 +476,7 @@ def dungrim_quartermaster_inventory() -> list[Item]:
     return [
         Item("racja żołnierska", "Sucha porcja do marszu i nocnej wachty.", 0.6, 4, "dungrim_ration", "food", is_consumable=True, effects_on_consume={"restore_stamina": 8}),
         Item("oliwa do lamp", "Mała butelka oliwy do lamp i pochodni.", 0.4, 3, "dungrim_lamp_oil", "tool"),
-        Item("zwój bełtów", "Zwój bełtów do fortecznych kusz.", 1.4, 10, "dungrim_bolt_bundle", "tool"),
+        Item("zestaw naprawczy", "Płótno, igła i sznur do prostych napraw w drodze.", 1.0, 8, "dungrim_repair_kit", "tool"),
         Item("stara latarnia", "Latarnia z grubym szkłem, dobra na patrol.", 1.3, 8, "dungrim_lantern", "tool"),
     ]
 
@@ -531,7 +519,7 @@ def straznica_caravan_inventory() -> list[Item]:
 
 def straznica_hunter_inventory() -> list[Item]:
     return [
-        Item("wiązka grotów", "Wiązka prostych grotów do strzał i bełtów.", 0.7, 5, "straznica_arrowheads", "tool"),
+        Item("zestaw linek", "Wiązka cienkich linek i supełków do codziennej pracy.", 0.7, 5, "straznica_cord_bundle", "tool"),
         Item("skórzane rękawice", "Rękawice z wyprawionej skóry, dobre na wiatr i kamień.", 0.4, 4, "straznica_leather_gloves", "armor", "lewa_reka", protection=0),
         Item("sakwa ziołowa", "Mała sakwa z suszonymi ziołami i gorzkimi liśćmi.", 0.5, 4, "straznica_herb_sack", "food", is_consumable=True, effects_on_consume={"restore_stamina": 5}),
         Item("futro z kozicy", "Ciepłe futro z górskiej kozicy.", 1.9, 11, "straznica_chamois_fur", "armor", "korpus", protection=1),
@@ -568,7 +556,7 @@ def trakty_courier_inventory() -> list[Item]:
 
 def trakty_hunter_inventory() -> list[Item]:
     return [
-        Item("wiązka grotów", "Wiązka prostych grotów do strzał i bełtów.", 0.7, 5, "trakty_arrowheads", "tool"),
+        Item("zestaw linek", "Wiązka cienkich linek i supełków do codziennej pracy.", 0.7, 5, "trakty_cord_bundle", "tool"),
         Item("skórzane rękawice", "Rękawice z wyprawionej skóry, dobre na wiatr i kamień.", 0.4, 4, "trakty_leather_gloves", "armor", "lewa_reka", protection=0),
         Item("sakwa ziołowa", "Mała sakwa z suszonymi ziołami i gorzkimi liśćmi.", 0.5, 4, "trakty_herb_sack", "food", is_consumable=True, effects_on_consume={"restore_stamina": 5}),
         Item("futro z kozicy", "Ciepłe futro z górskiej kozicy.", 1.9, 11, "trakty_chamois_fur", "armor", "korpus", protection=1),
@@ -595,7 +583,6 @@ def puszcza_herbal_inventory() -> list[Item]:
 
 def puszcza_hunter_inventory() -> list[Item]:
     return [
-        Item("kołczan strzał", "Skórzany kołczan z długimi strzałami.", 1.6, 10, "puszcza_arrows", "tool"),
         Item("sidła leśne", "Zestaw sidel i pętli na zwierzynę.", 1.0, 8, "puszcza_traps", "tool"),
         Item("futro sarny", "Cienkie, miękkie futro z lasu.", 1.5, 7, "puszcza_deer_fur", "armor", "korpus", protection=0),
         Item("nóż tropiciela", "Krótki nóż do skór, lin i tropów.", 0.3, 6, "puszcza_tracker_knife", "weapon", "prawa_reka", damage_type="kluta", base_damage=2, reach=1, initiative_modifier=1, parry_bonus=0),

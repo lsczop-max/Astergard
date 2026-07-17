@@ -344,7 +344,7 @@ ORGANIZATIONS: tuple[OrganizationDefinition, ...] = (
     OrganizationDefinition(
         id="kompania_najemna",
         name="Kompania Najemna",
-        description="Sprzedaje miecz, łuk i dyscyplinę tam, gdzie ktoś płaci lepiej niż reszta.",
+        description="Sprzedaje miecz i dyscyplinę tam, gdzie ktoś płaci lepiej niż reszta.",
         career_id="zolnierz",
         schools=("szkola_najemna",),
         trainers=("master_halberd",),

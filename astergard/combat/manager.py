@@ -937,9 +937,6 @@ class CombatManager:
             weights["glowa"] = max(4, weights.get("glowa", 0) - 2)
             weights["prawa_noga"] = weights.get("prawa_noga", 0) + 2
             weights["lewa_noga"] = weights.get("lewa_noga", 0) + 2
-        if normalize_weapon_family(weapon) in {"luki", "kusze"}:
-            weights["glowa"] += 2
-            weights["korpus"] += 1
         if defender.shield() is not None:
             weights["lewa_reka"] = max(4, weights.get("lewa_reka", 0) - 3)
             weights["korpus"] += 2
@@ -949,10 +946,6 @@ class CombatManager:
 
     def _technique_for(self, style_name: str, weapon: Item | None) -> str:
         family = normalize_weapon_family(weapon)
-        if family == "luki":
-            return "mierzony strzał"
-        if family == "kusze":
-            return "krótki strzał"
         if family == "wlocznie":
             return "krótki wyrzut włóczni"
         if family == "bron_drzewcowa":

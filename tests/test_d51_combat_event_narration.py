@@ -33,7 +33,7 @@ class D51CombatEventNarrationTests(unittest.TestCase):
         assert result.combat_event is not None
         payload = result.combat_event.to_dict()
         self.assertEqual(payload["attacker_name"], "atakujacy")
-        self.assertIn(payload["weapon_family"], {"miecze", "bez_broni", "improwizowana", "wlocznie", "topory", "mloty", "bron_drzewcowa", "luki", "kusze", "sztylety", "maczugi"})
+        self.assertIn(payload["weapon_family"], {"miecze", "bez_broni", "improwizowana", "wlocznie", "topory", "mloty", "bron_drzewcowa", "sztylety", "maczugi"})
         self.assertIn("result", payload)
         self.assertIn("technique", payload)
         self.assertNotIn("None", result.message)
