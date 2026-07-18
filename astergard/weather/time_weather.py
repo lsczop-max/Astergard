@@ -55,11 +55,22 @@ class TimeAndWeatherManager:
 
     def ambient_event(self, zone: str) -> str | None:
         weather = self.weather_by_zone.get(zone)
+        if zone in {"Centrum_Twierdza", "Podgrodzie", "Forteca_Dungrim", "Haldun"}:
+            choices = [
+                "Ktoś zamyka okiennice po drugiej stronie ulicy.",
+                "Pies przebiega przez przejście i znika za rogiem.",
+                "Ktoś przestawia skrzynię pod ścianę i wraca do pracy.",
+            ]
+            if weather is None:
+                return random.choice(choices) if random.random() < 0.25 else None
+            if weather in self._ambient_by_weather:
+                return random.choice(choices) if random.random() < 0.15 else None
+            return None
         if weather is None:
             return random.choice([
                 "Ktoś zamyka okiennice po drugiej stronie ulicy.",
                 "Pies przebiega przez przejście i znika za rogiem.",
-                "Gdzieś dalej trzaśnie gałąź, a potem wraca zwykły ruch ulicy.",
+                "Ktoś przestawia skrzynię pod ścianę i wraca do pracy.",
             ]) if random.random() < 0.4 else None
         choices = self._ambient_by_weather.get(weather, [])
         if not choices or random.random() >= 0.45:

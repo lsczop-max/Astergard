@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+import random
 from uuid import uuid4
 from typing import TypedDict, cast
 
@@ -66,7 +67,20 @@ def _lower_first(text: str) -> str:
 def _pick_fragment(options: tuple[str, ...], key: str) -> str:
     if not options:
         return ""
-    return options[sum(ord(ch) for ch in key) % len(options)]
+    return random.choice(options)
+
+
+def _is_compound_activity(text: str) -> bool:
+    lowered = text.lower()
+    return " i " in lowered or ", " in lowered or " oraz " in lowered
+
+
+def _single_activity_clause(text: str, *, prefer_last: bool = False) -> str:
+    clause = text.strip().rstrip(".")
+    for separator in (" oraz ", " i ", ","):
+        if separator in clause:
+            clause = clause.split(separator, 1)[-1 if prefer_last else 0].strip()
+    return clause
 
 
 _SCENE_FRAGMENTS: dict[str, dict[str, tuple[str, ...]]] = {
@@ -74,9 +88,7 @@ _SCENE_FRAGMENTS: dict[str, dict[str, tuple[str, ...]]] = {
         "default": (
             "otwiera okiennice",
             "zamiata próg",
-            "rozpala piec",
             "sprawdza zamki",
-            "wyprowadza zwierzęta",
         ),
         "deszcz": (
             "strząsa wodę z kaptura",
@@ -249,21 +261,25 @@ class NPC:
     def scene_line(self, time_of_day: int | None = None, weather: str | None = None, zone: str | None = None) -> str:
         base = self.short_desc.strip().rstrip(".")
         phase = self.daily_phase or _phase_from_hour(time_of_day)
-        activity = self.daily_activity.strip().rstrip(".")
+        raw_activity = self.daily_activity
+        prefer_last = phase in {"wieczór", "noc"}
+        _ = _weather_hint(weather)
+        _ = zone or self.zone
+        activity = _single_activity_clause(raw_activity, prefer_last=prefer_last)
         if not activity:
-            activity = self.daily_schedule.get(phase, self.daily_schedule.get("dzień", "")).strip().rstrip(".")
-        if self.vnum == "podgrodzie_kowal" and phase == "noc" and activity:
-            return f"Kowal {_lower_first(activity)}."
-        weather_key = _weather_hint(weather)
-        fragment_pool = _SCENE_FRAGMENTS.get(phase, _SCENE_FRAGMENTS["dzień"])
-        key = f"{self.vnum}:{phase}:{weather_key}:{zone or self.zone}"
-        fragment = _pick_fragment(fragment_pool.get(weather_key) or fragment_pool["default"], key)
-        if activity and fragment:
-            return f"{base}, {fragment} i {_lower_first(activity)}."
+            activity = _single_activity_clause(self.daily_schedule.get(phase, self.daily_schedule.get("dzień", "")), prefer_last=prefer_last)
+        if self.vnum == "podgrodzie_kowal" and phase == "noc" and raw_activity:
+            return f"Kowal {_lower_first(_single_activity_clause(raw_activity, prefer_last=False))}."
+        if self.vnum == "traveler" and (zone == "Centrum_Twierdza" or self.zone == "Centrum_Twierdza"):
+            chapel_activity = {
+                "świt": "kładzie monetę w niszy",
+                "dzień": "zapala świecę przy kapliczce",
+                "wieczór": "składa dłonie przy kapliczce",
+                "noc": "stoi w ciszy przy niszy",
+            }.get(phase, "kładzie monetę w niszy")
+            return f"{base}, {chapel_activity}."
         if activity:
             return f"{base}, {_lower_first(activity)}."
-        if fragment:
-            return f"{base}, {fragment}."
         return base
 
 
@@ -589,10 +605,10 @@ class NPCFactory:
             }
         if vnum in {"blacksmith", "carpenter", "tanner", "armorer", "podgrodzie_kowal", "podgrodzie_pomocnik_kowala", "haldun_blacksmith", "dungrim_armorer", "dungrim_military_blacksmith"}:
             return {
-                "świt": "Otwiera warsztat i rozpala ogień.",
-                "dzień": "Uderza młotem w rozgrzane żelazo.",
-                "wieczór": "Czyści stanowisko i wygasza ogień.",
-                "noc": "Wraca do domu z zapachem dymu i metalu.",
+                "świt": "Otwiera warsztat.",
+                "dzień": "Uderza młotem w żelazo.",
+                "wieczór": "Czyści stanowisko.",
+                "noc": "Wraca do domu.",
             }
         if vnum in {"straznica_woznica", "straznica_podrozny", "straznica_pielgrzym"}:
             return {
@@ -659,10 +675,10 @@ class NPCFactory:
             }
         if vnum in {"traveler", "podgrodzie_pielgrzym"}:
             return {
-                "świt": "Zbiera sakwy i rusza w drogę.",
-                "dzień": "Przemierza ulice i szuka traktu.",
-                "wieczór": "Szuka noclegu przed zmrokiem.",
-                "noc": "Odpoczywa po długiej drodze.",
+                "świt": "Kładzie monetę w niszy.",
+                "dzień": "Zapala świecę przy kapliczce.",
+                "wieczór": "Składa dłonie przy kapliczce.",
+                "noc": "Stoi w ciszy przy niszy.",
             }
         if vnum in {"farmer", "woodcutter", "miller", "priest_aide", "podgrodzie_chlop", "podgrodzie_chlopka", "haldun_farmer", "haldun_pasterz", "haldun_solt", "dungrim_stablemaster"}:
             return {
@@ -2774,7 +2790,7 @@ class NPCFactory:
             return self._basic_npc(
                 vnum="traveler",
                 name="podróżny",
-                short_desc="Podróżny stoi z sakwą przy nodze i ogląda miasto tak, jakby wciąż szukał wyjścia.",
+                short_desc="Podróżny stoi z sakwą przy nodze.",
                 long_desc="Na płaszczu ma pył z kilku dróg, a na twarzy ostrożność ludzi, którzy widzieli już zbyt wiele granic.",
                 zone="Centrum_Twierdza",
                 faction="MEEKHAN",
@@ -2916,7 +2932,7 @@ class NPCFactory:
             return self._basic_npc(
                 vnum="traveler",
                 name="podróżny",
-                short_desc="Podróżny stoi z sakwą przy nodze i ogląda miasto tak, jakby wciąż szukał wyjścia.",
+                short_desc="Podróżny stoi z sakwą przy nodze.",
                 long_desc="Na płaszczu ma pył z kilku dróg, a na twarzy ostrożność ludzi, którzy widzieli już zbyt wiele granic.",
                 zone="Centrum_Twierdza",
                 faction="MEEKHAN",

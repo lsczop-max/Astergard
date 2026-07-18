@@ -179,6 +179,102 @@ def _title_case(text: str) -> str:
     return text[:1].upper() + text[1:] if text else text
 
 
+def _title_case_phrase(text: str) -> str:
+    keep_lower = {"za", "przy", "pod", "nad", "obok", "na", "do", "ku", "w", "u", "od"}
+    words = []
+    for index, word in enumerate(text.split()):
+        if index > 0 and word.lower() in keep_lower:
+            words.append(word.lower())
+        else:
+            words.append(_title_case(word))
+    return " ".join(words)
+
+
+_GENITIVE_EXIT_EXCEPTIONS = {
+    "karczma": "karczmy",
+    "zaułek": "zaułka",
+    "tyły": "tyłów",
+    "kapliczka": "kapliczki",
+    "szeroka": "szerokiej",
+    "brukowana": "brukowanej",
+    "przydrożna": "przydrożnej",
+}
+
+_LOCATIVE_EXIT_EXCEPTIONS = {
+    "karczma": "karczmie",
+    "zaułek": "zaułku",
+    "kapliczka": "kapliczce",
+    "szeroka": "szerokiej",
+    "brukowana": "brukowanej",
+    "przydrożna": "przydrożnej",
+}
+
+_EXACT_EXIT_FORMS = {
+    ("szeroka brukowana", "locative"): "Szerokiej Brukowanej",
+    ("tyły karczmy", "genitive"): "Tyłów Karczmy",
+    ("zaułek za karczmą", "genitive"): "Zaułka za Karczmą",
+    ("kapliczka przydrożna", "locative"): "Kapliczce Przydrożnej",
+    ("karczma pod żurawiem", "genitive"): "Karczmy pod Żurawiem",
+    ("mała stajnia", "genitive"): "Małej Stajni",
+    ("kuźnia przy murze", "genitive"): "Kuźni przy Murze",
+    ("podcienia kupieckie", "genitive"): "Podcieni Kupieckich",
+    ("plac przed wartownią", "genitive"): "Placu Przed Wartownią",
+    ("dom snycerza", "genitive"): "Domu Snycerza",
+    ("dom snycerzy", "genitive"): "Domu Snycerzy",
+    ("stary spichlerz", "genitive"): "Starego Spichlerza",
+    ("jatki rzeźników", "genitive"): "Jatek Rzeźników",
+    ("boczne uliczki placu", "genitive"): "Bocznych Uliczek Placu",
+    ("opuszczona chata", "genitive"): "Opuszczonej Chaty",
+    ("wschodnia furta łowców", "genitive"): "Wschodniej Furty Łowców",
+    ("skład drewna", "genitive"): "Składu Drewna",
+    ("zaułek czeladników", "genitive"): "Zaułka Czeladników",
+    ("pastwiska", "genitive"): "Pastwisk",
+    ("kapliczka podróżnych", "genitive"): "Kapliczki Podróżnych",
+    ("kapliczka podróżnych za murem", "genitive"): "Kapliczki Podróżnych za Murem",
+    ("kram świecarzy", "genitive"): "Kramu Świecarzy",
+    ("warsztat cieśli", "genitive"): "Warsztatu Cieśli",
+}
+
+
+def _inflect_exit_word(word: str, case: str) -> str:
+    lowered = word.lower()
+    if case == "genitive":
+        if lowered in _GENITIVE_EXIT_EXCEPTIONS:
+            form = _GENITIVE_EXIT_EXCEPTIONS[lowered]
+        elif lowered.endswith("ły"):
+            form = lowered[:-2] + "łów"
+        elif lowered.endswith("ek"):
+            form = lowered[:-2] + "ka"
+        elif lowered.endswith("ka"):
+            form = lowered[:-2] + "ki"
+        elif lowered.endswith("na"):
+            form = lowered[:-1] + "ej"
+        elif lowered.endswith("a"):
+            form = lowered[:-1] + "y"
+        else:
+            form = lowered
+    elif case == "locative":
+        if lowered in _LOCATIVE_EXIT_EXCEPTIONS:
+            form = _LOCATIVE_EXIT_EXCEPTIONS[lowered]
+        elif lowered.endswith("ka"):
+            form = lowered[:-2] + "kiej"
+        elif lowered.endswith("na"):
+            form = lowered[:-1] + "ej"
+        elif lowered.endswith("a"):
+            form = lowered[:-1] + "iej"
+        elif lowered.endswith("ek"):
+            form = lowered[:-2] + "ku"
+        else:
+            form = lowered
+    else:
+        form = lowered
+    return form
+
+
+def _has_embedded_relation(tokens: list[str]) -> bool:
+    return any(token in {"za", "przy", "pod", "nad", "obok", "między", "miedzy", "na", "w", "u"} for token in tokens[1:])
+
+
 def _simple_plural(noun: str) -> str:
     if not noun:
         return noun
@@ -257,6 +353,10 @@ def _is_indoors(zone: str) -> bool:
     return zone in {"Forteca_Dungrim", "Kopalnia_Zelaza", "Jaskinie_Wilkow"}
 
 
+def _is_central_city_zone(zone: str) -> bool:
+    return zone in {"Centrum_Twierdza", "Podgrodzie"}
+
+
 def _visibility_label(weather: str | None, time_of_day: int, zone: str) -> str:
     if zone in {"Kopalnia_Zelaza", "Jaskinie_Wilkow"}:
         return "ciemność" if time_of_day >= 20 or time_of_day < 6 else "słabe światło"
@@ -303,6 +403,8 @@ def _time_clause(hour: int, zone: str) -> str:
         if hour < 6 or hour >= 20:
             return "Tu porę zdradza cisza."
         return "Światło dociera tylko tam, gdzie ktoś je przyniesie."
+    if _is_central_city_zone(zone):
+        return ""
     if hour < 7:
         return "Świt rozprasza ciemność."
     if hour < 11:
@@ -326,6 +428,8 @@ def _season_clause(season: str | None, zone: str) -> str:
     if season == "lato":
         if _is_indoors(zone):
             return "Lato robi wnętrze dusznym."
+        if _is_central_city_zone(zone):
+            return ""
         return "Lato trzyma ciepło."
     if season == "wiosna":
         return "Wiosna daje zieleń."
@@ -490,11 +594,93 @@ _LIFE_BY_ZONE = {
     "Bagna_Hookri": "Ludzie poprawiają buty, przechodzą po kępach i sprawdzają, czy torf jeszcze trzyma.",
 }
 
+_SCENE_SOUND_BY_PROFILE = {
+    "inn_interior": "W sali dźwięczą kufle, rozmowy i krótki śmiech.",
+    "inn_back": "Za kuchenną ścianą stuka drewno i brzęczą kufle odkładane po myciu.",
+    "square": "Na placu słychać przesuwane skrzynie, wodę w wiadrze i krótkie komendy straży.",
+    "passage": "Między fasadami słychać ostrożne kroki i przyciszone nawoływania.",
+    "street": "Na ulicy skrzypią wozy, a spod butów sypie się żwir.",
+    "forge": "Metal dźwięczy o metal, a miech syczy przy palenisku.",
+    "market": "Kupcy przekrzykują się nad ladami, a skrzynie stukają o bruk.",
+    "temple_interior": "W świątyni słychać stłumione kroki i pojedyncze szepty.",
+    "crossroads": "Na rozstajach turkoczą koła, a z pobocza dochodzą krótkie nawoływania.",
+    "roadside_chapel": "Przy kapliczce słychać wiatr, skrzypienie trawy i pojedyncze kroki.",
+}
+
+_SCENE_SMELL_BY_PROFILE = {
+    "inn_interior": "Pachnie piwem, pieczonym mięsem i mokrym drewnem.",
+    "inn_back": "Pachnie tłuszczem, mokrym drewnem i warzywami z kuchni.",
+    "square": "W powietrzu miesza się mokry bruk, pył i dym z pobliskich palenisk.",
+    "passage": "Pachnie kurzem znad drogi i mokrym tynkiem.",
+    "street": "Pachnie pyłem, mokrym brukiem i sadzą z pobliskich palenisk.",
+    "forge": "Czuć rozgrzany metal, węgiel i pył ze skały.",
+    "market": "Czuć płótno, żelazo i surowe drewno kramów.",
+    "temple_interior": "Pachnie woskiem, dymem świec i kwiatami przy niszy.",
+    "crossroads": "Pachnie kurzem traktu, mokrą trawą i dymem z ognisk.",
+    "roadside_chapel": "Pachnie mokrym kamieniem, kurzem drogi i woskiem z pojedynczej świecy.",
+}
+
+_SCENE_WEAR_BY_PROFILE = {
+    "inn_interior": "Ławy są wygładzone od łokci, a próg ma rysy od butów.",
+    "inn_back": "Deski są śliskie od tłuszczu, a stół ma nacięcia po nożach.",
+    "square": "Bruk jest wyślizgany przy krawędzi i popękany od kół oraz butów.",
+    "passage": "Próg jest przetarty, a kamień przy ścianach starty od towarów i butów.",
+    "street": "Bruk jest wygładzony i popękany koleinami.",
+    "forge": "Krawędzie stołów są okopcone, a ściany noszą ślady sadzy i uderzeń.",
+    "market": "Lada jest starta od towaru, a bruk nosi ślady kół i ciężkich skrzyń.",
+    "temple_interior": "Kamień przy progu jest gładki od butów i odstawianych świec.",
+    "crossroads": "Koleiny rozchodzą się w kilka stron, a pobocza są wygniecione przez postoje.",
+    "roadside_chapel": "Próg jest wygładzony przez buty i piasek z drogi.",
+}
+
+_SCENE_LIFE_BY_PROFILE = {
+    "inn_interior": "Karczmarz liczy kufle, a służba znosi czyste szklanki.",
+    "inn_back": "Ktoś odkłada kubeł przy ścianie, a ktoś inny czyści kufle przy stole.",
+    "square": "Straż przesuwa się przy murze, a handlarze rozkładają skrzynie.",
+    "passage": "Kupcy przymykają okiennice, a przechodnie mijają się bokiem.",
+    "street": "Przechodnie mijają się szybko, a ktoś odstawia skrzynię przy ścianie.",
+    "forge": "Kowal wyciąga żelazo z ognia i zaraz znowu sięga po młot.",
+    "market": "Kupcy ważą towar, a przekupki przesuwają skrzynie bliżej przejścia.",
+    "temple_interior": "Ktoś odkłada świecę przy niszy i wychodzi bez słowa.",
+    "crossroads": "Wozy zwalniają, a przewodnicy liczą skrzynie przed kolejnym odcinkiem.",
+    "roadside_chapel": "Podróżni zostawiają drobne dary i ruszają dalej.",
+}
+
+_PROFILE_DROPS_TIME_AND_SEASON = {
+    "inn_interior",
+    "inn_back",
+    "square",
+    "passage",
+    "street",
+    "forge",
+    "market",
+    "temple_interior",
+    "crossroads",
+    "roadside_chapel",
+}
+
+
+def _scene_profile(scene: "WorldScene") -> str:
+    return scene.scene_profile.strip()
+
 
 def _scene_sound_clause(scene: "WorldScene") -> str:
+    profile = _scene_profile(scene)
+    if profile in _SCENE_SOUND_BY_PROFILE:
+        return _SCENE_SOUND_BY_PROFILE[profile]
     title = scene.title.lower()
     if scene.zone in {"Centrum_Twierdza", "Podgrodzie"}:
-        return "Z ulicy słychać wozy, nawoływania i szczekanie psów."
+        if "karcz" in title or "zajazd" in title:
+            return "Przez salę idą kufle, rozmowy i krótkie wybuchy śmiechu."
+        if "kuź" in title:
+            return "Metal dźwięczy o metal, a miech syczy przy palenisku."
+        if "rynek" in title or "targ" in title:
+            return "Kupcy przekrzykują się nad ladami, a skrzynie stukają o bruk."
+        if "kaplic" in title or "świąty" in title:
+            return "Przy niszy i ławkach słychać tylko stłumione kroki i pojedyncze szepty."
+        if "plac" in title or "studnia" in title:
+            return "Na placu słychać przesuwane skrzynie, wodę w wiadrze i krótkie komendy straży."
+        return ""
     if "karcz" in title or "zajazd" in title:
         return "Przez salę idą kufle, rozmowy i krótkie wybuchy śmiechu."
     if "kuź" in title or scene.zone in {"Forteca_Dungrim"}:
@@ -515,11 +701,22 @@ def _scene_sound_clause(scene: "WorldScene") -> str:
 
 
 def _scene_smell_clause(scene: "WorldScene") -> str:
+    profile = _scene_profile(scene)
+    if profile in _SCENE_SMELL_BY_PROFILE:
+        return _SCENE_SMELL_BY_PROFILE[profile]
     title = scene.title.lower()
     if "karcz" in title or "zajazd" in title:
         return "Pachnie piwem, pieczonym mięsem, dymem i mokrym drewnem."
     if "kuź" in title or scene.zone in {"Kopalnia_Zelaza"}:
         return "Czuć rozgrzany metal, węgiel i pył ze skały."
+    if scene.zone in {"Centrum_Twierdza", "Podgrodzie"}:
+        if "rynek" in title or "targ" in title:
+            return "Czuć płótno, żelazo i surowe drewno kramów."
+        if "kaplic" in title or "świąty" in title:
+            return "Pachnie woskiem, dymem świec i kwiatami przy niszy."
+        if "plac" in title or "studnia" in title:
+            return "W powietrzu miesza się mokry bruk, pył i dym z pobliskich palenisk."
+        return ""
     if scene.zone in {"Puszcza_Ciszy", "Knieja_Cichych_Sciezek", "Osada_Mysliwych"}:
         return "W powietrzu unosi się żywica, mokra kora i ziemia po deszczu."
     if scene.zone in {"Bagna_Hookri"}:
@@ -534,11 +731,22 @@ def _scene_smell_clause(scene: "WorldScene") -> str:
 
 
 def _scene_wear_clause(scene: "WorldScene") -> str:
+    profile = _scene_profile(scene)
+    if profile in _SCENE_WEAR_BY_PROFILE:
+        return _SCENE_WEAR_BY_PROFILE[profile]
     title = scene.title.lower()
     if "karcz" in title or "zajazd" in title:
         return "Ławy są wygładzone od łokci, a próg ma rysy od butów."
     if "kuź" in title or scene.zone in {"Kopalnia_Zelaza"}:
         return "Krawędzie stołów są okopcone, a ściany noszą ślady sadzy i uderzeń."
+    if scene.zone in {"Centrum_Twierdza", "Podgrodzie"}:
+        if "rynek" in title or "targ" in title:
+            return "Lada jest starta od towaru, a bruk nosi ślady kół i ciężkich skrzyń."
+        if "kaplic" in title or "świąty" in title:
+            return "Kamień przy progu jest gładki od butów i odstawianych świec."
+        if "plac" in title or "studnia" in title:
+            return "Bruk jest wyślizgany przy krawędzi i pocięty przez częsty ruch wzdłuż ścian."
+        return ""
     if scene.zone in {"Puszcza_Ciszy", "Knieja_Cichych_Sciezek", "Osada_Mysliwych"}:
         return "Korzenie przecinają ścieżkę, a podniesione kępy mchu kryją stare ślady butów."
     if scene.zone in {"Bagna_Hookri"}:
@@ -552,7 +760,22 @@ def _scene_wear_clause(scene: "WorldScene") -> str:
 
 def _scene_life_clause(scene: "WorldScene") -> str:
     hour = scene.time_of_day % 24
+    profile = _scene_profile(scene)
+    if profile in _SCENE_LIFE_BY_PROFILE:
+        return _SCENE_LIFE_BY_PROFILE[profile]
     title = scene.title.lower()
+    if scene.zone in {"Centrum_Twierdza", "Podgrodzie"}:
+        if "karcz" in title or "zajazd" in title:
+            return "Karczmarz liczy kufle, a służba znosi czyste szklanki."
+        if "kuź" in title:
+            return "Kowal wyciąga żelazo z ognia i zaraz znowu sięga po młot."
+        if "rynek" in title or "targ" in title:
+            return "Kupcy ważą towar, a przekupki przesuwają skrzynie bliżej przejścia."
+        if "kaplic" in title or "świąty" in title:
+            return "Ktoś zostawia ofiarę przy niszy i odchodzi bez słowa."
+        if "plac" in title or "studnia" in title:
+            return "Straż przesuwa się przy murze, a handlarze rozkładają skrzynie."
+        return ""
     if hour < 7:
         return "Rano ktoś otwiera drzwi, zamiata próg albo rozpala ogień."
     if hour < 11:
@@ -599,35 +822,24 @@ def _clean_target_phrase(target: str, kind: str) -> str:
     return lowered
 
 
-def _inflect_exit_target(target: str) -> str:
-    lowered = target.strip().lower()
-    if not lowered:
+def _inflect_exit_target(target: str, case: str = "locative") -> str:
+    cleaned = target.strip()
+    if not cleaned:
         return ""
-    proper_names = {
-        "astergard",
-        "haldun",
-        "dungrim",
-        "karshold",
-        "mekhara",
-        "hookri",
-        "wilkow",
-        "ciszy",
-    }
-    if " " in lowered:
+    lowered_cleaned = cleaned.lower()
+    exact = _EXACT_EXIT_FORMS.get((lowered_cleaned, case))
+    if exact is not None:
+        return exact
+    tokens = cleaned.split()
+    if not tokens:
         return ""
-    if lowered in proper_names:
-        return _title_case(lowered)
-    if lowered.endswith("arnia"):
-        return lowered[:-1]
-    if lowered.endswith(("nia", "cia", "zia", "sia")):
-        return lowered[:-2] + "i"
-    if lowered.endswith("a"):
-        return lowered[:-1] + "y"
-    if lowered.endswith("ek"):
-        return lowered[:-2] + "ku"
-    if lowered.endswith(("k", "g", "t", "d", "n", "m", "p", "b", "s", "z", "ł", "r", "c")):
-        return lowered + "u"
-    return lowered
+    if _has_embedded_relation([token.lower() for token in tokens]):
+        head = _inflect_exit_word(tokens[0], "genitive")
+        return _title_case_phrase(" ".join([head, *tokens[1:]]))
+    if case == "genitive" and len(tokens) == 1 and tokens[0].lower() in {"astergard", "haldun", "dungrim", "karshold", "mekhara", "hookri", "wilkow", "ciszy"}:
+        return _title_case_phrase(tokens[0].lower())
+    inflected = " ".join(_inflect_exit_word(token, case) for token in tokens)
+    return _title_case_phrase(inflected)
 
 
 def _infer_exit_kind(zone: str, direction: str, location_name: str) -> str:
@@ -668,10 +880,33 @@ def _render_exit_clause(scene, direction: str, exit_) -> str | None:
     loc_phrase = _direction_phrase(direction)
     lock_phrase = "zamknięte " if getattr(exit_, "is_locked", False) else ""
     target_text = _clean_target_phrase(target, kind) if target else ""
+    target_clause = ""
     if target_text:
-        target_clause = f"w stronę {target_text}"
-    else:
-        target_clause = ""
+        direction_forms = scene.exit_forms.get(direction, {})
+        prep = direction_forms.get("prep", "")
+        if prep == "w stronę":
+            target_clause = f"w stronę {direction_forms.get('genitive') or _inflect_exit_target(target_text, 'genitive')}"
+        elif prep == "ku":
+            target_clause = f"ku {direction_forms.get('dative') or direction_forms.get('locative') or _inflect_exit_target(target_text, 'locative')}"
+        elif prep == "do":
+            target_clause = f"do {direction_forms.get('genitive') or _inflect_exit_target(target_text, 'genitive')}"
+        else:
+            tokens = target_text.split()
+            if kind in {"drzwi", "brama", "furta"}:
+                if _has_embedded_relation([token.lower() for token in tokens]):
+                    target_clause = f"w stronę {_inflect_exit_target(target_text, 'genitive')}"
+                else:
+                    target_clause = f"do {_inflect_exit_target(target_text, 'genitive')}"
+            elif kind == "schody":
+                target_clause = f"ku {_inflect_exit_target(target_text, 'locative')}"
+            elif kind == "tunel":
+                target_clause = f"w stronę {_inflect_exit_target(target_text, 'locative')}"
+            elif kind == "most":
+                target_clause = f"ku {_inflect_exit_target(target_text, 'locative')}"
+            elif kind in {"ulica", "ścieżka", "trakt", "przejście", "wejście", "zejście", "przesmyk"}:
+                target_clause = f"ku {_inflect_exit_target(target_text, 'locative')}"
+            else:
+                target_clause = f"w stronę {_inflect_exit_target(target_text, 'genitive')}"
     if kind == "drzwi":
         if target_clause:
             return f"{loc_phrase.capitalize()} {lock_phrase}drzwi prowadzą {target_clause}."
@@ -680,6 +915,10 @@ def _render_exit_clause(scene, direction: str, exit_) -> str | None:
         if target_clause:
             return f"{loc_phrase.capitalize()} {lock_phrase}brama prowadzi {target_clause}."
         return f"{loc_phrase.capitalize()} {lock_phrase}brama prowadzi dalej."
+    if kind == "furta":
+        if target_clause:
+            return f"{loc_phrase.capitalize()} furta prowadzi {target_clause}."
+        return f"{loc_phrase.capitalize()} furta prowadzi dalej."
     if kind == "schody":
         if target_clause:
             return f"{loc_phrase.capitalize()} schody prowadzą {target_clause}."
@@ -721,9 +960,11 @@ class WorldScene:
     perspective: str
     temperature: str
     target_names: Mapping[str, str]
+    exit_forms: Mapping[str, Mapping[str, str]]
     exits: Mapping[str, object]
     items: Sequence[object]
     npcs: Sequence[object]
+    scene_profile: str = ""
     notable_elements: list[str] = field(default_factory=list)
 
 
@@ -746,6 +987,8 @@ def build_world_scene(
     items: Sequence[object],
     npcs: Sequence[object],
     target_names: Mapping[str, str],
+    exit_forms: Mapping[str, Mapping[str, str]] | None = None,
+    scene_profile: str = "",
 ) -> WorldScene:
     terrain = _terrain_for_zone(zone)
     space = _space_for_zone(zone)
@@ -767,15 +1010,18 @@ def build_world_scene(
         perspective=perspective,
         temperature=temperature,
         target_names=target_names,
+        exit_forms=exit_forms or {},
         exits=exits,
         items=items,
         npcs=npcs,
+        scene_profile=scene_profile,
     )
 
 
 def render_world_scene(scene: WorldScene, *, mode: str = "standard") -> str:
     body: list[str] = [scene.title]
     visibility_note = ""
+    scene_profile = _scene_profile(scene)
     if scene.visibility == "ciemność":
         visibility_note = "Widzisz głównie najbliższe kontury."
     elif scene.visibility == "słaba widoczność":
@@ -785,7 +1031,11 @@ def render_world_scene(scene: WorldScene, *, mode: str = "standard") -> str:
     elif scene.visibility == "światło niesione":
         visibility_note = "Światło trzymasz przy sobie."
     if mode == "short":
-        intro_parts = [part.rstrip(".") for part in [scene.description.strip(), _time_clause(scene.time_of_day, scene.zone), visibility_note] if part]
+        intro_parts = [scene.description.strip().rstrip(".")]
+        if scene_profile not in _PROFILE_DROPS_TIME_AND_SEASON:
+            intro_parts.append(_time_clause(scene.time_of_day, scene.zone).rstrip("."))
+        if visibility_note:
+            intro_parts.append(visibility_note.rstrip("."))
         body.append(". ".join(intro_parts) + ".")
         life_parts = [part for part in [_scene_sound_clause(scene), _scene_smell_clause(scene)] if part]
         if life_parts:
@@ -802,13 +1052,16 @@ def render_world_scene(scene: WorldScene, *, mode: str = "standard") -> str:
         return "\n".join(part for part in body if part).strip()
 
     intro_parts = [scene.description.strip().rstrip(".")]
-    for clause in (
-        _time_clause(scene.time_of_day, scene.zone),
+    clauses: list[str] = []
+    if scene_profile not in _PROFILE_DROPS_TIME_AND_SEASON:
+        clauses.append(_time_clause(scene.time_of_day, scene.zone))
+        clauses.append(_season_clause(scene.season, scene.zone))
+    clauses.extend([
         _weather_clause(scene.weather, scene.zone, scene.space),
-        _season_clause(scene.season, scene.zone),
         _state_clause(scene.world_state),
         visibility_note,
-    ):
+    ])
+    for clause in clauses:
         if clause:
             intro_parts.append(clause.rstrip("."))
     body.append(". ".join(intro_parts).strip() + ".")

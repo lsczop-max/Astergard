@@ -2,12 +2,17 @@ from __future__ import annotations
 
 import asyncio
 import json
+import random
+import subprocess
 import re
 import unittest
+import sys
+from types import ModuleType
 from pathlib import Path
 from typing import TypedDict, cast
 
 from astergard.testing.harness import TestGameHarness
+from astergard.world.content import make_content_pack
 from astergard.world.manager import WorldManager
 
 
@@ -25,15 +30,6 @@ OLD_TEMPLATE_MARKERS = (
     "miasto zaczyna się",
     "teren sam wybiera",
     "nie potrzebuje",
-)
-NON_DETERMINISTIC_PREFIXES = (
-    "Karczmarz",
-    "Strażnik",
-    "Kowal",
-    "Podróżny",
-    "Pies",
-    "Gdzieś",
-    "Ktoś",
 )
 
 EXPECTED_INSPECTABLES = {
@@ -80,25 +76,120 @@ def _load_data() -> AuditData:
 
 def _render_pilot() -> dict[int, str]:
     async def run() -> dict[int, str]:
-        with TestGameHarness() as harness:
-            character = harness.create_character("pilot", room_id=EXPECTED_IDS[0])
-            rendered: dict[int, str] = {}
-            for room_id in EXPECTED_IDS:
-                character.room_id = room_id
-                transcript = await harness.execute(character, "spojrz")
-                rendered[room_id] = transcript.output
-            return rendered
+        state = random.getstate()
+        random.seed(0)
+        try:
+            with TestGameHarness() as harness:
+                character = harness.create_character("pilot", room_id=EXPECTED_IDS[0])
+                rendered: dict[int, str] = {}
+                for room_id in EXPECTED_IDS:
+                    character.room_id = room_id
+                    transcript = await harness.execute(character, "spojrz")
+                    rendered[room_id] = transcript.output
+                return rendered
+        finally:
+            random.setstate(state)
 
     return asyncio.run(run())
 
 
-def _stable_render(text: str) -> str:
-    lines = []
-    for line in text.splitlines():
-        if line.startswith(NON_DETERMINISTIC_PREFIXES):
-            continue
-        lines.append(line)
-    return "\n".join(lines)
+def _content_signature(content) -> tuple[object, ...]:
+    return (
+        content.room_id,
+        content.name,
+        content.description,
+        tuple(sorted(content.inspectables.items())),
+        tuple(sorted(getattr(content, "forms", {}).items())),
+        tuple(sorted((direction, tuple(sorted(forms.items()))) for direction, forms in getattr(content, "exit_forms", {}).items())),
+        tuple(sorted(getattr(content, "exit_kinds", {}).items())),
+        getattr(content, "scene_profile", ""),
+        tuple(item.name for item in content.items),
+        tuple((item.name, amount) for item, amount in content.hidden_items),
+    )
+
+
+EXPECTED_EXIT_KINDS = {
+    14: {"polnoc": "drzwi", "poludnie": "drzwi", "zachod": "drzwi"},
+    15: {"polnoc": "drzwi", "wschod": "drzwi"},
+    2: {"zachod": "ulica", "wschod": "ulica", "poludnie": "drzwi"},
+    13: {"zachod": "drzwi", "wschod": "drzwi", "polnocny-wschod": "przejście"},
+    4: {"zachod": "przejście", "poludniowy-wschod": "przejście", "poludniowy-zachod": "przejście"},
+    12: {"zachod": "drzwi", "wschod": "ulica", "poludniowy-zachod": "przejście"},
+    47: {"polnoc": "przejście", "zachod": "przejście", "poludniowy-wschod": "przejście"},
+    37: {"polnoc": "drzwi", "zachod": "przejście"},
+    55: {"polnoc": "ulica", "zachod": "trakt", "poludniowy-wschod": "trakt", "wschod": "furta"},
+    59: {"zachod": "trakt", "polnocny-zachod": "trakt", "poludniowy-wschod": "trakt"},
+}
+
+EXPECTED_EXIT_FORMS = {
+    14: {
+        "polnoc": {"prep": "w stronę", "genitive": "Zaułka za Karczmą"},
+        "poludnie": {"prep": "do", "genitive": "Tyłów Karczmy"},
+        "zachod": {"prep": "ku", "locative": "Szerokiej Brukowanej"},
+    },
+    15: {
+        "polnoc": {"prep": "do", "genitive": "Karczmy pod Żurawiem"},
+        "wschod": {"prep": "ku", "locative": "Małej Stajni"},
+    },
+    2: {
+        "zachod": {"prep": "ku", "locative": "Placu Przed Wartownią"},
+        "wschod": {"prep": "ku", "locative": "Bocznym Uliczkom Placu"},
+        "poludnie": {"prep": "do", "genitive": "Domu Snycerza"},
+    },
+    13: {
+        "zachod": {"prep": "do", "genitive": "Kuźni przy Murze"},
+        "wschod": {"prep": "do", "genitive": "Karczmy pod Żurawiem"},
+        "polnocny-wschod": {"prep": "ku", "locative": "Podcieniom Kupieckim"},
+    },
+    4: {
+        "zachod": {"prep": "ku", "locative": "Bocznym Uliczkom Placu"},
+        "poludniowy-wschod": {"prep": "w stronę", "genitive": "Zaułka za Karczmą"},
+        "poludniowy-zachod": {"prep": "ku", "locative": "Szerokiej Brukowanej"},
+    },
+    12: {
+        "zachod": {"prep": "do", "genitive": "Starego Spichlerza"},
+        "wschod": {"prep": "ku", "locative": "Szerokiej Brukowanej"},
+        "poludniowy-zachod": {"prep": "do", "genitive": "Jatek Rzeźników"},
+    },
+    47: {
+        "polnoc": {"prep": "do", "genitive": "Kramu Świecarza"},
+        "zachod": {"prep": "do", "genitive": "Warsztatu Cieśli"},
+        "poludniowy-wschod": {"prep": "do", "genitive": "Składu Drewna"},
+    },
+    37: {
+        "polnoc": {"prep": "do", "genitive": "Przedsionka Świątyni"},
+        "zachod": {"prep": "ku", "locative": "Portowi Rzecznemu"},
+    },
+    55: {
+        "polnoc": {"prep": "do", "genitive": "Zaułka Czeladników"},
+        "zachod": {"prep": "do", "genitive": "Opuszczonej Chaty"},
+        "poludniowy-wschod": {"prep": "do", "genitive": "Kapliczki Przydrożnej"},
+        "wschod": {"prep": "do", "genitive": "Wschodniej Furty Łowców"},
+    },
+    59: {
+        "zachod": {"prep": "do", "genitive": "Pastwisk"},
+        "polnocny-zachod": {"prep": "do", "genitive": "Rozstajów Traktów"},
+        "poludniowy-wschod": {"prep": "ku", "locative": "Kapliczce Podróżnych za Murem"},
+    },
+}
+
+
+def _load_develop_content_pack() -> dict[int, tuple[object, ...]]:
+    completed = subprocess.run(
+        ["git", "show", "HEAD~1:astergard/world/content.py"],
+        cwd=ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    module = ModuleType("develop_world_content")
+    module.__dict__["__file__"] = str(ROOT / "astergard" / "world" / "content.py")
+    sys.modules[module.__name__] = module
+    try:
+        exec(compile(completed.stdout, module.__dict__["__file__"], "exec"), module.__dict__)
+    finally:
+        sys.modules.pop(module.__name__, None)
+    return {content.room_id: _content_signature(content) for content in module.make_content_pack()}
 
 
 class D582CentrumPilotTests(unittest.TestCase):
@@ -109,13 +200,13 @@ class D582CentrumPilotTests(unittest.TestCase):
 
     def test_pilot_renders_match_the_saved_audit(self) -> None:
         data = _load_data()
-        expected_render = {card["location_id"]: _stable_render(card["spojrz_after"]) for card in data["cards"]}
+        expected_render = {card["location_id"]: card["spojrz_after"] for card in data["cards"]}
 
         first = _render_pilot()
         second = _render_pilot()
 
-        self.assertEqual({rid: _stable_render(text) for rid, text in first.items()}, {rid: _stable_render(text) for rid, text in second.items()})
-        self.assertEqual({rid: _stable_render(text) for rid, text in first.items()}, expected_render)
+        self.assertEqual(first, second)
+        self.assertEqual(first, expected_render)
 
     def test_pilot_rooms_keep_their_landmarks_and_inspectables(self) -> None:
         world = WorldManager()
@@ -133,6 +224,8 @@ class D582CentrumPilotTests(unittest.TestCase):
                 expected_exits,
                 room_id,
             )
+            self.assertEqual({direction: exit_.kind for direction, exit_ in location.exits.items()}, EXPECTED_EXIT_KINDS[room_id], room_id)
+            self.assertEqual(location.exit_forms, EXPECTED_EXIT_FORMS[room_id], room_id)
 
     def test_pilot_renders_do_not_reintroduce_old_templates_or_raw_aliases(self) -> None:
         rendered = _render_pilot()
@@ -140,6 +233,18 @@ class D582CentrumPilotTests(unittest.TestCase):
             lowered = text.lower()
             self.assertFalse(any(marker in lowered for marker in OLD_TEMPLATE_MARKERS), text)
             self.assertIsNone(RAW_ALIAS_PATTERN.search(text), text)
+            self.assertNotIn("Świt rozprasza ciemność.", text)
+            self.assertNotIn("Lato trzyma ciepło.", text)
+            self.assertNotIn("Gdzieś dalej trzaśnie gałąź", text)
+
+    def test_production_changes_exactly_ten_locations_against_develop(self) -> None:
+        current = {content.room_id: _content_signature(content) for content in make_content_pack()}
+        develop = _load_develop_content_pack()
+        changed_ids = {room_id for room_id in current if current[room_id] != develop[room_id]}
+
+        self.assertEqual(changed_ids, set(EXPECTED_IDS))
+        self.assertEqual(len(changed_ids), 10)
+        self.assertEqual(current[56], develop[56])
 
     def test_pilot_does_not_bring_back_ranged_weapon_tokens(self) -> None:
         world = WorldManager()
