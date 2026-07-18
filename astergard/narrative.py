@@ -668,35 +668,40 @@ def _render_exit_clause(scene, direction: str, exit_) -> str | None:
     loc_phrase = _direction_phrase(direction)
     lock_phrase = "zamknięte " if getattr(exit_, "is_locked", False) else ""
     target_text = _clean_target_phrase(target, kind) if target else ""
-    inflected_target = _inflect_exit_target(target_text) if target_text else ""
+    if target_text:
+        target_clause = f"w stronę {target_text}"
+    else:
+        target_clause = ""
     if kind == "drzwi":
-        if inflected_target:
-            return f"{loc_phrase.capitalize()} {lock_phrase}drzwi prowadzą do {inflected_target}."
+        if target_clause:
+            return f"{loc_phrase.capitalize()} {lock_phrase}drzwi prowadzą {target_clause}."
         return f"{loc_phrase.capitalize()} {lock_phrase}drzwi prowadzą dalej."
     if kind == "brama":
-        if inflected_target:
-            return f"{loc_phrase.capitalize()} {lock_phrase}brama prowadzi do {inflected_target}."
+        if target_clause:
+            return f"{loc_phrase.capitalize()} {lock_phrase}brama prowadzi {target_clause}."
         return f"{loc_phrase.capitalize()} {lock_phrase}brama prowadzi dalej."
     if kind == "schody":
+        if target_clause:
+            return f"{loc_phrase.capitalize()} schody prowadzą {target_clause}."
         return f"{loc_phrase.capitalize()} schody prowadzą {('wyżej' if direction == 'gora' else 'niżej') }."
     if kind == "tunel":
-        if inflected_target:
-            return f"{loc_phrase.capitalize()} tunel niknie w stronę {inflected_target}."
+        if target_clause:
+            return f"{loc_phrase.capitalize()} tunel niknie {target_clause}."
         return f"{loc_phrase.capitalize()} tunel niknie w ciemności."
     if kind == "most":
-        if inflected_target:
-            return f"{loc_phrase.capitalize()} most prowadzi ku {inflected_target}."
+        if target_clause:
+            return f"{loc_phrase.capitalize()} most prowadzi {target_clause}."
         return f"{loc_phrase.capitalize()} most przecina dalszą część terenu."
     if kind == "ulica":
-        if inflected_target:
-            return f"{loc_phrase.capitalize()} ulica prowadzi do {inflected_target}."
+        if target_clause:
+            return f"{loc_phrase.capitalize()} ulica prowadzi {target_clause}."
         return f"{loc_phrase.capitalize()} ulica ciągnie się dalej."
     if kind in {"ścieżka", "trakt", "przejście", "wejście", "zejście", "przesmyk"}:
-        if inflected_target:
-            return f"{loc_phrase.capitalize()} {kind} wiedzie do {inflected_target}."
+        if target_clause:
+            return f"{loc_phrase.capitalize()} {kind} wiedzie {target_clause}."
         return f"{loc_phrase.capitalize()} {kind} ciągnie się dalej."
-    if inflected_target:
-        return f"{loc_phrase.capitalize()} prowadzi przejście do {inflected_target}."
+    if target_clause:
+        return f"{loc_phrase.capitalize()} prowadzi przejście {target_clause}."
     return f"{loc_phrase.capitalize()} prowadzi przejście dalej."
 
 

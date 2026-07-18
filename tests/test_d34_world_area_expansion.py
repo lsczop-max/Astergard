@@ -25,7 +25,7 @@ class D34WorldAreaExpansionTests(unittest.TestCase):
         self.assertGreaterEqual(len(authored), 90)
         self.assertEqual(world.locations[15].name, "Tyły Karczmy")
         self.assertIn("ludzie przechodnie mieszkancy mieszkańcy", world.locations[15].inspectables)
-        self.assertTrue(world.locations[15].description.startswith("Tyły Karczmy należy"))
+        self.assertTrue(world.locations[15].description.startswith("Wąskie zaplecze za kuchennym wejściem"))
 
     def test_player_can_travel_into_expanded_area_and_inspect_generic_detail(self) -> None:
         async def run() -> None:

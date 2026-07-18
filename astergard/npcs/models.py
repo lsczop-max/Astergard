@@ -256,7 +256,7 @@ class NPC:
             return f"Kowal {_lower_first(activity)}."
         weather_key = _weather_hint(weather)
         fragment_pool = _SCENE_FRAGMENTS.get(phase, _SCENE_FRAGMENTS["dzień"])
-        key = f"{self.vnum}:{self.id}:{phase}:{weather_key}:{zone or self.zone}"
+        key = f"{self.vnum}:{phase}:{weather_key}:{zone or self.zone}"
         fragment = _pick_fragment(fragment_pool.get(weather_key) or fragment_pool["default"], key)
         if activity and fragment:
             return f"{base}, {fragment} i {_lower_first(activity)}."
