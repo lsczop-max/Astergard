@@ -2405,7 +2405,7 @@ class NPCFactory:
             return self._basic_npc(
                 vnum="innkeeper",
                 name="karczmarz",
-                short_desc="Karczmarz ociera dłonie o fartuch i patrzy na gości bez zaufania.",
+                short_desc="Karczmarz ociera dłonie o fartuch.",
                 long_desc="Pamięta cudze rachunki lepiej niż cudze twarze, a mimo to rzadko daje się oszukać po raz drugi.",
                 zone="Centrum_Twierdza",
                 faction="MEEKHAN",

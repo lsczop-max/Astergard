@@ -44,7 +44,7 @@ Z ulicy słychać wozy, nawoływania i szczekanie psów. Pachnie piwem, pieczony
 Pod ścianą stoi beczka piwa.
 Na ziemi leży miska gulaszu.
 Pod ścianą stoi dębowa ława.
-Karczmarz ociera dłonie o fartuch i patrzy na gości bez zaufania, wyprowadza zwierzęta i otwiera karczmę i ustawia stoły przy wejściu.
+Karczmarz ociera dłonie o fartuch.
 Na północy drzwi prowadzą w stronę zaułek za karczmą. Na południu drzwi prowadzą w stronę tyły karczmy. Na zachodzie drzwi prowadzą w stronę szeroka brukowana.
 ```
 

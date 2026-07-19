@@ -2,12 +2,10 @@ from __future__ import annotations
 
 import asyncio
 import json
+import hashlib
 import random
-import subprocess
 import re
 import unittest
-import sys
-from types import ModuleType
 from pathlib import Path
 from typing import TypedDict, cast
 
@@ -18,6 +16,7 @@ from astergard.world.manager import WorldManager
 
 ROOT = Path(__file__).resolve().parents[1]
 DATA_PATH = ROOT / "docs" / "audits" / "D58_2_CENTRUM_PILOT_DATA.json"
+BASELINE_SIGNATURES_PATH = ROOT / "tests" / "fixtures" / "d58_2_develop_content_signatures.json"
 EXPECTED_IDS = [14, 15, 2, 13, 4, 12, 47, 37, 55, 59]
 RAW_ALIAS_PATTERN = re.compile(r"\b[a-z]+_[a-z0-9_]+\b")
 OLD_TEMPLATE_MARKERS = (
@@ -108,6 +107,22 @@ def _content_signature(content) -> tuple[object, ...]:
     )
 
 
+def _normalize_signature(value):
+    if isinstance(value, dict):
+        return {key: _normalize_signature(value[key]) for key in sorted(value)}
+    if isinstance(value, tuple):
+        return [_normalize_signature(item) for item in value]
+    if isinstance(value, list):
+        return [_normalize_signature(item) for item in value]
+    return value
+
+
+def _signature_hash(content) -> str:
+    signature = _normalize_signature(_content_signature(content))
+    payload = json.dumps(signature, ensure_ascii=False, separators=(",", ":"))
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
 EXPECTED_EXIT_KINDS = {
     14: {"polnoc": "drzwi", "poludnie": "drzwi", "zachod": "drzwi"},
     15: {"polnoc": "drzwi", "wschod": "drzwi"},
@@ -174,22 +189,10 @@ EXPECTED_EXIT_FORMS = {
 }
 
 
-def _load_develop_content_pack() -> dict[int, tuple[object, ...]]:
-    completed = subprocess.run(
-        ["git", "show", "HEAD~1:astergard/world/content.py"],
-        cwd=ROOT,
-        check=True,
-        capture_output=True,
-        text=True,
-    )
-    module = ModuleType("develop_world_content")
-    module.__dict__["__file__"] = str(ROOT / "astergard" / "world" / "content.py")
-    sys.modules[module.__name__] = module
-    try:
-        exec(compile(completed.stdout, module.__dict__["__file__"], "exec"), module.__dict__)
-    finally:
-        sys.modules.pop(module.__name__, None)
-    return {content.room_id: _content_signature(content) for content in module.make_content_pack()}
+def _load_baseline_signatures() -> dict[int, str]:
+    raw = json.loads(BASELINE_SIGNATURES_PATH.read_text(encoding="utf-8"))
+    room_signatures = raw["room_signatures"]
+    return {int(room_id): signature for room_id, signature in room_signatures.items()}
 
 
 class D582CentrumPilotTests(unittest.TestCase):
@@ -238,8 +241,10 @@ class D582CentrumPilotTests(unittest.TestCase):
             self.assertNotIn("Gdzieś dalej trzaśnie gałąź", text)
 
     def test_production_changes_exactly_ten_locations_against_develop(self) -> None:
-        current = {content.room_id: _content_signature(content) for content in make_content_pack()}
-        develop = _load_develop_content_pack()
+        current = {content.room_id: _signature_hash(content) for content in make_content_pack()}
+        develop = _load_baseline_signatures()
+
+        self.assertEqual(set(current), set(develop))
         changed_ids = {room_id for room_id in current if current[room_id] != develop[room_id]}
 
         self.assertEqual(changed_ids, set(EXPECTED_IDS))
