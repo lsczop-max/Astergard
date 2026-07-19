@@ -8,6 +8,7 @@ import zipfile
 from pathlib import Path
 from typing import Any, cast
 
+from astergard.application.session_transport import TcpSessionTransport
 from astergard.gmcp import IAC, SE, SB, room_info_packet
 from astergard.testing import FakeReader, FakeWriter, TestGameHarness
 from tools.build_mudlet_package import main as build_mudlet_package
@@ -99,14 +100,10 @@ class MudletClientTests(unittest.TestCase):
 
             reader = FakeReader.from_text_lines(["entry", "secret"])
             writer = FakeWriter()
-            login = asyncio.run(server.session_flow.login(cast(Any, reader), cast(Any, writer)))
+            transport = TcpSessionTransport(cast(Any, reader), cast(Any, writer))
+            login = asyncio.run(server.session_flow.login(transport))
             assert login.character is not None
-            asyncio.run(
-                server.session_flow.send_initial_view(
-                    cast(Any, writer),
-                    server.make_context(login.character),
-                )
-            )
+            asyncio.run(server.session_flow.send_initial_view(transport, server.make_context(login.character)))
             payload = b"".join(writer.chunks)
             self.assertIn(b"Core.Hello", payload)
             self.assertIn(b"Room.Info", payload)
@@ -120,14 +117,18 @@ class MudletClientTests(unittest.TestCase):
             character.room_id = 60
             server.repo.save(character)
 
+            reader = FakeReader.from_text_lines(["entry", "secret", "poludnie"])
             writer = FakeWriter()
-            server.clients[cast(Any, writer)] = character  # type: ignore[index]
-            start_location = server.world.get_location(character.room_id)
-            assert start_location is not None
-            direction = next(iter(start_location.exits))
-            server.move_direct(character, direction)
+            transport = TcpSessionTransport(cast(Any, reader), cast(Any, writer))
+            login = asyncio.run(server.session_flow.login(transport))
+            assert login.character is not None
+            asyncio.run(server.session_flow.send_initial_view(transport, server.make_context(login.character)))
+            writer.clear()
+            server.clients[transport] = login.character
+            asyncio.run(server.session_flow.command_loop(transport, server.make_context(login.character)))
             payload = b"".join(writer.chunks)
             self.assertIn(b"Room.Info", payload)
+            self.assertIn(b"Kierujesz si", payload)
             self.assertTrue(any(chunk.startswith(bytes([IAC, SB])) for chunk in writer.chunks))
 
     def test_session_loop_sends_room_info_on_room_change(self) -> None:
@@ -140,25 +141,17 @@ class MudletClientTests(unittest.TestCase):
 
             reader = FakeReader.from_text_lines(["entry", "secret"])
             writer = FakeWriter()
-            login = asyncio.run(server.session_flow.login(cast(Any, reader), cast(Any, writer)))
+            transport = TcpSessionTransport(cast(Any, reader), cast(Any, writer))
+            login = asyncio.run(server.session_flow.login(transport))
             self.assertIsNotNone(login.character)
             assert login.character is not None
 
-            asyncio.run(
-                server.session_flow.send_initial_view(
-                    cast(Any, writer),
-                    server.make_context(login.character),
-                )
-            )
+            asyncio.run(server.session_flow.send_initial_view(transport, server.make_context(login.character)))
             writer.clear()
             move_reader = FakeReader.from_text_lines(["poludnie"])
-            asyncio.run(
-                server.session_flow.command_loop(
-                    cast(Any, move_reader),
-                    cast(Any, writer),
-                    server.make_context(login.character),
-                )
-            )
+            move_transport = TcpSessionTransport(cast(Any, move_reader), cast(Any, writer))
+            server.clients[move_transport] = login.character
+            asyncio.run(server.session_flow.command_loop(move_transport, server.make_context(login.character)))
             payload = b"".join(writer.chunks)
             self.assertIn(b"Room.Info", payload)
             self.assertIn(b"Kierujesz si", payload)

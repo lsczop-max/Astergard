@@ -8,6 +8,7 @@ from astergard.application.context_assembler import GameContextAssembler
 from astergard.application.heartbeat import HeartbeatService
 from astergard.engine.lifecycle import EngineLifecycle
 from astergard.application.session_flow import SessionFlow
+from astergard.application.session_transport import TcpSessionTransport, SessionTransport
 from astergard.characters.models import Character
 from astergard.combat.wounds import overall_health_desc
 from astergard.commands.dispatcher import CommandFunc
@@ -15,7 +16,6 @@ from astergard.commands.exploration import DIRECTIONS, move_direct_with
 from astergard.commands.helpers import find_item, find_npc
 from astergard.items.models import Item
 from astergard.npcs.models import NPC
-from astergard.server.gmcp_bridge import send_room_info_for_character
 from astergard.server.context import GameContext
 from astergard.utils import describe_gold
 
@@ -51,12 +51,10 @@ class GameServer:
     cmd_ranking: CommandFunc
     cmd_save: CommandFunc
     cmd_quit: CommandFunc
-
-    """Network-facing orchestration layer."""
-
     def __init__(self, db_path: str = "mud.db", mudlet_map_enabled: bool | None = None) -> None:
-        self.clients: dict[asyncio.StreamWriter, Character] = {}
+        self.clients: dict[SessionTransport, Character] = {}
         self.services: GameServices = GameBootstrapper(db_path).build()
+        self.services.server = self
         self.mudlet_map_enabled = self._resolve_mudlet_map_enabled(mudlet_map_enabled)
         self.services.minimap_service.enabled = self.mudlet_map_enabled
         self._expose_services()
@@ -112,9 +110,7 @@ class GameServer:
         return find_npc(self.make_context(Character("lookup")), room_id, name)
 
     def move_direct(self, char: Character, direction: str) -> str:
-        result = move_direct_with(self.services.exploration_service, self.make_context(char), char, direction)
-        send_room_info_for_character(self, char)
-        return result
+        return move_direct_with(self.services.exploration_service, self.make_context(char), char, direction)
 
     def get_players_in_room(self, room_id: int) -> list[Character]:
         return [char for char in self.clients.values() if char.room_id == room_id and char.is_alive]
@@ -145,27 +141,29 @@ class GameServer:
                 pass
 
     async def handle_connection(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
+        transport = TcpSessionTransport(reader, writer)
         character: Character | None = None
         try:
-            login = await self.session_flow.login(reader, writer)
+            login = await self.session_flow.login(transport)
             if login.close_connection or login.character is None:
                 return
             character = login.character
-            self.clients[writer] = character
+            self.clients[transport] = character
             ctx = self.make_context(character)
-            await self.session_flow.send_initial_view(writer, ctx)
-            await self.session_flow.command_loop(reader, writer, ctx)
-        except (ConnectionResetError, asyncio.CancelledError):
+            await self.session_flow.send_initial_view(transport, ctx)
+            await self.session_flow.command_loop(transport, ctx)
+        except ConnectionResetError:
             pass
+        except asyncio.CancelledError:
+            raise
         finally:
             if character is not None:
                 self.services.save_load.save_character(character, "session_disconnect")
                 self.services.event_bus.emit("session.character_saved", username=character.username)
             self.services.save_load.save_world("session_disconnect")
-            self.clients.pop(writer, None)
+            self.clients.pop(transport, None)
             try:
-                writer.close()
-                await writer.wait_closed()
+                await transport.close()
             except Exception:
                 pass
 

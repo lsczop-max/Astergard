@@ -73,6 +73,7 @@ class AdminService:
             return AdminCommandResult(False, "Nie ma takiej lokacji.")
         old_room = target.room_id
         target.room_id = room_id
+        ctx.admin.location_changes.record(target)
         self.audit.record(ctx.character.username, "teleport", target=target.username, from_room=old_room, to_room=room_id)
         return AdminCommandResult(True, f"{target.username} zostaje przeniesiony do lokacji {room_id}.")
 
@@ -88,6 +89,7 @@ class AdminService:
             return AdminCommandResult(False, "Nie ma takiej lokacji.")
         old_room = ctx.character.room_id
         ctx.character.room_id = room_id
+        ctx.admin.location_changes.record(ctx.character)
         self.audit.record(ctx.character.username, "goto", from_room=old_room, to_room=room_id)
         return AdminCommandResult(True, f"Przenosisz się do lokacji {room_id}.")
 
@@ -100,6 +102,7 @@ class AdminService:
             return AdminCommandResult(False, "Nie odnajdujesz takiego gracza.")
         old_room = target.room_id
         target.room_id = ctx.character.room_id
+        ctx.admin.location_changes.record(target)
         self.audit.record(ctx.character.username, "summon", target=target.username, from_room=old_room, to_room=target.room_id)
         return AdminCommandResult(True, f"{target.username} zostaje przywołany.")
 

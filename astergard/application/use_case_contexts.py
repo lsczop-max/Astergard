@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 from astergard.characters.models import Character
@@ -19,6 +19,26 @@ from astergard.weather.time_weather import TimeAndWeatherManager
 
 
 @dataclass(slots=True)
+class LocationChangeOutbox:
+    characters: list[Character] = field(default_factory=list)
+
+    def record(self, character: Character) -> None:
+        self.characters.append(character)
+
+    def drain(self) -> list[Character]:
+        seen: set[int] = set()
+        drained: list[Character] = []
+        for character in self.characters:
+            key = id(character)
+            if key in seen:
+                continue
+            seen.add(key)
+            drained.append(character)
+        self.characters.clear()
+        return drained
+
+
+@dataclass(slots=True)
 class ExplorationContext:
     character: Character
     event_bus: EventBus
@@ -27,6 +47,7 @@ class ExplorationContext:
     npcs: NPCManager
     players_in_room: Callable[[int], list[Character]]
     current_command: str | None = None
+    location_changes: LocationChangeOutbox = field(default_factory=LocationChangeOutbox)
 
 
 @dataclass(slots=True)
@@ -98,3 +119,4 @@ class AdminContext:
     scheduler: Any
     observability: Any
     all_players: Callable[[], list[Character]]
+    location_changes: LocationChangeOutbox = field(default_factory=LocationChangeOutbox)

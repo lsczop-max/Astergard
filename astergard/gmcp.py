@@ -123,7 +123,11 @@ def core_hello_payload() -> dict[str, str]:
 
 
 def room_info_packet(location, world) -> bytes:
-    return gmcp_payload(ROOM_INFO_PACKAGE, location_room_info(location, world).to_dict())
+    return gmcp_payload(ROOM_INFO_PACKAGE, room_info_payload(location, world))
+
+
+def room_info_payload(location, world) -> dict[str, Any]:
+    return location_room_info(location, world).to_dict()
 
 
 def core_hello_packet() -> bytes:

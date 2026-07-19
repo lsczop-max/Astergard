@@ -3,7 +3,6 @@ from __future__ import annotations
 import asyncio
 import tempfile
 import unittest
-from typing import cast
 
 from astergard.quests.manager import QUESTS
 from astergard.testing import TestGameHarness
@@ -117,7 +116,7 @@ class D351QLocalQuestExpansionTests(unittest.TestCase):
                 server.repo.save(char)
 
                 loaded = server.repo.load("quest_save")
-                server.clients[cast(asyncio.StreamWriter, harness.writers["quest_save"])] = loaded
+                server.clients[harness.writers["quest_save"]] = loaded
                 self.assertIn("merchant_price_check", loaded.active_quests)
                 self.assertEqual(loaded.active_quests["merchant_price_check"]["current"], 1)
 

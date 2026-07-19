@@ -9,6 +9,7 @@ from typing import Any, cast
 from astergard.characters.creation import CharacterCreationError, CharacterCreationProfile
 from astergard.characters.professions import ProfessionError, ProfessionSelection
 from astergard.database.repository import PlayerRepository
+from astergard.application.session_transport import TcpSessionTransport
 from astergard.testing import FakeReader, FakeWriter, TestGameHarness as GameHarness
 
 
@@ -41,7 +42,8 @@ class CharacterCreatorTests(unittest.TestCase):
                     ]
                 )
                 writer = FakeWriter()
-                result = await harness.require_server().session_flow.login(cast(Any, reader), cast(Any, writer))
+                transport = TcpSessionTransport(cast(Any, reader), cast(Any, writer))
+                result = await harness.require_server().session_flow.login(transport)
                 assert result.character is not None
                 char = result.character
                 self.assertEqual(char.name, "Ala")
@@ -90,7 +92,8 @@ class CharacterCreatorTests(unittest.TestCase):
                     ]
                 )
                 writer = FakeWriter()
-                result = await harness.require_server().session_flow.login(cast(Any, reader), cast(Any, writer))
+                transport = TcpSessionTransport(cast(Any, reader), cast(Any, writer))
+                result = await harness.require_server().session_flow.login(transport)
                 assert result.character is not None
                 char = result.character
                 self.assertEqual(char.origin, "chlop_z_podgrodzia")
@@ -301,7 +304,8 @@ class CharacterCreatorTests(unittest.TestCase):
                     ]
                 )
                 writer = FakeWriter()
-                result = await harness.require_server().session_flow.login(cast(Any, reader), cast(Any, writer))
+                transport = TcpSessionTransport(cast(Any, reader), cast(Any, writer))
+                result = await harness.require_server().session_flow.login(transport)
                 assert result.character is not None
                 transcript = await harness.execute(result.character, "profil")
                 self.assertIn("O tobie:", transcript.output)

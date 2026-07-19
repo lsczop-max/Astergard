@@ -150,6 +150,7 @@ class ExplorationActionService:
         old_room_id = char.room_id
         char.stats.kondycja = max(0, char.stats.kondycja - cost)
         char.room_id = ex.target_room
+        ctx.location_changes.record(char)
         char.visit_current_room()
         ctx.event_bus.emit(
             DomainEventType.CHARACTER_MOVED,

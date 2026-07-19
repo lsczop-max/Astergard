@@ -5,6 +5,7 @@ from pathlib import Path
 
 from astergard.characters.models import Character
 from astergard.server.game import GameServer
+from astergard.testing import MemorySessionTransport
 
 
 class ContextPortTests(unittest.TestCase):
@@ -30,7 +31,7 @@ class ContextPortTests(unittest.TestCase):
         char = Character("tester")
         char.room_id = 0
         ctx = server.make_context(char)
-        server.clients[object()] = char  # type: ignore[index]
+        server.clients[MemorySessionTransport()] = char
         self.assertEqual(ctx.players_in_room(0), [char])
 
 

@@ -11,6 +11,7 @@ from astergard.application.use_case_contexts import (
     ExplorationContext,
     InventoryContext,
     MagicCraftingContext,
+    LocationChangeOutbox,
     QuestContext,
     SystemContext,
     AdminContext,
@@ -39,6 +40,7 @@ class GameContext:
     communication_port: CommunicationContext
     admin_port: AdminContext
     players_in_room: Callable[[int], list[Character]]
+    location_changes: LocationChangeOutbox
     observability: Any | None = None
 
     def players_in_current_room(self) -> list[Character]:

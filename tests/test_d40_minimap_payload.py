@@ -7,6 +7,7 @@ import unittest
 from typing import Any, cast
 from unittest.mock import patch
 
+from astergard.application.session_transport import TcpSessionTransport
 from astergard.testing import FakeReader, FakeWriter, TestGameHarness
 from astergard.utils import send_to_client
 
@@ -109,18 +110,12 @@ class MinimapPayloadTests(unittest.TestCase):
 
             reader = FakeReader.from_text_lines(["entry", "secret"])
             writer = FakeWriter()
-            login = asyncio.run(
-                server.session_flow.login(cast(Any, reader), cast(Any, writer))
-            )
+            transport = TcpSessionTransport(cast(Any, reader), cast(Any, writer))
+            login = asyncio.run(server.session_flow.login(transport))
             self.assertIsNotNone(login.character)
             assert login.character is not None
 
-            asyncio.run(
-                server.session_flow.send_initial_view(
-                    cast(Any, writer),
-                    server.make_context(login.character),
-                )
-            )
+            asyncio.run(server.session_flow.send_initial_view(transport, server.make_context(login.character)))
             initial_text = writer.text()
             expected_prompt = server.prompt(login.character)
             self.assertNotIn("<MAP_JSON>", initial_text)
@@ -128,13 +123,9 @@ class MinimapPayloadTests(unittest.TestCase):
 
             writer.clear()
             move_reader = FakeReader.from_text_lines(["poludnie"])
-            asyncio.run(
-                server.session_flow.command_loop(
-                    cast(Any, move_reader),
-                    cast(Any, writer),
-                    server.make_context(login.character),
-                )
-            )
+            move_transport = TcpSessionTransport(cast(Any, move_reader), cast(Any, writer))
+            server.clients[move_transport] = login.character
+            asyncio.run(server.session_flow.command_loop(move_transport, server.make_context(login.character)))
             moved_text = writer.text()
             self.assertIn("Kierujesz się na południe.", moved_text)
             self.assertNotIn("<MAP_JSON>", moved_text)
@@ -153,18 +144,12 @@ class MinimapPayloadTests(unittest.TestCase):
 
                 reader = FakeReader.from_text_lines(["entry", "secret"])
                 writer = FakeWriter()
-                login = asyncio.run(
-                    server.session_flow.login(cast(Any, reader), cast(Any, writer))
-                )
+                transport = TcpSessionTransport(cast(Any, reader), cast(Any, writer))
+                login = asyncio.run(server.session_flow.login(transport))
                 self.assertIsNotNone(login.character)
                 assert login.character is not None
 
-                asyncio.run(
-                    server.session_flow.send_initial_view(
-                        cast(Any, writer),
-                        server.make_context(login.character),
-                    )
-                )
+                asyncio.run(server.session_flow.send_initial_view(transport, server.make_context(login.character)))
                 initial_text = writer.text()
                 expected_prompt = server.prompt(login.character)
                 self.assertIn("<MAP_JSON>", initial_text)
@@ -174,13 +159,9 @@ class MinimapPayloadTests(unittest.TestCase):
 
                 writer.clear()
                 move_reader = FakeReader.from_text_lines(["poludnie"])
-                asyncio.run(
-                    server.session_flow.command_loop(
-                        cast(Any, move_reader),
-                        cast(Any, writer),
-                        server.make_context(login.character),
-                    )
-                )
+                move_transport = TcpSessionTransport(cast(Any, move_reader), cast(Any, writer))
+                server.clients[move_transport] = login.character
+                asyncio.run(server.session_flow.command_loop(move_transport, server.make_context(login.character)))
                 moved_text = writer.text()
                 self.assertIn("Kierujesz się na południe.", moved_text)
                 self.assertIn("<MAP_JSON>", moved_text)
@@ -199,21 +180,15 @@ class MinimapPayloadTests(unittest.TestCase):
 
                 reader = FakeReader.from_text_lines(["entry", "secret"])
                 writer = FakeWriter()
-                login = asyncio.run(
-                    server.session_flow.login(cast(Any, reader), cast(Any, writer))
-                )
+                transport = TcpSessionTransport(cast(Any, reader), cast(Any, writer))
+                login = asyncio.run(server.session_flow.login(transport))
                 assert login.character is not None
                 login.character.admin_role = "helper"
                 writer.clear()
 
                 debug_reader = FakeReader.from_text_lines(["debug_map"])
-                asyncio.run(
-                    server.session_flow.command_loop(
-                        cast(Any, debug_reader),
-                        cast(Any, writer),
-                        server.make_context(login.character),
-                    )
-                )
+                debug_transport = TcpSessionTransport(cast(Any, debug_reader), cast(Any, writer))
+                asyncio.run(server.session_flow.command_loop(debug_transport, server.make_context(login.character)))
                 debug_text = writer.text()
                 self.assertIn("Wysyłam podgląd mapy.", debug_text)
                 self.assertIn("<MAP_JSON>", debug_text)

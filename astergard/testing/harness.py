@@ -1,5 +1,4 @@
 from __future__ import annotations
-from typing import cast
 
 import tempfile
 from dataclasses import dataclass, field
@@ -7,7 +6,7 @@ from pathlib import Path
 
 from astergard.characters.models import Character
 from astergard.server.game import GameServer
-from astergard.testing.fakes import FakeWriter
+from astergard.testing.transports import MemorySessionTransport
 
 
 @dataclass(slots=True)
@@ -32,7 +31,7 @@ class TestGameHarness:
     db_path: str | None = None
     server: GameServer | None = None
     _temp_dir: tempfile.TemporaryDirectory[str] | None = None
-    writers: dict[str, FakeWriter] = field(default_factory=dict)
+    writers: dict[str, MemorySessionTransport] = field(default_factory=dict)
 
     def start(self) -> "TestGameHarness":
         if self.db_path is None:
@@ -66,9 +65,9 @@ class TestGameHarness:
             server.repo.register(username, "test-password")
         character = server.repo.load(username)
         character.room_id = room_id
-        writer = FakeWriter()
-        self.writers[username] = writer
-        server.clients[cast(object, writer)] = character  # type: ignore[index]
+        transport = MemorySessionTransport()
+        self.writers[username] = transport
+        server.clients[transport] = character
         return character
 
     def context_for(self, character: Character):

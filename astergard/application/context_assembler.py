@@ -11,6 +11,7 @@ from astergard.application.use_case_contexts import (
     ExplorationContext,
     InventoryContext,
     MagicCraftingContext,
+    LocationChangeOutbox,
     QuestContext,
     SystemContext,
     AdminContext,
@@ -35,6 +36,7 @@ class GameContextAssembler:
     all_players: Callable[[], list[Character]] | None = None
 
     def build(self, character: Character, current_command: str | None = None) -> GameContext:
+        location_changes = LocationChangeOutbox()
         exploration = ExplorationContext(
             character=character,
             event_bus=self.services.event_bus,
@@ -43,6 +45,7 @@ class GameContextAssembler:
             npcs=self.services.npcs,
             players_in_room=self.players_in_room,
             current_command=current_command,
+            location_changes=location_changes,
         )
         return GameContext(
             character=character,
@@ -80,7 +83,9 @@ class GameContextAssembler:
                 scheduler=self.services.scheduler,
                 observability=self.services.observability,
                 all_players=self.all_players or (lambda: []),
+                location_changes=location_changes,
             ),
             players_in_room=self.players_in_room,
+            location_changes=location_changes,
             observability=self.services.observability,
         )

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any
 
 from astergard.admin.tools import AdminTools
 from astergard.admin.audit_logger import AdminAuditLogger
@@ -64,6 +65,7 @@ class GameServices:
     system_service: SystemCommandService
     save_load: SaveLoadEngine
     observability: ObservabilityService
+    server: Any | None = None
 
 
 class GameBootstrapper:

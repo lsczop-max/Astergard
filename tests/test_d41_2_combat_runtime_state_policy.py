@@ -5,7 +5,6 @@ import tempfile
 import unittest
 import warnings
 from pathlib import Path
-from typing import Any, cast
 from unittest.mock import patch
 
 from astergard.application.bootstrap import GameBootstrapper
@@ -144,8 +143,8 @@ class D412CombatRuntimeStatePolicyTests(unittest.TestCase):
             server.combat.start_fight(player, npc.character)
             self.assertTrue(server.combat.has_fight(player.username, npc.id))
 
-            writer = harness.writers[player.username]
-            server.clients.pop(cast(Any, writer))
+            transport = harness.writers[player.username]
+            server.clients.pop(transport)
 
             harness.tick_once()
 

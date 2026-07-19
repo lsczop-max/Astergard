@@ -1,23 +1,23 @@
 from __future__ import annotations
 
-from astergard.gmcp import room_info_packet
+from astergard.application.session_transport import make_room_info_event
 
 
-def writer_for_character(server, character):
-    for writer, current in server.clients.items():
+def transport_for_character(server, character):
+    for transport, current in server.clients.items():
         if current is character:
-            return writer
+            return transport
     return None
 
 
-def send_room_info_for_character(server, character) -> None:
-    writer = writer_for_character(server, character)
-    if writer is None:
+async def send_room_info_for_character(server, character) -> None:
+    transport = transport_for_character(server, character)
+    if transport is None:
         return
     location = server.world.get_location(character.room_id)
     if location is None:
         return
     try:
-        writer.write(room_info_packet(location, server.world))
+        await transport.send_event(make_room_info_event(location, server.world))
     except Exception:
         return
