@@ -19,6 +19,10 @@ class LocationContent:
     name: str | None = None
     description: str | None = None
     inspectables: dict[str, str] = field(default_factory=dict)
+    forms: dict[str, str] = field(default_factory=dict)
+    exit_forms: dict[str, dict[str, str]] = field(default_factory=dict)
+    exit_kinds: dict[str, str] = field(default_factory=dict)
+    scene_profile: str = ""
     items: tuple[Item, ...] = ()
     hidden_items: tuple[tuple[Item, int], ...] = ()
 
@@ -186,14 +190,21 @@ _DISTRICT_OVERRIDES: dict[int, LocationContent] = {
         room_id=2,
         name="Główny Plac Astergardu",
         description=(
-            "Szeroki plac leży przed strażniczym ramieniem miasta, tam gdzie bruk jest równiejszy niż w bocznych ulicach. "
-            "Między fasadami stoją flagi, studnia i skrzynie targowe, a od zachodu dochodzi cięższy ruch przy wartowni."
+            "Szeroki plac leży przed miejską wartownią, tam gdzie bruk jest równiejszy niż w bocznych ulicach. "
+            "Na środku stoi studnia, a przy fasadach leżą skrzynie targowe; od zachodu dochodzi cięższy ruch przy ścianach wartowni."
         ),
         inspectables={
             "studnia fontanna": "Kamienna studnia ma niski cembrowinowy krąg i żelazny kubeł na łańcuchu. Woda jest zimna i lekko słona od miejskiego pyłu.",
             "ogloszenia tablica słup": "Na słupie wiszą wyblakłe ogłoszenia o targach, straży i zaginionych rzeczach. Dwa z nich są dopisane ręką pisarza, nie urzędnika.",
             "straz żołnierze ludzie": "Przy studni stoją ławy i skrzynie targowe. Straż patrzy raczej na ręce niż na twarze.",
         },
+        exit_kinds={"zachod": "ulica", "wschod": "ulica", "poludnie": "drzwi"},
+        exit_forms={
+            "zachod": {"prep": "ku", "locative": "Placu Przed Wartownią"},
+            "wschod": {"prep": "ku", "locative": "Bocznym Uliczkom Placu"},
+            "poludnie": {"prep": "do", "genitive": "Domu Snycerza"},
+        },
+        scene_profile="square",
         items=(
             Item("ława targowa", "Niska, ciężka ława z ciemnego drewna. Służyła kupcom i czekającym klientom.", 5.0, 8, "market_bench_02", item_type="furniture"),
             Item("skrzynia targowa", "Porysowana skrzynia po solonych śledziach i płótnie.", 2.4, 4, "market_crate_02", is_container=True, capacity=18),
@@ -203,7 +214,7 @@ _DISTRICT_OVERRIDES: dict[int, LocationContent] = {
         room_id=12,
         name="Kuźnia przy Murze",
         description=(
-            "Kuźnia przy Murze trzyma się nisko przy kamiennym boku ulicy, a na wschodzie zaczyna się Szeroka Brukowana. "
+            "Kuźnia przy Murze przylega do kamiennego muru przy ulicy, a na wschodzie zaczyna się Szeroka Brukowana. "
             "Ogień bije przez szczeliny, kurz przy wejściu czerwienieje od żaru, a każdy cios młota odbija się krótko od muru."
         ),
         inspectables={
@@ -216,6 +227,13 @@ _DISTRICT_OVERRIDES: dict[int, LocationContent] = {
             Item("szczypce kowalskie", "Długie szczypce do wyciągania żelaza z ognia.", 1.0, 6, "smith_tongs_12", item_type="tool"),
             Item("pochodnia kuźnicza", "Pochodnia przesiąknięta smołą i sadzą z kuźni.", 0.5, 2, "forge_torch_12"),
         ),
+        exit_kinds={"zachod": "drzwi", "wschod": "ulica", "poludniowy-zachod": "przejście"},
+        exit_forms={
+            "zachod": {"prep": "do", "genitive": "Starego Spichlerza"},
+            "wschod": {"prep": "ku", "locative": "Szerokiej Brukowanej"},
+            "poludniowy-zachod": {"prep": "do", "genitive": "Jatek Rzeźników"},
+        },
+        scene_profile="forge",
     ),
     14: LocationContent(
         room_id=14,
@@ -234,6 +252,13 @@ _DISTRICT_OVERRIDES: dict[int, LocationContent] = {
             Item("miska gulaszu", "Gliniasta miska z resztką gulaszu. Jeszcze ciepła.", 0.8, 3, "tavern_stew_bowl_14", item_type="food", is_consumable=True, effects_on_consume={"restore_stamina": 16}),
             Item("dębowa ława", "Ława, która pamięta więcej rozmów niż niejeden urzędnik.", 6.0, 9, "tavern_oak_bench_14", item_type="furniture"),
         ),
+        exit_kinds={"polnoc": "drzwi", "poludnie": "drzwi", "zachod": "drzwi"},
+        exit_forms={
+            "polnoc": {"prep": "w stronę", "genitive": "Zaułka za Karczmą"},
+            "poludnie": {"prep": "do", "genitive": "Tyłów Karczmy"},
+            "zachod": {"prep": "ku", "locative": "Szerokiej Brukowanej"},
+        },
+        scene_profile="inn_interior",
     ),
     15: LocationContent(
         room_id=15,
@@ -247,6 +272,12 @@ _DISTRICT_OVERRIDES: dict[int, LocationContent] = {
             "beczki skrzynie": "Beczki są lekkie i suche, a skrzynie noszą ślady po mokrych warzywach i workach z solą.",
             "stol kufle": "Stół ma nacięcia po nożach i ślady po piwie wycieranym byle szmatą.",
         },
+        exit_kinds={"polnoc": "drzwi", "wschod": "drzwi"},
+        exit_forms={
+            "polnoc": {"prep": "do", "genitive": "Karczmy pod Żurawiem"},
+            "wschod": {"prep": "ku", "locative": "Małej Stajni"},
+        },
+        scene_profile="inn_back",
     ),
     25: LocationContent(
         room_id=25,
@@ -269,8 +300,8 @@ _DISTRICT_OVERRIDES: dict[int, LocationContent] = {
         room_id=37,
         name="Świątynia Popiołu",
         description=(
-            "Świątynia Popiołu stoi z ciemnego kamienia między przedsionkiem a portem. "
-            "Niskie filary tłumią odgłos kroków, a po progu rozciąga się wosk i chłodna woda."
+            "Świątynia Popiołu z ciemnego kamienia stoi przy wejściu. "
+            "Niskie ściany tłumią odgłos kroków, a na posadzce widać woskowe ślady i ciemne zacieki po świecach."
         ),
         inspectables={
             "oltarz ołtarz": "Ołtarz jest prosty, z popękanym blatem i metalową misą na ofiary z oliwy i wosku.",
@@ -282,6 +313,12 @@ _DISTRICT_OVERRIDES: dict[int, LocationContent] = {
             Item("drewniana ławka", "Prosta ławka dla modlących się lub czekających.", 4.0, 6, "chapel_bench_37", item_type="furniture"),
             Item("wiązka ziół", "Świeżo zebrana wiązka ziół leczniczych.", 0.2, 3, "priest_herb_bundle_37"),
         ),
+        exit_kinds={"polnoc": "drzwi", "zachod": "przejście"},
+        exit_forms={
+            "polnoc": {"prep": "do", "genitive": "Przedsionka Świątyni"},
+            "zachod": {"prep": "ku", "locative": "Portowi Rzecznemu"},
+        },
+        scene_profile="temple_interior",
     ),
     38: LocationContent(
         room_id=38,
@@ -324,14 +361,21 @@ _DISTRICT_OVERRIDES: dict[int, LocationContent] = {
         room_id=47,
         name="Rynek Żelazny",
         description=(
-            "Rynek Żelazny rozkłada się szeroko między kramami i warsztatami. "
-            "Wózki z żelazem stoją obok skrzyń z tkaniną, a przekupki pilnują wag ostrzej niż własnych sakiew."
+                "Rynek Żelazny skupia kamienną studnię, rząd kramów i ciężkie wózki z żelazem. "
+                "Drewniane lady, sznury płócien i opiłki pod nogami nadają mu ciężar warsztatu, nie placu."
         ),
         inspectables={
             "kramy stragany": "Stragany są zasłane płótnem, skórą i odłamkami metalu. Każdy sprzedawca ma inną historię, ale te same obcasy.",
             "wagi odważniki": "Wagi są pilnowane surowiej niż uczciwość. Obok leżą odważniki z wybitymi znakami cechu.",
             "handel kupcy": "Kupcy mówią szybko, lecz milkną, gdy widzą straż. Wtedy wszyscy nagle przypominają sobie o przepisach.",
         },
+        exit_kinds={"polnoc": "przejście", "zachod": "przejście", "poludniowy-wschod": "przejście"},
+        exit_forms={
+            "polnoc": {"prep": "do", "genitive": "Kramu Świecarza"},
+            "zachod": {"prep": "do", "genitive": "Warsztatu Cieśli"},
+            "poludniowy-wschod": {"prep": "do", "genitive": "Składu Drewna"},
+        },
+        scene_profile="market",
         items=(
             Item("odważnik targowy", "Mały odważnik z wybitym znakiem rynku.", 0.7, 5, "market_weight_47"),
             Item("skrzynka na przyprawy", "Niska skrzynka po cennych przyprawach i ziołach.", 1.5, 9, "spice_crate_47", is_container=True, capacity=12),
@@ -629,14 +673,21 @@ _DISTRICT_OVERRIDES.update(
             room_id=4,
             name="Podcienia Kupieckie",
             description=(
-                "Podcienia Kupieckie ściskają przejście między fasadami, a kamień zostaje tu na chwilę bez wiatru. "
-                "Okiennice są przymknięte, pod progiem leży błoto znad drogi, i łatwo stąd wrócić ku placowi albo karczmie."
+                "Podcienia Kupieckie ściskają przejście między fasadami, a niskie sklepienia trzymają kurz tuż nad brukiem. "
+                "Okiennice są przymknięte, pod progami leży błoto znad drogi, a światło wpada tu tylko wąskim pasem."
             ),
             inspectables={
                 "okna okiennice": "Okiennice stoją uchylone tylko na szerokość dłoni. Kupcy wolą widzieć kawałek ulicy niż całe zamieszanie.",
                 "drzwi prog próg": "Próg jest przetarty od towarów i butów, a drzwi noszą świeże rysy po hakach.",
                 "fasady podcienia": "Fasady są blisko siebie, dlatego słońce wpada tu tylko na chwilę i wąskim pasem.",
             },
+            exit_kinds={"zachod": "przejście", "poludniowy-wschod": "przejście", "poludniowy-zachod": "przejście"},
+            exit_forms={
+                "zachod": {"prep": "ku", "locative": "Bocznym Uliczkom Placu"},
+                "poludniowy-wschod": {"prep": "w stronę", "genitive": "Zaułka za Karczmą"},
+                "poludniowy-zachod": {"prep": "ku", "locative": "Szerokiej Brukowanej"},
+            },
+            scene_profile="passage",
         ),
         5: LocationContent(
             room_id=5,
@@ -655,14 +706,21 @@ _DISTRICT_OVERRIDES.update(
             room_id=13,
             name="Szeroka Brukowana",
             description=(
-                "Szeroka Brukowana łączy karczmę z kuźnią i prowadzi przez środek miejskiego ruchu. "
-                "Przy ścianach stoją suche beczki, a bruk jest tu gładki od wozów i butów."
+                "Szeroka Brukowana biegnie między karczmą a kuźnią, a jej kamienie tworzą długi, wyślizgany pas. "
+                "Przy ścianach stoją suche beczki, a bruk nosi ślad wozów, butów i zsuwanych skrzyń."
             ),
             inspectables={
                 "slady ślady tropy": "Ślady kół i butów nakładają się tu na siebie tak gęsto, że dawna nawierzchnia prawie znika.",
                 "sciana ściana mur": "Ściany są starta od łokci i sakw, a mur od północy łapie ciepło szybciej niż reszta ulicy.",
                 "beczki": "Beczki stoją przy murze, suche i lekkie, gotowe wrócić do karczmy albo do piwnic kupców.",
             },
+            exit_kinds={"zachod": "drzwi", "wschod": "drzwi", "polnocny-wschod": "przejście"},
+            exit_forms={
+                "zachod": {"prep": "do", "genitive": "Kuźni przy Murze"},
+                "wschod": {"prep": "do", "genitive": "Karczmy pod Żurawiem"},
+                "polnocny-wschod": {"prep": "ku", "locative": "Podcieniom Kupieckim"},
+            },
+            scene_profile="street",
         ),
         21: LocationContent(
             room_id=21,
@@ -887,25 +945,33 @@ _DISTRICT_OVERRIDES.update(
                 "wióry pył": "Wióry i pył tworzą cienką warstwę na bruku.",
             },
         ),
-        55: LocationContent(
-            room_id=55,
-            name="Rozstaje Traktów",
-            description=(
-                "Na skraju miasta bruk przechodzi w koleiny, a rozstaje zbierają ruch z furty łowców, kapliczki i opuszczonej chaty. "
-                "Kamień graniczny ma odłupany róg i biały ślad po kredzie, jakby ktoś jeszcze rano sprawdzał kierunek."
-            ),
+    55: LocationContent(
+        room_id=55,
+        name="Rozstaje Traktów",
+        description=(
+            "Na skraju miasta bruk przechodzi w koleiny, a rozstaje zbierają ruch z furty łowców, kapliczki i opuszczonej chaty. "
+            "Kamień graniczny ma odłupany róg i biały ślad po kredzie, a słup drogowy wskazuje skręt ku kapliczce i furtce łowców."
+        ),
             inspectables={
                 "drogi koleiny": "Koleiny rozchodzą się w kilka stron. Najgłębsza jest ta, którą jadą cięższe wozy z zaopatrzeniem.",
                 "kamień graniczny": "Kamień graniczny ma odłupany róg i ślad kredy, którym ktoś zaznaczył ostatni objazd.",
                 "słup drogowy": "Słup drogowy stoi krzywo, ale wciąż pokazuje drogę ku kapliczce i furtce łowców.",
             },
+            exit_kinds={"polnoc": "ulica", "zachod": "trakt", "poludniowy-wschod": "trakt", "wschod": "furta"},
+            exit_forms={
+                "polnoc": {"prep": "do", "genitive": "Zaułka Czeladników"},
+                "zachod": {"prep": "do", "genitive": "Opuszczonej Chaty"},
+                "poludniowy-wschod": {"prep": "do", "genitive": "Kapliczki Przydrożnej"},
+                "wschod": {"prep": "do", "genitive": "Wschodniej Furty Łowców"},
+            },
+            scene_profile="crossroads",
         ),
         56: LocationContent(
             room_id=56,
             name="Opuszczona Chata",
             description=(
-                "Krzywa chata stoi na brzegu bruku, między rozstajami a gospodarstwem. "
-                "Kurz, zwęglony krąg po palenisku i wydeptany próg pokazują, że ktoś mieszkał tu długo, zanim odszedł."
+                "Chata stoi krzywo, ale jeszcze nie upadła, jakby sama nie była pewna, czy zasługuje na zapomnienie. "
+                "W środku zalega kurz, stara słoma i kilka śladów po tym, że ktoś kiedyś jednak tu mieszkał."
             ),
             inspectables={
                 "słoma kurz": "Słoma jest zbita i zbutwiała.",
@@ -941,13 +1007,20 @@ _DISTRICT_OVERRIDES.update(
             name="Kapliczka Przydrożna",
             description=(
                 "Kamienna kapliczka stoi przy samym wylocie bruku, tam gdzie ostatni kamień przechodzi w koleiny traktu. "
-                "W niszy leżą wstążki, moneta i kawałek chleba, a za plecami zostaje już miasto."
+                "W niszy leżą wstążki, moneta i kawałek chleba, a wiatr łatwo obchodzi niską ścianę."
             ),
             inspectables={
                 "wstążki monety": "Wstążki są wyblakłe, monety ciemne od deszczu.",
                 "nisza": "Nisza w kamieniu jest płytka, ale wystarcza, by osłonić ofiarę od wiatru.",
                 "próg bruku": "Próg kapliczki jest wyślizgany od butów i usiany drobnym piaskiem znoszonym z drogi.",
             },
+            exit_kinds={"zachod": "trakt", "polnocny-zachod": "trakt", "poludniowy-wschod": "trakt"},
+            exit_forms={
+                "zachod": {"prep": "do", "genitive": "Pastwisk"},
+                "polnocny-zachod": {"prep": "do", "genitive": "Rozstajów Traktów"},
+                "poludniowy-wschod": {"prep": "ku", "locative": "Kapliczce Podróżnych za Murem"},
+            },
+            scene_profile="roadside_chapel",
         ),
     }
 )
@@ -2494,6 +2567,16 @@ def apply_content_pack(locations: dict[int, Location], content_pack: tuple[Locat
         if content.description is not None:
             loc.description = content.description
         loc.inspectables.update(content.inspectables)
+        if content.forms:
+            loc.forms.update(content.forms)
+        if content.exit_forms:
+            for direction, forms in content.exit_forms.items():
+                loc.exit_forms[direction] = dict(forms)
+        if content.scene_profile:
+            loc.scene_profile = content.scene_profile
+        for direction, kind in content.exit_kinds.items():
+            if direction in loc.exits:
+                loc.exits[direction].kind = kind
         for item in content.items:
             if item.vnum is None or all(existing.vnum != item.vnum for existing in loc.items):
                 loc.items.append(item)
