@@ -199,7 +199,7 @@
         {
           "direction": "s",
           "door": false,
-          "kind": "brama",
+          "kind": "drzwi",
           "locked": false,
           "target": 10,
           "visible": true
@@ -207,7 +207,7 @@
         {
           "direction": "e",
           "door": false,
-          "kind": "brama",
+          "kind": "ulica",
           "locked": false,
           "target": 3,
           "visible": true
@@ -215,7 +215,7 @@
         {
           "direction": "w",
           "door": false,
-          "kind": "brama",
+          "kind": "ulica",
           "locked": false,
           "target": 1,
           "visible": true
@@ -274,7 +274,7 @@
         {
           "direction": "se",
           "door": false,
-          "kind": "brama",
+          "kind": "przejście",
           "locked": false,
           "target": 5,
           "visible": true
@@ -282,7 +282,7 @@
         {
           "direction": "sw",
           "door": false,
-          "kind": "brama",
+          "kind": "przejście",
           "locked": false,
           "target": 13,
           "visible": true
@@ -290,7 +290,7 @@
         {
           "direction": "w",
           "door": false,
-          "kind": "brama",
+          "kind": "przejście",
           "locked": false,
           "target": 3,
           "visible": true
@@ -556,7 +556,7 @@
         {
           "direction": "sw",
           "door": false,
-          "kind": "brama",
+          "kind": "przejście",
           "locked": false,
           "target": 22,
           "visible": true
@@ -564,7 +564,7 @@
         {
           "direction": "e",
           "door": false,
-          "kind": "brama",
+          "kind": "ulica",
           "locked": false,
           "target": 13,
           "visible": true
@@ -572,7 +572,7 @@
         {
           "direction": "w",
           "door": false,
-          "kind": "brama",
+          "kind": "drzwi",
           "locked": false,
           "target": 11,
           "visible": true
@@ -598,7 +598,7 @@
         {
           "direction": "ne",
           "door": false,
-          "kind": "brama",
+          "kind": "przejście",
           "locked": false,
           "target": 4,
           "visible": true
@@ -606,7 +606,7 @@
         {
           "direction": "e",
           "door": false,
-          "kind": "brama",
+          "kind": "drzwi",
           "locked": false,
           "target": 14,
           "visible": true
@@ -614,7 +614,7 @@
         {
           "direction": "w",
           "door": false,
-          "kind": "brama",
+          "kind": "drzwi",
           "locked": false,
           "target": 12,
           "visible": true
@@ -1279,7 +1279,7 @@
         "s": 31,
         "w": 29
       },
-      "name": "Przejście pod Łukiem",
+      "name": "Przejście pod Sklepieniem",
       "num": 30,
       "special_exits": [
         {
@@ -1320,7 +1320,7 @@
         "e": 32,
         "n": 30
       },
-      "name": "Warsztat Łuczarza",
+      "name": "Warsztat Stolarski",
       "num": 31,
       "special_exits": [
         {
@@ -1533,7 +1533,7 @@
         {
           "direction": "n",
           "door": false,
-          "kind": "brama",
+          "kind": "drzwi",
           "locked": false,
           "target": 36,
           "visible": true
@@ -1541,7 +1541,7 @@
         {
           "direction": "w",
           "door": false,
-          "kind": "brama",
+          "kind": "przejście",
           "locked": false,
           "target": 38,
           "visible": true
@@ -1882,7 +1882,7 @@
         {
           "direction": "n",
           "door": false,
-          "kind": "brama",
+          "kind": "przejście",
           "locked": false,
           "target": 46,
           "visible": true
@@ -1890,7 +1890,7 @@
         {
           "direction": "se",
           "door": false,
-          "kind": "brama",
+          "kind": "przejście",
           "locked": false,
           "target": 52,
           "visible": true
@@ -1898,7 +1898,7 @@
         {
           "direction": "w",
           "door": false,
-          "kind": "brama",
+          "kind": "przejście",
           "locked": false,
           "target": 48,
           "visible": true
@@ -1983,7 +1983,7 @@
         "e": 51,
         "n": 49
       },
-      "name": "Warsztat Łuczarza",
+      "name": "Warsztat Stolarski",
       "num": 50,
       "special_exits": [
         {
@@ -2165,7 +2165,7 @@
         {
           "direction": "n",
           "door": false,
-          "kind": "brama",
+          "kind": "ulica",
           "locked": false,
           "target": 54,
           "visible": true
@@ -2173,7 +2173,7 @@
         {
           "direction": "se",
           "door": false,
-          "kind": "brama",
+          "kind": "trakt",
           "locked": false,
           "target": 59,
           "visible": true
@@ -2181,7 +2181,7 @@
         {
           "direction": "e",
           "door": false,
-          "kind": "brama",
+          "kind": "furta",
           "locked": false,
           "target": 95,
           "visible": true
@@ -2189,7 +2189,7 @@
         {
           "direction": "w",
           "door": false,
-          "kind": "brama",
+          "kind": "trakt",
           "locked": false,
           "target": 56,
           "visible": true
@@ -2323,7 +2323,7 @@
         {
           "direction": "nw",
           "door": false,
-          "kind": "brama",
+          "kind": "trakt",
           "locked": false,
           "target": 55,
           "visible": true
@@ -2331,7 +2331,7 @@
         {
           "direction": "se",
           "door": false,
-          "kind": "brama",
+          "kind": "trakt",
           "locked": false,
           "target": 135,
           "visible": true
@@ -2339,7 +2339,7 @@
         {
           "direction": "w",
           "door": false,
-          "kind": "brama",
+          "kind": "trakt",
           "locked": false,
           "target": 58,
           "visible": true
@@ -3732,7 +3732,7 @@
         "n": 99,
         "s": 101
       },
-      "name": "Stojaki na Łuki",
+      "name": "Stojaki na Drzewce",
       "num": 100,
       "special_exits": [
         {
@@ -9630,7 +9630,7 @@
         "e": 268,
         "nw": 266
       },
-      "name": "Miejsce Cichego Strzału",
+      "name": "Miejsce Cichego Kroku",
       "num": 267,
       "special_exits": [
         {
@@ -10437,7 +10437,7 @@
         "e": 288,
         "s": 290
       },
-      "name": "Łuk Pochylonych Buków",
+      "name": "Zakos Pochylonych Buków",
       "num": 289,
       "special_exits": [
         {
@@ -12708,7 +12708,7 @@
         "e": 352,
         "w": 350
       },
-      "name": "Dawna Ambona Łuczników",
+      "name": "Dawna Ambona Strażników",
       "num": 351,
       "special_exits": [
         {
