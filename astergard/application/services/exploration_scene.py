@@ -28,6 +28,8 @@ class ExplorationSceneRenderer:
             items=list(location.items),
             npcs=list(ctx.npcs.by_room(location.id)),
             target_names=target_names,
+            exit_forms=location.exit_forms,
+            scene_profile=location.scene_profile,
         )
         if ctx.character.has_light_source() and scene.visibility in {"ciemność", "słaba widoczność", "półmrok"}:
             scene.visibility = "światło niesione"

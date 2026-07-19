@@ -5,6 +5,7 @@ from dataclasses import asdict, dataclass
 from functools import lru_cache
 import hashlib
 import json
+import random
 import re
 from pathlib import Path
 from statistics import mean
@@ -449,18 +450,23 @@ def classify_quality_band(score: int, issues: Iterable[str] = ()) -> str:
 
 
 def _spawn_deterministic_world() -> tuple[WorldManager, NPCManager, TimeAndWeatherManager]:
-    world = WorldManager()
-    world.generate_world()
-    npcs = NPCManager(world)
-    npcs.populate()
-    _stabilize_npc_ids(world, npcs)
-    weather = TimeAndWeatherManager()
-    weather.hour = _FIXED_HOUR
-    weather.season = _FIXED_SEASON
-    weather.world_state = _FIXED_WORLD_STATE
-    weather.weather_by_zone.clear()
-    weather.ambient_event = lambda zone: None  # type: ignore[assignment]
-    return world, npcs, weather
+    random_state = random.getstate()
+    random.seed(0)
+    try:
+        world = WorldManager()
+        world.generate_world()
+        npcs = NPCManager(world)
+        npcs.populate()
+        _stabilize_npc_ids(world, npcs)
+        weather = TimeAndWeatherManager()
+        weather.hour = _FIXED_HOUR
+        weather.season = _FIXED_SEASON
+        weather.world_state = _FIXED_WORLD_STATE
+        weather.weather_by_zone.clear()
+        weather.ambient_event = lambda zone: None  # type: ignore[assignment]
+        return world, npcs, weather
+    finally:
+        random.setstate(random_state)
 
 
 def _stabilize_npc_ids(world: WorldManager, npcs: NPCManager) -> None:
@@ -906,181 +912,178 @@ def _select_manual_samples(result: WorldDescriptionAudit) -> dict[str, list[dict
 
 @lru_cache(maxsize=1)
 def build_world_description_audit() -> WorldDescriptionAudit:
-    world, npcs, weather = _spawn_deterministic_world()
-    adapter = WorldNarrativeAdapter(world)
-    facts_by_id = {location_id: adapter.facts_for_location(location_id) for location_id in sorted(world.locations)}
-    rendered_by_id = {
-        location_id: _render_location(world, npcs, weather, location_id)
-        for location_id in sorted(world.locations)
-    }
-    records: list[LocationAuditRecord] = []
-    sentence_counter, opening_counter, ending_counter = _common_sentence_statistics(rendered_by_id)
-    max_same_region_similarity, region_similarity, cross_region_similarity = _compute_similarity_maps(world, rendered_by_id)
-    validator = DescriptionValidator()
-    for location_id in sorted(world.locations):
-        rendered = rendered_by_id[location_id]
-        rendered_by_id[location_id] = rendered
-        location = world.locations[location_id]
-        facts = _extract_text_facts(rendered, location.name)
-        location_facts = facts_by_id[location_id]
-        same_region_max = max_same_region_similarity.get(location_id, 0.0)
-        issues, notes, score = _score_record(
-            location_id=location_id,
-            rendered=rendered,
-            facts=facts,
-            text_stats={
-                "tokens": _tokenize(facts["body"]),
-                "sentence_count": len(facts["sentences"]),
-                "opening_frequency": opening_counter[facts["first_sentence"]] if facts["first_sentence"] else 0,
-                "ending_frequency": ending_counter[facts["last_sentence"]] if facts["last_sentence"] else 0,
-            },
-            validator=validator,
-            world=world,
-            same_region_max_similarity=same_region_max,
-            location_facts=location_facts,
-        )
-        record = LocationAuditRecord(
-            location_id=location_id,
-            name=location.name,
-            region=location.zone,
-            terrain=location_facts.terrain,
-            source_description=location.description,
-            rendered_look=rendered,
-            exits=tuple(
-                ExitRecord(
-                    direction=direction,
-                    target_id=exit_.target_room,
-                    target_name=world.locations[exit_.target_room].name if exit_.target_room in world.locations else "",
-                    kind=getattr(exit_, "kind", ""),
-                )
-                for direction, exit_ in location.exits.items()
-            ),
-            neighbour_names=tuple(
-                world.locations[exit_.target_room].name
-                for exit_ in location.exits.values()
-                if exit_.target_room in world.locations
-            ),
-            inspectables=tuple(location.inspectables.keys()),
-            items=tuple(item.name for item in location.items),
-            npcs=_collect_npc_names(world, npcs, location_id),
-            issues=tuple(sorted(dict.fromkeys(issues))),
-            class_name=_score_to_class(score, issues),
-            score=score,
-            line_count=len(facts["lines"]),
-            sentence_count=len(facts["sentences"]),
-            token_count=facts["token_count"],
-            lexical_diversity=facts["lexical_diversity"],
-            max_same_region_similarity=round(same_region_max, 3),
-            notes=tuple(sorted(dict.fromkeys(notes))),
-        )
-        records.append(record)
+    random_state = random.getstate()
+    random.seed(0)
+    try:
+        world, npcs, weather = _spawn_deterministic_world()
+        adapter = WorldNarrativeAdapter(world)
+        facts_by_id = {location_id: adapter.facts_for_location(location_id) for location_id in sorted(world.locations)}
+        rendered_by_id = {
+            location_id: _render_location(world, npcs, weather, location_id)
+            for location_id in sorted(world.locations)
+        }
+        records: list[LocationAuditRecord] = []
+        sentence_counter, opening_counter, ending_counter = _common_sentence_statistics(rendered_by_id)
+        max_same_region_similarity, region_similarity, cross_region_similarity = _compute_similarity_maps(world, rendered_by_id)
+        validator = DescriptionValidator()
+        for location_id in sorted(world.locations):
+            rendered = rendered_by_id[location_id]
+            rendered_by_id[location_id] = rendered
+            location = world.locations[location_id]
+            facts = _extract_text_facts(rendered, location.name)
+            location_facts = facts_by_id[location_id]
+            same_region_max = max_same_region_similarity.get(location_id, 0.0)
+            issues, notes, score = _score_record(
+                location_id=location_id,
+                rendered=rendered,
+                facts=facts,
+                text_stats={
+                    "tokens": _tokenize(facts["body"]),
+                    "sentence_count": len(facts["sentences"]),
+                    "opening_frequency": opening_counter[facts["first_sentence"]] if facts["first_sentence"] else 0,
+                    "ending_frequency": ending_counter[facts["last_sentence"]] if facts["last_sentence"] else 0,
+                },
+                validator=validator,
+                world=world,
+                same_region_max_similarity=same_region_max,
+                location_facts=location_facts,
+            )
+            record = LocationAuditRecord(
+                location_id=location_id,
+                name=location.name,
+                region=location.zone,
+                terrain=location_facts.terrain,
+                source_description=location.description,
+                rendered_look=rendered,
+                exits=tuple(
+                    ExitRecord(
+                        direction=direction,
+                        target_id=exit_.target_room,
+                        target_name=world.locations[exit_.target_room].name if exit_.target_room in world.locations else "",
+                        kind=getattr(exit_, "kind", ""),
+                    )
+                    for direction, exit_ in location.exits.items()
+                ),
+                neighbour_names=tuple(
+                    world.locations[exit_.target_room].name
+                    for exit_ in location.exits.values()
+                    if exit_.target_room in world.locations
+                ),
+                inspectables=tuple(location.inspectables.keys()),
+                items=tuple(item.name for item in location.items),
+                npcs=_collect_npc_names(world, npcs, location_id),
+                issues=tuple(sorted(dict.fromkeys(issues))),
+                class_name=_score_to_class(score, issues),
+                score=score,
+                line_count=len(facts["lines"]),
+                sentence_count=len(facts["sentences"]),
+                token_count=facts["token_count"],
+                lexical_diversity=facts["lexical_diversity"],
+                max_same_region_similarity=round(same_region_max, 3),
+                notes=tuple(sorted(dict.fromkeys(notes))),
+            )
+            records.append(record)
 
-    class_counts = Counter(record.class_name for record in records)
-    issue_counts = Counter(issue for record in records for issue in record.issues)
-    repeated_sentences = tuple(
-        sorted(
-            ((sentence, count) for sentence, count in sentence_counter.items() if count > 1),
-            key=lambda item: (-item[1], item[0]),
+        class_counts = Counter(record.class_name for record in records)
+        issue_counts = Counter(issue for record in records for issue in record.issues)
+        repeated_sentences = tuple(
+            sorted(
+                ((sentence, count) for sentence, count in sentence_counter.items() if count > 1),
+                key=lambda item: (-item[1], item[0]),
+            )
         )
-    )
-    repeated_openings = tuple(
-        sorted(
-            ((sentence, count) for sentence, count in opening_counter.items() if count > 1),
-            key=lambda item: (-item[1], item[0]),
+        repeated_openings = tuple(sorted(((sentence, count) for sentence, count in opening_counter.items() if count > 1), key=lambda item: (-item[1], item[0])))
+        repeated_endings = tuple(sorted(((sentence, count) for sentence, count in ending_counter.items() if count > 1), key=lambda item: (-item[1], item[0])))
+        identical_sentence_instances = sum(count - 1 for count in sentence_counter.values() if count > 1)
+        identical_sentence_forms = len(repeated_sentences)
+        template_openers = sum(1 for record in records if "TEMPLATE_OPENER" in record.issues)
+        template_endings = sum(1 for record in records if "TEMPLATE_ENDING" in record.issues)
+        abstract_narrator_count = sum(1 for record in records if "ABSTRACT_NARRATOR" in record.issues)
+        generic_location_count = sum(1 for record in records if "GENERIC_LOCATION" in record.issues)
+        no_landmark_count = sum(1 for record in records if "NO_LANDMARK" in record.issues)
+        no_spatial_layout_count = sum(1 for record in records if "NO_SPATIAL_LAYOUT" in record.issues)
+        language_error_count = sum(1 for record in records if "GRAMMAR_ERROR" in record.issues or "UNNATURAL_POLISH" in record.issues)
+        spatial_inconsistency_count = sum(
+            1
+            for record in records
+            if {"NEIGHBOUR_CONTRADICTION", "EXIT_NOT_REFLECTED", "FALSE_CONTINUITY"} & set(record.issues)
         )
-    )
-    repeated_endings = tuple(
-        sorted(
-            ((sentence, count) for sentence, count in ending_counter.items() if count > 1),
-            key=lambda item: (-item[1], item[0]),
+        raw_alias_count = sum(1 for record in records if "RAW_ALIAS_LEAK" in record.issues)
+        non_interactive_detail_count = sum(1 for record in records if "NON_INTERACTIVE_DETAIL" in record.issues)
+        overloaded_render_count = sum(1 for record in records if "OVERLOADED_RENDER" in record.issues)
+        duplicate_identity_count = sum(1 for record in records if record.max_same_region_similarity >= 0.86)
+        region_summaries = _build_region_summaries(records)
+        rewrite_order = _region_order({summary.region: summary for summary in region_summaries})
+        manual_samples = _manual_sample_ids(records)
+        worst_locations = tuple(record.location_id for record in sorted(records, key=lambda item: (item.score, -item.max_same_region_similarity, item.location_id))[:20])
+        best_locations = tuple(record.location_id for record in sorted(records, key=lambda item: (-item.score, item.max_same_region_similarity, item.location_id))[:20])
+        report = WorldDescriptionAudit(
+            generated_at=_GENERATED_AT,
+            world_size=len(world.locations),
+            records=tuple(records),
+            class_counts=tuple(sorted(class_counts.items(), key=lambda item: item[0])),
+            issue_counts=tuple(sorted(issue_counts.items(), key=lambda item: (-item[1], item[0]))),
+            repeated_sentences=repeated_sentences,
+            repeated_openings=repeated_openings,
+            repeated_endings=repeated_endings,
+            identical_sentence_instances=identical_sentence_instances,
+            identical_sentence_forms=identical_sentence_forms,
+            template_openers=template_openers,
+            template_endings=template_endings,
+            abstract_narrator_count=abstract_narrator_count,
+            generic_location_count=generic_location_count,
+            no_landmark_count=no_landmark_count,
+            no_spatial_layout_count=no_spatial_layout_count,
+            language_error_count=language_error_count,
+            spatial_inconsistency_count=spatial_inconsistency_count,
+            raw_alias_count=raw_alias_count,
+            non_interactive_detail_count=non_interactive_detail_count,
+            overloaded_render_count=overloaded_render_count,
+            duplicate_identity_count=duplicate_identity_count,
+            region_summaries=region_summaries,
+            rewrite_order=rewrite_order,
+            manual_samples=manual_samples,
+            worst_locations=worst_locations,
+            best_locations=best_locations,
+            region_similarity=tuple(region_similarity),
+            cross_region_similarity=tuple(cross_region_similarity),
+            report_digest="",
         )
-    )
-    region_summaries = _build_region_summaries(records)
-    rewrite_order = _region_order({summary.region: summary for summary in region_summaries})
-    manual_samples = _manual_sample_ids(records)
-    worst_locations = tuple(record.location_id for record in sorted(records, key=lambda item: (item.score, -item.max_same_region_similarity, item.location_id))[:20])
-    best_locations = tuple(record.location_id for record in sorted(records, key=lambda item: (-item.score, item.max_same_region_similarity, item.location_id))[:20])
-    duplicate_identity_count = sum(1 for record in records if record.max_same_region_similarity >= 0.86)
-    template_openers = sum(1 for record in records if "TEMPLATE_OPENER" in record.issues)
-    template_endings = sum(1 for record in records if "TEMPLATE_ENDING" in record.issues)
-    abstract_narrator_count = sum(1 for record in records if "ABSTRACT_NARRATOR" in record.issues)
-    generic_location_count = sum(1 for record in records if "GENERIC_LOCATION" in record.issues)
-    no_landmark_count = sum(1 for record in records if "NO_LANDMARK" in record.issues)
-    no_spatial_layout_count = sum(1 for record in records if "NO_SPATIAL_LAYOUT" in record.issues)
-    language_error_count = sum(1 for record in records if "GRAMMAR_ERROR" in record.issues or "UNNATURAL_POLISH" in record.issues)
-    spatial_inconsistency_count = sum(
-        1
-        for record in records
-        if {"NEIGHBOUR_CONTRADICTION", "EXIT_NOT_REFLECTED", "FALSE_CONTINUITY"} & set(record.issues)
-    )
-    raw_alias_count = sum(1 for record in records if "RAW_ALIAS_LEAK" in record.issues)
-    non_interactive_detail_count = sum(1 for record in records if "NON_INTERACTIVE_DETAIL" in record.issues)
-    overloaded_render_count = sum(1 for record in records if "OVERLOADED_RENDER" in record.issues)
-    report = WorldDescriptionAudit(
-        generated_at=_GENERATED_AT,
-        world_size=len(world.locations),
-        records=tuple(records),
-        class_counts=tuple(sorted(class_counts.items(), key=lambda item: item[0])),
-        issue_counts=tuple(sorted(issue_counts.items(), key=lambda item: (-item[1], item[0]))),
-        repeated_sentences=repeated_sentences,
-        repeated_openings=repeated_openings,
-        repeated_endings=repeated_endings,
-        identical_sentence_instances=sum(count - 1 for _sentence, count in repeated_sentences),
-        identical_sentence_forms=len(repeated_sentences),
-        template_openers=template_openers,
-        template_endings=template_endings,
-        abstract_narrator_count=abstract_narrator_count,
-        generic_location_count=generic_location_count,
-        no_landmark_count=no_landmark_count,
-        no_spatial_layout_count=no_spatial_layout_count,
-        language_error_count=language_error_count,
-        spatial_inconsistency_count=spatial_inconsistency_count,
-        raw_alias_count=raw_alias_count,
-        non_interactive_detail_count=non_interactive_detail_count,
-        overloaded_render_count=overloaded_render_count,
-        duplicate_identity_count=duplicate_identity_count,
-        region_summaries=region_summaries,
-        rewrite_order=rewrite_order,
-        manual_samples=manual_samples,
-        worst_locations=worst_locations,
-        best_locations=best_locations,
-        region_similarity=tuple(region_similarity),
-        cross_region_similarity=tuple(cross_region_similarity),
-        report_digest="",
-    )
-    digest = hashlib.sha256(json.dumps(report.to_dict(), ensure_ascii=False, sort_keys=True).encode("utf-8")).hexdigest()
-    return WorldDescriptionAudit(
-        generated_at=report.generated_at,
-        world_size=report.world_size,
-        records=report.records,
-        class_counts=report.class_counts,
-        issue_counts=report.issue_counts,
-        repeated_sentences=report.repeated_sentences,
-        repeated_openings=report.repeated_openings,
-        repeated_endings=report.repeated_endings,
-        identical_sentence_instances=report.identical_sentence_instances,
-        identical_sentence_forms=report.identical_sentence_forms,
-        template_openers=report.template_openers,
-        template_endings=report.template_endings,
-        abstract_narrator_count=report.abstract_narrator_count,
-        generic_location_count=report.generic_location_count,
-        no_landmark_count=report.no_landmark_count,
-        no_spatial_layout_count=report.no_spatial_layout_count,
-        language_error_count=report.language_error_count,
-        spatial_inconsistency_count=report.spatial_inconsistency_count,
-        raw_alias_count=report.raw_alias_count,
-        non_interactive_detail_count=report.non_interactive_detail_count,
-        overloaded_render_count=report.overloaded_render_count,
-        duplicate_identity_count=report.duplicate_identity_count,
-        region_summaries=report.region_summaries,
-        rewrite_order=report.rewrite_order,
-        manual_samples=report.manual_samples,
-        worst_locations=report.worst_locations,
-        best_locations=report.best_locations,
-        region_similarity=report.region_similarity,
-        cross_region_similarity=report.cross_region_similarity,
-        report_digest=digest,
-    )
+        digest = hashlib.sha256(json.dumps(report.to_dict(), ensure_ascii=False, sort_keys=True).encode("utf-8")).hexdigest()
+        return WorldDescriptionAudit(
+            generated_at=report.generated_at,
+            world_size=report.world_size,
+            records=report.records,
+            class_counts=report.class_counts,
+            issue_counts=report.issue_counts,
+            repeated_sentences=report.repeated_sentences,
+            repeated_openings=report.repeated_openings,
+            repeated_endings=report.repeated_endings,
+            identical_sentence_instances=report.identical_sentence_instances,
+            identical_sentence_forms=report.identical_sentence_forms,
+            template_openers=report.template_openers,
+            template_endings=report.template_endings,
+            abstract_narrator_count=report.abstract_narrator_count,
+            generic_location_count=report.generic_location_count,
+            no_landmark_count=report.no_landmark_count,
+            no_spatial_layout_count=report.no_spatial_layout_count,
+            language_error_count=report.language_error_count,
+            spatial_inconsistency_count=report.spatial_inconsistency_count,
+            raw_alias_count=report.raw_alias_count,
+            non_interactive_detail_count=report.non_interactive_detail_count,
+            overloaded_render_count=report.overloaded_render_count,
+            duplicate_identity_count=report.duplicate_identity_count,
+            region_summaries=report.region_summaries,
+            rewrite_order=report.rewrite_order,
+            manual_samples=report.manual_samples,
+            worst_locations=report.worst_locations,
+            best_locations=report.best_locations,
+            region_similarity=report.region_similarity,
+            cross_region_similarity=report.cross_region_similarity,
+            report_digest=digest,
+        )
+    finally:
+        random.setstate(random_state)
 
 
 def _format_issue_summary(items: Iterable[tuple[str, int]], *, limit: int = 12) -> str:

@@ -300,8 +300,8 @@ _DISTRICT_OVERRIDES: dict[int, LocationContent] = {
         room_id=37,
         name="Świątynia Popiołu",
         description=(
-            "Świątynia Popiołu z ciemnego kamienia stoi przy wejściu. "
-            "Niskie ściany tłumią odgłos kroków, a na posadzce widać woskowe ślady i ciemne zacieki po świecach."
+            "Świątynia Popiołu stoi z ciemnego kamienia między przedsionkiem a portem. "
+            "Niskie filary tłumią odgłos kroków, a po progu rozciąga się wosk i chłodna woda."
         ),
         inspectables={
             "oltarz ołtarz": "Ołtarz jest prosty, z popękanym blatem i metalową misą na ofiary z oliwy i wosku.",
@@ -361,8 +361,8 @@ _DISTRICT_OVERRIDES: dict[int, LocationContent] = {
         room_id=47,
         name="Rynek Żelazny",
         description=(
-                "Rynek Żelazny skupia kamienną studnię, rząd kramów i ciężkie wózki z żelazem. "
-                "Drewniane lady, sznury płócien i opiłki pod nogami nadają mu ciężar warsztatu, nie placu."
+            "Rynek Żelazny rozkłada się szeroko między kramami i warsztatami. "
+            "Wózki z żelazem stoją obok skrzyń z tkaniną, a przekupki pilnują wag ostrzej niż własnych sakiew."
         ),
         inspectables={
             "kramy stragany": "Stragany są zasłane płótnem, skórą i odłamkami metalu. Każdy sprzedawca ma inną historię, ale te same obcasy.",
