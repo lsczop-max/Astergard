@@ -186,8 +186,9 @@ _DISTRICT_OVERRIDES: dict[int, LocationContent] = {
         room_id=2,
         name="Główny Plac Astergardu",
         description=(
-            "Szeroki plac leży przed strażniczym ramieniem miasta, tam gdzie bruk jest równiejszy niż w bocznych ulicach. "
-            "Między fasadami stoją flagi, studnia i skrzynie targowe, a od zachodu dochodzi cięższy ruch przy wartowni."
+            "Sercem miasta jest szeroki plac, na którym spotykają się kupcy, żołnierze i ludzie bez stałego zajęcia. "
+            "Bruk jest tu lepiej utrzymany niż w bocznych ulicach, lecz wciąż nosi ślady kół i końskich podków. "
+            "Nad wszystkim wiszą mokre flagi i dym z pieców, a echo kroków odbija się od fasad."
         ),
         inspectables={
             "studnia fontanna": "Kamienna studnia ma niski cembrowinowy krąg i żelazny kubeł na łańcuchu. Woda jest zimna i lekko słona od miejskiego pyłu.",
@@ -203,8 +204,8 @@ _DISTRICT_OVERRIDES: dict[int, LocationContent] = {
         room_id=12,
         name="Kuźnia przy Murze",
         description=(
-            "Kuźnia przy Murze trzyma się nisko przy kamiennym boku ulicy, a na wschodzie zaczyna się Szeroka Brukowana. "
-            "Ogień bije przez szczeliny, kurz przy wejściu czerwienieje od żaru, a każdy cios młota odbija się krótko od muru."
+            "Kowalski ogień bije tu przez szczeliny w ścianach i barwi kurz na czerwono. W powietrzu wisi zapach węgla, spalonego smaru i rozgrzanego żelaza. "
+            "Każdy dźwięk młota zdaje się krótszy niż w innych częściach miasta, jakby sam mur połykał resztę hałasu."
         ),
         inspectables={
             "kowadlo młot": "Kowadło jest spłaszczone od lat pracy. Młoty leżą obok w kolejności, którą rozumie tylko właściciel.",
@@ -221,8 +222,9 @@ _DISTRICT_OVERRIDES: dict[int, LocationContent] = {
         room_id=14,
         name="Karczma pod Żurawiem",
         description=(
-            "Niski dach Karczmy pod Żurawiem schodzi niemal do poziomu ganku, a od zachodu widać szerokie drzwi od Szerokiej Brukowanej. "
-            "Z izby wypływa zapach piwa, pieczonego mięsa i mokrego drewna, a przy stołach słychać urywane rozmowy i brzęk kufli."
+            "Karczma stoi ciężko przy ulicy, z niskim dachem i szerokim wejściem od głównego szlaku w mieście. "
+            "Przez otwarte okna wypływa zapach warzonego piwa, tłuszczu i mokrych płaszczy. "
+            "Przy stołach słychać urywane rozmowy, ktoś odstawia kufel z brzękiem, a od paleniska idzie zapach pieczonego mięsa i mokrego drewna."
         ),
         inspectables={
             "lada karczmarz": "Lada jest gładka od łokci i kubków. Za nią wiszą haczyki na kufle, lecz połowa z nich jest pusta.",
@@ -239,8 +241,8 @@ _DISTRICT_OVERRIDES: dict[int, LocationContent] = {
         room_id=15,
         name="Tyły Karczmy",
         description=(
-            "Wąskie zaplecze za kuchennym wejściem mieści puste beczki, skrzynie po warzywach i stół do czyszczenia kufli. "
-            "To krótki pas desek między kuchnią a stajnią, gdzie wszystko nosi ślady tłuszczu i mokrych łap."
+            "Tyły Karczmy należy do wąskiego zaplecza za kuchennym wejściem. "
+            "Przy ścianie stoją puste beczki, skrzynie po warzywach i poplamiony stół do czyszczenia kufli."
         ),
         inspectables={
             "ludzie przechodnie mieszkancy mieszkańcy": "Najczęściej przewijają się tu ludzie z kuchni, tragarze i ci, którzy wolą wejść od tyłu niż przez salę.",
@@ -269,8 +271,8 @@ _DISTRICT_OVERRIDES: dict[int, LocationContent] = {
         room_id=37,
         name="Świątynia Popiołu",
         description=(
-            "Świątynia Popiołu stoi z ciemnego kamienia między przedsionkiem a portem. "
-            "Niskie filary tłumią odgłos kroków, a po progu rozciąga się wosk i chłodna woda."
+            "Świątynia nie błyszczy złotem ani szkłem. Jest zbudowana z ciemnego kamienia i niskich filarów, które znoszą dym z setek świec. "
+            "Wewnątrz pachnie popiołem, woskiem i chłodną wodą na kamiennym progu, jakby modlitwy miały tu zawsze najpierw obmyć stopy."
         ),
         inspectables={
             "oltarz ołtarz": "Ołtarz jest prosty, z popękanym blatem i metalową misą na ofiary z oliwy i wosku.",
@@ -324,8 +326,9 @@ _DISTRICT_OVERRIDES: dict[int, LocationContent] = {
         room_id=47,
         name="Rynek Żelazny",
         description=(
-            "Rynek Żelazny rozkłada się szeroko między kramami i warsztatami. "
-            "Wózki z żelazem stoją obok skrzyń z tkaniną, a przekupki pilnują wag ostrzej niż własnych sakiew."
+            "Na rynku handluje się wszystkim, co można zważyć, zwinąć albo wycenić bez patrzenia w oczy. "
+            "Wózki z żelazem stoją obok skrzyń z tkaniną, a przekupki wybijają rytm targu głosami ostrzejszymi niż noże rzeźników. "
+            "Tu Astergard pokazuje swoją prawdziwą twarz: nie królewską, lecz kupiecką."
         ),
         inspectables={
             "kramy stragany": "Stragany są zasłane płótnem, skórą i odłamkami metalu. Każdy sprzedawca ma inną historię, ale te same obcasy.",
@@ -625,19 +628,6 @@ _DISTRICT_OVERRIDES.update(
                 "rynsztok": "Rynsztok zbiera wodę, pył i drobne resztki z targu.",
             },
         ),
-        4: LocationContent(
-            room_id=4,
-            name="Podcienia Kupieckie",
-            description=(
-                "Podcienia Kupieckie ściskają przejście między fasadami, a kamień zostaje tu na chwilę bez wiatru. "
-                "Okiennice są przymknięte, pod progiem leży błoto znad drogi, i łatwo stąd wrócić ku placowi albo karczmie."
-            ),
-            inspectables={
-                "okna okiennice": "Okiennice stoją uchylone tylko na szerokość dłoni. Kupcy wolą widzieć kawałek ulicy niż całe zamieszanie.",
-                "drzwi prog próg": "Próg jest przetarty od towarów i butów, a drzwi noszą świeże rysy po hakach.",
-                "fasady podcienia": "Fasady są blisko siebie, dlatego słońce wpada tu tylko na chwilę i wąskim pasem.",
-            },
-        ),
         5: LocationContent(
             room_id=5,
             name="Zaułek za Karczmą",
@@ -650,19 +640,6 @@ _DISTRICT_OVERRIDES.update(
                 "kufle beczki": "Puste kufle i beczki stoją tu do rana, jeśli wcześniej nie znikną w czyjejś ręce.",
             },
             items=(Item("tłusty fartuch", "Stary fartuch kuchenny z plamami po piwie.", 0.6, 2, "tavern_apron_05"),),
-        ),
-        13: LocationContent(
-            room_id=13,
-            name="Szeroka Brukowana",
-            description=(
-                "Szeroka Brukowana łączy karczmę z kuźnią i prowadzi przez środek miejskiego ruchu. "
-                "Przy ścianach stoją suche beczki, a bruk jest tu gładki od wozów i butów."
-            ),
-            inspectables={
-                "slady ślady tropy": "Ślady kół i butów nakładają się tu na siebie tak gęsto, że dawna nawierzchnia prawie znika.",
-                "sciana ściana mur": "Ściany są starta od łokci i sakw, a mur od północy łapie ciepło szybciej niż reszta ulicy.",
-                "beczki": "Beczki stoją przy murze, suche i lekkie, gotowe wrócić do karczmy albo do piwnic kupców.",
-            },
         ),
         21: LocationContent(
             room_id=21,
@@ -891,21 +868,20 @@ _DISTRICT_OVERRIDES.update(
             room_id=55,
             name="Rozstaje Traktów",
             description=(
-                "Na skraju miasta bruk przechodzi w koleiny, a rozstaje zbierają ruch z furty łowców, kapliczki i opuszczonej chaty. "
-                "Kamień graniczny ma odłupany róg i biały ślad po kredzie, jakby ktoś jeszcze rano sprawdzał kierunek."
+                "Rozstaje otwierają się poza miasto jak wybór, który zawsze przychodzi za późno. "
+                "Tutaj drogi rozchodzą się ku polom, młynowi i mostowi, a każdy skręt ma na sobie ślady kół i decyzji."
             ),
             inspectables={
-                "drogi koleiny": "Koleiny rozchodzą się w kilka stron. Najgłębsza jest ta, którą jadą cięższe wozy z zaopatrzeniem.",
-                "kamień graniczny": "Kamień graniczny ma odłupany róg i ślad kredy, którym ktoś zaznaczył ostatni objazd.",
-                "słup drogowy": "Słup drogowy stoi krzywo, ale wciąż pokazuje drogę ku kapliczce i furtce łowców.",
+                "drogi koleiny": "Koleiny rozchodzą się w kilka stron.",
+                "kamień": "Na kamieniu granicznym ktoś niedawno zostawił ślad kredy.",
             },
         ),
         56: LocationContent(
             room_id=56,
             name="Opuszczona Chata",
             description=(
-                "Krzywa chata stoi na brzegu bruku, między rozstajami a gospodarstwem. "
-                "Kurz, zwęglony krąg po palenisku i wydeptany próg pokazują, że ktoś mieszkał tu długo, zanim odszedł."
+                "Chata stoi krzywo, ale jeszcze nie upadła, jakby sama nie była pewna, czy zasługuje na zapomnienie. "
+                "W środku zalega kurz, stara słoma i kilka śladów po tym, że ktoś kiedyś jednak tu mieszkał."
             ),
             inspectables={
                 "słoma kurz": "Słoma jest zbita i zbutwiała.",
@@ -940,13 +916,12 @@ _DISTRICT_OVERRIDES.update(
             room_id=59,
             name="Kapliczka Przydrożna",
             description=(
-                "Kamienna kapliczka stoi przy samym wylocie bruku, tam gdzie ostatni kamień przechodzi w koleiny traktu. "
-                "W niszy leżą wstążki, moneta i kawałek chleba, a za plecami zostaje już miasto."
+                "Kapliczka stoi przy drodze jak ostatni znak przed dalszą, mniej pewną częścią świata. "
+                "W niszy z kamienia zostawiono wstążki, monetę i wyblakły kawałek chleba."
             ),
             inspectables={
                 "wstążki monety": "Wstążki są wyblakłe, monety ciemne od deszczu.",
                 "nisza": "Nisza w kamieniu jest płytka, ale wystarcza, by osłonić ofiarę od wiatru.",
-                "próg bruku": "Próg kapliczki jest wyślizgany od butów i usiany drobnym piaskiem znoszonym z drogi.",
             },
         ),
     }
