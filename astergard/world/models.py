@@ -31,6 +31,4 @@ class Location:
     hidden_elements: list[dict[str, object]] = field(default_factory=list)
     inspectables: dict[str, str] = field(default_factory=dict)
     forms: dict[str, str] = field(default_factory=dict)
-    exit_forms: dict[str, dict[str, str]] = field(default_factory=dict)
-    scene_profile: str = ""
     scene_anchor: str = ""

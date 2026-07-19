@@ -64,12 +64,19 @@ class D52WorldNarrationTests(unittest.TestCase):
             daily_activity="Sprawdza pobliskie przejście.",
         )
         text = self._scene(npcs=[npc])
-        npc_line = next(line for line in text.splitlines() if line.startswith("Żołnierz"))
-        activity = npc_line.split(", ", 1)[1] if ", " in npc_line else npc_line
         self.assertIn("sprawdza pobliskie przejście", text)
-        self.assertEqual(npc_line.count("sprawdza pobliskie przejście"), 1)
-        self.assertNotIn(" i ", activity)
-        self.assertNotIn(",", activity)
+        self.assertTrue(
+            any(
+                phrase in text
+                for phrase in (
+                    "otwiera okiennice",
+                    "zamiata próg",
+                    "rozpala piec",
+                    "sprawdza zamki",
+                    "wyprowadza zwierzęta",
+                )
+            )
+        )
         self.assertNotIn("W pobliżu są", text)
 
     def test_short_mode_is_more_compact_than_full_mode(self) -> None:

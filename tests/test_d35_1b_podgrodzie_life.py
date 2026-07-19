@@ -128,7 +128,7 @@ class D351BPodgrodzieLifeTests(unittest.TestCase):
             self.assertEqual(moving.daily_activity, "Liczy zamówienia i siedzi przy osmolonym stole.")
 
             reply = asyncio.run(harness.execute(char, "spojrz"))
-            self.assertIn("Kowal liczy zamówienia.", reply.output)
+            self.assertIn("Kowal liczy zamówienia i siedzi przy osmolonym stole.", reply.output)
             self.assertIn("Kowal", reply.output)
 
     def test_npc_moves_within_zone_using_existing_exit(self) -> None:
