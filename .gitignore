@@ -24,6 +24,8 @@ env/
 # Build
 build/
 dist/
+node_modules/
+coverage/
 
 # Logs
 *.log
