@@ -1,26 +1,20 @@
 from __future__ import annotations
 
 import asyncio
-import os
 
 from astergard.application.bootstrap import GameBootstrapper, GameServices
 from astergard.application.context_assembler import GameContextAssembler
 from astergard.application.heartbeat import HeartbeatService
 from astergard.engine.lifecycle import EngineLifecycle
 from astergard.application.session_flow import SessionFlow
-from astergard.application.session_transport import TcpSessionTransport, SessionTransport
+from astergard.application.session_transport import SessionTransport, TcpSessionTransport
+from astergard.server.gateway import WebSocketGateway, WebSocketGatewayConfig
+from astergard.server.game_support import GameServerSupportMixin
 from astergard.characters.models import Character
-from astergard.combat.wounds import overall_health_desc
 from astergard.commands.dispatcher import CommandFunc
-from astergard.commands.exploration import DIRECTIONS, move_direct_with
-from astergard.commands.helpers import find_item, find_npc
-from astergard.items.models import Item
-from astergard.npcs.models import NPC
-from astergard.server.context import GameContext
-from astergard.utils import describe_gold
 
 
-class GameServer:
+class GameServer(GameServerSupportMixin):
     cmd_look: CommandFunc
     cmd_move: CommandFunc
     cmd_say: CommandFunc
@@ -51,8 +45,10 @@ class GameServer:
     cmd_ranking: CommandFunc
     cmd_save: CommandFunc
     cmd_quit: CommandFunc
+
     def __init__(self, db_path: str = "mud.db", mudlet_map_enabled: bool | None = None) -> None:
         self.clients: dict[SessionTransport, Character] = {}
+        self._active_transports: set[SessionTransport] = set()
         self.services: GameServices = GameBootstrapper(db_path).build()
         self.services.server = self
         self.mudlet_map_enabled = self._resolve_mudlet_map_enabled(mudlet_map_enabled)
@@ -64,94 +60,74 @@ class GameServer:
         self.session_flow = SessionFlow(self.services, self.make_context, self.prompt)
         self._install_compatibility_methods()
 
-    @staticmethod
-    def _resolve_mudlet_map_enabled(mudlet_map_enabled: bool | None) -> bool:
-        if mudlet_map_enabled is not None:
-            return mudlet_map_enabled
-        return os.getenv("ASTERGARD_MUDLET_MAP", "").strip().lower() in {"1", "true", "yes", "on"}
-
-    def _expose_services(self) -> None:
-        self.repo = self.services.repo
-        self.world = self.services.world
-        self.npcs = self.services.npcs
-        self.combat = self.services.combat
-        self.factions = self.services.factions
-        self.quests = self.services.quests
-        self.economy = self.services.economy
-        self.crafting = self.services.crafting
-        self.magic = self.services.magic
-        self.weather = self.services.weather
-        self.admin = self.services.admin
-        self.dispatcher = self.services.dispatcher
-
-    def _install_compatibility_methods(self) -> None:
-        aliases = {
-            "cmd_look": "look", "cmd_move": "polnoc", "cmd_say": "powiedz",
-            "cmd_emote": "em", "cmd_shout": "krzycz", "cmd_sense": "zbadaj", "cmd_score": "cechy",
-            "cmd_profile": "profil", "cmd_postac": "postac", "cmd_skills": "umiejetnosci", "cmd_inventory": "ekwipunek", "cmd_get": "wez",
-            "cmd_drop": "upusc", "cmd_wear": "zaloz", "cmd_remove": "zdejmij",
-            "cmd_kill": "zabij", "cmd_flee": "ucieczka", "cmd_talk": "rozmawiaj",
-            "cmd_quests": "zadania", "cmd_offer": "oferta", "cmd_buy": "kup",
-            "cmd_sell": "sprzedaj", "cmd_search": "szukaj", "cmd_consume": "zjedz",
-            "cmd_cast": "czaruj", "cmd_craft": "craft", "cmd_reputation": "reputacja",
-            "cmd_ranking": "ranking", "cmd_save": "zapisz", "cmd_quit": "quit",
-        }
-        for public_name, command_name in aliases.items():
-            handler = self.dispatcher.commands[command_name]
-            setattr(self, public_name, handler)
-
-    def make_context(self, character: Character) -> GameContext:
-        return self.context_assembler.build(character)
-
-    def find_item(self, items: list[Item], name: str, index: int = 1) -> Item | None:
-        return find_item(items, name, index)
-
-    def find_npc(self, room_id: int, name: str) -> NPC | None:
-        return find_npc(self.make_context(Character("lookup")), room_id, name)
-
-    def move_direct(self, char: Character, direction: str) -> str:
-        return move_direct_with(self.services.exploration_service, self.make_context(char), char, direction)
-
-    def get_players_in_room(self, room_id: int) -> list[Character]:
-        return [char for char in self.clients.values() if char.room_id == room_id and char.is_alive]
-
-    def get_all_players(self) -> list[Character]:
-        return list(self.clients.values())
-
-    def prompt(self, character: Character) -> str:
-        health = overall_health_desc(character.wounds)
-        stamina = character.stats.describe_kondycja()
-        gold = describe_gold(character.gold)
-        return f"{stamina}, {health}, {gold}. > "
-
-    async def start(self, host: str = "0.0.0.0", port: int = 4000) -> None:
+    async def start(
+        self,
+        host: str = "0.0.0.0",
+        port: int = 4000,
+        websocket_config: WebSocketGatewayConfig | None = None,
+    ) -> None:
+        websocket_gateway = WebSocketGateway(self, websocket_config or WebSocketGatewayConfig(allow_localhost_origin=True))
         heartbeat_task = asyncio.create_task(self.global_heartbeat())
-        server = await asyncio.start_server(self.handle_connection, host, port)
-        self.services.event_bus.emit("server.started", host=host, port=port)
-        print(f"Astergard MUD działa na {host}:{port}")
+        websocket_task = asyncio.create_task(websocket_gateway.run())
+        self.services.event_bus.emit(
+            "server.started",
+            host=host,
+            port=port,
+            websocket_host=websocket_gateway.config.host,
+            websocket_port=websocket_gateway.config.port,
+        )
+        print(
+            f"Astergard MUD działa na {host}:{port} "
+            f"oraz WebSocket na {websocket_gateway.config.host}:{websocket_gateway.config.port}"
+        )
+        tcp_server = await asyncio.start_server(self.handle_connection, host, port)
         try:
-            async with server:
-                await server.serve_forever()
+            while not self.lifecycle.shutdown_requested:
+                if websocket_task.done():
+                    websocket_error = websocket_task.exception()
+                    if websocket_error is not None:
+                        raise websocket_error
+                    break
+                if heartbeat_task.done():
+                    heartbeat_error = heartbeat_task.exception()
+                    if heartbeat_error is not None:
+                        raise heartbeat_error
+                    break
+                await asyncio.sleep(0.1)
         finally:
             self.lifecycle.request_shutdown("server_stop")
-            heartbeat_task.cancel()
+            tcp_server.close()
             try:
-                await heartbeat_task
-            except asyncio.CancelledError:
+                await tcp_server.wait_closed()
+            except Exception:
                 pass
+            await websocket_gateway.close_active_connections()
+            await self._close_active_transports()
+            websocket_task.cancel()
+            heartbeat_task.cancel()
+            for task in (websocket_task, heartbeat_task):
+                try:
+                    await task
+                except asyncio.CancelledError:
+                    pass
+                except Exception:
+                    pass
 
     async def handle_connection(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
-        transport = TcpSessionTransport(reader, writer)
+        await self._run_session(TcpSessionTransport(reader, writer))
+
+    async def _run_session(self, transport: SessionTransport) -> None:
         character: Character | None = None
+        self._register_transport(transport)
         try:
             login = await self.session_flow.login(transport)
             if login.close_connection or login.character is None:
                 return
             character = login.character
             self.clients[transport] = character
-            ctx = self.make_context(character)
-            await self.session_flow.send_initial_view(transport, ctx)
-            await self.session_flow.command_loop(transport, ctx)
+            context = self.make_context(character)
+            await self.session_flow.send_initial_view(transport, context)
+            await self.session_flow.command_loop(transport, context)
         except ConnectionResetError:
             pass
         except asyncio.CancelledError:
@@ -162,6 +138,7 @@ class GameServer:
                 self.services.event_bus.emit("session.character_saved", username=character.username)
             self.services.save_load.save_world("session_disconnect")
             self.clients.pop(transport, None)
+            self._unregister_transport(transport)
             try:
                 await transport.close()
             except Exception:
@@ -174,4 +151,4 @@ class GameServer:
         self.lifecycle.request_shutdown(reason)
 
 
-__all__ = ["DIRECTIONS", "GameContext", "GameServer"]
+__all__ = ["GameServer"]

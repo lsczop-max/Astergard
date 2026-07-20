@@ -62,6 +62,12 @@ Minimal payload shape:
 
 `command.result` does not repeat `output`. Clients should render `output.text` and `output.prompt` only, which avoids double-printing.
 
+The current runtime order for a successful command is:
+
+- `output.text` and/or `room.info`
+- `command.result`
+- `output.prompt`
+
 Room payload uses the same authoritative room data that Mudlet receives today through GMCP `Room.Info`.
 
 ## Examples

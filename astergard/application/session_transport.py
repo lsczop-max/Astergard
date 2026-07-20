@@ -73,7 +73,12 @@ class SessionTransport(Protocol):
     kind: SessionTransportKind
     capabilities: frozenset[SessionCapability]
 
-    async def read_input(self, expected: SessionInputKind) -> SessionInput: ...
+    async def read_input(
+        self,
+        expected: SessionInputKind,
+        *,
+        deadline: float | None = None,
+    ) -> SessionInput: ...
     async def send_text(self, text: str) -> None: ...
     async def send_prompt(self, prompt: str) -> None: ...
     async def send_event(self, event: SessionEvent) -> None: ...
@@ -116,7 +121,12 @@ class TcpSessionTransport:
         except UnicodeDecodeError as exc:
             raise ValueError("Input is not valid UTF-8.") from exc
 
-    async def read_input(self, expected: SessionInputKind) -> SessionInput:
+    async def read_input(
+        self,
+        expected: SessionInputKind,
+        *,
+        deadline: float | None = None,
+    ) -> SessionInput:
         if expected == SessionInputKind.HELLO:
             return SessionInput(SessionInputKind.HELLO, {"transport": self.kind.value}, None)
         if expected == SessionInputKind.DISCONNECT:

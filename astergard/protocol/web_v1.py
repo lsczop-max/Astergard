@@ -34,6 +34,7 @@ STREAM_MESSAGE_TYPES = {"session.ready", "output.text", "output.prompt", "room.i
 RESPONSE_MESSAGE_TYPES = {"auth.result", "command.result", "connection.pong", "protocol.error"}
 
 MESSAGE_SIZE_LIMIT = 8192
+WEB_MESSAGE_MAX_BYTES = MESSAGE_SIZE_LIMIT
 COMMAND_LENGTH_LIMIT = 512
 
 

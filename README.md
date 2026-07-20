@@ -57,6 +57,12 @@ Oficjalny pakiet kliencki Mudlet dla Astergardu znajduje się w:
 
 - [client/mudlet/README.md](/home/lukasz/Dokumenty/astergard_d34_world_area/client/mudlet/README.md)
 
+## WebSocket Gateway
+
+Dokumentacja D59.3 dla produkcyjnego gatewaya WebSocket:
+
+- [docs/websocket_gateway.md](/home/lukasz/Dokumenty/astergard_d34_world_area/docs/websocket_gateway.md)
+
 ## Testy
 
 ```bash

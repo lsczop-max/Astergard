@@ -7,6 +7,7 @@ from astergard.application.bootstrap import GameServices
 from astergard.application.session_transport import (
     SessionInput,
     SessionInputKind,
+    SessionCapability,
     SessionTransport,
     is_debug_map_allowed,
     make_auth_result_event,
@@ -127,6 +128,8 @@ class SessionFlow:
         return value
 
     async def _ensure_gmcp_ready(self, transport: SessionTransport) -> None:
+        if SessionCapability.GMCP not in transport.capabilities:
+            return
         key = self._transport_key(transport)
         if key in self._gmcp_announced_transports:
             return

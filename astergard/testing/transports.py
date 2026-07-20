@@ -52,7 +52,12 @@ class MemorySessionTransport:
             payload_dict = {"value": payload}
         self.inbound.append(SessionInput(kind, payload_dict, request_id))
 
-    async def read_input(self, expected: SessionInputKind) -> SessionInput:
+    async def read_input(
+        self,
+        expected: SessionInputKind,
+        *,
+        deadline: float | None = None,
+    ) -> SessionInput:
         if not self.inbound:
             raise EOFError
         message = self.inbound.popleft()
