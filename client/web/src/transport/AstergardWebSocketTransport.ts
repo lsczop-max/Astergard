@@ -4,6 +4,10 @@ import {
   parseProtocolEnvelope,
   serializeWebEnvelope,
   type AuthLoginPayload,
+  type CreatorBackPayload,
+  type CreatorCancelPayload,
+  type CreatorStartPayload,
+  type CreatorSubmitPayload,
   type ClientEnvelope,
   type CommandExecutePayload,
   type ConnectionPingPayload,
@@ -34,11 +38,15 @@ export function connectionStateLabel(state: TransportState): string {
   }
 }
 
-type PendingRequest = 'hello' | 'login' | 'command' | 'ping';
+type PendingRequest = 'hello' | 'login' | 'creator' | 'command' | 'ping';
 
 type ClientPayloadMap = {
   'session.hello': SessionHelloPayload;
   'auth.login': AuthLoginPayload;
+  'creator.start': CreatorStartPayload;
+  'creator.submit': CreatorSubmitPayload;
+  'creator.back': CreatorBackPayload;
+  'creator.cancel': CreatorCancelPayload;
   'command.execute': CommandExecutePayload;
   'connection.ping': ConnectionPingPayload;
 };
@@ -166,6 +174,55 @@ export class AstergardWebSocketTransport {
     const envelope = this.buildEnvelope('auth.login', payload, 'login');
     this.send(envelope);
     this.setState('authenticating');
+  }
+
+  async startCreator(username: string, password: string): Promise<void> {
+    if (this.state !== 'handshaking' && this.state !== 'authenticating') {
+      throw new Error('Najpierw nawiąż połączenie.');
+    }
+    if (this.pendingHas('creator')) {
+      throw new Error('Kreator jest już w toku.');
+    }
+    const payload: CreatorStartPayload = { username, password };
+    const envelope = this.buildEnvelope('creator.start', payload, 'creator');
+    this.send(envelope);
+    this.setState('authenticating');
+  }
+
+  async submitCreator(stepId: string, value: string): Promise<void> {
+    if (this.state !== 'authenticating' && this.state !== 'handshaking') {
+      throw new Error('Kreator jest dostępny dopiero po handshake.');
+    }
+    if (this.pendingHas('creator')) {
+      throw new Error('Kreator jest już w toku.');
+    }
+    const payload: CreatorSubmitPayload = { step_id: stepId, value };
+    const envelope = this.buildEnvelope('creator.submit', payload, 'creator');
+    this.send(envelope);
+  }
+
+  async goBackInCreator(stepId: string): Promise<void> {
+    if (this.state !== 'authenticating' && this.state !== 'handshaking') {
+      throw new Error('Kreator jest dostępny dopiero po handshake.');
+    }
+    if (this.pendingHas('creator')) {
+      throw new Error('Kreator jest już w toku.');
+    }
+    const payload: CreatorBackPayload = { step_id: stepId };
+    const envelope = this.buildEnvelope('creator.back', payload, 'creator');
+    this.send(envelope);
+  }
+
+  async cancelCreator(stepId: string): Promise<void> {
+    if (this.state !== 'authenticating' && this.state !== 'handshaking') {
+      throw new Error('Kreator jest dostępny dopiero po handshake.');
+    }
+    if (this.pendingHas('creator')) {
+      throw new Error('Kreator jest już w toku.');
+    }
+    const payload: CreatorCancelPayload = { step_id: stepId };
+    const envelope = this.buildEnvelope('creator.cancel', payload, 'creator');
+    this.send(envelope);
   }
 
   async executeCommand(command: string): Promise<void> {
@@ -364,13 +421,33 @@ export class AstergardWebSocketTransport {
     }
     if (envelope.type === 'auth.result') {
       if (!envelope.payload.success) {
-        this.setState('error');
+        this.setState('handshaking');
         this.emit({
           kind: 'error',
           code: envelope.payload.reason ?? 'auth_failed',
           message: `Logowanie nie powiodło się: ${envelope.payload.reason ?? 'odmowa serwera'}.`,
         });
       }
+    }
+    if (envelope.type === 'creator.started') {
+      this.setState('authenticating');
+    }
+    if (envelope.type === 'creator.step') {
+      this.setState('authenticating');
+    }
+    if (envelope.type === 'creator.validation_error') {
+      this.setState('authenticating');
+      this.emit({
+        kind: 'error',
+        code: envelope.payload.field,
+        message: `Błąd kreatora: ${envelope.payload.message}`,
+      });
+    }
+    if (envelope.type === 'creator.cancelled') {
+      this.setState('handshaking');
+    }
+    if (envelope.type === 'creator.finished') {
+      this.setState('authenticating');
     }
     if (envelope.type === 'session.ready') {
       this.setState('ready');
@@ -382,7 +459,12 @@ export class AstergardWebSocketTransport {
       envelope.type === 'command.result' ||
       envelope.type === 'connection.pong' ||
       envelope.type === 'session.ready' ||
-      envelope.type === 'auth.result'
+      envelope.type === 'auth.result' ||
+      envelope.type === 'creator.started' ||
+      envelope.type === 'creator.step' ||
+      envelope.type === 'creator.validation_error' ||
+      envelope.type === 'creator.cancelled' ||
+      envelope.type === 'creator.finished'
     ) {
       this.emit({ kind: 'message', message: envelope });
     }

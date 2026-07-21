@@ -23,6 +23,7 @@ from astergard.protocol.web_v1 import (
 )
 from astergard.server.gateway import WebSocketGateway, WebSocketGatewayConfig
 from astergard.testing import TestGameHarness
+from astergard.world.manager import STARTING_ROOM_ID
 
 
 def _frame(message_type: str, payload: dict[str, Any], *, request_id: str) -> str:
@@ -35,6 +36,49 @@ def _json_frame(message_type: str, payload: dict[str, Any], *, request_id: str) 
         separators=(",", ":"),
         ensure_ascii=False,
     )
+
+
+def _creator_answer(step: dict[str, Any], answers: dict[str, str], *, fallback_choice: bool = True, override: str | None = None) -> str:
+    if override is not None:
+        return override
+    if step["input_type"] == "choice":
+        if not fallback_choice:
+            raise KeyError(step["step_id"])
+        return step["choices"][0]["value"]
+    return answers[step["step_id"]]
+
+
+async def _drive_web_creator(
+    websocket: Any,
+    *,
+    suffix: str,
+    username: str,
+    password: str,
+    answers: dict[str, str],
+    final_override: str | None = None,
+) -> tuple[Any, list[Any], str]:
+    await websocket.send(_frame("session.hello", {"client": "tests", "transport": "websocket"}, request_id=f"{suffix}-hello"))
+    greeting = parse_web_envelope(await websocket.recv())
+    assert greeting.type == "output.text"
+
+    await websocket.send(_frame("creator.start", {"username": username, "password": password}, request_id=f"{suffix}-start"))
+    started = parse_web_envelope(await websocket.recv())
+    assert started.type == "creator.started"
+    step = started.payload["step"]
+
+    while True:
+        step_id = step["step_id"]
+        request_id = f"{suffix}-{step_id}"
+        value = _creator_answer(step, answers, override=final_override if step_id == "gait" else None)
+        await websocket.send(_frame("creator.submit", {"step_id": step_id, "value": value}, request_id=request_id))
+        response = parse_web_envelope(await websocket.recv())
+        if response.type == "creator.step":
+            step = response.payload
+            continue
+        if response.type == "creator.finished":
+            post_frames = [parse_web_envelope(await websocket.recv()) for _ in range(5)]
+            return response, post_frames, request_id
+        return response, [], request_id
 
 
 async def _read_http_response(reader: asyncio.StreamReader) -> str:
@@ -225,6 +269,255 @@ class WebSocketGatewayIntegrationTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(second.type, "auth.result")
                 self.assertFalse(second.payload["success"])
                 self.assertEqual(second.request_id, "login-1")
+
+    async def test_web_creator_flow_creates_character_and_reaches_ready(self) -> None:
+        config = WebSocketGatewayConfig(allowed_origins=("http://localhost:3000",))
+        async with websocket_gateway_context(self.server, config) as (_gateway, port):
+            async with self._connect(port, "http://localhost:3000") as websocket:
+                await websocket.send(_frame("session.hello", {"client": "tests", "transport": "websocket"}, request_id="hello-1"))
+                greeting = parse_web_envelope(await websocket.recv())
+                self.assertEqual(greeting.type, "output.text")
+
+                await websocket.send(_frame("creator.start", {"username": "newbie", "password": "secret"}, request_id="start-1"))
+                started = parse_web_envelope(await websocket.recv())
+                self.assertEqual(started.type, "creator.started")
+                step = started.payload["step"]
+                self.assertEqual(step["step_id"], "name")
+
+                answers = {
+                    "name": "Nowy",
+                    "gender_description": "kobieta",
+                    "age": "24",
+                }
+
+                while True:
+                    step_id = step["step_id"]
+                    value = _creator_answer(step, answers)
+                    request_id = f"submit-{step_id}"
+                    await websocket.send(_frame("creator.submit", {"step_id": step_id, "value": value}, request_id=request_id))
+                    response = parse_web_envelope(await websocket.recv())
+                    if response.type == "creator.step":
+                        step = response.payload
+                        continue
+                    self.assertEqual(response.type, "creator.finished")
+                    self.assertEqual(response.request_id, request_id)
+                    break
+
+                post_creation_frames = [parse_web_envelope(await websocket.recv()) for _ in range(5)]
+                frame_types = [frame.type for frame in post_creation_frames]
+                self.assertEqual(frame_types[-1], "session.ready")
+                self.assertEqual(frame_types.count("session.ready"), 1)
+                self.assertNotIn("auth.result", frame_types)
+                self.assertIn("room.info", frame_types)
+                self.assertIn("output.prompt", frame_types)
+                self.assertNotIn("secret", "".join(frame.payload.get("text", "") if frame.type == "output.text" else "" for frame in post_creation_frames))
+                character = self.server.repo.load("newbie")
+                self.assertEqual(character.name, "Nowy")
+                self.assertEqual(character.gender_description, "kobieta")
+                self.assertEqual(character.age, 24)
+                self.assertEqual(character.room_id, STARTING_ROOM_ID)
+
+    async def test_web_creator_conflict_is_controlled_and_atomic(self) -> None:
+        config = WebSocketGatewayConfig(allowed_origins=("http://localhost:3000",))
+        answers = {
+            "name": "Nowy",
+            "gender_description": "kobieta",
+            "age": "24",
+        }
+        async with websocket_gateway_context(self.server, config) as (_gateway, port):
+            async with self._connect(port, "http://localhost:3000") as first, self._connect(port, "http://localhost:3000") as second:
+                first_result_task = asyncio.create_task(
+                    _drive_web_creator(
+                        first,
+                        suffix="first",
+                        username="dupe",
+                        password="secret",
+                        answers=answers,
+                    )
+                )
+                second_result_task = asyncio.create_task(
+                    _drive_web_creator(
+                        second,
+                        suffix="second",
+                        username="dupe",
+                        password="secret",
+                        answers=answers,
+                    )
+                )
+                first_result, second_result = await asyncio.gather(first_result_task, second_result_task)
+
+                results = [first_result, second_result]
+                finished_results = [result for result in results if result[0].type == "creator.finished"]
+                rejected_results = [result for result in results if result[0].type == "creator.validation_error"]
+                self.assertEqual(len(finished_results), 1)
+                self.assertEqual(len(rejected_results), 1)
+
+                finished_response, post_frames, finished_request_id = finished_results[0]
+                self.assertEqual(finished_response.request_id, finished_request_id)
+                finished_types = [frame.type for frame in post_frames]
+                self.assertEqual(finished_types.count("session.ready"), 1)
+                self.assertNotIn("auth.result", finished_types)
+                self.assertNotIn("creator.finished", finished_types)
+                self.assertIn("room.info", finished_types)
+                self.assertIn("output.prompt", finished_types)
+
+                rejected_response, rejected_frames, rejected_request_id = rejected_results[0]
+                self.assertEqual(rejected_response.request_id, rejected_request_id)
+                self.assertIn(rejected_request_id, {"first-gait", "second-gait"})
+                self.assertEqual(rejected_response.payload["field"], "username_taken")
+                self.assertEqual(rejected_response.payload["step_id"], "gait")
+                self.assertEqual(rejected_frames, [])
+
+                character = self.server.repo.load("dupe")
+                self.assertEqual(character.name, "Nowy")
+                self.assertEqual(character.gender_description, "kobieta")
+                self.assertEqual(character.age, 24)
+                self.assertEqual(character.room_id, STARTING_ROOM_ID)
+                await first.close()
+                await second.close()
+                await first.wait_closed()
+                await second.wait_closed()
+                self.assertNotEqual(first.close_code, 1011)
+                self.assertNotEqual(second.close_code, 1011)
+
+    async def test_web_creator_cancel_and_disconnect_do_not_persist(self) -> None:
+        config = WebSocketGatewayConfig(allowed_origins=("http://localhost:3000",))
+        async with websocket_gateway_context(self.server, config) as (_gateway, port):
+            async with self._connect(port, "http://localhost:3000") as websocket:
+                await websocket.send(_frame("session.hello", {"client": "tests", "transport": "websocket"}, request_id="cancel-hello"))
+                await websocket.recv()
+
+                await websocket.send(_frame("creator.start", {"username": "cancelled", "password": "secret"}, request_id="cancel-start"))
+                started = parse_web_envelope(await websocket.recv())
+                self.assertEqual(started.type, "creator.started")
+
+                await websocket.send(_frame("creator.cancel", {"step_id": "name"}, request_id="cancel-step"))
+                cancelled = parse_web_envelope(await websocket.recv())
+                self.assertEqual(cancelled.type, "creator.cancelled")
+                self.assertEqual(cancelled.request_id, "cancel-step")
+                self.assertFalse(self.server.repo.player_exists("cancelled"))
+                with self.assertRaises(asyncio.TimeoutError):
+                    await asyncio.wait_for(websocket.recv(), timeout=0.2)
+                await websocket.close()
+                await websocket.wait_closed()
+                await self._wait_for_cleanup()
+
+            async with self._connect(port, "http://localhost:3000") as websocket:
+                await websocket.send(_frame("session.hello", {"client": "tests", "transport": "websocket"}, request_id="disconnect-hello"))
+                await websocket.recv()
+                await websocket.send(_frame("creator.start", {"username": "disconnect", "password": "secret"}, request_id="disconnect-start"))
+                started = parse_web_envelope(await websocket.recv())
+                self.assertEqual(started.type, "creator.started")
+
+                step = started.payload["step"]
+                await websocket.send(_frame("creator.submit", {"step_id": step["step_id"], "value": "Rodzic"}, request_id="disconnect-name"))
+                step = parse_web_envelope(await websocket.recv())
+                self.assertEqual(step.type, "creator.step")
+                self.assertEqual(step.payload["step_id"], "gender_description")
+
+                await websocket.close()
+                await websocket.wait_closed()
+                await self._wait_for_cleanup()
+                self.assertFalse(self.server.repo.player_exists("disconnect"))
+                self.assertNotEqual(websocket.close_code, 1011)
+
+    async def test_web_creator_allows_relogin_after_finish(self) -> None:
+        config = WebSocketGatewayConfig(allowed_origins=("http://localhost:3000",))
+        answers = {
+            "name": "Powracajacy",
+            "gender_description": "mężczyzna",
+            "age": "26",
+        }
+        async with websocket_gateway_context(self.server, config) as (_gateway, port):
+            async with self._connect(port, "http://localhost:3000") as websocket:
+                finished_response, post_frames, _ = await _drive_web_creator(
+                    websocket,
+                    suffix="return",
+                    username="returning",
+                    password="secret",
+                    answers=answers,
+                )
+                self.assertEqual(finished_response.type, "creator.finished")
+                post_types = [frame.type for frame in post_frames]
+                self.assertEqual(post_types.count("session.ready"), 1)
+                await websocket.close()
+                await websocket.wait_closed()
+                await self._wait_for_cleanup()
+
+            character = self.server.repo.load("returning")
+            self.assertEqual(character.name, "Powracajacy")
+            self.assertEqual(character.gender_description, "mężczyzna")
+            self.assertEqual(character.age, 26)
+            self.assertEqual(character.room_id, STARTING_ROOM_ID)
+
+            async with self._connect(port, "http://localhost:3000") as websocket:
+                await websocket.send(_frame("session.hello", {"client": "tests", "transport": "websocket"}, request_id="relogin-hello"))
+                greeting = parse_web_envelope(await websocket.recv())
+                self.assertEqual(greeting.type, "output.text")
+
+                await websocket.send(_frame("auth.login", {"username": "returning", "password": "secret"}, request_id="relogin-login"))
+                frames = [parse_web_envelope(await websocket.recv()) for _ in range(5)]
+                self.assertEqual([frame.type for frame in frames], ["auth.result", "output.text", "room.info", "output.prompt", "session.ready"])
+                self.assertEqual(frames[0].request_id, "relogin-login")
+                self.assertEqual(frames[-1].payload["username"], "returning")
+
+    async def test_web_creator_invalid_final_answer_preserves_request_id(self) -> None:
+        config = WebSocketGatewayConfig(allowed_origins=("http://localhost:3000",))
+        answers = {
+            "name": "Bledny",
+            "gender_description": "kobieta",
+            "age": "22",
+        }
+        async with websocket_gateway_context(self.server, config) as (_gateway, port):
+            async with self._connect(port, "http://localhost:3000") as websocket:
+                response, post_frames, request_id = await _drive_web_creator(
+                    websocket,
+                    suffix="invalid",
+                    username="invalid-final",
+                    password="secret",
+                    answers=answers,
+                    final_override="nieprawidlowy-wybor",
+                )
+                self.assertEqual(response.type, "creator.validation_error")
+                self.assertEqual(response.request_id, request_id)
+                self.assertEqual(response.payload["step_id"], "gait")
+                self.assertFalse(post_frames)
+                self.assertFalse(self.server.repo.player_exists("invalid-final"))
+                with self.assertRaises(asyncio.TimeoutError):
+                    await asyncio.wait_for(websocket.recv(), timeout=0.2)
+                await websocket.close()
+                await websocket.wait_closed()
+
+    async def test_creator_back_and_cancel_keep_user_on_the_current_step(self) -> None:
+        config = WebSocketGatewayConfig(allowed_origins=("http://localhost:3000",))
+        async with websocket_gateway_context(self.server, config) as (_gateway, port):
+            async with self._connect(port, "http://localhost:3000") as websocket:
+                await websocket.send(_frame("session.hello", {"client": "tests", "transport": "websocket"}, request_id="hello-1"))
+                await websocket.recv()
+
+                await websocket.send(_frame("creator.start", {"username": "retry", "password": "secret"}, request_id="start-1"))
+                started = parse_web_envelope(await websocket.recv())
+                self.assertEqual(started.type, "creator.started")
+
+                await websocket.send(_frame("creator.submit", {"step_id": "name", "value": ""}, request_id="submit-bad"))
+                invalid = parse_web_envelope(await websocket.recv())
+                self.assertEqual(invalid.type, "creator.validation_error")
+                self.assertEqual(invalid.payload["step_id"], "name")
+
+                await websocket.send(_frame("creator.submit", {"step_id": "name", "value": "Retry"}, request_id="submit-good"))
+                step = parse_web_envelope(await websocket.recv())
+                self.assertEqual(step.type, "creator.step")
+                self.assertEqual(step.payload["step_id"], "gender_description")
+
+                await websocket.send(_frame("creator.back", {"step_id": "gender_description"}, request_id="back-1"))
+                back = parse_web_envelope(await websocket.recv())
+                self.assertEqual(back.type, "creator.step")
+                self.assertEqual(back.payload["step_id"], "name")
+
+                await websocket.send(_frame("creator.cancel", {"step_id": "name"}, request_id="cancel-1"))
+                cancelled = parse_web_envelope(await websocket.recv())
+                self.assertEqual(cancelled.type, "creator.cancelled")
+                self.assertEqual(cancelled.payload["username"], "retry")
 
     async def test_move_emits_room_info_before_command_text(self) -> None:
         self.assertTrue(self.server.repo.register("walker", "secret"))

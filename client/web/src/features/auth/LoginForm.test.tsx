@@ -9,6 +9,7 @@ import { useAppStore } from '../../store/AppStore';
 
 function makeTransportRef(
   submitLoginImpl: (username: string, password: string) => Promise<void> = async () => undefined,
+  startCreatorImpl: (username: string, password: string) => Promise<void> = async () => undefined,
 ): MutableRefObject<AstergardWebSocketTransport | null> {
   return {
     current: {
@@ -19,6 +20,9 @@ function makeTransportRef(
       ping: vi.fn(),
       subscribe: vi.fn(() => vi.fn()),
       submitLogin: submitLoginImpl,
+      startCreator: startCreatorImpl,
+      goBackInCreator: vi.fn(),
+      cancelCreator: vi.fn(),
       close: vi.fn(),
     } as unknown as AstergardWebSocketTransport,
   };
@@ -42,7 +46,7 @@ describe('LoginForm', () => {
     const password = screen.getByLabelText('Hasło');
     await user.type(username, 'ala');
     await user.type(password, 'tajne');
-    await user.click(screen.getByRole('button', { name: /Połącz \/ Zaloguj/ }));
+    await user.click(screen.getByRole('button', { name: 'Zaloguj' }));
     expect(password).toHaveValue('');
   });
 
@@ -62,10 +66,25 @@ describe('LoginForm', () => {
     );
     await user.type(screen.getByLabelText('Nazwa użytkownika'), 'ala');
     await user.type(screen.getByLabelText('Hasło'), 'tajne');
-    await user.click(screen.getByRole('button', { name: /Połącz \/ Zaloguj/ }));
+    await user.click(screen.getByRole('button', { name: 'Zaloguj' }));
     expect(await screen.findByText('Błędne hasło')).toBeInTheDocument();
     expect(setItemSpy).not.toHaveBeenCalled();
     expect(logSpy).not.toHaveBeenCalled();
     expect(errorSpy).not.toHaveBeenCalled();
+  });
+
+  it('starts creator mode when switched to new character', async () => {
+    const user = userEvent.setup();
+    const startCreator = vi.fn().mockResolvedValue(undefined);
+    const transportRef = makeTransportRef(async () => undefined, startCreator);
+    renderWithStore(<LoginForm transportRef={transportRef} />);
+
+    await user.click(screen.getByLabelText('Nowa postać'));
+    await user.type(screen.getByLabelText('Nazwa nowego konta'), 'nowa');
+    await user.type(screen.getByLabelText('Nowe hasło'), 'sekret');
+    await user.click(screen.getByRole('button', { name: 'Rozpocznij tworzenie' }));
+
+    expect(startCreator).toHaveBeenCalledTimes(1);
+    expect(startCreator).toHaveBeenCalledWith('nowa', 'sekret');
   });
 });

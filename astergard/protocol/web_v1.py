@@ -6,10 +6,24 @@ from typing import Any, Literal
 
 WEB_PROTOCOL_VERSION = 1
 
-ClientMessageType = Literal["session.hello", "auth.login", "command.execute", "connection.ping"]
+ClientMessageType = Literal[
+    "session.hello",
+    "auth.login",
+    "creator.start",
+    "creator.submit",
+    "creator.back",
+    "creator.cancel",
+    "command.execute",
+    "connection.ping",
+]
 ServerMessageType = Literal[
     "session.ready",
     "auth.result",
+    "creator.started",
+    "creator.step",
+    "creator.validation_error",
+    "creator.cancelled",
+    "creator.finished",
     "output.text",
     "output.prompt",
     "room.info",
@@ -18,10 +32,24 @@ ServerMessageType = Literal[
     "protocol.error",
 ]
 
-CLIENT_MESSAGE_TYPES = {"session.hello", "auth.login", "command.execute", "connection.ping"}
+CLIENT_MESSAGE_TYPES = {
+    "session.hello",
+    "auth.login",
+    "creator.start",
+    "creator.submit",
+    "creator.back",
+    "creator.cancel",
+    "command.execute",
+    "connection.ping",
+}
 SERVER_MESSAGE_TYPES = {
     "session.ready",
     "auth.result",
+    "creator.started",
+    "creator.step",
+    "creator.validation_error",
+    "creator.cancelled",
+    "creator.finished",
     "output.text",
     "output.prompt",
     "room.info",
@@ -29,9 +57,28 @@ SERVER_MESSAGE_TYPES = {
     "connection.pong",
     "protocol.error",
 }
-REQUEST_MESSAGE_TYPES = {"session.hello", "auth.login", "command.execute", "connection.ping"}
+REQUEST_MESSAGE_TYPES = {
+    "session.hello",
+    "auth.login",
+    "creator.start",
+    "creator.submit",
+    "creator.back",
+    "creator.cancel",
+    "command.execute",
+    "connection.ping",
+}
 STREAM_MESSAGE_TYPES = {"session.ready", "output.text", "output.prompt", "room.info"}
-RESPONSE_MESSAGE_TYPES = {"auth.result", "command.result", "connection.pong", "protocol.error"}
+RESPONSE_MESSAGE_TYPES = {
+    "auth.result",
+    "creator.started",
+    "creator.step",
+    "creator.validation_error",
+    "creator.cancelled",
+    "creator.finished",
+    "command.result",
+    "connection.pong",
+    "protocol.error",
+}
 
 MESSAGE_SIZE_LIMIT = 8192
 WEB_MESSAGE_MAX_BYTES = MESSAGE_SIZE_LIMIT
@@ -159,6 +206,82 @@ def _validate_auth_login(payload: dict[str, Any]) -> None:
     _require_string_field(payload, "password", max_length=COMMAND_LENGTH_LIMIT)
 
 
+def _validate_creator_start(payload: dict[str, Any]) -> None:
+    _require_allowed_keys(payload, {"username", "password"})
+    _require_string_field(payload, "username", max_length=COMMAND_LENGTH_LIMIT)
+    _require_string_field(payload, "password", max_length=COMMAND_LENGTH_LIMIT)
+
+
+def _validate_creator_step_ref(payload: dict[str, Any]) -> None:
+    _require_allowed_keys(payload, {"step_id"})
+    _require_string_field(payload, "step_id", max_length=COMMAND_LENGTH_LIMIT)
+
+
+def _validate_creator_submit(payload: dict[str, Any]) -> None:
+    _require_allowed_keys(payload, {"step_id", "value"})
+    _require_string_field(payload, "step_id", max_length=COMMAND_LENGTH_LIMIT)
+    _require_string_field(payload, "value", allow_empty=True, max_length=COMMAND_LENGTH_LIMIT)
+
+
+def _validate_creator_choice(payload: dict[str, Any]) -> None:
+    _require_allowed_keys(payload, {"value", "label", "description"})
+    _require_string_field(payload, "value", max_length=COMMAND_LENGTH_LIMIT)
+    _require_string_field(payload, "label", max_length=COMMAND_LENGTH_LIMIT)
+    if "description" in payload:
+        _require_string_field(payload, "description", allow_empty=True, max_length=COMMAND_LENGTH_LIMIT)
+
+
+def _validate_creator_step(payload: dict[str, Any]) -> None:
+    _require_allowed_keys(payload, {"step_id", "title", "prompt", "input_type", "choices", "back_available", "cancel_available"})
+    _require_string_field(payload, "step_id", max_length=COMMAND_LENGTH_LIMIT)
+    _require_string_field(payload, "title", max_length=COMMAND_LENGTH_LIMIT)
+    _require_string_field(payload, "prompt", allow_empty=True, max_length=COMMAND_LENGTH_LIMIT * 8)
+    input_type = _require_string_field(payload, "input_type", max_length=COMMAND_LENGTH_LIMIT)
+    if input_type not in {"text", "number", "choice", "secret"}:
+        raise WebProtocolError("invalid_payload", "Payload field 'input_type' must be one of: text, number, choice, secret.")
+    if "choices" in payload:
+        choices = payload["choices"]
+        if type(choices) is not list:
+            raise WebProtocolError("invalid_payload", "Payload field 'choices' must be an array.")
+        for choice in choices:
+            if not isinstance(choice, dict):
+                raise WebProtocolError("invalid_payload", "Payload field 'choices' must contain objects.")
+            _validate_creator_choice(choice)
+    if type(payload.get("back_available")) is not bool:
+        raise WebProtocolError("invalid_payload", "Payload field 'back_available' must be a boolean.")
+    if type(payload.get("cancel_available")) is not bool:
+        raise WebProtocolError("invalid_payload", "Payload field 'cancel_available' must be a boolean.")
+
+
+def _validate_creator_started(payload: dict[str, Any]) -> None:
+    _require_allowed_keys(payload, {"username", "step"})
+    _require_string_field(payload, "username", max_length=COMMAND_LENGTH_LIMIT)
+    if not isinstance(payload.get("step"), dict):
+        raise WebProtocolError("invalid_payload", "Payload field 'step' must be an object.")
+    _validate_creator_step(payload["step"])
+
+
+def _validate_creator_validation_error(payload: dict[str, Any]) -> None:
+    _require_allowed_keys(payload, {"step_id", "field", "message"})
+    _require_string_field(payload, "step_id", max_length=COMMAND_LENGTH_LIMIT)
+    _require_string_field(payload, "field", max_length=COMMAND_LENGTH_LIMIT)
+    _require_string_field(payload, "message", allow_empty=True, max_length=COMMAND_LENGTH_LIMIT * 8)
+
+
+def _validate_creator_cancelled(payload: dict[str, Any]) -> None:
+    _require_allowed_keys(payload, {"username", "reason"})
+    _require_string_field(payload, "username", max_length=COMMAND_LENGTH_LIMIT)
+    if "reason" in payload:
+        _require_string_field(payload, "reason", allow_empty=True, max_length=COMMAND_LENGTH_LIMIT)
+
+
+def _validate_creator_finished(payload: dict[str, Any]) -> None:
+    _require_allowed_keys(payload, {"username", "character_name"})
+    _require_string_field(payload, "username", max_length=COMMAND_LENGTH_LIMIT)
+    if "character_name" in payload:
+        _require_string_field(payload, "character_name", max_length=COMMAND_LENGTH_LIMIT)
+
+
 def _validate_command_execute(payload: dict[str, Any]) -> None:
     _require_allowed_keys(payload, {"command"})
     _require_string_field(payload, "command", max_length=COMMAND_LENGTH_LIMIT)
@@ -245,6 +368,18 @@ def _validate_payload_shape(message_type: str, payload: dict[str, Any]) -> None:
     if message_type == "auth.login":
         _validate_auth_login(payload)
         return
+    if message_type == "creator.start":
+        _validate_creator_start(payload)
+        return
+    if message_type == "creator.submit":
+        _validate_creator_submit(payload)
+        return
+    if message_type == "creator.back":
+        _validate_creator_step_ref(payload)
+        return
+    if message_type == "creator.cancel":
+        _validate_creator_step_ref(payload)
+        return
     if message_type == "command.execute":
         _validate_command_execute(payload)
         return
@@ -256,6 +391,21 @@ def _validate_payload_shape(message_type: str, payload: dict[str, Any]) -> None:
         return
     if message_type == "auth.result":
         _validate_auth_result(payload)
+        return
+    if message_type == "creator.started":
+        _validate_creator_started(payload)
+        return
+    if message_type == "creator.step":
+        _validate_creator_step(payload)
+        return
+    if message_type == "creator.validation_error":
+        _validate_creator_validation_error(payload)
+        return
+    if message_type == "creator.cancelled":
+        _validate_creator_cancelled(payload)
+        return
+    if message_type == "creator.finished":
+        _validate_creator_finished(payload)
         return
     if message_type == "output.text":
         _validate_output_text(payload, "text")

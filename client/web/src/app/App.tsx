@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { CreatorForm } from '../features/auth/CreatorForm';
 import { LoginForm } from '../features/auth/LoginForm';
 import { CommandBar } from '../features/terminal/CommandBar';
 import { ConnectionStatus } from '../features/terminal/ConnectionStatus';
@@ -13,15 +14,9 @@ function AppShell() {
   const { state, dispatch } = useAppStore();
   const transportRef = useRef<AstergardWebSocketTransport | null>(null);
 
-  if (transportRef.current === null) {
-    transportRef.current = new AstergardWebSocketTransport(buildWebSocketUrl());
-  }
-
   useEffect(() => {
-    const transport = transportRef.current;
-    if (!transport) {
-      return;
-    }
+    const transport = new AstergardWebSocketTransport(buildWebSocketUrl());
+    transportRef.current = transport;
 
     const unsubscribe = transport.subscribe((event) => {
       if (event.kind === 'state') {
@@ -45,6 +40,9 @@ function AppShell() {
     return () => {
       unsubscribe();
       transport.dispose();
+      if (transportRef.current === transport) {
+        transportRef.current = null;
+      }
     };
   }, [dispatch]);
 
@@ -62,7 +60,7 @@ function AppShell() {
 
       <section className="layout">
         <aside className="sidebar">
-          <LoginForm transportRef={transportRef} />
+          {state.creator ? <CreatorForm transportRef={transportRef} /> : <LoginForm transportRef={transportRef} />}
           <RoomInfoPanel room={state.lastRoomInfo} />
         </aside>
 

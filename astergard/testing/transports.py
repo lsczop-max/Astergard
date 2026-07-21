@@ -61,6 +61,13 @@ class MemorySessionTransport:
         if not self.inbound:
             raise EOFError
         message = self.inbound.popleft()
+        if expected in {SessionInputKind.CREDENTIALS, SessionInputKind.CREATOR} and message.kind in {
+            SessionInputKind.CREATOR_START,
+            SessionInputKind.CREATOR_SUBMIT,
+            SessionInputKind.CREATOR_BACK,
+            SessionInputKind.CREATOR_CANCEL,
+        }:
+            return message
         if message.kind != expected and message.kind not in {SessionInputKind.PING, SessionInputKind.DISCONNECT}:
             raise ValueError(f"Unexpected input kind: {message.kind.value}")
         return message

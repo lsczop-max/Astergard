@@ -2,10 +2,23 @@ export const WEB_PROTOCOL_VERSION = 1 as const;
 export const MAX_PROTOCOL_MESSAGE_BYTES = 8192;
 export const MAX_COMMAND_BYTES = 512;
 
-export type ClientMessageType = 'session.hello' | 'auth.login' | 'command.execute' | 'connection.ping';
+export type ClientMessageType =
+  | 'session.hello'
+  | 'auth.login'
+  | 'creator.start'
+  | 'creator.submit'
+  | 'creator.back'
+  | 'creator.cancel'
+  | 'command.execute'
+  | 'connection.ping';
 export type ServerMessageType =
   | 'session.ready'
   | 'auth.result'
+  | 'creator.started'
+  | 'creator.step'
+  | 'creator.validation_error'
+  | 'creator.cancelled'
+  | 'creator.finished'
   | 'output.text'
   | 'output.prompt'
   | 'room.info'
@@ -15,7 +28,16 @@ export type ServerMessageType =
 
 export type RequestMessageType = ClientMessageType;
 export type StreamMessageType = 'session.ready' | 'output.text' | 'output.prompt' | 'room.info';
-export type ResponseMessageType = 'auth.result' | 'command.result' | 'connection.pong' | 'protocol.error';
+export type ResponseMessageType =
+  | 'auth.result'
+  | 'creator.started'
+  | 'creator.step'
+  | 'creator.validation_error'
+  | 'creator.cancelled'
+  | 'creator.finished'
+  | 'command.result'
+  | 'connection.pong'
+  | 'protocol.error';
 
 export interface SessionHelloPayload {
   client?: string;
@@ -27,6 +49,24 @@ export interface SessionHelloPayload {
 export interface AuthLoginPayload {
   username: string;
   password: string;
+}
+
+export interface CreatorStartPayload {
+  username: string;
+  password: string;
+}
+
+export interface CreatorSubmitPayload {
+  step_id: string;
+  value: string;
+}
+
+export interface CreatorBackPayload {
+  step_id: string;
+}
+
+export interface CreatorCancelPayload {
+  step_id: string;
 }
 
 export interface CommandExecutePayload {
@@ -46,6 +86,43 @@ export interface AuthResultPayload {
   success: boolean;
   username: string;
   reason?: string;
+}
+
+export interface CreatorChoicePayload {
+  value: string;
+  label: string;
+  description?: string;
+}
+
+export interface CreatorStepPayload {
+  step_id: string;
+  title: string;
+  prompt: string;
+  input_type: 'text' | 'number' | 'choice' | 'secret';
+  choices?: CreatorChoicePayload[];
+  back_available: boolean;
+  cancel_available: boolean;
+}
+
+export interface CreatorStartedPayload {
+  username: string;
+  step: CreatorStepPayload;
+}
+
+export interface CreatorValidationErrorPayload {
+  step_id: string;
+  field: string;
+  message: string;
+}
+
+export interface CreatorCancelledPayload {
+  username: string;
+  reason?: string;
+}
+
+export interface CreatorFinishedPayload {
+  username: string;
+  character_name?: string;
 }
 
 export interface OutputTextPayload {
@@ -96,12 +173,21 @@ type Envelope<TType extends string, TPayload> = {
 export type ClientEnvelope =
   | Envelope<'session.hello', SessionHelloPayload>
   | Envelope<'auth.login', AuthLoginPayload>
+  | Envelope<'creator.start', CreatorStartPayload>
+  | Envelope<'creator.submit', CreatorSubmitPayload>
+  | Envelope<'creator.back', CreatorBackPayload>
+  | Envelope<'creator.cancel', CreatorCancelPayload>
   | Envelope<'command.execute', CommandExecutePayload>
   | Envelope<'connection.ping', ConnectionPingPayload>;
 
 export type ServerEnvelope =
   | Envelope<'session.ready', SessionReadyPayload>
   | Envelope<'auth.result', AuthResultPayload>
+  | Envelope<'creator.started', CreatorStartedPayload>
+  | Envelope<'creator.step', CreatorStepPayload>
+  | Envelope<'creator.validation_error', CreatorValidationErrorPayload>
+  | Envelope<'creator.cancelled', CreatorCancelledPayload>
+  | Envelope<'creator.finished', CreatorFinishedPayload>
   | Envelope<'output.text', OutputTextPayload>
   | Envelope<'output.prompt', OutputPromptPayload>
   | Envelope<'room.info', RoomInfoPayload>
@@ -121,10 +207,24 @@ export class ProtocolError extends Error {
   }
 }
 
-const CLIENT_MESSAGE_TYPES = new Set<ClientMessageType>(['session.hello', 'auth.login', 'command.execute', 'connection.ping']);
+const CLIENT_MESSAGE_TYPES = new Set<ClientMessageType>([
+  'session.hello',
+  'auth.login',
+  'creator.start',
+  'creator.submit',
+  'creator.back',
+  'creator.cancel',
+  'command.execute',
+  'connection.ping',
+]);
 const SERVER_MESSAGE_TYPES = new Set<ServerMessageType>([
   'session.ready',
   'auth.result',
+  'creator.started',
+  'creator.step',
+  'creator.validation_error',
+  'creator.cancelled',
+  'creator.finished',
   'output.text',
   'output.prompt',
   'room.info',
@@ -132,9 +232,28 @@ const SERVER_MESSAGE_TYPES = new Set<ServerMessageType>([
   'connection.pong',
   'protocol.error',
 ]);
-const REQUEST_MESSAGE_TYPES = new Set<RequestMessageType>(['session.hello', 'auth.login', 'command.execute', 'connection.ping']);
+const REQUEST_MESSAGE_TYPES = new Set<RequestMessageType>([
+  'session.hello',
+  'auth.login',
+  'creator.start',
+  'creator.submit',
+  'creator.back',
+  'creator.cancel',
+  'command.execute',
+  'connection.ping',
+]);
 const STREAM_MESSAGE_TYPES = new Set<StreamMessageType>(['session.ready', 'output.text', 'output.prompt', 'room.info']);
-const RESPONSE_MESSAGE_TYPES = new Set<ResponseMessageType>(['auth.result', 'command.result', 'connection.pong', 'protocol.error']);
+const RESPONSE_MESSAGE_TYPES = new Set<ResponseMessageType>([
+  'auth.result',
+  'creator.started',
+  'creator.step',
+  'creator.validation_error',
+  'creator.cancelled',
+  'creator.finished',
+  'command.result',
+  'connection.pong',
+  'protocol.error',
+]);
 
 function fail(code: string, message: string): never {
   throw new ProtocolError(code, message);
@@ -189,6 +308,92 @@ function validateAuthLogin(payload: Record<string, unknown>): void {
   requireAllowedKeys(payload, ['username', 'password']);
   requireString(payload.username, 'username', { maxBytes: MAX_COMMAND_BYTES });
   requireString(payload.password, 'password', { maxBytes: MAX_COMMAND_BYTES });
+}
+
+function validateCreatorStart(payload: Record<string, unknown>): void {
+  requireAllowedKeys(payload, ['username', 'password']);
+  requireString(payload.username, 'username', { maxBytes: MAX_COMMAND_BYTES });
+  requireString(payload.password, 'password', { maxBytes: MAX_COMMAND_BYTES });
+}
+
+function validateCreatorSubmit(payload: Record<string, unknown>): void {
+  requireAllowedKeys(payload, ['step_id', 'value']);
+  requireString(payload.step_id, 'step_id', { maxBytes: MAX_COMMAND_BYTES });
+  requireString(payload.value, 'value', { allowEmpty: true, maxBytes: MAX_COMMAND_BYTES });
+}
+
+function validateCreatorStepReference(payload: Record<string, unknown>): void {
+  requireAllowedKeys(payload, ['step_id']);
+  requireString(payload.step_id, 'step_id', { maxBytes: MAX_COMMAND_BYTES });
+}
+
+function validateCreatorChoice(payload: Record<string, unknown>): void {
+  requireAllowedKeys(payload, ['value', 'label', 'description']);
+  requireString(payload.value, 'value', { maxBytes: MAX_COMMAND_BYTES });
+  requireString(payload.label, 'label', { maxBytes: MAX_COMMAND_BYTES });
+  if ('description' in payload) {
+    requireString(payload.description, 'description', { allowEmpty: true, maxBytes: MAX_COMMAND_BYTES });
+  }
+}
+
+function validateCreatorStep(payload: Record<string, unknown>): void {
+  requireAllowedKeys(payload, ['step_id', 'title', 'prompt', 'input_type', 'choices', 'back_available', 'cancel_available']);
+  requireString(payload.step_id, 'step_id', { maxBytes: MAX_COMMAND_BYTES });
+  requireString(payload.title, 'title', { maxBytes: MAX_COMMAND_BYTES });
+  requireString(payload.prompt, 'prompt', { allowEmpty: true, maxBytes: MAX_COMMAND_BYTES * 8 });
+  const inputType = requireString(payload.input_type, 'input_type', { maxBytes: MAX_COMMAND_BYTES });
+  if (!['text', 'number', 'choice', 'secret'].includes(inputType)) {
+    fail('invalid_payload', "Payload field 'input_type' must be one of: text, number, choice, secret.");
+  }
+  if ('choices' in payload) {
+    if (!Array.isArray(payload.choices)) {
+      fail('invalid_payload', "Payload field 'choices' must be an array.");
+    }
+    for (const choice of payload.choices) {
+      if (!isPlainObject(choice)) {
+        fail('invalid_payload', "Payload field 'choices' must contain objects.");
+      }
+      validateCreatorChoice(choice);
+    }
+  }
+  if (typeof payload.back_available !== 'boolean') {
+    fail('invalid_payload', "Payload field 'back_available' must be a boolean.");
+  }
+  if (typeof payload.cancel_available !== 'boolean') {
+    fail('invalid_payload', "Payload field 'cancel_available' must be a boolean.");
+  }
+}
+
+function validateCreatorStarted(payload: Record<string, unknown>): void {
+  requireAllowedKeys(payload, ['username', 'step']);
+  requireString(payload.username, 'username', { maxBytes: MAX_COMMAND_BYTES });
+  if (!isPlainObject(payload.step)) {
+    fail('invalid_payload', "Payload field 'step' must be an object.");
+  }
+  validateCreatorStep(payload.step);
+}
+
+function validateCreatorValidationError(payload: Record<string, unknown>): void {
+  requireAllowedKeys(payload, ['step_id', 'field', 'message']);
+  requireString(payload.step_id, 'step_id', { maxBytes: MAX_COMMAND_BYTES });
+  requireString(payload.field, 'field', { maxBytes: MAX_COMMAND_BYTES });
+  requireString(payload.message, 'message', { allowEmpty: true, maxBytes: MAX_COMMAND_BYTES * 8 });
+}
+
+function validateCreatorCancelled(payload: Record<string, unknown>): void {
+  requireAllowedKeys(payload, ['username', 'reason']);
+  requireString(payload.username, 'username', { maxBytes: MAX_COMMAND_BYTES });
+  if ('reason' in payload) {
+    requireString(payload.reason, 'reason', { allowEmpty: true, maxBytes: MAX_COMMAND_BYTES });
+  }
+}
+
+function validateCreatorFinished(payload: Record<string, unknown>): void {
+  requireAllowedKeys(payload, ['username', 'character_name']);
+  requireString(payload.username, 'username', { maxBytes: MAX_COMMAND_BYTES });
+  if ('character_name' in payload) {
+    requireString(payload.character_name, 'character_name', { maxBytes: MAX_COMMAND_BYTES });
+  }
 }
 
 function validateCommandExecute(payload: Record<string, unknown>): void {
@@ -268,10 +473,19 @@ function validateProtocolError(payload: Record<string, unknown>): void {
 function validatePayload(type: string, payload: Record<string, unknown>): void {
   if (type === 'session.hello') return validateSessionHello(payload);
   if (type === 'auth.login') return validateAuthLogin(payload);
+  if (type === 'creator.start') return validateCreatorStart(payload);
+  if (type === 'creator.submit') return validateCreatorSubmit(payload);
+  if (type === 'creator.back') return validateCreatorStepReference(payload);
+  if (type === 'creator.cancel') return validateCreatorStepReference(payload);
   if (type === 'command.execute') return validateCommandExecute(payload);
   if (type === 'connection.ping') return validateConnectionPing(payload);
   if (type === 'session.ready') return validateSessionReady(payload);
   if (type === 'auth.result') return validateAuthResult(payload);
+  if (type === 'creator.started') return validateCreatorStarted(payload);
+  if (type === 'creator.step') return validateCreatorStep(payload);
+  if (type === 'creator.validation_error') return validateCreatorValidationError(payload);
+  if (type === 'creator.cancelled') return validateCreatorCancelled(payload);
+  if (type === 'creator.finished') return validateCreatorFinished(payload);
   if (type === 'output.text') return validateTextPayload(payload, 'text');
   if (type === 'output.prompt') return validateTextPayload(payload, 'prompt');
   if (type === 'room.info') return validateRoomInfo(payload);

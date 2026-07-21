@@ -68,6 +68,145 @@ describe('transport', () => {
     expect(command.payload).toEqual({ command: 'spojrz' });
   });
 
+  it('carries request ids for creator flow and keeps password out of terminal state', async () => {
+    const transport = makeTransport();
+    const messages: string[] = [];
+    transport.subscribe((event) => {
+      if (event.kind === 'message') {
+        messages.push(event.message.type);
+      }
+    });
+    transport.connect();
+    const socket = MockWebSocket.instances[0];
+    socket.open();
+    await transport.startCreator('nowa', 'sekret');
+    const start = parseProtocolEnvelope(socket.sent[1]);
+    expect(start.type).toBe('creator.start');
+    expect(start.payload).toEqual({ username: 'nowa', password: 'sekret' });
+    socket.message(
+      serializeWebEnvelope({
+        version: 1,
+        type: 'creator.started',
+        payload: {
+          username: 'nowa',
+          step: {
+            step_id: 'name',
+            title: 'Imię',
+            prompt: '— Jak cię zwać?',
+            input_type: 'text',
+            back_available: false,
+            cancel_available: true,
+          },
+        },
+        request_id: start.request_id,
+        sequence: 1,
+      }),
+    );
+    await transport.submitCreator('name', 'Ala');
+    const submit = parseProtocolEnvelope(socket.sent[2]);
+    expect(submit.type).toBe('creator.submit');
+    expect(submit.payload).toEqual({ step_id: 'name', value: 'Ala' });
+    expect(messages).toContain('creator.started');
+  });
+
+  it('correlates creator.finished with the final submit request and reaches ready without auth.result', async () => {
+    const transport = makeTransport();
+    const messages: string[] = [];
+    const errors: string[] = [];
+    transport.subscribe((event) => {
+      if (event.kind === 'message') {
+        messages.push(event.message.type);
+      }
+      if (event.kind === 'error') {
+        errors.push(event.message);
+      }
+    });
+    transport.connect();
+    const socket = MockWebSocket.instances[0];
+    socket.open();
+
+    await transport.startCreator('nowa', 'sekret');
+    const start = parseProtocolEnvelope(socket.sent[1]);
+    socket.message(
+      serializeWebEnvelope({
+        version: 1,
+        type: 'creator.started',
+        payload: {
+          username: 'nowa',
+          step: {
+            step_id: 'gait',
+            title: 'Chód',
+            prompt: '— Jak się poruszasz?',
+            input_type: 'choice',
+            choices: [
+              { value: 'spokojny', label: 'spokojny' },
+            ],
+            back_available: true,
+            cancel_available: true,
+          },
+        },
+        request_id: start.request_id,
+        sequence: 1,
+      }),
+    );
+
+    await transport.submitCreator('gait', 'spokojny');
+    const submit = parseProtocolEnvelope(socket.sent[2]);
+    socket.message(
+      serializeWebEnvelope({
+        version: 1,
+        type: 'creator.finished',
+        payload: { username: 'nowa', character_name: 'Ala' },
+        request_id: submit.request_id,
+        sequence: 2,
+      }),
+    );
+    socket.message(
+      serializeWebEnvelope({
+        version: 1,
+        type: 'output.text',
+        payload: { text: 'Witaj' },
+        sequence: 3,
+      }),
+    );
+    socket.message(
+      serializeWebEnvelope({
+        version: 1,
+        type: 'room.info',
+        payload: {
+          num: 1,
+          name: 'Start',
+          area: 'Astergard',
+          coords: { x: 0, y: 0, z: 0 },
+          exits: {},
+        },
+        sequence: 4,
+      }),
+    );
+    socket.message(
+      serializeWebEnvelope({
+        version: 1,
+        type: 'output.prompt',
+        payload: { prompt: '> ' },
+        sequence: 5,
+      }),
+    );
+    socket.message(
+      serializeWebEnvelope({
+        version: 1,
+        type: 'session.ready',
+        payload: { transport: 'websocket', username: 'nowa' },
+        sequence: 6,
+      }),
+    );
+
+    expect(errors).toEqual([]);
+    expect(messages).toContain('creator.finished');
+    expect(messages).toContain('session.ready');
+    expect(messages).not.toContain('auth.result');
+    expect(transport.getState()).toBe('ready');
+  });
+
   it('rejects duplicate, gap, and regression sequence', () => {
     const transport = makeTransport();
     const events: string[] = [];

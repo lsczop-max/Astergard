@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import sqlite3
 from pathlib import Path
 
 from astergard.characters.creation import CharacterCreationProfile, create_character_from_profile
@@ -13,6 +14,12 @@ from astergard.database.migrations import MigrationRunner
 from astergard.database.world_state_repository import WorldStateRepository
 from astergard.database.save_manifest_repository import SaveManifestRepository
 from astergard.world.manager import STARTING_ROOM_ID
+
+
+class UsernameTakenError(ValueError):
+    def __init__(self, username: str) -> None:
+        super().__init__("Ta nazwa użytkownika jest już zajęta.")
+        self.username = username
 
 
 class PlayerRepository:
@@ -53,11 +60,14 @@ class PlayerRepository:
         return self.accounts.exists(username)
 
     def register(self, username: str, password: str, profile: CharacterCreationProfile | None = None) -> bool:
-        if self.accounts.exists(username):
-            return False
         password_hash, salt = self.accounts.create_credentials(username, password)
         character = create_character_from_profile(username, profile) if profile is not None else Character(username=username, room_id=STARTING_ROOM_ID)
-        self.characters.insert_new(username, password_hash, salt, character)
+        try:
+            self.characters.insert_new(username, password_hash, salt, character)
+        except sqlite3.IntegrityError as exc:
+            if "players.username" not in str(exc) and "UNIQUE constraint failed" not in str(exc):
+                raise
+            raise UsernameTakenError(username) from exc
         self.audit.record(username, "account_registered")
         return True
 

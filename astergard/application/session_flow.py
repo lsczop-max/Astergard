@@ -9,7 +9,13 @@ from astergard.application.session_transport import (
     SessionInputKind,
     SessionCapability,
     SessionTransport,
+    SessionTransportKind,
     is_debug_map_allowed,
+    make_creator_cancelled_event,
+    make_creator_finished_event,
+    make_creator_started_event,
+    make_creator_step_event,
+    make_creator_validation_error_event,
     make_auth_result_event,
     make_command_result_event,
     make_connection_pong_event,
@@ -20,6 +26,7 @@ from astergard.application.session_transport import (
     make_session_ready_event,
     next_sequence,
 )
+from astergard.application.web_creator_flow import WebCreatorFlow, WebCreatorValidationError
 from astergard.server.gmcp_bridge import send_room_info_for_character
 from astergard.characters.creation import (
     CharacterCreationError,
@@ -54,6 +61,7 @@ from astergard.characters.creation import (
 )
 from astergard.characters.models import Character
 from astergard.characters.professions import ProfessionError, build_selection, profession_menu_text
+from astergard.database.repository import UsernameTakenError
 from astergard.commands.parser import CommandParser
 from astergard.protocol.web_v1 import COMMAND_LENGTH_LIMIT
 from astergard.server.context import GameContext
@@ -107,6 +115,14 @@ class SessionFlow:
                 continue
             if message.kind == SessionInputKind.DISCONNECT:
                 raise EOFError
+            if expected == SessionInputKind.CREDENTIALS and message.kind == SessionInputKind.CREATOR_START:
+                return message
+            if expected == SessionInputKind.CREATOR and message.kind in {
+                SessionInputKind.CREATOR_SUBMIT,
+                SessionInputKind.CREATOR_BACK,
+                SessionInputKind.CREATOR_CANCEL,
+            }:
+                return message
             if message.kind != expected:
                 raise ValueError(f"Unexpected input kind: {message.kind.value}")
             return message
@@ -191,6 +207,99 @@ class SessionFlow:
                 return validator(response)
             except (CharacterCreationError, ProfessionError) as exc:
                 await transport.send_text(f"<red>{exc}</red>")
+
+    async def _run_web_creator(
+        self,
+        transport: SessionTransport,
+        username: str,
+        password: str,
+        start_request_id: str,
+    ) -> Character | None:
+        flow = WebCreatorFlow(username, password)
+        await transport.send_event(
+            make_creator_started_event(
+                username,
+                flow.start_payload()["step"],
+                request_id=start_request_id,
+                sequence=self._next_sequence(transport),
+            )
+        )
+        while not flow.finished and not flow.cancelled:
+            message = await self._await_message(transport, SessionInputKind.CREATOR)
+            try:
+                if message.kind == SessionInputKind.CREATOR_SUBMIT:
+                    step_id = self._string_payload(message, "step_id")
+                    value = self._string_payload(message, "value", allow_empty=True)
+                    profile = flow.submit(step_id, value)
+                    if profile is not None:
+                        try:
+                            self.services.repo.register(username, password, profile)
+                        except UsernameTakenError:
+                            await transport.send_event(
+                                make_creator_validation_error_event(
+                                    step_id,
+                                    "username_taken",
+                                    "Ta nazwa użytkownika jest już zajęta.",
+                                    request_id=message.request_id,
+                                    sequence=self._next_sequence(transport),
+                                )
+                            )
+                            continue
+                        flow.mark_finished()
+                        await transport.send_event(
+                            make_creator_finished_event(
+                                username,
+                                character_name=profile.name,
+                                request_id=message.request_id,
+                                sequence=self._next_sequence(transport),
+                            )
+                        )
+                        character = self.services.repo.load(username)
+                        character.visit_current_room()
+                        return character
+                    await transport.send_event(
+                        make_creator_step_event(
+                            flow.current_step_dict(),
+                            request_id=message.request_id,
+                            sequence=self._next_sequence(transport),
+                        )
+                    )
+                    continue
+                if message.kind == SessionInputKind.CREATOR_BACK:
+                    step_id = self._string_payload(message, "step_id")
+                    step = flow.back(step_id)
+                    await transport.send_event(
+                        make_creator_step_event(
+                            step.to_dict(),
+                            request_id=message.request_id,
+                            sequence=self._next_sequence(transport),
+                        )
+                    )
+                    continue
+                if message.kind == SessionInputKind.CREATOR_CANCEL:
+                    step_id = self._string_payload(message, "step_id")
+                    flow.cancel(step_id)
+                    await transport.send_event(
+                        make_creator_cancelled_event(
+                            username,
+                            reason="cancelled_by_user",
+                            request_id=message.request_id,
+                            sequence=self._next_sequence(transport),
+                        )
+                    )
+                    return None
+            except WebCreatorValidationError as exc:
+                step_id = self._string_payload(message, "step_id")
+                await transport.send_event(
+                    make_creator_validation_error_event(
+                        step_id,
+                        exc.field,
+                        exc.message,
+                        request_id=message.request_id,
+                        sequence=self._next_sequence(transport),
+                    )
+                )
+        return None
 
     async def _collect_creation_profile(self, transport: SessionTransport) -> CharacterCreationProfile:
         await transport.send_text(creation_opening_text())
@@ -341,6 +450,67 @@ class SessionFlow:
             await transport.send_text(
                 "<gold>Astergard MUD</gold>\nKarczmarz podnosi wzrok znad kufla. Jak się przedstawiasz? "
             )
+            if transport.kind == SessionTransportKind.WEB:
+                while True:
+                    request = await self._await_message(transport, SessionInputKind.CREDENTIALS)
+                    request_id = request.request_id
+                    if request.kind == SessionInputKind.CREATOR_START:
+                        username = self._string_payload(request, "username", allow_empty=False)
+                        password = self._string_payload(request, "password", allow_empty=False)
+                        if self.services.repo.player_exists(username):
+                            await transport.send_event(
+                                make_creator_validation_error_event(
+                                    "start",
+                                    "username",
+                                    "Ta nazwa użytkownika jest już zajęta.",
+                                    request_id=request_id,
+                                    sequence=self._next_sequence(transport),
+                                )
+                            )
+                            continue
+                        character = await self._run_web_creator(transport, username, password, request_id or "creator-start")
+                        if character is None:
+                            continue
+                        await transport.send_text(creation_closing_text())
+                        return LoginResult(character)
+
+                    username = self._string_payload(request, "username", allow_empty=False)
+                    password = self._string_payload(request, "password", allow_empty=False)
+                    if not self.services.repo.player_exists(username):
+                        await transport.send_event(
+                            make_auth_result_event(
+                                False,
+                                username,
+                                reason="unknown_character",
+                                request_id=request_id,
+                                sequence=self._next_sequence(transport),
+                            )
+                        )
+                        continue
+                    if not self.services.repo.verify(username, password):
+                        await transport.send_text("<red>Błędne hasło.</red>")
+                        await transport.send_event(
+                            make_auth_result_event(
+                                False,
+                                username,
+                                reason="invalid_credentials",
+                                request_id=request_id,
+                                sequence=self._next_sequence(transport),
+                            )
+                        )
+                        continue
+                    character = self.services.repo.load(username)
+                    character.visit_current_room()
+                    await transport.send_event(
+                        make_auth_result_event(
+                            True,
+                            username,
+                            request_id=request_id,
+                            sequence=self._next_sequence(transport),
+                        )
+                    )
+                    return LoginResult(character)
+
             username, password, request_id = await self._read_login_credentials(transport)
             if not username:
                 return LoginResult(None, close_connection=True)
@@ -367,11 +537,15 @@ class SessionFlow:
                         request_id=request_id,
                         sequence=self._next_sequence(transport),
                     )
-                )
+                    )
                 return LoginResult(character)
 
             profile = await self._collect_creation_profile(transport)
-            self.services.repo.register(username, password, profile)
+            try:
+                self.services.repo.register(username, password, profile)
+            except UsernameTakenError:
+                await transport.send_text("<red>Ta nazwa użytkownika jest już zajęta.</red>")
+                return LoginResult(None, close_connection=True)
             character = self.services.repo.load(username)
             character.visit_current_room()
             await transport.send_text(creation_closing_text())

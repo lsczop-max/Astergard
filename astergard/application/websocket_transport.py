@@ -132,7 +132,17 @@ class WebSocketSessionTransport:
         if expected == SessionInputKind.HELLO:
             return message_type == "session.hello"
         if expected == SessionInputKind.CREDENTIALS:
-            return message_type == "auth.login"
+            return message_type in {"auth.login", "creator.start"}
+        if expected == SessionInputKind.CREATOR:
+            return message_type in {"creator.submit", "creator.back", "creator.cancel"}
+        if expected == SessionInputKind.CREATOR_START:
+            return message_type == "creator.start"
+        if expected == SessionInputKind.CREATOR_SUBMIT:
+            return message_type == "creator.submit"
+        if expected == SessionInputKind.CREATOR_BACK:
+            return message_type == "creator.back"
+        if expected == SessionInputKind.CREATOR_CANCEL:
+            return message_type == "creator.cancel"
         if expected == SessionInputKind.COMMAND:
             return message_type == "command.execute"
         return False
@@ -291,6 +301,14 @@ class WebSocketSessionTransport:
                 return SessionInput(SessionInputKind.HELLO, dict(envelope.payload), envelope.request_id)
             if envelope.type == "auth.login":
                 return SessionInput(SessionInputKind.CREDENTIALS, dict(envelope.payload), envelope.request_id)
+            if envelope.type == "creator.start":
+                return SessionInput(SessionInputKind.CREATOR_START, dict(envelope.payload), envelope.request_id)
+            if envelope.type == "creator.submit":
+                return SessionInput(SessionInputKind.CREATOR_SUBMIT, dict(envelope.payload), envelope.request_id)
+            if envelope.type == "creator.back":
+                return SessionInput(SessionInputKind.CREATOR_BACK, dict(envelope.payload), envelope.request_id)
+            if envelope.type == "creator.cancel":
+                return SessionInput(SessionInputKind.CREATOR_CANCEL, dict(envelope.payload), envelope.request_id)
             if envelope.type == "command.execute":
                 command = envelope.payload.get("command", "")
                 if isinstance(command, str) and len(command.encode("utf-8")) > COMMAND_LENGTH_LIMIT:

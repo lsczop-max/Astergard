@@ -67,5 +67,61 @@ describe('AppStore reducer', () => {
     });
     expect(protocolError.userError).toContain('Błąd protokołu');
     expect(protocolError.terminalLines.at(-1)?.kind).toBe('system');
+
+    const creatorStarted = reducer(initialState, {
+      kind: 'message',
+      envelope: {
+        version: 1,
+        type: 'creator.started',
+        payload: {
+          username: 'nowa',
+          step: {
+            step_id: 'name',
+            title: 'Imię',
+            prompt: '— Jak cię zwać?',
+            input_type: 'text',
+            back_available: false,
+            cancel_available: true,
+          },
+        },
+        request_id: 'creator-1',
+        sequence: 1,
+      },
+    });
+    expect(creatorStarted.creator?.step.step_id).toBe('name');
+    expect(creatorStarted.userError).toBeNull();
+    expect(creatorStarted.terminalLines).toHaveLength(initialState.terminalLines.length);
+
+    const creatorError = reducer(creatorStarted, {
+      kind: 'message',
+      envelope: {
+        version: 1,
+        type: 'creator.validation_error',
+        payload: {
+          step_id: 'name',
+          field: 'name',
+          message: 'Imię nie może być puste.',
+        },
+        request_id: 'creator-1',
+        sequence: 2,
+      },
+    });
+    expect(creatorError.creator?.step.step_id).toBe('name');
+    expect(creatorError.userError).toBe('Imię nie może być puste.');
+    expect(creatorError.terminalLines).toHaveLength(initialState.terminalLines.length);
+
+    const creatorCancelled = reducer(creatorError, {
+      kind: 'message',
+      envelope: {
+        version: 1,
+        type: 'creator.cancelled',
+        payload: {
+          username: 'nowa',
+        },
+        request_id: 'creator-1',
+        sequence: 3,
+      },
+    });
+    expect(creatorCancelled.creator).toBeNull();
   });
 });

@@ -33,6 +33,11 @@ class SessionCapability(str, Enum):
 class SessionInputKind(str, Enum):
     HELLO = "session.hello"
     CREDENTIALS = "auth.login"
+    CREATOR = "creator.action"
+    CREATOR_START = "creator.start"
+    CREATOR_SUBMIT = "creator.submit"
+    CREATOR_BACK = "creator.back"
+    CREATOR_CANCEL = "creator.cancel"
     RESPONSE = "session.response"
     COMMAND = "command.execute"
     PING = "connection.ping"
@@ -222,6 +227,63 @@ def make_auth_result_event(
     if reason is not None:
         payload["reason"] = reason
     return SessionEvent("auth.result", payload, request_id=request_id, sequence=sequence)
+
+
+def make_creator_started_event(
+    username: str,
+    step: dict[str, Any],
+    *,
+    request_id: str | None = None,
+    sequence: int | None = None,
+) -> SessionEvent:
+    return SessionEvent("creator.started", {"username": username, "step": dict(step)}, request_id=request_id, sequence=sequence)
+
+
+def make_creator_step_event(
+    step: dict[str, Any],
+    *,
+    request_id: str | None = None,
+    sequence: int | None = None,
+) -> SessionEvent:
+    return SessionEvent("creator.step", dict(step), request_id=request_id, sequence=sequence)
+
+
+def make_creator_validation_error_event(
+    step_id: str,
+    field: str,
+    message: str,
+    *,
+    request_id: str | None = None,
+    sequence: int | None = None,
+) -> SessionEvent:
+    payload = {"step_id": step_id, "field": field, "message": message}
+    return SessionEvent("creator.validation_error", payload, request_id=request_id, sequence=sequence)
+
+
+def make_creator_cancelled_event(
+    username: str,
+    *,
+    reason: str | None = None,
+    request_id: str | None = None,
+    sequence: int | None = None,
+) -> SessionEvent:
+    payload: dict[str, Any] = {"username": username}
+    if reason is not None:
+        payload["reason"] = reason
+    return SessionEvent("creator.cancelled", payload, request_id=request_id, sequence=sequence)
+
+
+def make_creator_finished_event(
+    username: str,
+    *,
+    character_name: str | None = None,
+    request_id: str | None = None,
+    sequence: int | None = None,
+) -> SessionEvent:
+    payload: dict[str, Any] = {"username": username}
+    if character_name is not None:
+        payload["character_name"] = character_name
+    return SessionEvent("creator.finished", payload, request_id=request_id, sequence=sequence)
 
 
 def make_command_result_event(

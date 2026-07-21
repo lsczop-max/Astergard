@@ -1,6 +1,10 @@
 import { createContext, useContext, useMemo, useReducer } from 'react';
 import type { ReactNode } from 'react';
-import type { ProtocolEnvelope, RoomInfoPayload } from '../protocol/webProtocol';
+import type {
+  CreatorStepPayload,
+  ProtocolEnvelope,
+  RoomInfoPayload,
+} from '../protocol/webProtocol';
 import { parseAnsi } from '../styles/ansi';
 
 export type ConnectionState = 'disconnected' | 'connecting' | 'handshaking' | 'authenticating' | 'ready' | 'closing' | 'error';
@@ -20,6 +24,10 @@ export type AppState = {
     username: string | null;
     transport: string | null;
   } | null;
+  creator: {
+    username: string;
+    step: CreatorStepPayload;
+  } | null;
   terminalLines: TerminalLine[];
   prompt: string;
   lastRoomInfo: RoomInfoPayload | null;
@@ -38,6 +46,7 @@ type Action =
 export const initialState: AppState = {
   connectionState: 'disconnected',
   session: null,
+  creator: null,
   terminalLines: [],
   prompt: '',
   lastRoomInfo: null,
@@ -95,6 +104,7 @@ export function reducer(state: AppState, action: Action): AppState {
       return {
         ...state,
         connectionState: action.state,
+        creator: action.state === 'disconnected' || action.state === 'closing' || action.state === 'error' ? null : state.creator,
         pendingRequestIds: action.state === 'disconnected' || action.state === 'closing' || action.state === 'error' ? [] : state.pendingRequestIds,
       };
     case 'set-error':
@@ -115,6 +125,7 @@ export function reducer(state: AppState, action: Action): AppState {
       if (action.envelope.type === 'session.ready') {
         return appendTerminalLine({
           ...state,
+          creator: null,
           connectionState: 'ready',
           session: {
             username: action.envelope.payload.username ?? state.session?.username ?? null,
@@ -126,7 +137,6 @@ export function reducer(state: AppState, action: Action): AppState {
       if (action.envelope.type === 'auth.result') {
         const nextState = {
           ...state,
-          connectionState: action.envelope.payload.success ? 'authenticating' : 'error',
           session: action.envelope.payload.success
             ? {
                 username: action.envelope.payload.username,
@@ -137,6 +147,56 @@ export function reducer(state: AppState, action: Action): AppState {
           pendingRequestIds,
         } satisfies AppState;
         return action.envelope.payload.success ? nextState : appendTerminalLine(nextState, createSystemLine('Logowanie nie powiodło się.'));
+      }
+      if (action.envelope.type === 'creator.started') {
+        return {
+          ...state,
+          creator: {
+            username: action.envelope.payload.username,
+            step: action.envelope.payload.step,
+          },
+          userError: null,
+          pendingRequestIds,
+        };
+      }
+      if (action.envelope.type === 'creator.step') {
+        return {
+          ...state,
+          creator: state.creator
+            ? {
+                ...state.creator,
+                step: action.envelope.payload,
+              }
+            : {
+                username: state.session?.username ?? '',
+                step: action.envelope.payload,
+              },
+          userError: null,
+          pendingRequestIds,
+        };
+      }
+      if (action.envelope.type === 'creator.validation_error') {
+        return {
+          ...state,
+          userError: action.envelope.payload.message,
+          pendingRequestIds,
+        };
+      }
+      if (action.envelope.type === 'creator.cancelled') {
+        return {
+          ...state,
+          creator: null,
+          userError: null,
+          pendingRequestIds,
+        };
+      }
+      if (action.envelope.type === 'creator.finished') {
+        return {
+          ...state,
+          creator: null,
+          userError: null,
+          pendingRequestIds,
+        };
       }
       if (action.envelope.type === 'output.text') {
         return appendTerminalLine(
