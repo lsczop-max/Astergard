@@ -7,7 +7,7 @@ from astergard.application.context_assembler import GameContextAssembler
 from astergard.application.heartbeat import HeartbeatService
 from astergard.engine.lifecycle import EngineLifecycle
 from astergard.application.session_flow import SessionFlow
-from astergard.application.session_transport import SessionTransport, TcpSessionTransport
+from astergard.application.session_transport import SessionTransport, SessionTransportKind, TcpSessionTransport
 from astergard.server.gateway import WebSocketGateway, WebSocketGatewayConfig
 from astergard.server.game_support import GameServerSupportMixin
 from astergard.characters.models import Character
@@ -138,6 +138,7 @@ class GameServer(GameServerSupportMixin):
                 self.services.event_bus.emit("session.character_saved", username=character.username)
             self.services.save_load.save_world("session_disconnect")
             self.clients.pop(transport, None)
+            self.session_flow.clear_transport_state(transport)
             self._unregister_transport(transport)
             try:
                 await transport.close()
@@ -145,7 +146,29 @@ class GameServer(GameServerSupportMixin):
                 pass
 
     async def global_heartbeat(self) -> None:
-        await self.lifecycle.run_forever(self.heartbeat.tick_once)
+        await self.lifecycle.run_forever(self.heartbeat.tick_once, self._flush_heartbeat_vitals)
+
+    async def _flush_heartbeat_vitals(self, changed_characters: list[Character]) -> None:
+        if not changed_characters:
+            return
+        changed_ids = {id(character) for character in changed_characters}
+        for transport, character in list(self.clients.items()):
+            if id(character) not in changed_ids:
+                continue
+            if transport.kind != SessionTransportKind.WEB:
+                continue
+            if self.clients.get(transport) is not character:
+                continue
+            try:
+                await self.session_flow.send_character_vitals(transport, character)
+            except Exception:
+                self.clients.pop(transport, None)
+                self.session_flow.clear_transport_state(transport)
+                self._unregister_transport(transport)
+                try:
+                    await transport.close()
+                except Exception:
+                    pass
 
     def shutdown(self, reason: str = "manual") -> None:
         self.lifecycle.request_shutdown(reason)

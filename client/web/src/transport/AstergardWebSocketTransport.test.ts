@@ -68,6 +68,17 @@ describe('transport', () => {
     expect(command.payload).toEqual({ command: 'spojrz' });
   });
 
+  it('rejects whitespace-only command envelopes before sending', async () => {
+    const transport = makeTransport();
+    transport.connect();
+    const socket = MockWebSocket.instances[0];
+    socket.open();
+    socket.message(serializeWebEnvelope({ version: 1, type: 'session.ready', payload: { transport: 'websocket' }, sequence: 1 }));
+
+    await expect(transport.executeCommand('   ')).rejects.toThrow(/non-whitespace characters/);
+    expect(socket.sent).toHaveLength(1);
+  });
+
   it('carries request ids for creator flow and keeps password out of terminal state', async () => {
     const transport = makeTransport();
     const messages: string[] = [];
@@ -107,6 +118,43 @@ describe('transport', () => {
     expect(submit.type).toBe('creator.submit');
     expect(submit.payload).toEqual({ step_id: 'name', value: 'Ala' });
     expect(messages).toContain('creator.started');
+  });
+
+  it('forwards character.vitals without request correlation noise', () => {
+    const transport = makeTransport();
+    const messages: string[] = [];
+    const errors: string[] = [];
+    transport.subscribe((event) => {
+      if (event.kind === 'message') {
+        messages.push(event.message.type);
+      }
+      if (event.kind === 'error') {
+        errors.push(event.message);
+      }
+    });
+    transport.connect();
+    const socket = MockWebSocket.instances[0];
+    socket.open();
+    socket.message(serializeWebEnvelope({ version: 1, type: 'session.ready', payload: { transport: 'websocket' }, sequence: 1 }));
+    socket.message(
+      serializeWebEnvelope({
+        version: 1,
+        type: 'character.vitals',
+        payload: {
+          condition_current: 12,
+          condition_max: 12,
+          condition_label: 'jest w pełni sił',
+          stamina_current: 100,
+          stamina_max: 100,
+          stamina_label: 'Jesteś w pełni sił.',
+        },
+        sequence: 2,
+      }),
+    );
+
+    expect(errors).toEqual([]);
+    expect(messages).toContain('character.vitals');
+    expect(transport.getState()).toBe('ready');
   });
 
   it('correlates creator.finished with the final submit request and reaches ready without auth.result', async () => {

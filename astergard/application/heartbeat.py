@@ -5,6 +5,7 @@ import random
 from collections.abc import Callable
 
 from astergard.application.bootstrap import GameServices
+from astergard.application.character_vitals import build_character_vitals_payload
 from astergard.characters.models import Character
 from astergard.items.models import Item
 
@@ -21,7 +22,9 @@ class HeartbeatService:
             await asyncio.sleep(4)
             self.tick_once()
 
-    def tick_once(self) -> None:
+    def tick_once(self) -> list[Character]:
+        players = list(self.players())
+        before_by_id = {id(character): build_character_vitals_payload(character) for character in players}
         zones = list({loc.zone for loc in self.services.world.locations.values()})
         self.services.weather.tick(zones)
         if zones:
@@ -39,11 +42,20 @@ class HeartbeatService:
         self.process_combat_rounds()
         self.services.npcs.respawn_tick()
         self.services.event_bus.emit("world.respawn_tick_completed", npc_count=len(self.services.npcs.npcs))
-        for character in self.players():
+        for character in players:
             try:
                 self.tick_character(character)
             except Exception:
                 continue
+        changed_characters: list[Character] = []
+        for character in players:
+            before = before_by_id.get(id(character))
+            if before is None:
+                continue
+            after = build_character_vitals_payload(character)
+            if after != before:
+                changed_characters.append(character)
+        return changed_characters
 
     def tick_character(self, character: Character) -> None:
         loc = self.services.world.get_location(character.room_id)

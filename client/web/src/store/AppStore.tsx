@@ -1,6 +1,7 @@
 import { createContext, useContext, useMemo, useReducer } from 'react';
 import type { ReactNode } from 'react';
 import type {
+  CharacterVitalsPayload,
   CreatorStepPayload,
   ProtocolEnvelope,
   RoomInfoPayload,
@@ -28,6 +29,7 @@ export type AppState = {
     username: string;
     step: CreatorStepPayload;
   } | null;
+  vitals: CharacterVitalsPayload | null;
   terminalLines: TerminalLine[];
   prompt: string;
   lastRoomInfo: RoomInfoPayload | null;
@@ -47,6 +49,7 @@ export const initialState: AppState = {
   connectionState: 'disconnected',
   session: null,
   creator: null,
+  vitals: null,
   terminalLines: [],
   prompt: '',
   lastRoomInfo: null,
@@ -105,6 +108,7 @@ export function reducer(state: AppState, action: Action): AppState {
         ...state,
         connectionState: action.state,
         creator: action.state === 'disconnected' || action.state === 'closing' || action.state === 'error' ? null : state.creator,
+        vitals: action.state === 'disconnected' || action.state === 'closing' || action.state === 'error' ? null : state.vitals,
         pendingRequestIds: action.state === 'disconnected' || action.state === 'closing' || action.state === 'error' ? [] : state.pendingRequestIds,
       };
     case 'set-error':
@@ -147,6 +151,13 @@ export function reducer(state: AppState, action: Action): AppState {
           pendingRequestIds,
         } satisfies AppState;
         return action.envelope.payload.success ? nextState : appendTerminalLine(nextState, createSystemLine('Logowanie nie powiodło się.'));
+      }
+      if (action.envelope.type === 'character.vitals') {
+        return {
+          ...state,
+          vitals: action.envelope.payload,
+          pendingRequestIds,
+        };
       }
       if (action.envelope.type === 'creator.started') {
         return {

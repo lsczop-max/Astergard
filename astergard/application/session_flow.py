@@ -11,6 +11,7 @@ from astergard.application.session_transport import (
     SessionTransport,
     SessionTransportKind,
     is_debug_map_allowed,
+    make_character_vitals_event,
     make_creator_cancelled_event,
     make_creator_finished_event,
     make_creator_started_event,
@@ -28,6 +29,7 @@ from astergard.application.session_transport import (
 )
 from astergard.application.web_creator_flow import WebCreatorFlow, WebCreatorValidationError
 from astergard.server.gmcp_bridge import send_room_info_for_character
+from astergard.application.character_vitals import build_character_vitals_payload
 from astergard.characters.creation import (
     CharacterCreationError,
     CharacterCreationProfile,
@@ -88,6 +90,7 @@ class SessionFlow:
         self.map_payload_enabled = bool(getattr(self.services.minimap_service, "enabled", False))
         self._gmcp_announced_transports: set[int] = set()
         self._sequence_by_transport: dict[int, int] = {}
+        self._last_vitals_by_transport: dict[int, dict[str, Any]] = {}
 
     def _transport_key(self, transport: SessionTransport) -> int:
         return id(transport)
@@ -98,6 +101,12 @@ class SessionFlow:
         sequence = next_sequence(current)
         self._sequence_by_transport[key] = sequence
         return sequence
+
+    def clear_transport_state(self, transport: SessionTransport) -> None:
+        key = self._transport_key(transport)
+        self._sequence_by_transport.pop(key, None)
+        self._last_vitals_by_transport.pop(key, None)
+        self._gmcp_announced_transports.discard(key)
 
     def _map_update_enabled(self, transport: SessionTransport) -> bool:
         return self.map_payload_enabled and is_debug_map_allowed(transport)
@@ -161,6 +170,19 @@ class SessionFlow:
             make_room_info_event(
                 location,
                 context.world,
+                sequence=self._next_sequence(transport),
+            )
+        )
+
+    async def _send_character_vitals(self, transport: SessionTransport, character: Character, *, force: bool = False) -> None:
+        payload = build_character_vitals_payload(character)
+        key = self._transport_key(transport)
+        if not force and self._last_vitals_by_transport.get(key) == payload:
+            return
+        self._last_vitals_by_transport[key] = dict(payload)
+        await transport.send_event(
+            make_character_vitals_event(
+                payload,
                 sequence=self._next_sequence(transport),
             )
         )
@@ -579,7 +601,8 @@ class SessionFlow:
         )
         await self._send_room_info(transport, context)
         await self._send_full_map_debug(transport, context)
-        await transport.send_prompt(self.prompt_renderer(context.character))
+        await self._send_character_vitals(transport, context.character, force=True)
+        await transport.send_prompt(self.prompt_renderer(context.character, transport))
         await transport.send_event(
             make_session_ready_event(
                 transport.kind,
@@ -596,7 +619,7 @@ class SessionFlow:
                 message = await self._await_message(transport, SessionInputKind.COMMAND)
                 raw = self._string_payload(message, "command", allow_empty=True)
                 if not raw:
-                    await transport.send_prompt(self.prompt_renderer(character))
+                    await transport.send_prompt(self.prompt_renderer(character, transport))
                     continue
                 parsed = CommandParser.parse(raw)
                 spec = (
@@ -625,7 +648,8 @@ class SessionFlow:
                         sequence=self._next_sequence(transport),
                     )
                 )
-                await transport.send_prompt(self.prompt_renderer(character))
+                await self._send_character_vitals(transport, character)
+                await transport.send_prompt(self.prompt_renderer(character, transport))
             except EOFError:
                 break
             except ValueError:
@@ -638,3 +662,5 @@ class SessionFlow:
                     )
                 )
                 break
+    async def send_character_vitals(self, transport: SessionTransport, character: Character, *, force: bool = False) -> None:
+        await self._send_character_vitals(transport, character, force=force)

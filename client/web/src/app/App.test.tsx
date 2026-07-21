@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { StrictMode, act } from 'react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -64,6 +64,110 @@ describe('App StrictMode transport lifecycle', () => {
       },
     });
     expect(screen.getByRole('main')).not.toHaveTextContent('tajne');
+  });
+
+  it('maps numpad movement only after ready and ignores interactive focus', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    const socket = MockWebSocket.instances[0];
+
+    await act(async () => {
+      socket.open();
+      socket.message(
+        JSON.stringify({
+          version: 1,
+          type: 'output.text',
+          payload: { text: 'Karczmarz podnosi wzrok znad kufla. Jak się przedstawiasz?' },
+          sequence: 1,
+        }),
+      );
+    });
+
+    await user.type(screen.getByLabelText('Nazwa użytkownika'), 'ala');
+    await user.type(screen.getByLabelText('Hasło'), 'tajne');
+    await user.click(screen.getByRole('button', { name: 'Zaloguj' }));
+
+    const login = parseProtocolEnvelope(socket.sent[1]);
+
+    await act(async () => {
+      socket.message(
+        JSON.stringify({
+          version: 1,
+          type: 'auth.result',
+          payload: { success: true, username: 'ala' },
+          request_id: login.request_id,
+          sequence: 2,
+        }),
+      );
+      socket.message(
+        JSON.stringify({
+          version: 1,
+          type: 'output.text',
+          payload: { text: 'Witaj' },
+          sequence: 3,
+        }),
+      );
+      socket.message(
+        JSON.stringify({
+          version: 1,
+          type: 'room.info',
+          payload: {
+            num: 1,
+            name: 'Start',
+            area: 'Astergard',
+            coords: { x: 0, y: 0, z: 0 },
+            exits: {},
+          },
+          sequence: 4,
+        }),
+      );
+      socket.message(
+        JSON.stringify({
+          version: 1,
+          type: 'character.vitals',
+          payload: {
+            condition_current: 12,
+            condition_max: 12,
+            condition_label: 'jest w pełni sił',
+            stamina_current: 100,
+            stamina_max: 100,
+            stamina_label: 'Jesteś w pełni sił.',
+          },
+          sequence: 5,
+        }),
+      );
+      socket.message(
+        JSON.stringify({
+          version: 1,
+          type: 'output.prompt',
+          payload: { prompt: '> ' },
+          sequence: 6,
+        }),
+      );
+      socket.message(
+        JSON.stringify({
+          version: 1,
+          type: 'session.ready',
+          payload: { transport: 'websocket', username: 'ala' },
+          sequence: 7,
+        }),
+      );
+    });
+
+    const initialSentLength = socket.sent.length;
+    fireEvent.keyDown(document.body, { code: 'Numpad8', key: '8' });
+    expect(socket.sent).toHaveLength(initialSentLength + 1);
+    expect(parseProtocolEnvelope(socket.sent.at(-1) as string)).toMatchObject({
+      version: 1,
+      type: 'command.execute',
+      payload: { command: 'polnoc' },
+    });
+
+    const commandInput = screen.getByLabelText('Komenda');
+    commandInput.focus();
+    fireEvent.keyDown(commandInput, { code: 'Numpad9', key: '9' });
+    expect(socket.sent).toHaveLength(initialSentLength + 1);
   });
 
   it('replaces the trial transport and keeps the second connection active', () => {

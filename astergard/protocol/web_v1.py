@@ -19,6 +19,7 @@ ClientMessageType = Literal[
 ServerMessageType = Literal[
     "session.ready",
     "auth.result",
+    "character.vitals",
     "creator.started",
     "creator.step",
     "creator.validation_error",
@@ -45,6 +46,7 @@ CLIENT_MESSAGE_TYPES = {
 SERVER_MESSAGE_TYPES = {
     "session.ready",
     "auth.result",
+    "character.vitals",
     "creator.started",
     "creator.step",
     "creator.validation_error",
@@ -67,7 +69,7 @@ REQUEST_MESSAGE_TYPES = {
     "command.execute",
     "connection.ping",
 }
-STREAM_MESSAGE_TYPES = {"session.ready", "output.text", "output.prompt", "room.info"}
+STREAM_MESSAGE_TYPES = {"session.ready", "character.vitals", "output.text", "output.prompt", "room.info"}
 RESPONSE_MESSAGE_TYPES = {
     "auth.result",
     "creator.started",
@@ -86,13 +88,14 @@ COMMAND_LENGTH_LIMIT = 512
 
 
 class WebProtocolError(ValueError):
-    def __init__(self, code: str, message: str) -> None:
+    def __init__(self, code: str, message: str, request_id: str | None = None) -> None:
         super().__init__(message)
         self.code = code
         self.message = message
+        self.request_id = request_id
 
     def __repr__(self) -> str:
-        return f"WebProtocolError(code={self.code!r}, message={self.message!r})"
+        return f"WebProtocolError(code={self.code!r}, message={self.message!r}, request_id={self.request_id!r})"
 
     def __str__(self) -> str:
         return self.message
@@ -206,6 +209,21 @@ def _validate_auth_login(payload: dict[str, Any]) -> None:
     _require_string_field(payload, "password", max_length=COMMAND_LENGTH_LIMIT)
 
 
+def _validate_character_vitals(payload: dict[str, Any]) -> None:
+    _require_allowed_keys(
+        payload,
+        {"condition_current", "condition_max", "condition_label", "stamina_current", "stamina_max", "stamina_label"},
+    )
+    _ensure_exact_int(payload.get("condition_current"), "condition_current", minimum=0)
+    _ensure_exact_int(payload.get("condition_max"), "condition_max", minimum=0)
+    _ensure_exact_int(payload.get("stamina_current"), "stamina_current", minimum=0)
+    _ensure_exact_int(payload.get("stamina_max"), "stamina_max", minimum=0)
+    if "condition_label" in payload:
+        _require_string_field(payload, "condition_label", allow_empty=True, max_length=COMMAND_LENGTH_LIMIT * 4)
+    if "stamina_label" in payload:
+        _require_string_field(payload, "stamina_label", allow_empty=True, max_length=COMMAND_LENGTH_LIMIT * 4)
+
+
 def _validate_creator_start(payload: dict[str, Any]) -> None:
     _require_allowed_keys(payload, {"username", "password"})
     _require_string_field(payload, "username", max_length=COMMAND_LENGTH_LIMIT)
@@ -284,7 +302,9 @@ def _validate_creator_finished(payload: dict[str, Any]) -> None:
 
 def _validate_command_execute(payload: dict[str, Any]) -> None:
     _require_allowed_keys(payload, {"command"})
-    _require_string_field(payload, "command", max_length=COMMAND_LENGTH_LIMIT)
+    command = _require_string_field(payload, "command", max_length=COMMAND_LENGTH_LIMIT)
+    if not command.strip():
+        raise WebProtocolError("invalid_command", "Command must contain non-whitespace characters.")
 
 
 def _validate_connection_ping(payload: dict[str, Any]) -> None:
@@ -367,6 +387,9 @@ def _validate_payload_shape(message_type: str, payload: dict[str, Any]) -> None:
         return
     if message_type == "auth.login":
         _validate_auth_login(payload)
+        return
+    if message_type == "character.vitals":
+        _validate_character_vitals(payload)
         return
     if message_type == "creator.start":
         _validate_creator_start(payload)
@@ -492,7 +515,12 @@ def parse_web_envelope(raw: str | bytes, *, max_bytes: int = MESSAGE_SIZE_LIMIT)
     if sequence is not None and (type(sequence) is not int or sequence < 1):
         raise WebProtocolError("invalid_sequence", "sequence must be a positive integer.")
     _ensure_request_metadata(message_type, request_id, sequence)
-    _validate_payload_shape(message_type, payload)
+    try:
+        _validate_payload_shape(message_type, payload)
+    except WebProtocolError as exc:
+        if request_id is not None:
+            raise WebProtocolError(exc.code, exc.message, request_id=request_id) from exc
+        raise
     return WebProtocolEnvelope(
         version=version,
         type=message_type,

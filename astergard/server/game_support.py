@@ -10,6 +10,7 @@ from astergard.commands.helpers import find_item, find_npc
 from astergard.items.models import Item
 from astergard.npcs.models import NPC
 from astergard.server.context import GameContext
+from astergard.application.session_transport import SessionTransport, SessionTransportKind
 from astergard.utils import describe_gold
 
 
@@ -111,7 +112,9 @@ class GameServerSupportMixin:
     def get_all_players(self) -> list[Character]:
         return list(self.clients.values())
 
-    def prompt(self, character: Character) -> str:
+    def prompt(self, character: Character, transport: SessionTransport | None = None) -> str:
+        if transport is not None and transport.kind == SessionTransportKind.WEB:
+            return ">"
         health = overall_health_desc(character.wounds)
         stamina = character.stats.describe_kondycja()
         gold = describe_gold(character.gold)

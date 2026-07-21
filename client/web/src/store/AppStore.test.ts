@@ -42,7 +42,26 @@ describe('AppStore reducer', () => {
     expect(afterRoom.lastRoomInfo?.name).toBe('Komnata');
     expect(afterRoom.terminalLines.at(-1)?.kind).toBe('room');
 
-    const afterCommandResult = reducer(afterRoom, {
+    const afterVitals = reducer(afterRoom, {
+      kind: 'message',
+      envelope: {
+        version: 1,
+        type: 'character.vitals',
+        payload: {
+          condition_current: 9,
+          condition_max: 12,
+          condition_label: 'jest lekko ranny',
+          stamina_current: 88,
+          stamina_max: 100,
+          stamina_label: 'Jesteś w pełni sił.',
+        },
+        sequence: 4,
+      },
+    });
+    expect(afterVitals.vitals?.condition_current).toBe(9);
+    expect(afterVitals.terminalLines).toHaveLength(afterRoom.terminalLines.length);
+
+    const afterCommandResult = reducer(afterVitals, {
       kind: 'message',
       envelope: {
         version: 1,

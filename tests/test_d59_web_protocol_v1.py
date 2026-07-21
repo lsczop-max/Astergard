@@ -50,6 +50,18 @@ class WebProtocolV1Tests(unittest.TestCase):
             build_web_envelope("session.ready", {"transport": "web", "username": "tester"}, sequence=1),
             build_web_envelope("auth.result", {"success": True, "username": "tester"}, request_id="2", sequence=2),
             build_web_envelope(
+                "character.vitals",
+                {
+                    "condition_current": 10,
+                    "condition_max": 12,
+                    "condition_label": "jest lekko ranny",
+                    "stamina_current": 88,
+                    "stamina_max": 100,
+                    "stamina_label": "Jesteś w pełni sił.",
+                },
+                sequence=3,
+            ),
+            build_web_envelope(
                 "creator.started",
                 {
                     "username": "newbie",
@@ -63,7 +75,7 @@ class WebProtocolV1Tests(unittest.TestCase):
                     },
                 },
                 request_id="2a",
-                sequence=3,
+                sequence=4,
             ),
             build_web_envelope(
                 "creator.step",
@@ -76,28 +88,28 @@ class WebProtocolV1Tests(unittest.TestCase):
                     "cancel_available": True,
                 },
                 request_id="2b",
-                sequence=4,
+                sequence=5,
             ),
             build_web_envelope(
                 "creator.validation_error",
                 {"step_id": "name", "field": "name", "message": "Imię nie może być puste."},
                 request_id="2c",
-                sequence=5,
+                sequence=6,
             ),
             build_web_envelope(
                 "creator.cancelled",
                 {"username": "newbie", "reason": "cancelled_by_user"},
                 request_id="2d",
-                sequence=6,
+                sequence=7,
             ),
             build_web_envelope(
                 "creator.finished",
                 {"username": "newbie", "character_name": "Ala"},
                 request_id="2e",
-                sequence=7,
+                sequence=8,
             ),
-            build_web_envelope("output.text", {"text": "Witaj"}, sequence=3),
-            build_web_envelope("output.prompt", {"prompt": "> "}, sequence=4),
+            build_web_envelope("output.text", {"text": "Witaj"}, sequence=9),
+            build_web_envelope("output.prompt", {"prompt": ">"}, sequence=10),
             build_web_envelope(
                 "room.info",
                 {
@@ -107,11 +119,11 @@ class WebProtocolV1Tests(unittest.TestCase):
                     "coords": {"x": 1, "y": 2, "z": 0},
                     "exits": {},
                 },
-                sequence=5,
+                sequence=11,
             ),
-            build_web_envelope("command.result", {"command": "spojrz", "success": True}, request_id="3", sequence=6),
-            build_web_envelope("connection.pong", {"nonce": "abc"}, request_id="4", sequence=7),
-            build_web_envelope("protocol.error", {"code": "invalid_json", "message": "Protocol message is not valid JSON."}, request_id="5", sequence=8),
+            build_web_envelope("command.result", {"command": "spojrz", "success": True}, request_id="3", sequence=12),
+            build_web_envelope("connection.pong", {"nonce": "abc"}, request_id="4", sequence=13),
+            build_web_envelope("protocol.error", {"code": "invalid_json", "message": "Protocol message is not valid JSON."}, request_id="5", sequence=14),
         ]
         for envelope in envelopes:
             encoded = serialize_web_envelope(envelope)
@@ -178,6 +190,16 @@ class WebProtocolV1Tests(unittest.TestCase):
                     separators=(",", ":"),
                 )
             )
+
+    def test_whitespace_command_execute_is_rejected_with_request_id(self) -> None:
+        raw = json.dumps(
+            {"version": 1, "type": "command.execute", "payload": {"command": "   "}, "request_id": "cmd-1"},
+            separators=(",", ":"),
+        )
+        with self.assertRaises(WebProtocolError) as ctx:
+            parse_web_envelope(raw)
+        self.assertEqual(ctx.exception.code, "invalid_command")
+        self.assertEqual(ctx.exception.request_id, "cmd-1")
 
     def test_command_protocol_errors_preserve_request_id_and_do_not_mix(self) -> None:
         async def run_bad_command(payload: dict[str, object], request_id: str) -> SessionEvent:
@@ -247,6 +269,29 @@ class WebProtocolV1Tests(unittest.TestCase):
             self.assertTrue(actions[8][0] == "write" and actions[8][1].endswith(b" > "))
             self.assertEqual(actions[9][0], "drain")
 
+    def test_empty_web_command_reprompts_with_exact_prompt(self) -> None:
+        with TestGameHarness() as harness:
+            server = harness.require_server()
+            self.assertTrue(server.repo.register("web", "secret"))
+            transport = MemorySessionTransport()
+            transport.queue_input(SessionInputKind.HELLO, {})
+            transport.queue_input(
+                SessionInputKind.CREDENTIALS,
+                {"username": "web", "password": "secret"},
+                request_id="login-1",
+            )
+            transport.queue_input(SessionInputKind.COMMAND, {"command": ""}, request_id="cmd-1")
+
+            login = asyncio.run(server.session_flow.login(transport))
+            self.assertIsNotNone(login.character)
+            assert login.character is not None
+            asyncio.run(server.session_flow.send_initial_view(transport, server.make_context(login.character)))
+            asyncio.run(server.session_flow.command_loop(transport, server.make_context(login.character)))
+
+            self.assertGreaterEqual(len(transport.outbound_prompts), 2)
+            self.assertEqual(transport.outbound_prompts[-1], ">")
+            self.assertTrue(all(prompt == ">" for prompt in transport.outbound_prompts))
+
     def test_movement_emits_room_info_before_command_text(self) -> None:
         with TestGameHarness() as harness:
             server = harness.require_server()
@@ -300,17 +345,21 @@ class WebProtocolV1Tests(unittest.TestCase):
             asyncio.run(server.session_flow.command_loop(transport, server.make_context(login.character)))
 
             self.assertNotIn("<MAP_JSON>", "".join(transport.outbound_text))
-            self.assertEqual(transport.outbound_prompts[-1], server.prompt(login.character))
+            self.assertEqual(transport.outbound_prompts[-1], ">")
 
             event_types = [event.type for event in transport.outbound_events]
             self.assertIn("auth.result", event_types)
+            self.assertIn("character.vitals", event_types)
             self.assertIn("room.info", event_types)
             self.assertIn("session.ready", event_types)
             self.assertIn("command.result", event_types)
 
             auth_event = next(event for event in transport.outbound_events if event.type == "auth.result")
+            vitals_event = next(event for event in transport.outbound_events if event.type == "character.vitals")
             command_event = next(event for event in transport.outbound_events if event.type == "command.result")
             self.assertEqual(auth_event.request_id, "login-1")
+            self.assertEqual(vitals_event.payload["condition_max"], 12)
+            self.assertEqual(vitals_event.payload["stamina_max"], 100)
             self.assertEqual(command_event.request_id, "cmd-1")
             self.assertEqual(auth_event.sequence, 1)
             self.assertEqual(

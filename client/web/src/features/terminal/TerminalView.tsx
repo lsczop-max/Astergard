@@ -23,6 +23,22 @@ export function TerminalView({ lines, prompt }: Props) {
     viewport.scrollTop = viewport.scrollHeight;
   }, [visibleLines, prompt]);
 
+  useEffect(() => {
+    const viewport = viewportRef.current;
+    if (!viewport || typeof ResizeObserver === 'undefined') {
+      return;
+    }
+    const observer = new ResizeObserver(() => {
+      if (atBottomRef.current) {
+        viewport.scrollTop = viewport.scrollHeight;
+      }
+    });
+    observer.observe(viewport);
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
+
   return (
     <section className="terminal-shell panel">
       <div
@@ -41,7 +57,7 @@ export function TerminalView({ lines, prompt }: Props) {
         </div>
       </div>
       <div className="terminal-prompt" aria-label="Prompt">
-        <span className="prompt-label">{prompt ?? '> '}</span>
+        <span className="prompt-label">{prompt ?? '>'}</span>
       </div>
     </section>
   );

@@ -5,6 +5,7 @@ import json
 from collections.abc import Callable
 from dataclasses import dataclass
 from time import perf_counter
+from typing import Any, Awaitable
 
 from typing import TYPE_CHECKING
 
@@ -34,25 +35,32 @@ class EngineLifecycle:
         self.scheduler.every("audit_tick", 60, self.audit_tick)
         self.event_bus.subscribe("*", self._audit_engine_event)
 
-    async def run_forever(self, tick_once: Callable[[], None]) -> None:
+    async def run_forever(
+        self,
+        tick_once: Callable[[], Any],
+        after_tick: Callable[[Any], Awaitable[None]] | None = None,
+    ) -> None:
         self.is_running = True
         self.event_bus.emit("engine.started")
         try:
             while not self.shutdown_requested:
                 await asyncio.sleep(self.tick_interval_seconds)
-                self.tick(tick_once)
+                tick_result = self.tick(tick_once)
+                if after_tick is not None:
+                    await after_tick(tick_result)
         finally:
             self.is_running = False
             self.flush_all("run_forever_exit")
             self.event_bus.emit("engine.stopped")
 
-    def tick(self, tick_once: Callable[[], None]) -> None:
+    def tick(self, tick_once: Callable[[], Any]) -> Any:
         self.event_bus.emit("engine.tick_started", tick=self.tick_count)
         start = perf_counter()
         ok = False
         error: str | None = None
+        tick_result: Any = None
         try:
-            tick_once()
+            tick_result = tick_once()
             self.scheduler.run_due(self.tick_count)
             ok = True
             self.event_bus.emit("engine.tick_completed", tick=self.tick_count)
@@ -66,6 +74,7 @@ class EngineLifecycle:
             if observability is not None:
                 observability.record_tick(self.tick_count, (perf_counter() - start) * 1000.0, ok, error)
             self.tick_count += 1
+        return tick_result
 
     def request_shutdown(self, reason: str = "manual") -> None:
         self.shutdown_requested = True

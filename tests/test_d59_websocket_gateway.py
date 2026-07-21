@@ -76,7 +76,7 @@ async def _drive_web_creator(
             step = response.payload
             continue
         if response.type == "creator.finished":
-            post_frames = [parse_web_envelope(await websocket.recv()) for _ in range(5)]
+            post_frames = [parse_web_envelope(await websocket.recv()) for _ in range(6)]
             return response, post_frames, request_id
         return response, [], request_id
 
@@ -191,23 +191,25 @@ class WebSocketGatewayIntegrationTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(greeting.sequence, 1)
 
                 await websocket.send(_frame("auth.login", {"username": "web", "password": "secret"}, request_id="login-1"))
-                login_frames = [parse_web_envelope(await websocket.recv()) for _ in range(5)]
+                login_frames = [parse_web_envelope(await websocket.recv()) for _ in range(6)]
                 self.assertEqual(
                     [frame.type for frame in login_frames],
-                    ["auth.result", "output.text", "room.info", "output.prompt", "session.ready"],
+                    ["auth.result", "output.text", "room.info", "character.vitals", "output.prompt", "session.ready"],
                 )
-                self.assertEqual([frame.sequence for frame in login_frames], [2, 3, 4, 5, 6])
+                self.assertEqual([frame.sequence for frame in login_frames], [2, 3, 4, 5, 6, 7])
                 self.assertEqual(login_frames[0].request_id, "login-1")
                 self.assertEqual(login_frames[-1].payload["transport"], "web")
+                self.assertEqual(login_frames[3].payload["condition_max"], 12)
+                self.assertEqual(login_frames[3].payload["stamina_max"], character.stats.max_kondycja)
 
                 await websocket.send(_frame("command.execute", {"command": "spojrz"}, request_id="cmd-1"))
                 command_frames = [parse_web_envelope(await websocket.recv()) for _ in range(3)]
                 self.assertEqual([frame.type for frame in command_frames], ["output.text", "command.result", "output.prompt"])
-                self.assertEqual([frame.sequence for frame in command_frames], [7, 8, 9])
+                self.assertEqual([frame.sequence for frame in command_frames], [8, 9, 10])
                 self.assertEqual(command_frames[1].request_id, "cmd-1")
                 self.assertEqual(
                     [frame.sequence for frame in [greeting] + login_frames + command_frames],
-                    list(range(1, 10)),
+                    list(range(1, 11)),
                 )
 
     async def test_bad_subprotocol_and_bad_origin_are_rejected(self) -> None:
@@ -303,13 +305,12 @@ class WebSocketGatewayIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     self.assertEqual(response.request_id, request_id)
                     break
 
-                post_creation_frames = [parse_web_envelope(await websocket.recv()) for _ in range(5)]
+                post_creation_frames = [parse_web_envelope(await websocket.recv()) for _ in range(6)]
                 frame_types = [frame.type for frame in post_creation_frames]
-                self.assertEqual(frame_types[-1], "session.ready")
+                self.assertEqual(frame_types, ["output.text", "output.text", "room.info", "character.vitals", "output.prompt", "session.ready"])
                 self.assertEqual(frame_types.count("session.ready"), 1)
                 self.assertNotIn("auth.result", frame_types)
-                self.assertIn("room.info", frame_types)
-                self.assertIn("output.prompt", frame_types)
+                self.assertEqual(post_creation_frames[4].payload["prompt"], ">")
                 self.assertNotIn("secret", "".join(frame.payload.get("text", "") if frame.type == "output.text" else "" for frame in post_creation_frames))
                 character = self.server.repo.load("newbie")
                 self.assertEqual(character.name, "Nowy")
@@ -358,6 +359,8 @@ class WebSocketGatewayIntegrationTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(finished_types.count("session.ready"), 1)
                 self.assertNotIn("auth.result", finished_types)
                 self.assertNotIn("creator.finished", finished_types)
+                self.assertEqual(finished_types.count("output.text"), 2)
+                self.assertIn("character.vitals", finished_types)
                 self.assertIn("room.info", finished_types)
                 self.assertIn("output.prompt", finished_types)
 
@@ -439,6 +442,7 @@ class WebSocketGatewayIntegrationTests(unittest.IsolatedAsyncioTestCase):
                 )
                 self.assertEqual(finished_response.type, "creator.finished")
                 post_types = [frame.type for frame in post_frames]
+                self.assertEqual(post_types.count("output.text"), 2)
                 self.assertEqual(post_types.count("session.ready"), 1)
                 await websocket.close()
                 await websocket.wait_closed()
@@ -456,10 +460,30 @@ class WebSocketGatewayIntegrationTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(greeting.type, "output.text")
 
                 await websocket.send(_frame("auth.login", {"username": "returning", "password": "secret"}, request_id="relogin-login"))
-                frames = [parse_web_envelope(await websocket.recv()) for _ in range(5)]
-                self.assertEqual([frame.type for frame in frames], ["auth.result", "output.text", "room.info", "output.prompt", "session.ready"])
+                frames = [parse_web_envelope(await websocket.recv()) for _ in range(6)]
+                self.assertEqual([frame.type for frame in frames], ["auth.result", "output.text", "room.info", "character.vitals", "output.prompt", "session.ready"])
                 self.assertEqual(frames[0].request_id, "relogin-login")
                 self.assertEqual(frames[-1].payload["username"], "returning")
+
+    async def test_web_command_changes_emit_updated_vitals(self) -> None:
+        self.assertTrue(self.server.repo.register("walker", "secret"))
+        character = self.server.repo.load("walker")
+        character.room_id = 60
+        self.server.repo.save(character)
+        config = WebSocketGatewayConfig(allowed_origins=("http://localhost:3000",))
+        async with websocket_gateway_context(self.server, config) as (_gateway, port):
+            async with self._connect(port, "http://localhost:3000") as websocket:
+                await websocket.send(_frame("session.hello", {"client": "tests", "transport": "websocket"}, request_id="hello-1"))
+                await websocket.recv()
+                await websocket.send(_frame("auth.login", {"username": "walker", "password": "secret"}, request_id="login-1"))
+                login_frames = [parse_web_envelope(await websocket.recv()) for _ in range(6)]
+                initial_vitals = login_frames[3]
+
+                await websocket.send(_frame("command.execute", {"command": "szukaj"}, request_id="search-1"))
+                command_frames = [parse_web_envelope(await websocket.recv()) for _ in range(4)]
+                self.assertEqual([frame.type for frame in command_frames], ["output.text", "command.result", "character.vitals", "output.prompt"])
+                updated_vitals = command_frames[2]
+                self.assertLess(updated_vitals.payload["stamina_current"], initial_vitals.payload["stamina_current"])
 
     async def test_web_creator_invalid_final_answer_preserves_request_id(self) -> None:
         config = WebSocketGatewayConfig(allowed_origins=("http://localhost:3000",))
@@ -530,12 +554,12 @@ class WebSocketGatewayIntegrationTests(unittest.IsolatedAsyncioTestCase):
                 await websocket.send(_frame("session.hello", {"client": "tests", "transport": "websocket"}, request_id="hello-1"))
                 await websocket.recv()
                 await websocket.send(_frame("auth.login", {"username": "walker", "password": "secret"}, request_id="login-1"))
-                for _ in range(5):
+                for _ in range(6):
                     await websocket.recv()
 
                 await websocket.send(_frame("command.execute", {"command": "poludnie"}, request_id="move-1"))
-                frames = [parse_web_envelope(await websocket.recv()) for _ in range(4)]
-                self.assertEqual([frame.type for frame in frames], ["room.info", "output.text", "command.result", "output.prompt"])
+                frames = [parse_web_envelope(await websocket.recv()) for _ in range(5)]
+                self.assertEqual([frame.type for frame in frames], ["room.info", "output.text", "command.result", "character.vitals", "output.prompt"])
                 self.assertLess(frames[0].sequence or 0, frames[1].sequence or 0)
                 self.assertLess(frames[1].sequence or 0, frames[2].sequence or 0)
                 self.assertLess(frames[2].sequence or 0, frames[3].sequence or 0)
@@ -548,7 +572,7 @@ class WebSocketGatewayIntegrationTests(unittest.IsolatedAsyncioTestCase):
                 await websocket.send(_frame("session.hello", {"client": "tests", "transport": "websocket"}, request_id="hello-1"))
                 await websocket.recv()
                 await websocket.send(_frame("auth.login", {"username": "ping", "password": "secret"}, request_id="login-1"))
-                for _ in range(5):
+                for _ in range(6):
                     await websocket.recv()
                 await websocket.send(_frame("connection.ping", {"nonce": "abc"}, request_id="ping-1"))
                 pong = parse_web_envelope(await websocket.recv())
@@ -595,11 +619,35 @@ class WebSocketGatewayIntegrationTests(unittest.IsolatedAsyncioTestCase):
                 await websocket.send(_frame("session.hello", {"client": "tests", "transport": "websocket"}, request_id="hello-1"))
                 await websocket.recv()
                 await websocket.send(_frame("auth.login", {"username": "len", "password": "secret"}, request_id="login-1"))
-                for _ in range(5):
+                for _ in range(6):
                     await websocket.recv()
                 await websocket.send(_frame("command.execute", {"command": "ż" * (COMMAND_LENGTH_LIMIT + 1)}, request_id="cmd-1"))
                 error = parse_web_envelope(await websocket.recv())
                 self.assertEqual(error.payload["code"], "message_too_large")
+
+    async def test_whitespace_command_is_rejected_without_closing_socket(self) -> None:
+        self.assertTrue(self.server.repo.register("blank", "secret"))
+        config = WebSocketGatewayConfig(allowed_origins=("http://localhost:3000",))
+        async with websocket_gateway_context(self.server, config) as (_gateway, port):
+            async with self._connect(port, "http://localhost:3000") as websocket:
+                await websocket.send(_frame("session.hello", {"client": "tests", "transport": "websocket"}, request_id="hello-1"))
+                await websocket.recv()
+                await websocket.send(_frame("auth.login", {"username": "blank", "password": "secret"}, request_id="login-1"))
+                for _ in range(6):
+                    await websocket.recv()
+
+                await websocket.send(_frame("command.execute", {"command": "   "}, request_id="cmd-blank"))
+                error = parse_web_envelope(await websocket.recv())
+                self.assertEqual(error.type, "protocol.error")
+                self.assertEqual(error.payload["code"], "invalid_command")
+                self.assertEqual(error.payload["message"], "Command must contain non-whitespace characters.")
+                self.assertEqual(error.request_id, "cmd-blank")
+
+                await websocket.send(_frame("command.execute", {"command": "spojrz"}, request_id="cmd-good"))
+                frames = [parse_web_envelope(await websocket.recv()) for _ in range(3)]
+                self.assertEqual([frame.type for frame in frames], ["output.text", "command.result", "output.prompt"])
+                self.assertEqual(frames[1].request_id, "cmd-good")
+                self.assertIsNone(websocket.close_code)
 
     async def test_disconnect_during_login_and_command(self) -> None:
         self.assertTrue(self.server.repo.register("disconnect", "secret"))
@@ -617,7 +665,7 @@ class WebSocketGatewayIntegrationTests(unittest.IsolatedAsyncioTestCase):
                 await websocket.send(_frame("session.hello", {"client": "tests", "transport": "websocket"}, request_id="hello-1"))
                 await websocket.recv()
                 await websocket.send(_frame("auth.login", {"username": "disconnect", "password": "secret"}, request_id="login-1"))
-                for _ in range(5):
+                for _ in range(6):
                     await websocket.recv()
                 await websocket.close()
             await asyncio.wait_for(websocket.wait_closed(), timeout=2.0)
@@ -636,7 +684,7 @@ class WebSocketGatewayIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     await websocket.send(_frame("session.hello", {"client": "tests", "transport": "websocket"}, request_id="hello-1"))
                     await websocket.recv()
                     await websocket.send(_frame("auth.login", {"username": "same", "password": "secret"}, request_id="login-1"))
-                    for _ in range(5):
+                    for _ in range(6):
                         await websocket.recv()
 
                 await first.send(_frame("command.execute", {"command": "spojrz"}, request_id="cmd-1"))

@@ -239,6 +239,10 @@ export class AstergardWebSocketTransport {
     this.send(envelope);
   }
 
+  canExecuteCommand(): boolean {
+    return this.state === 'ready' && !this.pendingHas('command');
+  }
+
   async ping(nonce?: string): Promise<void> {
     if (this.state === 'disconnected' || this.state === 'connecting') {
       throw new Error('Ping jest dostępny po handshake.');
@@ -456,6 +460,7 @@ export class AstergardWebSocketTransport {
       envelope.type === 'output.text' ||
       envelope.type === 'output.prompt' ||
       envelope.type === 'room.info' ||
+      envelope.type === 'character.vitals' ||
       envelope.type === 'command.result' ||
       envelope.type === 'connection.pong' ||
       envelope.type === 'session.ready' ||

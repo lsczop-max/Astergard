@@ -229,6 +229,14 @@ def make_auth_result_event(
     return SessionEvent("auth.result", payload, request_id=request_id, sequence=sequence)
 
 
+def make_character_vitals_event(
+    payload: dict[str, Any],
+    *,
+    sequence: int | None = None,
+) -> SessionEvent:
+    return SessionEvent("character.vitals", dict(payload), sequence=sequence)
+
+
 def make_creator_started_event(
     username: str,
     step: dict[str, Any],

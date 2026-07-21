@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { CreatorForm } from '../features/auth/CreatorForm';
 import { LoginForm } from '../features/auth/LoginForm';
+import { CharacterVitalsPanel } from '../features/terminal/CharacterVitalsPanel';
 import { CommandBar } from '../features/terminal/CommandBar';
 import { ConnectionStatus } from '../features/terminal/ConnectionStatus';
 import { RoomInfoPanel } from '../features/terminal/RoomInfoPanel';
@@ -9,6 +10,25 @@ import { AppStoreProvider, useAppStore } from '../store/AppStore';
 import { AstergardWebSocketTransport } from '../transport/AstergardWebSocketTransport';
 import { buildWebSocketUrl } from '../transport/url';
 import { StatusBanner } from '../components/StatusBanner';
+
+const NUMPAD_COMMANDS: Record<string, string> = {
+  Numpad8: 'polnoc',
+  Numpad9: 'polnocny-wschod',
+  Numpad6: 'wschod',
+  Numpad3: 'poludniowy-wschod',
+  Numpad2: 'poludnie',
+  Numpad1: 'poludniowy-zachod',
+  Numpad4: 'zachod',
+  Numpad7: 'polnocny-zachod',
+  Numpad5: 'spojrz',
+};
+
+function isInteractiveTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof Element)) {
+    return false;
+  }
+  return Boolean(target.closest('input, textarea, select, button, [contenteditable="true"], .login-form, .creator-form, .command-bar'));
+}
 
 function AppShell() {
   const { state, dispatch } = useAppStore();
@@ -37,7 +57,30 @@ function AppShell() {
     });
     transport.connect();
 
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.repeat || event.ctrlKey || event.altKey || event.metaKey) {
+        return;
+      }
+      if (isInteractiveTarget(event.target)) {
+        return;
+      }
+      const command = NUMPAD_COMMANDS[event.code];
+      if (!command) {
+        return;
+      }
+      const currentTransport = transportRef.current;
+      if (!currentTransport || !currentTransport.canExecuteCommand()) {
+        return;
+      }
+      event.preventDefault();
+      void currentTransport.executeCommand(command).catch((error) => {
+        dispatch({ kind: 'set-error', message: error instanceof Error ? error.message : 'Nie udało się wysłać komendy.' });
+      });
+    };
+    document.addEventListener('keydown', onKeyDown);
+
     return () => {
+      document.removeEventListener('keydown', onKeyDown);
       unsubscribe();
       transport.dispose();
       if (transportRef.current === transport) {
@@ -65,6 +108,7 @@ function AppShell() {
         </aside>
 
         <section className="terminal-pane">
+          <CharacterVitalsPanel vitals={state.vitals} />
           <TerminalView lines={state.terminalLines} prompt={state.prompt} />
           <CommandBar transportRef={transportRef} disabled={state.connectionState !== 'ready'} />
         </section>

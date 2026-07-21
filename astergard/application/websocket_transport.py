@@ -283,7 +283,7 @@ class WebSocketSessionTransport:
             try:
                 envelope = parse_web_envelope(raw, max_bytes=self.limits.message_max_bytes)
             except WebProtocolError as exc:
-                await self._handle_protocol_error(exc, None)
+                await self._handle_protocol_error(exc, exc.request_id)
                 if self._closed:
                     raise EOFError
                 continue

@@ -14,6 +14,7 @@ export type ClientMessageType =
 export type ServerMessageType =
   | 'session.ready'
   | 'auth.result'
+  | 'character.vitals'
   | 'creator.started'
   | 'creator.step'
   | 'creator.validation_error'
@@ -27,7 +28,7 @@ export type ServerMessageType =
   | 'protocol.error';
 
 export type RequestMessageType = ClientMessageType;
-export type StreamMessageType = 'session.ready' | 'output.text' | 'output.prompt' | 'room.info';
+export type StreamMessageType = 'session.ready' | 'character.vitals' | 'output.text' | 'output.prompt' | 'room.info';
 export type ResponseMessageType =
   | 'auth.result'
   | 'creator.started'
@@ -86,6 +87,15 @@ export interface AuthResultPayload {
   success: boolean;
   username: string;
   reason?: string;
+}
+
+export interface CharacterVitalsPayload {
+  condition_current: number;
+  condition_max: number;
+  condition_label?: string;
+  stamina_current: number;
+  stamina_max: number;
+  stamina_label?: string;
 }
 
 export interface CreatorChoicePayload {
@@ -183,6 +193,7 @@ export type ClientEnvelope =
 export type ServerEnvelope =
   | Envelope<'session.ready', SessionReadyPayload>
   | Envelope<'auth.result', AuthResultPayload>
+  | Envelope<'character.vitals', CharacterVitalsPayload>
   | Envelope<'creator.started', CreatorStartedPayload>
   | Envelope<'creator.step', CreatorStepPayload>
   | Envelope<'creator.validation_error', CreatorValidationErrorPayload>
@@ -220,6 +231,7 @@ const CLIENT_MESSAGE_TYPES = new Set<ClientMessageType>([
 const SERVER_MESSAGE_TYPES = new Set<ServerMessageType>([
   'session.ready',
   'auth.result',
+  'character.vitals',
   'creator.started',
   'creator.step',
   'creator.validation_error',
@@ -242,7 +254,7 @@ const REQUEST_MESSAGE_TYPES = new Set<RequestMessageType>([
   'command.execute',
   'connection.ping',
 ]);
-const STREAM_MESSAGE_TYPES = new Set<StreamMessageType>(['session.ready', 'output.text', 'output.prompt', 'room.info']);
+const STREAM_MESSAGE_TYPES = new Set<StreamMessageType>(['session.ready', 'character.vitals', 'output.text', 'output.prompt', 'room.info']);
 const RESPONSE_MESSAGE_TYPES = new Set<ResponseMessageType>([
   'auth.result',
   'creator.started',
@@ -287,6 +299,16 @@ function requireAllowedKeys(payload: Record<string, unknown>, allowed: readonly 
   }
 }
 
+function requireInteger(value: unknown, field: string, options?: { min?: number }): number {
+  if (!isExactNumber(value)) {
+    fail('invalid_payload', `Payload field '${field}' must be an integer.`);
+  }
+  if (options?.min !== undefined && value < options.min) {
+    fail('invalid_payload', `Payload field '${field}' must be at least ${options.min}.`);
+  }
+  return value;
+}
+
 function validateSessionHello(payload: Record<string, unknown>): void {
   requireAllowedKeys(payload, ['client', 'client_version', 'capabilities', 'transport']);
   if ('client' in payload) requireString(payload.client, 'client', { maxBytes: MAX_COMMAND_BYTES });
@@ -308,6 +330,20 @@ function validateAuthLogin(payload: Record<string, unknown>): void {
   requireAllowedKeys(payload, ['username', 'password']);
   requireString(payload.username, 'username', { maxBytes: MAX_COMMAND_BYTES });
   requireString(payload.password, 'password', { maxBytes: MAX_COMMAND_BYTES });
+}
+
+function validateCharacterVitals(payload: Record<string, unknown>): void {
+  requireAllowedKeys(payload, ['condition_current', 'condition_max', 'condition_label', 'stamina_current', 'stamina_max', 'stamina_label']);
+  requireInteger(payload.condition_current, 'condition_current', { min: 0 });
+  requireInteger(payload.condition_max, 'condition_max', { min: 0 });
+  requireInteger(payload.stamina_current, 'stamina_current', { min: 0 });
+  requireInteger(payload.stamina_max, 'stamina_max', { min: 0 });
+  if ('condition_label' in payload) {
+    requireString(payload.condition_label, 'condition_label', { allowEmpty: true, maxBytes: MAX_COMMAND_BYTES * 4 });
+  }
+  if ('stamina_label' in payload) {
+    requireString(payload.stamina_label, 'stamina_label', { allowEmpty: true, maxBytes: MAX_COMMAND_BYTES * 4 });
+  }
 }
 
 function validateCreatorStart(payload: Record<string, unknown>): void {
@@ -398,7 +434,10 @@ function validateCreatorFinished(payload: Record<string, unknown>): void {
 
 function validateCommandExecute(payload: Record<string, unknown>): void {
   requireAllowedKeys(payload, ['command']);
-  requireString(payload.command, 'command', { maxBytes: MAX_COMMAND_BYTES });
+  const command = requireString(payload.command, 'command', { maxBytes: MAX_COMMAND_BYTES });
+  if (!command.trim()) {
+    throw new ProtocolError('invalid_command', 'Command must contain non-whitespace characters.');
+  }
 }
 
 function validateConnectionPing(payload: Record<string, unknown>): void {
@@ -470,9 +509,13 @@ function validateProtocolError(payload: Record<string, unknown>): void {
   requireString(payload.message, 'message', { allowEmpty: true, maxBytes: MAX_COMMAND_BYTES });
 }
 
-function validatePayload(type: string, payload: Record<string, unknown>): void {
+function validatePayload(type: string, payload: unknown): void {
+  if (!isPlainObject(payload)) {
+    fail('invalid_payload', 'Protocol payload must be an object.');
+  }
   if (type === 'session.hello') return validateSessionHello(payload);
   if (type === 'auth.login') return validateAuthLogin(payload);
+  if (type === 'character.vitals') return validateCharacterVitals(payload);
   if (type === 'creator.start') return validateCreatorStart(payload);
   if (type === 'creator.submit') return validateCreatorSubmit(payload);
   if (type === 'creator.back') return validateCreatorStepReference(payload);
@@ -530,6 +573,8 @@ function byteLength(value: string): number {
 }
 
 export function serializeWebEnvelope(envelope: ProtocolEnvelope): string {
+  validateRequestMetadata(envelope.type, envelope.request_id, envelope.sequence);
+  validatePayload(envelope.type, envelope.payload);
   const data: Record<string, unknown> = {
     version: envelope.version,
     type: envelope.type,
@@ -562,13 +607,13 @@ export function parseProtocolEnvelope(raw: string | ArrayBuffer | Uint8Array): P
   if (!CLIENT_MESSAGE_TYPES.has(decoded.type as ClientMessageType) && !SERVER_MESSAGE_TYPES.has(decoded.type as ServerMessageType)) {
     fail('unknown_type', 'Unknown protocol message type.');
   }
-  if (!isPlainObject(decoded.payload)) fail('invalid_payload', 'Protocol payload must be an object.');
+  const payload = decoded.payload;
   validateRequestMetadata(decoded.type, decoded.request_id, decoded.sequence);
-  validatePayload(decoded.type, decoded.payload);
+  validatePayload(decoded.type, payload);
   return {
     version: decoded.version,
     type: decoded.type,
-    payload: decoded.payload,
+    payload,
     ...(decoded.request_id !== undefined ? { request_id: decoded.request_id } : {}),
     ...(decoded.sequence !== undefined ? { sequence: decoded.sequence } : {}),
   } as ProtocolEnvelope;
