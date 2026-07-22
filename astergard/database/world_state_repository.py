@@ -230,7 +230,7 @@ class WorldStateRepository:
                 "stats": npc.character.stats.__dict__,
                 "skills": npc.character.skills.to_dict(),
                 "inventory": [item.to_dict() for item in npc.character.inventory],
-                "equipment": {slot: item.to_dict() if item is not None else None for slot, item in npc.character.equipment.items()},
+                "equipment": npc.character.equipment.to_dict() if hasattr(npc.character.equipment, "to_dict") else {slot: item.to_dict() if item is not None else None for slot, item in npc.character.equipment.items()},
                 "wounds": npc.character.wounds,
                 "gold": npc.character.gold,
                 "is_alive": npc.character.is_alive,
@@ -254,7 +254,7 @@ class WorldStateRepository:
         npc.character.inventory = [Item.from_dict(item) for item in inventory if isinstance(item, dict)]
         equipment = data.get("equipment", {})
         if isinstance(equipment, dict):
-            npc.character.equipment = EquipmentSet.from_dict({slot: Item.from_dict(item) if isinstance(item, dict) else None for slot, item in equipment.items()})
+            npc.character.equipment = EquipmentSet.from_dict(equipment)
         wounds = data.get("wounds")
         if isinstance(wounds, dict):
             npc.character.wounds = {str(part): int(level) for part, level in wounds.items()}

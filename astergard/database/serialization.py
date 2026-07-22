@@ -5,6 +5,7 @@ import re
 import warnings
 from typing import Any
 
+from astergard.characters.appearance import CharacterAppearanceProfile, normalize_gender_id
 from astergard.characters.models import Character, CharacterSkills, CharacterStats, Effect
 from astergard.characters.careers import CareerLookupError, resolve_career, resolve_organization, resolve_school
 from astergard.characters.professions import migrate_legacy_profession_selection
@@ -175,16 +176,36 @@ def _purge_legacy_ranged_items(items: list[Item], *, context: str, username: str
     return kept
 
 
+def _resolve_legacy_gender_id(profile_raw: dict[str, Any]) -> str:
+    raw_gender_id = profile_raw.get("gender_id")
+    gender_source = raw_gender_id if raw_gender_id not in {None, ""} else profile_raw.get("gender_description", "")
+    gender_id = normalize_gender_id(gender_source)
+    appearance_raw = profile_raw.get("appearance_profile")
+    legacy_appearance_gender = ""
+    if isinstance(appearance_raw, dict):
+        legacy_appearance_gender = normalize_gender_id(appearance_raw.get("gender"))
+        if gender_id and legacy_appearance_gender and gender_id != legacy_appearance_gender:
+            warnings.warn(
+                f"Konflikt legacy płci w zapisie postaci: gender_description={profile_raw.get('gender_description', profile_raw.get('gender_id', ''))!r} "
+                f"oraz appearance.gender={appearance_raw.get('gender')!r}. Użyto pola głównego.",
+                stacklevel=2,
+            )
+    if gender_id:
+        return gender_id
+    return legacy_appearance_gender
+
+
 class CharacterStateSerializer:
     """Serializes the durable character state to explicit SQLite JSON columns."""
 
     @staticmethod
     def to_payload(char: Character) -> tuple[Any, ...]:
         inventory = [item.to_dict() for item in char.inventory]
-        equipment = {slot: item.to_dict() if item is not None else None for slot, item in char.equipment.items()}
+        equipment = char.equipment.to_dict() if hasattr(char.equipment, "to_dict") else {slot: item.to_dict() if item is not None else None for slot, item in char.equipment.items()}
         effects = [effect.to_dict() for effect in char.active_effects]
         creator_profile = {
             "name": char.name,
+            "gender_id": char.gender_id,
             "gender_description": char.gender_description,
             "age": char.age,
             "origin": char.origin,
@@ -195,6 +216,7 @@ class CharacterStateSerializer:
             "main_profession": char.main_profession,
             "secondary_profession": char.secondary_profession,
             "appearance": char.appearance,
+            "appearance_profile": char.appearance_profile.to_dict() if char.appearance_profile is not None else None,
             "history": char.history,
             "starting_reputation": char.starting_reputation,
             "career_path": {
@@ -255,21 +277,20 @@ class CharacterStateSerializer:
         char.completed_quests = list(json.loads(row[14]))
         char.inventory = _purge_legacy_ranged_items([Item.from_dict(item) for item in json.loads(row[15])], context="ekwipunku", username=username)
         equipment_raw = json.loads(row[16]) if len(row) > 16 and row[16] else {}
-        equipment_items = {
-            slot: Item.from_dict(item) if isinstance(item, dict) else None
-            for slot, item in equipment_raw.items()
-        }
-        for slot, item in list(equipment_items.items()):
+        char.equipment = EquipmentSet.from_dict(equipment_raw) if isinstance(equipment_raw, dict) else EquipmentSet.default()
+        equipment_items = list(char.equipment.all_items()) if isinstance(char.equipment, EquipmentSet) else [item for item in char.equipment.values() if item is not None]
+        for item in equipment_items:
+            if item is None:
+                continue
             if _is_legacy_ranged_item(item):
-                assert item is not None
                 warnings.warn(
                     f"Usunięto legacy przedmiot dystansowy z wyposażenia postaci {username}: {item.vnum or item.name}.",
                     stacklevel=2,
                 )
-                equipment_items[slot] = None
-        char.equipment = EquipmentSet.from_dict(equipment_items)
+                char.equipment.remove_item(item)
         for slot in EQUIPMENT_SLOTS:
             char.equipment.setdefault(slot, None)
+        char.resolve_equipment_conflicts()
         char.active_effects = [Effect.from_dict(effect) for effect in json.loads(row[17])]
         if len(row) > 18 and row[18]:
             char.combat_style = str(row[18])
@@ -279,7 +300,7 @@ class CharacterStateSerializer:
             for message in migration_warnings:
                 warnings.warn(message, stacklevel=2)
             char.name = str(profile_raw.get("name", ""))
-            char.gender_description = str(profile_raw.get("gender_description", ""))
+            char.gender_id = _resolve_legacy_gender_id(profile_raw)
             char.age = int(profile_raw.get("age", 0) or 0)
             char.origin = str(profile_raw.get("origin", ""))
             char.childhood = str(profile_raw.get("childhood", ""))
@@ -289,6 +310,23 @@ class CharacterStateSerializer:
             char.main_profession = str(profile_raw.get("main_profession", ""))
             char.secondary_profession = str(profile_raw.get("secondary_profession", ""))
             char.appearance = str(profile_raw.get("appearance", ""))
+            appearance_profile_raw = profile_raw.get("appearance_profile")
+            if isinstance(appearance_profile_raw, dict):
+                cleaned_profile = dict(appearance_profile_raw)
+                cleaned_profile.pop("gender", None)
+                try:
+                    char.appearance_profile = CharacterAppearanceProfile.from_dict(cleaned_profile)
+                except ValueError:
+                    warnings.warn(
+                        f"Nieprawidłowy profil wyglądu w zapisie postaci {username}. Użyto neutralnego fallbacku.",
+                        stacklevel=2,
+                    )
+                    char.appearance_profile = None
+                else:
+                    if char.gender_id == "f" and char.appearance_profile.beard != "brak":
+                        char.appearance_profile = None
+            else:
+                char.appearance_profile = None
             char.history = str(profile_raw.get("history", ""))
             char.starting_reputation = int(profile_raw.get("starting_reputation", 0) or 0)
             career_path = _clean_career_path(profile_raw.get("career_path", {}))

@@ -14,7 +14,7 @@ class SkillSystemTests(unittest.TestCase):
             repo = PlayerRepository(tmp.name)
             profile = CharacterCreationProfile.build(
                 name="Mira",
-                gender_description="kobieta",
+                gender_id="f",
                 age="27",
                 origin="uczeń rzemieślnika",
                 childhood="miasto",

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from astergard.characters.appearance import render_self_observation
 from astergard.application.services.exploration_parts import ExplorationTargetResolver
 from astergard.application.services.exploration_scene import ExplorationSceneRenderer
 from astergard.application.use_case_contexts import ExplorationContext
@@ -19,6 +20,15 @@ class ExplorationPerceptionService:
             return "<red>Wokół ciebie nie ma świata, tylko pustka.</red>"
         if self._is_short_look(arg):
             return self.scene_renderer.render(ctx, loc, True)
+        if self._is_self_reference(arg):
+            return render_self_observation(
+                name=ctx.character.name or ctx.character.username,
+                gender_id=ctx.character.gender_id,
+                wounds=ctx.character.wounds,
+                equipment=ctx.character.equipment,
+                appearance_profile=ctx.character.appearance_profile,
+                legacy_appearance=ctx.character.appearance,
+            )
         if arg:
             resolved = self.target_resolver.resolve(ctx, loc, arg, index)
             if resolved is not None:
@@ -55,6 +65,12 @@ class ExplorationPerceptionService:
             return False
         normalized = normalize_phrase(arg, drop_stopwords=True)
         return normalized in {"krotko", "krotki", "krotka", "krótko", "krótki", "krótka"}
+
+    def _is_self_reference(self, arg: str | None) -> bool:
+        if not arg:
+            return False
+        normalized = normalize_phrase(arg, drop_stopwords=True)
+        return normalized in {"siebie", "sobie", "samego siebie", "samej siebie", "samego", "samej"}
 
     def _smell_room(self, zone: str) -> str:
         if zone == "Gory_Mekhara":

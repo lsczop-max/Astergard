@@ -24,6 +24,9 @@ class D29PolishParserTests(unittest.TestCase):
         self.assertEqual(parsed.command, "wez")
         self.assertEqual(parsed.argument, "zelazny klucz")
         self.assertEqual(parsed.index, 2)
+        parsed = CommandParser.parse("ob siebie")
+        self.assertEqual(parsed.command, "ob")
+        self.assertEqual(parsed.argument, "siebie")
 
     def test_short_arkadia_style_aliases_work_for_look_and_inventory(self) -> None:
         async def run() -> None:

@@ -3,8 +3,10 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
+from astergard.characters.appearance import CharacterAppearanceProfile, gender_label, normalize_gender_id
 from astergard.characters.careers import CareerUserProfile
 from astergard.items.models import EQUIPMENT_SLOTS, EquipmentSet, Item, starter_items
+from astergard.combat.weapons import HandRequirement, resolve_weapon_profile
 from astergard.rules.combat_specialization import CombatSpecializationLoadout
 from astergard.rules.combat_specialization import defense_style_label, resolve_active_defense_style
 from astergard.rules.skills import (
@@ -136,7 +138,7 @@ class Character:
     room_id: int = 0
     visited_room_ids: set[int] = field(default_factory=set)
     name: str = ""
-    gender_description: str = ""
+    gender_id: str = ""
     age: int = 0
     origin: str = ""
     childhood: str = ""
@@ -146,6 +148,7 @@ class Character:
     main_profession: str = ""
     secondary_profession: str = ""
     appearance: str = ""
+    appearance_profile: CharacterAppearanceProfile | None = None
     history: str = ""
     starting_reputation: int = 0
     stats: CharacterStats = field(default_factory=CharacterStats)
@@ -185,10 +188,18 @@ class Character:
     def __post_init__(self) -> None:
         if not isinstance(self.visited_room_ids, set):
             self.visited_room_ids = {int(room_id) for room_id in self.visited_room_ids}
+        self.gender_id = normalize_gender_id(self.gender_id)
         if not isinstance(self.equipment, EquipmentSet):
             self.equipment = EquipmentSet.from_dict(self.equipment)
         if not isinstance(self.combat_specializations, CombatSpecializationLoadout):
             self.combat_specializations = CombatSpecializationLoadout.from_dict(self.combat_specializations)
+        if isinstance(self.appearance_profile, dict):
+            try:
+                self.appearance_profile = CharacterAppearanceProfile.from_dict(self.appearance_profile)
+            except ValueError:
+                self.appearance_profile = None
+        if self.appearance_profile is not None and self.gender_id == "f" and self.appearance_profile.beard != "brak":
+            self.appearance_profile = None
         self.career_id = None if self.career_id is None else (str(self.career_id).strip() or None)
         self.organization_id = None if self.organization_id is None else (str(self.organization_id).strip() or None)
         self.school_id = None if self.school_id is None else (str(self.school_id).strip() or None)
@@ -201,6 +212,15 @@ class Character:
         self.known_techniques = _normalize_unique_texts(self.known_techniques)
         for slot in EQUIPMENT_SLOTS:
             self.equipment.setdefault(slot, None)
+        self.resolve_equipment_conflicts()
+
+    @property
+    def gender_description(self) -> str:
+        return gender_label(self.gender_id)
+
+    @property
+    def gender_label(self) -> str:
+        return gender_label(self.gender_id)
 
     @property
     def awans(self) -> int | None:
@@ -291,6 +311,12 @@ class Character:
         return f"{item.display_name()} {slot_labels.get(slot, 'przy tobie')}"
 
     def armor_items(self) -> list[Item]:
+        items: list[Item] = []
+        if hasattr(self.equipment, "all_items"):
+            for item in self.equipment.all_items():
+                if item.item_type in {"armor", "shield"}:
+                    items.append(item)
+            return items
         return [item for item in self.equipment.values() if item is not None and item.item_type in {"armor", "shield"}]
 
     def armor_weight(self) -> float:
@@ -302,11 +328,42 @@ class Character:
 
     def set_equipment(self, slot: str, item: Item | None) -> None:
         self.equipment[slot] = item
+        self.resolve_equipment_conflicts()
 
     def clear_equipment(self, slot: str) -> Item | None:
         item = self.equipment.get(slot)
         self.equipment[slot] = None
         return item
+
+    def resolve_equipment_conflicts(self) -> None:
+        weapon = self.weapon()
+        if weapon is None:
+            return
+        profile = resolve_weapon_profile(weapon)
+        if profile is None or profile.legacy or profile.hand_requirement != HandRequirement.TWO_HANDED:
+            return
+        conflicting_shields: list[Item] = []
+        seen_ids: set[str] = set()
+        candidate_items = getattr(self.equipment, "all_items", lambda: tuple(self.equipment.values()))()
+        for item in candidate_items:
+            if item is not None and item.item_type == "shield":
+                item_id = getattr(item, "id", "")
+                if item_id and item_id in seen_ids:
+                    continue
+                if item_id:
+                    seen_ids.add(item_id)
+                conflicting_shields.append(item)
+        for shield in conflicting_shields:
+            shield_id = getattr(shield, "id", "")
+            if hasattr(self.equipment, "remove_item"):
+                self.equipment.remove_item(shield)
+            else:
+                for slot in ("tarcza", "bron_pomocnicza", "lewa_reka"):
+                    item = self.equipment.get(slot)
+                    if item is shield or (shield_id and getattr(item, "id", "") == shield_id):
+                        self.equipment[slot] = None
+            if not any(existing is shield or getattr(existing, "id", "") == shield_id for existing in self.inventory):
+                self.inventory.append(shield)
 
     def equipment_summary(self) -> str:
         worn = self.equipped_items()
@@ -369,12 +426,19 @@ class Character:
 
     def total_weight(self) -> float:
         carried = sum(item.total_weight() for item in self.inventory)
-        equipped = sum(item.total_weight() for item in self.equipment.values() if item is not None)
+        if hasattr(self.equipment, "all_items"):
+            equipped = sum(item.total_weight() for item in self.equipment.all_items())
+        else:
+            equipped = sum(item.total_weight() for item in self.equipment.values() if item is not None)
         coins = self.gold * 0.005
         return carried + equipped + coins
 
     def weapon(self) -> Item | None:
         for slot in ("bron_glowna", "bron_pomocnicza", "prawa_reka", "lewa_reka"):
+            stack = getattr(self.equipment, "layers", lambda _slot: (self.equipment.get(slot),))(slot)
+            for item in reversed(stack):
+                if item is not None and item.item_type == "weapon" and item.durability > 0:
+                    return item
             item = self.equipment.get(slot)
             if item is not None and item.item_type == "weapon" and item.durability > 0:
                 return item
@@ -393,6 +457,10 @@ class Character:
         else:
             slots = [body_part]
         for slot in slots:
+            stack = getattr(self.equipment, "layers", lambda _slot: (self.equipment.get(slot),))(slot)
+            for item in reversed(stack):
+                if item is not None and item.item_type in {"armor", "shield"} and item.durability > 0:
+                    return item
             item = self.equipment.get(slot)
             if item is not None and item.item_type in {"armor", "shield"} and item.durability > 0:
                 return item
@@ -400,6 +468,10 @@ class Character:
 
     def shield(self) -> Item | None:
         for slot in ("tarcza", "bron_pomocnicza", "lewa_reka"):
+            stack = getattr(self.equipment, "layers", lambda _slot: (self.equipment.get(slot),))(slot)
+            for item in reversed(stack):
+                if item is not None and item.item_type == "shield" and item.durability > 0:
+                    return item
             item = self.equipment.get(slot)
             if item is not None and item.item_type == "shield" and item.durability > 0:
                 return item

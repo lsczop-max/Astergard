@@ -47,6 +47,18 @@ EQUIPMENT_SLOT_ALIASES: dict[str, str] = {
     "lewa_reka": "bron_pomocnicza",
 }
 
+PRESENTATION_LAYERS: tuple[str, ...] = (
+    "undergarment",
+    "clothing",
+    "armor",
+    "outerwear",
+    "accessory",
+)
+
+PRESENTATION_LAYER_RANKS: dict[str, int] = {
+    layer: rank for rank, layer in enumerate(PRESENTATION_LAYERS)
+}
+
 
 def normalize_equipment_slot(slot: str | None) -> str | None:
     if slot is None:
@@ -61,7 +73,9 @@ def equipment_slot_label(slot: str) -> str:
 class EquipmentSet(dict[str, "Item | None"]):
     def __init__(self, initial: Mapping[str, "Item | None"] | None = None) -> None:
         super().__init__()
+        self._layers: dict[str, list[Item]] = {}
         for slot in EQUIPMENT_SLOTS:
+            self._layers[slot] = []
             super().__setitem__(slot, None)
         if initial:
             self.update(initial)
@@ -71,20 +85,54 @@ class EquipmentSet(dict[str, "Item | None"]):
         return cls()
 
     @classmethod
-    def from_dict(cls, data: Mapping[str, "Item | None"]) -> "EquipmentSet":
-        return cls(data)
+    def from_dict(cls, data: Mapping[str, Any]) -> "EquipmentSet":
+        equipment = cls()
+        if "layers" in data and isinstance(data.get("layers"), Mapping):
+            layers_raw = data.get("layers")
+            if isinstance(layers_raw, Mapping):
+                for slot, stack_raw in layers_raw.items():
+                    if not isinstance(stack_raw, list):
+                        continue
+                    for item_raw in stack_raw:
+                        if isinstance(item_raw, dict):
+                            item = Item.from_dict(item_raw)
+                            equipment.push(str(slot), item)
+            slots_raw = data.get("slots")
+            if isinstance(slots_raw, Mapping):
+                for slot, item_raw in slots_raw.items():
+                    canonical = equipment._canonical(str(slot))
+                    if canonical in EQUIPMENT_SLOTS and not equipment._layers.get(canonical):
+                        if isinstance(item_raw, dict):
+                            equipment[canonical] = Item.from_dict(item_raw)
+                        else:
+                            equipment[canonical] = None
+            return equipment
+        for slot, item in data.items():
+            if isinstance(item, dict):
+                equipment[slot] = Item.from_dict(item)
+            else:
+                equipment[slot] = None
+        return equipment
 
     def _canonical(self, slot: str) -> str:
         return normalize_equipment_slot(slot) or slot
 
     def __setitem__(self, slot: str, item: "Item | None") -> None:
-        super().__setitem__(self._canonical(slot), item)
+        canonical = self._canonical(slot)
+        if item is None:
+            self._layers[canonical] = []
+            super().__setitem__(canonical, None)
+            return
+        self._layers[canonical] = [item]
+        super().__setitem__(canonical, item)
 
     def __getitem__(self, slot: str) -> "Item | None":
         return super().__getitem__(self._canonical(slot))
 
     def __delitem__(self, slot: str) -> None:
-        super().__delitem__(self._canonical(slot))
+        canonical = self._canonical(slot)
+        self._layers[canonical] = []
+        super().__delitem__(canonical)
 
     def __contains__(self, slot: object) -> bool:
         if not isinstance(slot, str):
@@ -100,7 +148,9 @@ class EquipmentSet(dict[str, "Item | None"]):
     def pop(self, slot: str, default: "Item | None" = None) -> "Item | None":  # type: ignore[override]
         canonical = self._canonical(slot)
         if default is None:
+            self._layers[canonical] = []
             return super().pop(canonical)
+        self._layers[canonical] = []
         return super().pop(canonical, default)
 
     def update(self, other: Mapping[str, "Item | None"] | Iterable[tuple[str, "Item | None"]] = (), /, **kwargs: "Item | None") -> None:  # type: ignore[override]
@@ -111,10 +161,55 @@ class EquipmentSet(dict[str, "Item | None"]):
             items.extend(other)
         items.extend(kwargs.items())
         for slot, item in items:
-            super().__setitem__(self._canonical(slot), item)
+            self[slot] = item
 
     def copy(self) -> "EquipmentSet":
-        return EquipmentSet(self)
+        copied = EquipmentSet()
+        for slot in EQUIPMENT_SLOTS:
+            layers = [item for item in self._layers.get(slot, [])]
+            copied._layers[slot] = layers
+            dict.__setitem__(copied, slot, layers[-1] if layers else None)
+        return copied
+
+    def push(self, slot: str, item: "Item") -> None:
+        canonical = self._canonical(slot)
+        stack = self._layers.setdefault(canonical, [])
+        stack.append(item)
+        stack.sort(key=lambda candidate: PRESENTATION_LAYER_RANKS.get(candidate.presentation_layer or "", 99))
+        super().__setitem__(canonical, stack[-1] if stack else None)
+
+    def layers(self, slot: str) -> tuple["Item", ...]:
+        return tuple(self._layers.get(self._canonical(slot), ()))
+
+    def all_items(self) -> tuple["Item", ...]:
+        items: list[Item] = []
+        for slot in EQUIPMENT_SLOTS:
+            items.extend(self._layers.get(slot, []))
+        return tuple(items)
+
+    def remove_item(self, target: "Item") -> bool:
+        removed = False
+        target_id = getattr(target, "id", "")
+        for slot in EQUIPMENT_SLOTS:
+            stack = self._layers.get(slot, [])
+            if not stack:
+                continue
+            new_stack = [item for item in stack if item is not target and getattr(item, "id", "") != target_id]
+            if len(new_stack) != len(stack):
+                removed = True
+                self._layers[slot] = new_stack
+                super().__setitem__(slot, new_stack[-1] if new_stack else None)
+        return removed
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "slots": {slot: item.to_dict() if item is not None else None for slot, item in super().items()},
+            "layers": {
+                slot: [item.to_dict() for item in stack]
+                for slot, stack in self._layers.items()
+                if stack
+            },
+        }
 
 
 @dataclass
@@ -148,6 +243,11 @@ class Item:
     presentation_category: str | None = None
     scene_position: str | None = None
     forms: dict[str, str] = field(default_factory=dict)
+    display_nominative: str | None = None
+    display_accusative: str | None = None
+    presentation_layer: str | None = None
+    coverage_areas: tuple[str, ...] = field(default_factory=tuple)
+    coverage_mode: str | None = None
     weapon_profile_id: str | None = None
     armor_profile_id: str | None = None
     shield_profile_id: str | None = None
@@ -156,9 +256,26 @@ class Item:
         return self.weight + sum(item.total_weight() for item in self.contains)
 
     def display_name(self) -> str:
+        base_name = self.display_nominative
+        if not base_name:
+            nominative = self.forms.get("nom")
+            if isinstance(nominative, str) and nominative.strip():
+                base_name = nominative.strip()
+        if not base_name:
+            base_name = self.name
         if self.durability <= 0 and self.item_type in {"weapon", "armor", "shield"}:
-            return f"{self.name} (zniszczony)"
-        return self.name
+            return f"{base_name} (zniszczony)"
+        return base_name
+
+    def display_nominative_name(self) -> str:
+        return self.display_nominative or self.display_name()
+
+    def display_accusative_name(self) -> str | None:
+        if self.display_accusative:
+            return self.display_accusative
+        if "acc" in self.forms and isinstance(self.forms.get("acc"), str) and self.forms["acc"].strip():
+            return self.forms["acc"].strip()
+        return None
 
     def scene_category(self) -> str:
         if self.presentation_category:
@@ -221,6 +338,11 @@ class Item:
             "presentation_category": self.presentation_category,
             "scene_position": self.scene_position,
             "forms": dict(self.forms),
+            "display_nominative": self.display_nominative,
+            "display_accusative": self.display_accusative,
+            "presentation_layer": self.presentation_layer,
+            "coverage_areas": list(self.coverage_areas),
+            "coverage_mode": self.coverage_mode,
             "weapon_profile_id": self.weapon_profile_id,
             "armor_profile_id": self.armor_profile_id,
             "shield_profile_id": self.shield_profile_id,
@@ -260,6 +382,11 @@ class Item:
             presentation_category=data.get("presentation_category"),
             scene_position=data.get("scene_position"),
             forms=dict(data.get("forms", {})),
+            display_nominative=data.get("display_nominative"),
+            display_accusative=data.get("display_accusative"),
+            presentation_layer=data.get("presentation_layer"),
+            coverage_areas=tuple(str(area) for area in data.get("coverage_areas", []) if isinstance(area, str)),
+            coverage_mode=data.get("coverage_mode"),
             weapon_profile_id=data.get("weapon_profile_id"),
             armor_profile_id=data.get("armor_profile_id"),
             shield_profile_id=data.get("shield_profile_id"),

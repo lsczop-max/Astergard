@@ -3,6 +3,12 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 
+from astergard.characters.appearance import (
+    CharacterAppearanceProfile,
+    gender_label,
+    render_appearance_lines,
+    normalize_gender_id,
+)
 from astergard.characters.models import Character
 from astergard.characters.professions import (
     ProfessionSelection,
@@ -36,13 +42,6 @@ class ChildhoodDefinition:
 
 @dataclass(frozen=True, slots=True)
 class BirthRegionDefinition:
-    key: str
-    label: str
-    description: str
-
-
-@dataclass(frozen=True, slots=True)
-class AppearanceDefinition:
     key: str
     label: str
     description: str
@@ -176,106 +175,6 @@ BIRTH_REGION_DEFINITIONS: dict[str, BirthRegionDefinition] = {
     "puszcza": BirthRegionDefinition("puszcza", "Puszcza", "Las, w którym człowiek wcześniej uczy się słuchać niż mówić."),
     "bagna": BirthRegionDefinition("bagna", "Bagna", "Mokradła, torf i ścieżki, które zmieniają się szybciej niż ludzkie plany."),
     "gory": BirthRegionDefinition("gory", "Góry", "Kamień, chłód i wysokie ścieżki, gdzie każdy krok musi mieć sens."),
-}
-
-BUILD_DEFINITIONS: dict[str, AppearanceDefinition] = {
-    "krepy": AppearanceDefinition("krepy", "krępy", "Niższa sylwetka, cięższy środek ciężkości i siła, która bardziej stoi niż biegnie."),
-    "szczuply": AppearanceDefinition("szczuply", "szczupła", "Smukła budowa, zwinna i oszczędna w ruchu."),
-    "wysportowana": AppearanceDefinition("wysportowana", "wysportowana", "Ciało przyzwyczajone do pracy, marszu i wysiłku."),
-    "mocarna": AppearanceDefinition("mocarna", "mocarna", "Szeroka postura, z której trudno zepchnąć kogoś lekkim pchnięciem."),
-    "drobna": AppearanceDefinition("drobna", "drobna", "Niewielka sylwetka, łatwa do zgubienia w tłumie albo w cieniu."),
-    "atletyczna": AppearanceDefinition("atletyczna", "atletyczna", "Sylwetka z wyraźną siłą i wyćwiczonym ruchem."),
-}
-
-HEIGHT_DEFINITIONS: dict[str, AppearanceDefinition] = {
-    "niska": AppearanceDefinition("niska", "niska", "Niższy wzrost, bliżej ziemi niż większość ludzi."),
-    "srednia": AppearanceDefinition("srednia", "średnia", "Wzrost niewyróżniający się w tłumie."),
-    "wysoka": AppearanceDefinition("wysoka", "wysoka", "Wyraźnie wysoka sylwetka."),
-    "bardzo_wysoka": AppearanceDefinition("bardzo_wysoka", "bardzo wysoka", "Ponadprzeciętnie wysoka postać, którą widać z daleka."),
-    "postawna": AppearanceDefinition("postawna", "postawna", "Wyższa i masywniejsza niż przeciętnie."),
-}
-
-HAIR_DEFINITIONS: dict[str, AppearanceDefinition] = {
-    "ciemne_spiete": AppearanceDefinition("ciemne_spiete", "ciemne i spięte", "Ciemne włosy związane tak, by nie przeszkadzały w ruchu."),
-    "krotkie_jasne": AppearanceDefinition("krotkie_jasne", "krótkie i jasne", "Krótkie, jasne włosy bez większej troski o ozdobę."),
-    "dlugie_rude": AppearanceDefinition("dlugie_rude", "długie i rude", "Dłuższe włosy o ciepłym, rudawym odcieniu."),
-    "ogolone": AppearanceDefinition("ogolone", "ogolone", "Głowa wygolona lub prawie całkiem pozbawiona włosów."),
-    "siwe_rzadkie": AppearanceDefinition("siwe_rzadkie", "siwe i rzadkie", "Siwe, przerzedzone włosy po latach pracy i drogi."),
-    "splatane": AppearanceDefinition("splatane", "splątane", "Włosy noszone bez wielkiej troski o porządek."),
-}
-
-BEARD_DEFINITIONS: dict[str, AppearanceDefinition] = {
-    "brak": AppearanceDefinition("brak", "brak", "Gładko ogolona twarz."),
-    "krotka_broda": AppearanceDefinition("krotka_broda", "krótka broda", "Krótko przystrzyżona broda."),
-    "dlugi_zarost": AppearanceDefinition("dlugi_zarost", "długi zarost", "Zarost noszony już wyraźnie dłużej niż kilka dni."),
-    "wasy": AppearanceDefinition("wasy", "wąsy", "Same wąsy, bardziej z przyzwyczajenia niż z próżności."),
-    "pelna_broda": AppearanceDefinition("pelna_broda", "pełna broda", "Gęsta, pełniejsza broda."),
-}
-
-SCAR_DEFINITIONS: dict[str, AppearanceDefinition] = {
-    "brak": AppearanceDefinition("brak", "brak", "Brak widocznych blizn."),
-    "blizna_dlon": AppearanceDefinition("blizna_dlon", "blizna na dłoni", "Blizna na dłoni po pracy albo ostrzu."),
-    "blizna_policzek": AppearanceDefinition("blizna_policzek", "stara blizna na policzku", "Widoczna stara blizna na twarzy."),
-    "drobne_blizny": AppearanceDefinition("drobne_blizny", "kilka drobnych blizn", "Kilka małych śladów po dawnej robocie i bójce."),
-    "oparzenie": AppearanceDefinition("oparzenie", "ślad po oparzeniu", "Ślad po ogniu albo gorącym metalu."),
-}
-
-EYE_DEFINITIONS: dict[str, AppearanceDefinition] = {
-    "szare": AppearanceDefinition("szare", "szare", "Szare oczy, chłodne i trudne do odczytania."),
-    "piwne": AppearanceDefinition("piwne", "piwne", "Piwne oczy o ciepłym, ziemistym odcieniu."),
-    "zielone": AppearanceDefinition("zielone", "zielone", "Zielone oczy, wyraźne i rzadsze."),
-    "niebieskie": AppearanceDefinition("niebieskie", "niebieskie", "Jasne, niebieskie oczy."),
-    "czarne": AppearanceDefinition("czarne", "czarne", "Bardzo ciemne oczy, prawie czarne."),
-    "jasnobursztynowe": AppearanceDefinition("jasnobursztynowe", "jasnobursztynowe", "Jasne oczy w bursztynowym odcieniu."),
-}
-
-TATTOO_DEFINITIONS: dict[str, AppearanceDefinition] = {
-    "brak": AppearanceDefinition("brak", "brak", "Brak tatuaży."),
-    "drobne_znaki": AppearanceDefinition("drobne_znaki", "drobne znaki", "Małe znaki lub symbole na skórze."),
-    "wojenne_znaki": AppearanceDefinition("wojenne_znaki", "wojenne znaki", "Znaki związane ze służbą, walką albo przysięgą."),
-    "plemienne_wzory": AppearanceDefinition("plemienne_wzory", "plemienne wzory", "Tatuaże w stylu rodowym lub plemiennym."),
-    "modlitewne_symbole": AppearanceDefinition("modlitewne_symbole", "modlitewne symbole", "Symbole związane z wiarą i modlitwą."),
-}
-
-GAIT_DEFINITIONS: dict[str, AppearanceDefinition] = {
-    "pewny_spokojny": AppearanceDefinition("pewny_spokojny", "pewnym, spokojnym krokiem", "Porusza się spokojnie i bez pośpiechu."),
-    "ciezki": AppearanceDefinition("ciezki", "ciężkim krokiem", "Każdy krok ma w sobie wagę i ostrożność."),
-    "lekki": AppearanceDefinition("lekki", "lekko i szybko", "Ruch lekki, szybki i zwinny."),
-    "czujny": AppearanceDefinition("czujny", "czujnym krokiem", "Porusza się jak ktoś, kto stale ocenia otoczenie."),
-    "powolny": AppearanceDefinition("powolny", "wolno i ostrożnie", "Stawia kroki ostrożnie, bez gwałtownych ruchów."),
-}
-
-BUILD_ALIASES: dict[str, str] = {
-    "szczupła": "szczuply",
-    "szczupły": "szczuply",
-    "krępa": "krepy",
-    "krępy": "krepy",
-    "mocarny": "mocarna",
-    "drobny": "drobna",
-}
-
-HEIGHT_ALIASES: dict[str, str] = {
-    "niski": "niska",
-    "średni": "srednia",
-    "sredni": "srednia",
-    "wysoki": "wysoka",
-    "bardzo wysoki": "bardzo_wysoka",
-    "postawny": "postawna",
-}
-
-HAIR_ALIASES: dict[str, str] = {
-    "ciemne i krótkie": "ciemne_spiete",
-    "ciemne i krotkie": "ciemne_spiete",
-    "krótkie i ciemne": "ciemne_spiete",
-    "krotkie i ciemne": "ciemne_spiete",
-    "długie i czarne": "dlugie_rude",
-}
-
-GAIT_ALIASES: dict[str, str] = {
-    "pewnym krokiem": "pewny_spokojny",
-    "pewnym, zdecydowanym krokiem": "pewny_spokojny",
-    "wolnym krokiem": "powolny",
-    "lekko": "lekki",
 }
 
 BIRTH_REGION_ALIASES: dict[str, str] = {
@@ -432,102 +331,6 @@ def resolve_childhood(value: str) -> ChildhoodDefinition:
     raise CharacterCreationError("Nieznane dzieciństwo.")
 
 
-def build_appearance_prompt_text() -> str:
-    return _appearance_prompt_text(
-        "Budowa",
-        "Karczmarz zerka na twoją sylwetkę, nie na twoją historię.\n— Jakiej jesteś budowy?",
-        BUILD_DEFINITIONS,
-    )
-
-
-def resolve_build(value: str) -> AppearanceDefinition:
-    return _resolve_choice(value, BUILD_DEFINITIONS, "Budowa nie może być pusta.", aliases=BUILD_ALIASES)
-
-
-def height_prompt_text() -> str:
-    return _appearance_prompt_text(
-        "Wzrost",
-        "Kronikarz unosi wzrok znad pergaminu.\n— Jakiego jesteś wzrostu?",
-        HEIGHT_DEFINITIONS,
-    )
-
-
-def resolve_height(value: str) -> AppearanceDefinition:
-    return _resolve_choice(value, HEIGHT_DEFINITIONS, "Wzrost nie może być pusty.", aliases=HEIGHT_ALIASES)
-
-
-def hair_prompt_text() -> str:
-    return _appearance_prompt_text(
-        "Włosy",
-        "Karczmarz kiwa głową na znak, że to ważniejsza rzecz, niż się wydaje.\n— Jak wyglądają twoje włosy?",
-        HAIR_DEFINITIONS,
-    )
-
-
-def resolve_hair(value: str) -> AppearanceDefinition:
-    return _resolve_choice(value, HAIR_DEFINITIONS, "Włosy nie mogą być puste.", aliases=HAIR_ALIASES)
-
-
-def beard_prompt_text() -> str:
-    return _appearance_prompt_text(
-        "Broda",
-        "Kronikarz uśmiecha się pod nosem.\n— Nosisz brodę? Jeśli nie, wybierz brak.",
-        BEARD_DEFINITIONS,
-    )
-
-
-def resolve_beard(value: str) -> AppearanceDefinition:
-    return _resolve_choice(value, BEARD_DEFINITIONS, "Broda nie może być pusta.")
-
-
-def scars_prompt_text() -> str:
-    return _appearance_prompt_text(
-        "Blizny",
-        "Karczmarz nie naciska.\n— Masz blizny? Jeśli nie, wybierz brak.",
-        SCAR_DEFINITIONS,
-    )
-
-
-def resolve_scars(value: str) -> AppearanceDefinition:
-    return _resolve_choice(value, SCAR_DEFINITIONS, "Blizny nie mogą być puste.")
-
-
-def eyes_prompt_text() -> str:
-    return _appearance_prompt_text(
-        "Oczy",
-        "Kronikarz spogląda na ciebie uważniej.\n— Jakiego koloru są twoje oczy?",
-        EYE_DEFINITIONS,
-    )
-
-
-def resolve_eyes(value: str) -> AppearanceDefinition:
-    return _resolve_choice(value, EYE_DEFINITIONS, "Oczy nie mogą być puste.")
-
-
-def tattoos_prompt_text() -> str:
-    return _appearance_prompt_text(
-        "Tatuaże",
-        "Karczmarz składa dłonie na blacie.\n— Masz tatuaże? Jeśli nie, wybierz brak.",
-        TATTOO_DEFINITIONS,
-    )
-
-
-def resolve_tattoos(value: str) -> AppearanceDefinition:
-    return _resolve_choice(value, TATTOO_DEFINITIONS, "Tatuaże nie mogą być puste.")
-
-
-def gait_prompt_text() -> str:
-    return _appearance_prompt_text(
-        "Chód",
-        "Kronikarz odsuwa pergamin i czeka na ostatni szczegół.\n— Jak się poruszasz?",
-        GAIT_DEFINITIONS,
-    )
-
-
-def resolve_gait(value: str) -> AppearanceDefinition:
-    return _resolve_choice(value, GAIT_DEFINITIONS, "Chód nie może być pusty.", aliases=GAIT_ALIASES)
-
-
 def _resolve_or_keep_label(value: str, resolver) -> str:
     try:
         return resolver(value).label
@@ -536,37 +339,6 @@ def _resolve_or_keep_label(value: str, resolver) -> str:
         if not normalized:
             raise
         return normalized
-
-
-def _resolve_choice(
-    value: str,
-    definitions: dict[str, AppearanceDefinition],
-    error_message: str,
-    *,
-    aliases: dict[str, str] | None = None,
-) -> AppearanceDefinition:
-    normalized = normalize_text(value).lower()
-    if not normalized:
-        raise CharacterCreationError(error_message)
-    if normalized.isdigit():
-        index = int(normalized) - 1
-        options = list(definitions.values())
-        if 0 <= index < len(options):
-            return options[index]
-    if aliases is not None:
-        alias = aliases.get(normalized)
-        if alias is not None:
-            return definitions[alias]
-    if normalized in definitions:
-        return definitions[normalized]
-    for definition in definitions.values():
-        if normalized in {definition.key, normalize_text(definition.label).lower()}:
-            return definition
-    raise CharacterCreationError(error_message)
-
-
-def _appearance_prompt_text(title: str, question: str, definitions: dict[str, AppearanceDefinition]) -> str:
-    return _choice_prompt_text(title, question, definitions)
 
 
 def validate_text(label: str, value: str, *, min_length: int = 1, max_length: int = 200) -> str:
@@ -592,7 +364,7 @@ def validate_age(value: str | int) -> int:
 @dataclass(frozen=True, slots=True)
 class CharacterCreationProfile:
     name: str
-    gender_description: str
+    gender_id: str
     age: int
     origin: str
     childhood: str
@@ -600,10 +372,16 @@ class CharacterCreationProfile:
     main_profession: str
     secondary_profession: str
     appearance: str
+    appearance_profile: CharacterAppearanceProfile | None = None
+
+    @property
+    def gender_description(self) -> str:
+        return gender_label(self.gender_id)
 
     def to_dict(self) -> dict[str, object]:
-        return {
+        data: dict[str, object] = {
             "name": self.name,
+            "gender_id": self.gender_id,
             "gender_description": self.gender_description,
             "age": self.age,
             "origin": self.origin,
@@ -613,25 +391,45 @@ class CharacterCreationProfile:
             "secondary_profession": self.secondary_profession,
             "appearance": self.appearance,
         }
+        if self.appearance_profile is not None:
+            data["appearance_profile"] = self.appearance_profile.to_dict()
+        return data
 
     @classmethod
     def from_dict(cls, data: dict[str, object]) -> "CharacterCreationProfile":
         raw_age = data.get("age", 0)
         age_value = raw_age if isinstance(raw_age, (str, int)) else 0
+        gender_id = normalize_gender_id(data.get("gender_id", data.get("gender_description", "")))
         main_raw = str(data.get("main_profession", "")).strip()
         secondary_raw = str(data.get("secondary_profession", "")).strip()
         migrated_main, migrated_secondary = migrate_legacy_profession_selection(main_raw, secondary_raw or None)
         selection = build_selection(migrated_main, migrated_secondary or None) if migrated_main else ProfessionSelection("", "")
+        appearance_profile_raw = data.get("appearance_profile")
+        appearance_profile = None
+        if isinstance(appearance_profile_raw, Mapping):
+            cleaned_profile = dict(appearance_profile_raw)
+            cleaned_profile.pop("gender", None)
+            try:
+                appearance_profile = CharacterAppearanceProfile.from_dict(cleaned_profile)
+            except ValueError:
+                appearance_profile = None
+            else:
+                if gender_id == "f" and appearance_profile.beard != "brak":
+                    appearance_profile = None
+        appearance_text = str(data.get("appearance", "")).strip()
+        if not appearance_text and appearance_profile is not None and gender_id in {"m", "f"}:
+            appearance_text = "\n".join(render_appearance_lines(appearance_profile, gender_id=gender_id))
         return cls(
             name=validate_text("Imię", str(data.get("name", "")), min_length=2, max_length=32),
-            gender_description=validate_text("Opis płci", str(data.get("gender_description", "")), min_length=2, max_length=80),
+            gender_id=gender_id,
             age=validate_age(age_value),
             origin=resolve_origin(str(data.get("origin", ""))).key,
             childhood=resolve_childhood(str(data.get("childhood", ""))).key if str(data.get("childhood", "")).strip() else "",
             birth_region=_resolve_or_keep_label(str(data.get("birth_region", "")), resolve_birth_region),
             main_profession=selection.main_profession,
             secondary_profession=selection.secondary_profession,
-            appearance=validate_text("Wygląd", str(data.get("appearance", "")), min_length=2, max_length=800),
+            appearance=validate_text("Wygląd", appearance_text, min_length=2, max_length=800),
+            appearance_profile=appearance_profile,
         )
 
     @classmethod
@@ -639,28 +437,37 @@ class CharacterCreationProfile:
         cls,
         *,
         name: str,
-        gender_description: str,
+        gender_id: str,
         age: str | int,
         origin: str,
         birth_region: str,
         main_profession: str,
         secondary_profession: str | None,
-        appearance: str,
+        appearance: str | None = None,
+        appearance_profile: CharacterAppearanceProfile | None = None,
         childhood: str = "",
     ) -> "CharacterCreationProfile":
         resolved_origin = resolve_origin(origin)
         selection = build_selection(main_profession, secondary_profession)
         childhood_definition = resolve_childhood(childhood) if normalize_text(childhood) else None
+        resolved_gender = normalize_gender_id(gender_id)
+        if resolved_gender not in {"m", "f"}:
+            raise CharacterCreationError("Płeć nie może być pusta.")
+        if appearance_profile is not None:
+            rendered_appearance = "\n".join(render_appearance_lines(appearance_profile, gender_id=resolved_gender))
+        else:
+            rendered_appearance = validate_text("Wygląd", appearance or "", min_length=2, max_length=800)
         return cls(
             name=validate_text("Imię", name, min_length=2, max_length=32),
-            gender_description=validate_text("Opis płci", gender_description, min_length=2, max_length=80),
+            gender_id=resolved_gender,
             age=validate_age(age),
             origin=resolved_origin.key,
             childhood=childhood_definition.key if childhood_definition is not None else "",
             birth_region=resolve_birth_region(birth_region).label,
             main_profession=selection.main_profession,
             secondary_profession=selection.secondary_profession,
-            appearance=validate_text("Wygląd", appearance, min_length=2, max_length=800),
+            appearance=rendered_appearance,
+            appearance_profile=appearance_profile,
         )
 
     def origin_definition(self) -> OriginDefinition:
@@ -706,7 +513,7 @@ class CharacterCreationProfile:
         childhood = self.childhood_definition()
         char = Character(username=username, room_id=STARTING_ROOM_ID)
         char.name = self.name
-        char.gender_description = self.gender_description
+        char.gender_id = self.gender_id
         char.age = self.age
         char.origin = origin.key
         char.childhood = childhood.key if childhood is not None else ""
@@ -714,6 +521,7 @@ class CharacterCreationProfile:
         char.main_profession = profession_selection.main_profession
         char.secondary_profession = profession_selection.secondary_profession
         char.appearance = self.appearance
+        char.appearance_profile = self.appearance_profile
         char.starting_reputation = origin.starting_reputation
         char.global_reputation = origin.starting_reputation
         char.inventory = starter_items() + origin.inventory_factory()
@@ -744,39 +552,6 @@ def creation_closing_text() -> str:
         "— Świat bywa okrutny.\n"
         "— Mam nadzieję, że jeszcze kiedyś usiądziemy przy tym samym stole."
     )
-
-
-def build_appearance_summary(
-    *,
-    name: str,
-    gender_description: str,
-    build: str,
-    height: str,
-    hair: str,
-    beard: str,
-    scars: str,
-    eyes: str,
-    tattoos: str,
-    gait: str,
-) -> str:
-    parts = [
-        f"Przed tobą stoi {validate_text('Opis płci', gender_description, min_length=2, max_length=80)} o imieniu {validate_text('Imię', name, min_length=2, max_length=32)}.",
-        f"Ma {height.strip()} i {build.strip()}.",
-        f"Włosy nosi {hair.strip()}.",
-    ]
-    beard_text = normalize_text(beard).lower()
-    if beard_text and beard_text not in {"brak", "bez", "nie", "brak brody", "gładko"}:
-        parts.append(f"Brodę opisujesz jako {beard.strip()}.")
-    elif beard_text:
-        parts.append("Twarz ma gładko ogoloną.")
-    if scars.strip() and normalize_text(scars).lower() not in {"brak", "nie", "bez", "żadne", "zadne"}:
-        parts.append(f"Na twarzy lub ciele nosi ślady: {scars.strip()}.")
-    parts.append(f"Oczy ma {eyes.strip()}.")
-    if tattoos.strip() and normalize_text(tattoos).lower() not in {"brak", "nie", "bez", "żadne", "zadne"}:
-        parts.append(f"Zwracają też uwagę tatuaże: {tattoos.strip()}.")
-    if gait.strip():
-        parts.append(f"Porusza się {gait.strip()}.")
-    return " ".join(parts)
 
 
 def create_character_from_profile(username: str, profile: CharacterCreationProfile) -> Character:

@@ -33,34 +33,18 @@ from astergard.application.character_vitals import build_character_vitals_payloa
 from astergard.characters.creation import (
     CharacterCreationError,
     CharacterCreationProfile,
-    beard_prompt_text,
-    build_appearance_prompt_text,
-    build_appearance_summary,
     birth_region_prompt_text,
     childhood_prompt_text,
     creation_closing_text,
     creation_opening_text,
-    eyes_prompt_text,
-    gait_prompt_text,
-    hair_prompt_text,
-    height_prompt_text,
     origin_prompt_text,
-    resolve_beard,
-    resolve_build,
     resolve_birth_region,
     resolve_childhood,
-    resolve_eyes,
-    resolve_gait,
-    resolve_hair,
-    resolve_height,
     resolve_origin,
-    resolve_scars,
-    resolve_tattoos,
-    scars_prompt_text,
-    tattoos_prompt_text,
     validate_age,
     validate_text,
 )
+from astergard.characters.appearance import appearance_profile_from_choices, appearance_steps_for_gender, gender_step
 from astergard.characters.models import Character
 from astergard.characters.professions import ProfessionError, build_selection, profession_menu_text
 from astergard.database.repository import UsernameTakenError
@@ -331,15 +315,10 @@ class SessionFlow:
             lambda value: validate_text("Imię", value, min_length=2, max_length=32),
             "Karczmarz opiera łokcie o stół. ",
         )
-        gender_description = await self._prompt_validated(
+        gender_id = await self._prompt_validated(
             transport,
-            "— Jak mam cię opisać w księdze? ",
-            lambda value: validate_text(
-                "Opis płci",
-                value,
-                min_length=2,
-                max_length=80,
-            ),
+            f"{gender_step().prompt} ",
+            lambda value: gender_step().resolver(value).key,
             "Kronikarz zanurza pióro w atramencie. ",
         )
         age = await self._prompt_validated(
@@ -378,76 +357,33 @@ class SessionFlow:
             lambda value: build_selection(main_profession, value).secondary_profession,
             profession_menu_text(),
         )
-        build = await self._prompt_validated(
-            transport,
-            "— Jakiej jesteś budowy? ",
-            lambda value: resolve_build(value).label,
-            build_appearance_prompt_text(),
-        )
-        height = await self._prompt_validated(
-            transport,
-            "— Jakiego jesteś wzrostu? ",
-            lambda value: resolve_height(value).label,
-            height_prompt_text(),
-        )
-        hair = await self._prompt_validated(
-            transport,
-            "— Jak wyglądają twoje włosy? ",
-            lambda value: resolve_hair(value).label,
-            hair_prompt_text(),
-        )
-        beard = await self._prompt_validated(
-            transport,
-            "— Nosisz brodę? Jeśli nie, wpisz brak. ",
-            lambda value: resolve_beard(value).label,
-            beard_prompt_text(),
-        )
-        scars = await self._prompt_validated(
-            transport,
-            "— Masz blizny? Jeśli nie, wpisz brak. ",
-            lambda value: resolve_scars(value).label,
-            scars_prompt_text(),
-        )
-        eyes = await self._prompt_validated(
-            transport,
-            "— Jakiego koloru są twoje oczy? ",
-            lambda value: resolve_eyes(value).label,
-            eyes_prompt_text(),
-        )
-        tattoos = await self._prompt_validated(
-            transport,
-            "— Masz tatuaże? Jeśli nie, wpisz brak. ",
-            lambda value: resolve_tattoos(value).label,
-            tattoos_prompt_text(),
-        )
-        gait = await self._prompt_validated(
-            transport,
-            "— Jak się poruszasz? ",
-            lambda value: resolve_gait(value).label,
-            gait_prompt_text(),
-        )
-        appearance = build_appearance_summary(
-            name=name,
-            gender_description=gender_description,
-            build=build,
-            height=height,
-            hair=hair,
-            beard=beard,
-            scars=scars,
-            eyes=eyes,
-            tattoos=tattoos,
-            gait=gait,
-        )
+        appearance_values: dict[str, str] = {}
+        for step in appearance_steps_for_gender(gender_id):
+            appearance_values[step.step_id] = await self._prompt_validated(
+                transport,
+                f"{step.prompt} ",
+                lambda value, resolver=step.resolver: resolver(value).key,
+                None,
+            )
         return CharacterCreationProfile.build(
             name=name,
-            gender_description=gender_description,
+            gender_id=gender_id,
             age=age,
             origin=origin,
             childhood=childhood,
             birth_region=birth_region,
             main_profession=main_profession,
             secondary_profession=secondary_profession or None,
-            appearance=appearance,
+            appearance_profile=appearance_profile_from_choices(
+                gender_id=gender_id,
+                build=appearance_values["build"],
+                height=appearance_values["height"],
+                eyes=appearance_values["eyes"],
+                hair_color=appearance_values["hair_color"],
+                hair_style=appearance_values["hair_style"],
+                beard=appearance_values.get("beard", "brak"),
+                special_feature=appearance_values["special_feature"],
+            ),
         )
 
     async def _read_login_credentials(self, transport: SessionTransport) -> tuple[str, str, str | None]:

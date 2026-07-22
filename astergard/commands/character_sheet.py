@@ -24,8 +24,8 @@ def build_character_sheet_handlers() -> dict[str, CommandHandler]:
         ]
         if ctx.character.birth_region:
             lines.append(f"Twoim miejscem urodzenia jest {ctx.character.birth_region}.")
-        if ctx.character.gender_description:
-            lines.append(f"Opis, jaki nosisz przy sobie: {ctx.character.gender_description}.")
+        if ctx.character.gender_id:
+            lines.append(f"Płeć: {ctx.character.gender_description}.")
         return lines
 
     def _background_lines(ctx: GameContext) -> list[str]:
@@ -37,8 +37,6 @@ def build_character_sheet_handlers() -> dict[str, CommandHandler]:
             f"Reputacja startowa: {ctx.character.starting_reputation}.",
             f"Reputacja globalna: {ctx.character.global_reputation}.",
         ]
-        if ctx.character.appearance:
-            lines.append(f"Wygląd: {ctx.character.appearance}.")
         if origin_name:
             lines.append(f"Korzenie: {origin_name}.")
         return lines
@@ -49,7 +47,6 @@ def build_character_sheet_handlers() -> dict[str, CommandHandler]:
         body = [
             f"Przed tobą stoi {ctx.character.name or ctx.character.username}.",
             *identity[1:],
-            ctx.character.equipment_summary(),
             f"Sposób obrony: {defense_style_label(ctx.character.active_defense_style)}.",
             f"Poruszasz się {stride}.",
         ]

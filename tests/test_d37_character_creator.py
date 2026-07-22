@@ -11,6 +11,7 @@ from astergard.characters.professions import ProfessionError, ProfessionSelectio
 from astergard.database.repository import PlayerRepository
 from astergard.application.session_transport import TcpSessionTransport
 from astergard.testing import FakeReader, FakeWriter, TestGameHarness as GameHarness
+from astergard.characters.appearance import appearance_profile_from_choices
 
 
 class CharacterCreatorTests(unittest.TestCase):
@@ -33,12 +34,10 @@ class CharacterCreatorTests(unittest.TestCase):
                         "bard",
                         "szczupła",
                         "wysoka",
-                        "ciemne i spięte",
-                        "brak",
-                        "blizna na dłoni",
                         "szare",
-                        "brak",
-                        "pewnym, spokojnym krokiem",
+                        "ciemne",
+                        "spięte",
+                        "blizna na dłoni",
                     ]
                 )
                 writer = FakeWriter()
@@ -59,6 +58,16 @@ class CharacterCreatorTests(unittest.TestCase):
                 self.assertIn("lute", [item.vnum for item in char.inventory])
                 self.assertIn("muzyka", char.skills.values)
                 self.assertGreaterEqual(char.skills.values["muzyka"]["level"], 3)
+                self.assertIsNotNone(char.appearance_profile)
+                assert char.appearance_profile is not None
+                self.assertEqual(char.appearance_profile.build, "szczuply")
+                self.assertEqual(char.appearance_profile.height, "wysoki")
+                self.assertEqual(char.appearance_profile.eyes, "szare")
+                self.assertEqual(char.appearance_profile.hair_color, "ciemne")
+                self.assertEqual(char.appearance_profile.hair_style, "spiete")
+                self.assertEqual(char.appearance_profile.beard, "brak")
+                self.assertEqual(char.appearance_profile.special_feature, "blizna_dlon")
+                self.assertIn("Jesteś wysoką, szczupłą kobietą o szarych oczach.", char.appearance)
                 self.assertIn("Powoli odzyskujesz świadomość", writer.text())
                 self.assertIn("Karczmarz opiera łokcie", writer.text())
                 self.assertNotIn("Wybierz pochodzenie", writer.text())
@@ -81,11 +90,9 @@ class CharacterCreatorTests(unittest.TestCase):
                         "2",
                         "szermierz",
                         "bard",
+                        "4",
                         "2",
-                        "3",
                         "1",
-                        "1",
-                        "2",
                         "1",
                         "1",
                         "1",
@@ -101,24 +108,27 @@ class CharacterCreatorTests(unittest.TestCase):
                 self.assertEqual(char.birth_region, "Podgrodzie")
                 self.assertEqual(char.main_profession, "szermierz")
                 self.assertEqual(char.secondary_profession, "bard")
-                self.assertIn("szczupła", char.appearance)
-                self.assertIn("wysoka", char.appearance)
-                self.assertIn("ciemne i spięte", char.appearance)
-                self.assertIn("blizna na dłoni", char.appearance)
-                self.assertIn("szare", char.appearance)
+                self.assertIsNotNone(char.appearance_profile)
+                assert char.appearance_profile is not None
+                self.assertEqual(char.appearance_profile.build, "krepy")
+                self.assertEqual(char.appearance_profile.height, "niski")
+                self.assertEqual(char.appearance_profile.eyes, "szare")
+                self.assertEqual(char.appearance_profile.hair_color, "ciemne")
+                self.assertEqual(char.appearance_profile.hair_style, "krotkie")
+                self.assertEqual(char.appearance_profile.beard, "brak")
+                self.assertEqual(char.appearance_profile.special_feature, "brak")
+                self.assertIn("Jesteś niską, krępą kobietą o szarych oczach.", char.appearance)
                 transcript = writer.text()
                 self.assertIn("Pochodzenie:", transcript)
                 self.assertIn("1. mieszczanin Astergardu", transcript)
                 self.assertIn("Dzieciństwo:", transcript)
                 self.assertIn("Region urodzenia:", transcript)
-                self.assertIn("Budowa:", transcript)
-                self.assertIn("Wzrost:", transcript)
-                self.assertIn("Włosy:", transcript)
-                self.assertIn("Broda:", transcript)
-                self.assertIn("Blizny:", transcript)
-                self.assertIn("Oczy:", transcript)
-                self.assertIn("Tatuaże:", transcript)
-                self.assertIn("Chód:", transcript)
+                self.assertIn("— Jakiej jesteś budowy?", transcript)
+                self.assertIn("— Jakiego jesteś wzrostu?", transcript)
+                self.assertIn("— Jakiego koloru są twoje oczy?", transcript)
+                self.assertIn("— Jaki mają kolor twoje włosy?", transcript)
+                self.assertIn("— Jak nosisz włosy?", transcript)
+                self.assertIn("— Masz jakąś cechę szczególną? Jeśli nie, wybierz brak.", transcript)
                 self.assertIn("Profesje główne:", transcript)
                 self.assertIn("Wpisz numer albo nazwę.", transcript)
 
@@ -127,16 +137,26 @@ class CharacterCreatorTests(unittest.TestCase):
     def test_profile_roundtrip_persists_creator_data_and_professions(self) -> None:
         with tempfile.NamedTemporaryFile() as tmp:
             repo = PlayerRepository(tmp.name)
+            appearance_profile = appearance_profile_from_choices(
+                gender_id="m",
+                build="krępy",
+                height="wysoki",
+                eyes="piwne",
+                hair_color="ciemne",
+                hair_style="krótkie",
+                beard="brak",
+                special_feature="brak",
+            )
             profile = CharacterCreationProfile.build(
                 name="Marek",
-                gender_description="mężczyzna",
+                gender_id="m",
                 age="31",
                 origin="mieszczanin Astergardu",
                 childhood="miasto",
                 birth_region="Astergard",
                 main_profession="szermierz",
                 secondary_profession="kowal",
-                appearance="Krótko ostrzyżony kupiecki syn w czystym płaszczu.",
+                appearance_profile=appearance_profile,
             )
             self.assertTrue(repo.register("creator", "pw", profile))
             char = repo.load("creator")
@@ -146,6 +166,10 @@ class CharacterCreatorTests(unittest.TestCase):
             self.assertEqual(char.main_profession, "szermierz")
             self.assertEqual(char.secondary_profession, "kowal")
             self.assertEqual(char.combat_style, "ofensywny")
+            self.assertIsNotNone(char.appearance_profile)
+            assert char.appearance_profile is not None
+            self.assertEqual(char.appearance_profile, appearance_profile)
+            self.assertIn("Jesteś wysokim, krępym mężczyzną o piwnych oczach.", char.appearance)
             self.assertIn("dueling_blade", [item.vnum for item in char.inventory] + [item.vnum for item in char.equipment.values() if item is not None])
             self.assertIn("smith_tools", [item.vnum for item in char.inventory])
 
@@ -156,6 +180,9 @@ class CharacterCreatorTests(unittest.TestCase):
             self.assertEqual(loaded.history, "Zmieniona historia po pierwszym zapisie.")
             self.assertEqual(loaded.main_profession, "szermierz")
             self.assertEqual(loaded.secondary_profession, "kowal")
+            self.assertIsNotNone(loaded.appearance_profile)
+            assert loaded.appearance_profile is not None
+            self.assertEqual(loaded.appearance_profile, appearance_profile)
             self.assertIn("dueling_blade", [item.vnum for item in loaded.inventory] + [item.vnum for item in loaded.equipment.values() if item is not None])
 
     def test_legacy_character_defaults_survive_missing_creator_json(self) -> None:
@@ -197,9 +224,18 @@ class CharacterCreatorTests(unittest.TestCase):
                         "migrated",
                     ),
                 )
+                row = con.execute(
+                    """
+                    SELECT room_id,gold,stats_json,skills_json,wounds_json,reputation_json,global_reputation,local_reputation_json,
+                           renown,title,crimes_json,wanted_level,wanted_posts_json,quests_json,completed_json,inventory_json,equipment_json,effects_json,combat_style,creator_json,visited_room_ids_json
+                    FROM players WHERE username=?
+                    """,
+                    ("migrated",),
+                ).fetchone()
+            assert row is not None
             with warnings.catch_warnings(record=True) as captured:
                 warnings.simplefilter("always")
-                first = repo.load("migrated")
+                first = repo.characters.serializer.hydrate("migrated", row)
             self.assertGreaterEqual(len(captured), 1)
             self.assertEqual(first.main_profession, "wojownik")
             self.assertEqual(first.secondary_profession, "")
@@ -235,7 +271,7 @@ class CharacterCreatorTests(unittest.TestCase):
         with self.assertRaises(CharacterCreationError):
             CharacterCreationProfile.build(
                 name="A",
-                gender_description="mężczyzna",
+                gender_id="m",
                 age="24",
                 origin="mieszczanin Astergardu",
                 childhood="miasto",
@@ -248,7 +284,7 @@ class CharacterCreatorTests(unittest.TestCase):
         with self.assertRaises(ProfessionError):
             CharacterCreationProfile.build(
                 name="Ala",
-                gender_description="mężczyzna",
+                gender_id="m",
                 age="24",
                 origin="mieszczanin Astergardu",
                 childhood="miasto",
@@ -261,7 +297,7 @@ class CharacterCreatorTests(unittest.TestCase):
         with self.assertRaises(ProfessionError):
             CharacterCreationProfile.build(
                 name="Ala",
-                gender_description="mężczyzna",
+                gender_id="m",
                 age="24",
                 origin="mieszczanin Astergardu",
                 childhood="miasto",
@@ -295,12 +331,11 @@ class CharacterCreatorTests(unittest.TestCase):
                         "0",
                         "krępy",
                         "wysoki",
-                        "ciemne i krótkie",
-                        "krótka broda",
-                        "stara blizna na policzku",
                         "piwne",
-                        "1",
-                        "pewnym krokiem",
+                        "ciemne",
+                        "krótkie",
+                        "krótki zarost",
+                        "wąska blizna na policzku",
                     ]
                 )
                 writer = FakeWriter()
@@ -313,6 +348,16 @@ class CharacterCreatorTests(unittest.TestCase):
                 self.assertIn("Twoje pochodzenie to mieszczanin Astergardu.", transcript.output)
                 self.assertIn("Ścieżka główna: wojownik.", transcript.output)
                 self.assertIn("Na początku niesiesz:", transcript.output)
+                self.assertNotIn("Obciążenie:", transcript.output)
+                self.assertNotIn("100/100", transcript.output)
+                self.assertIn("Płeć: mężczyzna.", transcript.output)
+                self.assertNotIn("Wygląd:", transcript.output)
+                ob = await harness.execute(result.character, "ob siebie")
+                self.assertIn("Jesteś wysokim, krępym mężczyzną o piwnych oczach.", ob.output)
+                self.assertIn("Masz krótkie, ciemne włosy.", ob.output)
+                self.assertIn("Na twarzy nosisz kilkudniowy zarost.", ob.output)
+                self.assertIn("Wąska blizna przecina policzek.", ob.output)
+                self.assertIn("Marek, mężczyzna.", ob.output)
                 rep = await harness.execute(result.character, "reputacja")
                 self.assertIn("Twoje imię w świecie:", rep.output)
                 self.assertIn("Jak mówią o tobie ludzie:", rep.output)

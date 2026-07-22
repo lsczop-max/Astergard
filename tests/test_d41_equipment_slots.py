@@ -40,6 +40,94 @@ class EquipmentSlotTests(unittest.TestCase):
             self.assertIs(character.equipment["amulet"], amulet_a)
             self.assertIn(amulet_b, character.inventory)
 
+    def test_wear_rejects_shield_when_two_handed_weapon_is_equipped(self) -> None:
+        with TestGameHarness() as harness:
+            server = harness.require_server()
+            character = harness.create_character("slot_user", room_id=60)
+            halberd = Item(
+                "halabarda strażnicza",
+                "Długa broń.",
+                3.4,
+                20,
+                "watch_halberd",
+                item_type="weapon",
+                slot="bron_glowna",
+                wearable=True,
+                weapon_type="halabarda",
+                weapon_profile_id="watch_halberd",
+            )
+            shield = Item(
+                "okrągła tarcza",
+                "Osłona.",
+                2.0,
+                12,
+                "round_shield",
+                item_type="shield",
+                slot="tarcza",
+                wearable=True,
+                weapon_type="tarcza",
+            )
+            character.inventory.extend([halberd, shield])
+
+            first = server.services.inventory_service.wear_item(character, "halabarda strażnicza", 1)
+            second = server.services.inventory_service.wear_item(character, "okrągła tarcza", 1)
+
+            self.assertIn("Zakładasz halabarda strażnicza.", first)
+            self.assertIn("Najpierw odłóż broń dwuręczną", second)
+            self.assertIs(character.equipment["bron_glowna"], halberd)
+            self.assertIsNone(character.equipment["tarcza"])
+            self.assertIn(shield, character.inventory)
+
+    def test_wear_rejects_two_handed_weapon_when_shield_is_equipped(self) -> None:
+        with TestGameHarness() as harness:
+            server = harness.require_server()
+            character = harness.create_character("slot_user", room_id=60)
+            sword = Item(
+                "prosty miecz",
+                "Krótka broń.",
+                1.2,
+                20,
+                "garrison_short_sword",
+                item_type="weapon",
+                slot="bron_glowna",
+                wearable=True,
+                weapon_type="miecz",
+                weapon_profile_id="garrison_short_sword",
+            )
+            halberd = Item(
+                "halabarda strażnicza",
+                "Długa broń.",
+                3.4,
+                20,
+                "watch_halberd",
+                item_type="weapon",
+                slot="bron_glowna",
+                wearable=True,
+                weapon_type="halabarda",
+                weapon_profile_id="watch_halberd",
+            )
+            shield = Item(
+                "okrągła tarcza",
+                "Osłona.",
+                2.0,
+                12,
+                "round_shield",
+                item_type="shield",
+                slot="tarcza",
+                wearable=True,
+                weapon_type="tarcza",
+            )
+            character.inventory.extend([sword, halberd, shield])
+
+            first = server.services.inventory_service.wear_item(character, "okrągła tarcza", 1)
+            second = server.services.inventory_service.wear_item(character, "halabarda strażnicza", 1)
+
+            self.assertIn("Zakładasz okrągła tarcza.", first)
+            self.assertIn("Najpierw zdejmij tarczę", second)
+            self.assertIs(character.equipment["tarcza"], shield)
+            self.assertIsNone(character.equipment["bron_glowna"])
+            self.assertIn(halberd, character.inventory)
+
     def test_remove_frees_slot_and_returns_item_to_inventory(self) -> None:
         with TestGameHarness() as harness:
             character = harness.create_character("slot_user", room_id=60)
@@ -164,20 +252,13 @@ class EquipmentSlotTests(unittest.TestCase):
                     1,
                 )
 
-            async def run_postac() -> str:
-                return await server.services.dispatcher.commands["postac"](
-                    server.make_context(hero),
-                    None,
-                    1,
-                )
-
             look_text = asyncio.run(run_look())
-            postac_text = asyncio.run(run_postac())
+            ob_text = asyncio.run(harness.execute(hero, "ob siebie"))
             self.assertIn("Wyposażenie przy tobie: testowy miecz", inventory_text)
             self.assertIn("Obciążenie: niewielkie", inventory_text)
-            self.assertIn("Masz na sobie:", postac_text)
-            self.assertIn("W dłoniach masz: testowy miecz w prawej dłoni.", postac_text)
-            self.assertNotIn("broń główna", postac_text)
+            self.assertIn("Jesteś", ob_text.output)
+            self.assertIn("Twoją prawą rękę zajmuje: testowy miecz.", ob_text.output)
+            self.assertNotIn("tarcza testowa", ob_text.output)
             self.assertIn("tarcza", look_text)
 
 

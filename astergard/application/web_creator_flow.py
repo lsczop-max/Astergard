@@ -3,38 +3,17 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
+from astergard.characters.appearance import appearance_profile_from_choices, appearance_steps_for_gender, gender_step, normalize_gender_id
 from astergard.characters.creation import (
     BIRTH_REGION_DEFINITIONS,
-    BEARD_DEFINITIONS,
-    BUILD_DEFINITIONS,
     CHILDHOOD_DEFINITIONS,
-    EYE_DEFINITIONS,
-    GAIT_DEFINITIONS,
-    HAIR_DEFINITIONS,
-    HEIGHT_DEFINITIONS,
     ORIGIN_DEFINITIONS,
-    SCAR_DEFINITIONS,
-    TATTOO_DEFINITIONS,
-    build_appearance_summary,
-    build_appearance_prompt_text,
     birth_region_prompt_text,
     childhood_prompt_text,
-    eyes_prompt_text,
-    gait_prompt_text,
-    hair_prompt_text,
-    height_prompt_text,
-    origin_prompt_text,
-    resolve_beard,
-    resolve_build,
-    resolve_birth_region,
     resolve_childhood,
-    resolve_eyes,
-    resolve_gait,
-    resolve_hair,
-    resolve_height,
     resolve_origin,
-    resolve_scars,
-    resolve_tattoos,
+    resolve_birth_region,
+    origin_prompt_text,
     validate_age,
     validate_text,
 )
@@ -121,8 +100,7 @@ class WebCreatorFlow:
         return self._finished
 
     def current_step(self) -> CreatorStepPayload:
-        step = self._steps()[self._step_index]
-        return step
+        return self._steps()[self._step_index]
 
     def current_step_dict(self) -> dict[str, Any]:
         return self.current_step().to_dict()
@@ -159,14 +137,14 @@ class WebCreatorFlow:
         self._cancelled = True
 
     def _steps(self) -> list[CreatorStepPayload]:
-        return [
+        steps: list[CreatorStepPayload] = [
             CreatorStepPayload("name", "Imię", "— Jak cię zwać?", "text", [], False, True),
             CreatorStepPayload(
-                "gender_description",
-                "Opis płci",
-                "— Jak mam cię opisać w księdze?",
-                "text",
-                [],
+                "gender_id",
+                "Płeć",
+                gender_step().prompt,
+                "choice",
+                [_choice(option.key, option.label, option.description) for option in gender_step().options],
                 True,
                 True,
             ),
@@ -176,15 +154,22 @@ class WebCreatorFlow:
             CreatorStepPayload("birth_region", "Region urodzenia", birth_region_prompt_text(), "choice", _definition_choices(BIRTH_REGION_DEFINITIONS), True, True),
             CreatorStepPayload("main_profession", "Profesja główna", profession_menu_text(), "choice", _profession_choices(MAIN_PROFESSIONS), True, True),
             CreatorStepPayload("secondary_profession", "Profesja dodatkowa", profession_menu_text(), "choice", _secondary_profession_choices(), True, True),
-            CreatorStepPayload("build", "Budowa", build_appearance_prompt_text(), "choice", _definition_choices(BUILD_DEFINITIONS), True, True),
-            CreatorStepPayload("height", "Wzrost", height_prompt_text(), "choice", _definition_choices(HEIGHT_DEFINITIONS), True, True),
-            CreatorStepPayload("hair", "Włosy", hair_prompt_text(), "choice", _definition_choices(HAIR_DEFINITIONS), True, True),
-            CreatorStepPayload("beard", "Broda", "— Nosisz brodę? Jeśli nie, wybierz brak.", "choice", _definition_choices(BEARD_DEFINITIONS), True, True),
-            CreatorStepPayload("scars", "Blizny", "— Masz blizny? Jeśli nie, wybierz brak.", "choice", _definition_choices(SCAR_DEFINITIONS), True, True),
-            CreatorStepPayload("eyes", "Oczy", eyes_prompt_text(), "choice", _definition_choices(EYE_DEFINITIONS), True, True),
-            CreatorStepPayload("tattoos", "Tatuaże", "— Masz tatuaże? Jeśli nie, wybierz brak.", "choice", _definition_choices(TATTOO_DEFINITIONS), True, True),
-            CreatorStepPayload("gait", "Chód", gait_prompt_text(), "choice", _definition_choices(GAIT_DEFINITIONS), True, True),
         ]
+        gender_id = normalize_gender_id(self._answers.get("gender_id"))
+        if gender_id in {"m", "f"}:
+            for step in appearance_steps_for_gender(gender_id):
+                steps.append(
+                    CreatorStepPayload(
+                        step.step_id,
+                        step.title,
+                        step.prompt,
+                        "choice",
+                        [_choice(option.key, option.label_for_gender(gender_id), option.description) for option in step.options],
+                        True,
+                        True,
+                    )
+                )
+        return steps
 
     def _store_answer(self, step_id: str, raw_value: str) -> None:
         value = raw_value.strip()
@@ -192,8 +177,12 @@ class WebCreatorFlow:
             if step_id == "name":
                 self._answers["name"] = validate_text("Imię", value, min_length=2, max_length=32)
                 return
-            if step_id == "gender_description":
-                self._answers["gender_description"] = validate_text("Opis płci", value, min_length=2, max_length=80)
+            if step_id == "gender_id":
+                gender = gender_step().resolver(value).key
+                if self._answers.get("gender_id") != gender:
+                    for key in ("build", "height", "eyes", "hair_color", "hair_style", "beard", "special_feature"):
+                        self._answers.pop(key, None)
+                self._answers["gender_id"] = gender
                 return
             if step_id == "age":
                 self._answers["age"] = validate_age(value)
@@ -216,29 +205,9 @@ class WebCreatorFlow:
                     return
                 self._answers["secondary_profession"] = build_selection(self._get_required_answer("main_profession"), value).secondary_profession
                 return
-            if step_id == "build":
-                self._answers["build"] = resolve_build(value).label
-                return
-            if step_id == "height":
-                self._answers["height"] = resolve_height(value).label
-                return
-            if step_id == "hair":
-                self._answers["hair"] = resolve_hair(value).label
-                return
-            if step_id == "beard":
-                self._answers["beard"] = resolve_beard(value).label
-                return
-            if step_id == "scars":
-                self._answers["scars"] = resolve_scars(value).label
-                return
-            if step_id == "eyes":
-                self._answers["eyes"] = resolve_eyes(value).label
-                return
-            if step_id == "tattoos":
-                self._answers["tattoos"] = resolve_tattoos(value).label
-                return
-            if step_id == "gait":
-                self._answers["gait"] = resolve_gait(value).label
+            if step_id in {step.step_id for step in appearance_steps_for_gender(self._get_required_answer("gender_id"))}:
+                step = next(step for step in appearance_steps_for_gender(self._get_required_answer("gender_id")) if step.step_id == step_id)
+                self._answers[step_id] = step.resolver(value).key
                 return
         except (CharacterCreationError, ProfessionError, ValueError) as exc:
             raise WebCreatorValidationError(step_id, str(exc)) from exc
@@ -251,27 +220,26 @@ class WebCreatorFlow:
         return value
 
     def _build_profile(self) -> CharacterCreationProfile:
-        childhood = self._answers.get("childhood")
         secondary_profession = self._answers.get("secondary_profession")
+        beard_answer = self._answers.get("beard")
+        beard_value = beard_answer if isinstance(beard_answer, str) and beard_answer else "brak"
         return CharacterCreationProfile.build(
             name=self._get_required_answer("name"),
-            gender_description=self._get_required_answer("gender_description"),
+            gender_id=self._get_required_answer("gender_id"),
             age=self._answers.get("age", 0),
             origin=self._get_required_answer("origin"),
-            childhood=childhood if isinstance(childhood, str) else "",
+            childhood=self._get_required_answer("childhood"),
             birth_region=self._get_required_answer("birth_region"),
             main_profession=self._get_required_answer("main_profession"),
-            secondary_profession=secondary_profession if isinstance(secondary_profession, str) else None,
-            appearance=build_appearance_summary(
-                name=self._get_required_answer("name"),
-                gender_description=self._get_required_answer("gender_description"),
+            secondary_profession=secondary_profession if isinstance(secondary_profession, str) and secondary_profession else None,
+            appearance_profile=appearance_profile_from_choices(
+                gender_id=self._get_required_answer("gender_id"),
                 build=self._get_required_answer("build"),
                 height=self._get_required_answer("height"),
-                hair=self._get_required_answer("hair"),
-                beard=self._get_required_answer("beard"),
-                scars=self._get_required_answer("scars"),
                 eyes=self._get_required_answer("eyes"),
-                tattoos=self._get_required_answer("tattoos"),
-                gait=self._get_required_answer("gait"),
+                hair_color=self._get_required_answer("hair_color"),
+                hair_style=self._get_required_answer("hair_style"),
+                beard=beard_value,
+                special_feature=self._get_required_answer("special_feature"),
             ),
         )

@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from astergard.characters.models import Character
+from astergard.combat.weapons import HandRequirement, resolve_weapon_profile
 from astergard.commands.helpers import find_item
 from astergard.commands.polish import is_all_phrase, split_relation, tokens_match
 from astergard.items.models import EQUIPMENT_SLOTS, equipment_slot_label
@@ -285,8 +286,30 @@ class InventoryService:
         slot = item.normalized_slot()
         if slot is None:
             return f"{item.name} nie ma miejsca na ciele, które można by na siebie nałożyć."
+        equipped_weapon = character.weapon()
+        equipped_weapon_profile = resolve_weapon_profile(equipped_weapon)
+        if item.item_type == "shield" and equipped_weapon_profile is not None and not equipped_weapon_profile.legacy and equipped_weapon_profile.hand_requirement == HandRequirement.TWO_HANDED:
+            return "Najpierw odłóż broń dwuręczną, zanim założysz tarczę."
+        if item.item_type == "weapon":
+            item_profile = resolve_weapon_profile(item)
+            if item_profile is not None and not item_profile.legacy and item_profile.hand_requirement == HandRequirement.TWO_HANDED and character.shield() is not None:
+                return "Najpierw zdejmij tarczę, zanim weźmiesz broń dwuręczną."
         old = character.equipment.get(slot)
+        stackable_slots = {"glowa", "szyja", "korpus", "plecy", "rece", "dlonie", "pas", "nogi", "stopy"}
         if old is not None:
+            if (
+                slot in stackable_slots
+                and hasattr(character.equipment, "push")
+                and item.presentation_layer is not None
+                and old.presentation_layer is not None
+            ):
+                existing_layers = [layer.presentation_layer for layer in character.equipment.layers(slot) if layer.presentation_layer is not None]
+                if item.presentation_layer not in existing_layers:
+                    character.inventory.remove(item)
+                    character.equipment.push(slot, item)
+                    if event_bus is not None:
+                        event_bus.emit(DomainEventType.ITEM_EQUIPPED, username=character.username, slot=slot, item=item.vnum or item.name)
+                    return f"Zakładasz {item.display_name()}."
             slot_name = equipment_slot_label(slot)
             if slot_name == "amulet":
                 slot_name = "amuletu"
@@ -295,18 +318,25 @@ class InventoryService:
         character.equipment[slot] = item
         if event_bus is not None:
             event_bus.emit(DomainEventType.ITEM_EQUIPPED, username=character.username, slot=slot, item=item.vnum or item.name)
-        return f"Zakładasz {item.name}."
+        return f"Zakładasz {item.display_name()}."
 
     def remove_item(self, character: Character, name: str | None, event_bus=None) -> str:
         if not name:
             return "Co chcesz zdjąć?"
-        for slot in EQUIPMENT_SLOTS:
-            item = character.equipment.get(slot)
+        candidate_items = getattr(character.equipment, "all_items", lambda: tuple(character.equipment.values()))()
+        for item in candidate_items:
             if item is not None and tokens_match(name, f"{item.name} {item.vnum}"):
-                character.equipment[slot] = None
+                if hasattr(character.equipment, "remove_item"):
+                    character.equipment.remove_item(item)
+                else:
+                    for slot in EQUIPMENT_SLOTS:
+                        current = character.equipment.get(slot)
+                        if current is item:
+                            character.equipment[slot] = None
+                            break
                 character.inventory.append(item)
                 if event_bus is not None:
-                    event_bus.emit(DomainEventType.ITEM_UNEQUIPPED, username=character.username, slot=slot, item=item.vnum or item.name)
+                    event_bus.emit(DomainEventType.ITEM_UNEQUIPPED, username=character.username, slot=item.slot or "", item=item.vnum or item.name)
                 return f"Zdejmujesz {item.name}."
         return "Nie masz tego na sobie. Sprawdź, czy szukasz właściwej rzeczy albo właściwego miejsca."
 
@@ -329,9 +359,15 @@ class InventoryService:
     def find_container_ref(self, character: Character, name: str, *, index: int = 1, location: Location | None = None) -> ContainerRef | None:
         matches: list[ContainerRef] = []
         self._collect_container_refs(character.inventory, name, character.inventory, "inventory", matches)
-        for slot, item in character.equipment.items():
-            if item is not None:
-                self._collect_container_refs([item], name, character.inventory, f"equipment:{slot}", matches)
+        if hasattr(character.equipment, "all_items"):
+            for slot, item in character.equipment.items():
+                if item is not None:
+                    stack = list(character.equipment.layers(slot))
+                    self._collect_container_refs(stack or [item], name, character.inventory, f"equipment:{slot}", matches)
+        else:
+            for slot, item in character.equipment.items():
+                if item is not None:
+                    self._collect_container_refs([item], name, character.inventory, f"equipment:{slot}", matches)
         if location is not None:
             self._collect_container_refs(location.items, name, location.items, "ground", matches)
         return matches[index - 1] if len(matches) >= index else None

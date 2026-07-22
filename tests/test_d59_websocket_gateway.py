@@ -14,6 +14,7 @@ from websockets.exceptions import InvalidStatusCode
 from websockets.server import serve
 
 from astergard.application.websocket_transport import WebSocketTransportLimits
+from astergard.items.models import Item
 from astergard.protocol.web_v1 import (
     COMMAND_LENGTH_LIMIT,
     WEB_MESSAGE_MAX_BYTES,
@@ -41,6 +42,8 @@ def _json_frame(message_type: str, payload: dict[str, Any], *, request_id: str) 
 def _creator_answer(step: dict[str, Any], answers: dict[str, str], *, fallback_choice: bool = True, override: str | None = None) -> str:
     if override is not None:
         return override
+    if step["step_id"] in answers:
+        return answers[step["step_id"]]
     if step["input_type"] == "choice":
         if not fallback_choice:
             raise KeyError(step["step_id"])
@@ -69,7 +72,7 @@ async def _drive_web_creator(
     while True:
         step_id = step["step_id"]
         request_id = f"{suffix}-{step_id}"
-        value = _creator_answer(step, answers, override=final_override if step_id == "gait" else None)
+        value = _creator_answer(step, answers, override=final_override if step_id == "special_feature" else None)
         await websocket.send(_frame("creator.submit", {"step_id": step_id, "value": value}, request_id=request_id))
         response = parse_web_envelope(await websocket.recv())
         if response.type == "creator.step":
@@ -212,6 +215,57 @@ class WebSocketGatewayIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     list(range(1, 11)),
                 )
 
+    async def test_ob_siebie_matches_tcp_output_text(self) -> None:
+        self.assertTrue(self.server.repo.register("mirror", "secret"))
+        character = self.server.repo.load("mirror")
+        character.name = "Agran"
+        character.gender_id = "m"
+        character.room_id = 60
+        character.equipment["bron_glowna"] = Item(
+            "długi miecz",
+            "Miecz.",
+            1.2,
+            10,
+            "mirror_sword",
+            item_type="weapon",
+            slot="bron_glowna",
+            wearable=True,
+            weapon_type="miecz",
+            weapon_profile_id="garrison_short_sword",
+            display_nominative="długi miecz",
+            display_accusative="długi miecz",
+        )
+        character.equipment["tarcza"] = Item(
+            "migdałowa tarcza",
+            "Tarcza.",
+            2.0,
+            10,
+            "mirror_shield",
+            item_type="shield",
+            slot="tarcza",
+            wearable=True,
+            weapon_type="tarcza",
+            display_nominative="migdałowa tarcza",
+            display_accusative="migdałową tarczę",
+        )
+        self.server.repo.save(character)
+        tcp_output = await self.harness.execute(character, "ob siebie")
+        config = WebSocketGatewayConfig(
+            allowed_origins=("http://localhost:3000",),
+            limits=WebSocketTransportLimits(message_rate_limit_count=20, command_rate_limit_count=20),
+        )
+        async with websocket_gateway_context(self.server, config) as (_gateway, port):
+            async with self._connect(port, "http://localhost:3000") as websocket:
+                await websocket.send(_frame("session.hello", {"client": "tests", "transport": "websocket"}, request_id="hello-1"))
+                await websocket.recv()
+                await websocket.send(_frame("auth.login", {"username": "mirror", "password": "secret"}, request_id="login-1"))
+                for _ in range(6):
+                    await websocket.recv()
+                await websocket.send(_frame("command.execute", {"command": "ob siebie"}, request_id="look-1"))
+                frames = [parse_web_envelope(await websocket.recv()) for _ in range(3)]
+                self.assertEqual(frames[0].type, "output.text")
+                self.assertEqual(frames[0].payload["text"], tcp_output.output)
+
     async def test_bad_subprotocol_and_bad_origin_are_rejected(self) -> None:
         config = WebSocketGatewayConfig(allowed_origins=("http://localhost:3000",))
         async with websocket_gateway_context(self.server, config) as (_gateway, port):
@@ -288,7 +342,7 @@ class WebSocketGatewayIntegrationTests(unittest.IsolatedAsyncioTestCase):
 
                 answers = {
                     "name": "Nowy",
-                    "gender_description": "kobieta",
+                    "gender_id": "f",
                     "age": "24",
                 }
 
@@ -322,7 +376,7 @@ class WebSocketGatewayIntegrationTests(unittest.IsolatedAsyncioTestCase):
         config = WebSocketGatewayConfig(allowed_origins=("http://localhost:3000",))
         answers = {
             "name": "Nowy",
-            "gender_description": "kobieta",
+            "gender_id": "f",
             "age": "24",
         }
         async with websocket_gateway_context(self.server, config) as (_gateway, port):
@@ -366,9 +420,9 @@ class WebSocketGatewayIntegrationTests(unittest.IsolatedAsyncioTestCase):
 
                 rejected_response, rejected_frames, rejected_request_id = rejected_results[0]
                 self.assertEqual(rejected_response.request_id, rejected_request_id)
-                self.assertIn(rejected_request_id, {"first-gait", "second-gait"})
+                self.assertIn(rejected_request_id, {"first-special_feature", "second-special_feature"})
                 self.assertEqual(rejected_response.payload["field"], "username_taken")
-                self.assertEqual(rejected_response.payload["step_id"], "gait")
+                self.assertEqual(rejected_response.payload["step_id"], "special_feature")
                 self.assertEqual(rejected_frames, [])
 
                 character = self.server.repo.load("dupe")
@@ -416,7 +470,7 @@ class WebSocketGatewayIntegrationTests(unittest.IsolatedAsyncioTestCase):
                 await websocket.send(_frame("creator.submit", {"step_id": step["step_id"], "value": "Rodzic"}, request_id="disconnect-name"))
                 step = parse_web_envelope(await websocket.recv())
                 self.assertEqual(step.type, "creator.step")
-                self.assertEqual(step.payload["step_id"], "gender_description")
+                self.assertEqual(step.payload["step_id"], "gender_id")
 
                 await websocket.close()
                 await websocket.wait_closed()
@@ -428,7 +482,7 @@ class WebSocketGatewayIntegrationTests(unittest.IsolatedAsyncioTestCase):
         config = WebSocketGatewayConfig(allowed_origins=("http://localhost:3000",))
         answers = {
             "name": "Powracajacy",
-            "gender_description": "mężczyzna",
+            "gender_id": "m",
             "age": "26",
         }
         async with websocket_gateway_context(self.server, config) as (_gateway, port):
@@ -489,7 +543,7 @@ class WebSocketGatewayIntegrationTests(unittest.IsolatedAsyncioTestCase):
         config = WebSocketGatewayConfig(allowed_origins=("http://localhost:3000",))
         answers = {
             "name": "Bledny",
-            "gender_description": "kobieta",
+            "gender_id": "f",
             "age": "22",
         }
         async with websocket_gateway_context(self.server, config) as (_gateway, port):
@@ -504,7 +558,7 @@ class WebSocketGatewayIntegrationTests(unittest.IsolatedAsyncioTestCase):
                 )
                 self.assertEqual(response.type, "creator.validation_error")
                 self.assertEqual(response.request_id, request_id)
-                self.assertEqual(response.payload["step_id"], "gait")
+                self.assertEqual(response.payload["step_id"], "special_feature")
                 self.assertFalse(post_frames)
                 self.assertFalse(self.server.repo.player_exists("invalid-final"))
                 with self.assertRaises(asyncio.TimeoutError):
@@ -531,9 +585,9 @@ class WebSocketGatewayIntegrationTests(unittest.IsolatedAsyncioTestCase):
                 await websocket.send(_frame("creator.submit", {"step_id": "name", "value": "Retry"}, request_id="submit-good"))
                 step = parse_web_envelope(await websocket.recv())
                 self.assertEqual(step.type, "creator.step")
-                self.assertEqual(step.payload["step_id"], "gender_description")
+                self.assertEqual(step.payload["step_id"], "gender_id")
 
-                await websocket.send(_frame("creator.back", {"step_id": "gender_description"}, request_id="back-1"))
+                await websocket.send(_frame("creator.back", {"step_id": "gender_id"}, request_id="back-1"))
                 back = parse_web_envelope(await websocket.recv())
                 self.assertEqual(back.type, "creator.step")
                 self.assertEqual(back.payload["step_id"], "name")
