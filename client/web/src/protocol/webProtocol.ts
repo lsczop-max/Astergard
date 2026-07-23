@@ -1,6 +1,9 @@
+import { utf8ByteLength } from './utf8';
+
 export const WEB_PROTOCOL_VERSION = 1 as const;
 export const MAX_PROTOCOL_MESSAGE_BYTES = 8192;
 export const MAX_COMMAND_BYTES = 512;
+export const MAX_CREATOR_STEP_ID_BYTES = 64;
 
 export type ClientMessageType =
   | 'session.hello'
@@ -123,6 +126,7 @@ export interface CreatorValidationErrorPayload {
   step_id: string;
   field: string;
   message: string;
+  code?: string;
 }
 
 export interface CreatorCancelledPayload {
@@ -286,7 +290,7 @@ function requireString(value: unknown, field: string, options?: { allowEmpty?: b
   if (!options?.allowEmpty && value === '') {
     fail('invalid_payload', `Payload field '${field}' must be a non-empty string.`);
   }
-  if (options?.maxBytes !== undefined && byteLength(value) > options.maxBytes) {
+  if (options?.maxBytes !== undefined && utf8ByteLength(value) > options.maxBytes) {
     fail('message_too_large', `Payload field '${field}' exceeds the limit.`);
   }
   return value;
@@ -354,13 +358,13 @@ function validateCreatorStart(payload: Record<string, unknown>): void {
 
 function validateCreatorSubmit(payload: Record<string, unknown>): void {
   requireAllowedKeys(payload, ['step_id', 'value']);
-  requireString(payload.step_id, 'step_id', { maxBytes: MAX_COMMAND_BYTES });
+  requireString(payload.step_id, 'step_id', { maxBytes: MAX_CREATOR_STEP_ID_BYTES });
   requireString(payload.value, 'value', { allowEmpty: true, maxBytes: MAX_COMMAND_BYTES });
 }
 
 function validateCreatorStepReference(payload: Record<string, unknown>): void {
   requireAllowedKeys(payload, ['step_id']);
-  requireString(payload.step_id, 'step_id', { maxBytes: MAX_COMMAND_BYTES });
+  requireString(payload.step_id, 'step_id', { maxBytes: MAX_CREATOR_STEP_ID_BYTES });
 }
 
 function validateCreatorChoice(payload: Record<string, unknown>): void {
@@ -374,7 +378,7 @@ function validateCreatorChoice(payload: Record<string, unknown>): void {
 
 function validateCreatorStep(payload: Record<string, unknown>): void {
   requireAllowedKeys(payload, ['step_id', 'title', 'prompt', 'input_type', 'choices', 'back_available', 'cancel_available']);
-  requireString(payload.step_id, 'step_id', { maxBytes: MAX_COMMAND_BYTES });
+  requireString(payload.step_id, 'step_id', { maxBytes: MAX_CREATOR_STEP_ID_BYTES });
   requireString(payload.title, 'title', { maxBytes: MAX_COMMAND_BYTES });
   requireString(payload.prompt, 'prompt', { allowEmpty: true, maxBytes: MAX_COMMAND_BYTES * 8 });
   const inputType = requireString(payload.input_type, 'input_type', { maxBytes: MAX_COMMAND_BYTES });
@@ -410,10 +414,13 @@ function validateCreatorStarted(payload: Record<string, unknown>): void {
 }
 
 function validateCreatorValidationError(payload: Record<string, unknown>): void {
-  requireAllowedKeys(payload, ['step_id', 'field', 'message']);
-  requireString(payload.step_id, 'step_id', { maxBytes: MAX_COMMAND_BYTES });
+  requireAllowedKeys(payload, ['step_id', 'field', 'message', 'code']);
+  requireString(payload.step_id, 'step_id', { maxBytes: MAX_CREATOR_STEP_ID_BYTES });
   requireString(payload.field, 'field', { maxBytes: MAX_COMMAND_BYTES });
   requireString(payload.message, 'message', { allowEmpty: true, maxBytes: MAX_COMMAND_BYTES * 8 });
+  if ('code' in payload) {
+    requireString(payload.code, 'code', { maxBytes: MAX_COMMAND_BYTES });
+  }
 }
 
 function validateCreatorCancelled(payload: Record<string, unknown>): void {
@@ -566,10 +573,6 @@ function decodeJson(raw: string | ArrayBuffer | Uint8Array): unknown {
     }
     return value;
   });
-}
-
-function byteLength(value: string): number {
-  return new TextEncoder().encode(value).byteLength;
 }
 
 export function serializeWebEnvelope(envelope: ProtocolEnvelope): string {

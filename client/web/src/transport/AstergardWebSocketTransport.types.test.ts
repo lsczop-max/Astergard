@@ -23,6 +23,9 @@ describe('AstergardWebSocketTransport payload types', () => {
     const creator = createClientEnvelope('creator.start', { username: 'ala', password: 'tajne' }, 'req-2a');
     expectTypeOf(creator.payload).toEqualTypeOf<CreatorStartPayload>();
 
+    const creatorSubmit = createClientEnvelope('creator.submit', { step_id: 'name', value: 'Ala' }, 'req-2b');
+    expect(creatorSubmit.payload).toEqual({ step_id: 'name', value: 'Ala' });
+
     const command = createClientEnvelope('command.execute', { command: 'look' }, 'req-3');
     expectTypeOf(command.payload).toEqualTypeOf<CommandExecutePayload>();
 
@@ -39,6 +42,8 @@ describe('AstergardWebSocketTransport payload types', () => {
       createClientEnvelope('command.execute', { username: 'ala', password: 'tajne' }, 'req-x');
       // @ts-expect-error wrong payload for creator.start
       createClientEnvelope('creator.start', { command: 'look' }, 'req-x');
+      // @ts-expect-error wrong payload for creator.submit
+      createClientEnvelope('creator.submit', { value: 'Ala' }, 'req-x');
       // @ts-expect-error wrong payload for connection.ping
       createClientEnvelope('connection.ping', { command: 'look' }, 'req-x');
       // @ts-expect-error request_id is required

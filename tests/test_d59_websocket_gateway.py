@@ -6,7 +6,7 @@ import socket
 import unittest
 from contextlib import asynccontextmanager
 from collections import deque
-from typing import Any, cast
+from typing import Any, Callable, cast
 from unittest.mock import patch
 
 from websockets.client import connect
@@ -81,7 +81,41 @@ async def _drive_web_creator(
         if response.type == "creator.finished":
             post_frames = [parse_web_envelope(await websocket.recv()) for _ in range(6)]
             return response, post_frames, request_id
-        return response, [], request_id
+            return response, [], request_id
+
+
+async def _drive_creator_to_special_feature(
+    websocket: Any,
+    *,
+    suffix: str,
+    username: str,
+    password: str,
+    answers: dict[str, str] | None = None,
+    select_answer: Callable[[dict[str, Any]], str] | None = None,
+) -> tuple[dict[str, Any], str]:
+    await websocket.send(_frame("session.hello", {"client": "tests", "transport": "websocket"}, request_id=f"{suffix}-hello"))
+    greeting = parse_web_envelope(await websocket.recv())
+    assert greeting.type == "output.text"
+
+    await websocket.send(_frame("creator.start", {"username": username, "password": password}, request_id=f"{suffix}-start"))
+    started = parse_web_envelope(await websocket.recv())
+    assert started.type == "creator.started"
+    step = started.payload["step"]
+    previous_step_id = step["step_id"]
+
+    while step["step_id"] != "special_feature":
+        previous_step_id = step["step_id"]
+        request_id = f"{suffix}-{previous_step_id}"
+        if select_answer is not None:
+            value = select_answer(step)
+        else:
+            value = _creator_answer(step, answers or {})
+        await websocket.send(_frame("creator.submit", {"step_id": previous_step_id, "value": value}, request_id=request_id))
+        response = parse_web_envelope(await websocket.recv())
+        assert response.type == "creator.step"
+        step = response.payload
+
+    return step, previous_step_id
 
 
 async def _read_http_response(reader: asyncio.StreamReader) -> str:
@@ -327,7 +361,10 @@ class WebSocketGatewayIntegrationTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(second.request_id, "login-1")
 
     async def test_web_creator_flow_creates_character_and_reaches_ready(self) -> None:
-        config = WebSocketGatewayConfig(allowed_origins=("http://localhost:3000",))
+        config = WebSocketGatewayConfig(
+            allowed_origins=("http://localhost:3000",),
+            limits=WebSocketTransportLimits(message_rate_limit_count=500, command_rate_limit_count=500),
+        )
         async with websocket_gateway_context(self.server, config) as (_gateway, port):
             async with self._connect(port, "http://localhost:3000") as websocket:
                 await websocket.send(_frame("session.hello", {"client": "tests", "transport": "websocket"}, request_id="hello-1"))
@@ -372,17 +409,92 @@ class WebSocketGatewayIntegrationTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(character.age, 24)
                 self.assertEqual(character.room_id, STARTING_ROOM_ID)
 
-    async def test_web_creator_conflict_is_controlled_and_atomic(self) -> None:
-        config = WebSocketGatewayConfig(allowed_origins=("http://localhost:3000",))
+    async def test_web_creator_special_feature_submission_uses_public_step_id_and_finishes(self) -> None:
+        config = WebSocketGatewayConfig(
+            allowed_origins=("http://localhost:3000",),
+            limits=WebSocketTransportLimits(message_rate_limit_count=500, command_rate_limit_count=500),
+        )
         answers = {
             "name": "Nowy",
             "gender_id": "f",
             "age": "24",
         }
         async with websocket_gateway_context(self.server, config) as (_gateway, port):
+            async with self._connect(port, "http://localhost:3000") as websocket:
+                step, _ = await _drive_creator_to_special_feature(
+                    websocket,
+                    suffix="public",
+                    username="public-step",
+                    password="secret",
+                    answers=answers,
+                )
+
+                self.assertEqual(step["step_id"], "special_feature")
+                request_id = "public-special-feature"
+                await websocket.send(_frame("creator.submit", {"step_id": step["step_id"], "value": "blizna_policzek"}, request_id=request_id))
+                finished = parse_web_envelope(await websocket.recv())
+                self.assertEqual(finished.type, "creator.finished")
+                self.assertEqual(finished.request_id, request_id)
+
+                post_frames = [parse_web_envelope(await websocket.recv()) for _ in range(6)]
+                frame_types = [frame.type for frame in post_frames]
+                self.assertEqual(frame_types.count("session.ready"), 1)
+                self.assertNotIn("protocol.error", frame_types)
+                self.assertNotIn("Input exceeds the transport limit", "".join(frame.payload.get("text", "") for frame in post_frames if frame.type == "output.text"))
+
+    async def test_web_creator_rejects_stale_step_id_and_recovers(self) -> None:
+        config = WebSocketGatewayConfig(
+            allowed_origins=("http://localhost:3000",),
+            limits=WebSocketTransportLimits(message_rate_limit_count=500, command_rate_limit_count=500),
+        )
+        answers = {
+            "name": "Nowy",
+            "gender_id": "f",
+            "age": "24",
+        }
+        async with websocket_gateway_context(self.server, config) as (_gateway, port):
+            async with self._connect(port, "http://localhost:3000") as websocket:
+                step, stale_step_id = await _drive_creator_to_special_feature(
+                    websocket,
+                    suffix="stale",
+                    username="stale-step",
+                    password="secret",
+                    answers=answers,
+                )
+
+                self.assertEqual(step["step_id"], "special_feature")
+                self.assertNotEqual(stale_step_id, step["step_id"])
+
+                stale_request_id = "stale-special-feature"
+                await websocket.send(_frame("creator.submit", {"step_id": stale_step_id, "value": "blizna_policzek"}, request_id=stale_request_id))
+                error = parse_web_envelope(await websocket.recv())
+                self.assertEqual(error.type, "creator.validation_error")
+                self.assertEqual(error.request_id, stale_request_id)
+                self.assertEqual(error.payload["step_id"], stale_step_id)
+                self.assertEqual(error.payload["field"], "step_id")
+
+                recovery_request_id = "stale-recovery"
+                await websocket.send(_frame("creator.submit", {"step_id": step["step_id"], "value": "blizna_policzek"}, request_id=recovery_request_id))
+                finished = parse_web_envelope(await websocket.recv())
+                self.assertEqual(finished.type, "creator.finished")
+                self.assertEqual(finished.request_id, recovery_request_id)
+                post_frames = [parse_web_envelope(await websocket.recv()) for _ in range(6)]
+                self.assertEqual([frame.type for frame in post_frames].count("session.ready"), 1)
+
+    async def test_web_creator_conflict_is_controlled_and_atomic_with_barrier(self) -> None:
+        config = WebSocketGatewayConfig(allowed_origins=("http://localhost:3000",))
+        answers = {
+            "name": "Nowy",
+            "gender_id": "f",
+            "age": "24",
+        }
+        ready_for_final_submit = asyncio.Event()
+        ready_count = 0
+
+        async with websocket_gateway_context(self.server, config) as (_gateway, port):
             async with self._connect(port, "http://localhost:3000") as first, self._connect(port, "http://localhost:3000") as second:
-                first_result_task = asyncio.create_task(
-                    _drive_web_creator(
+                first_drive_task = asyncio.create_task(
+                    _drive_creator_to_special_feature(
                         first,
                         suffix="first",
                         username="dupe",
@@ -390,8 +502,8 @@ class WebSocketGatewayIntegrationTests(unittest.IsolatedAsyncioTestCase):
                         answers=answers,
                     )
                 )
-                second_result_task = asyncio.create_task(
-                    _drive_web_creator(
+                second_drive_task = asyncio.create_task(
+                    _drive_creator_to_special_feature(
                         second,
                         suffix="second",
                         username="dupe",
@@ -399,7 +511,36 @@ class WebSocketGatewayIntegrationTests(unittest.IsolatedAsyncioTestCase):
                         answers=answers,
                     )
                 )
-                first_result, second_result = await asyncio.gather(first_result_task, second_result_task)
+                first_step, _ = await first_drive_task
+                second_step, _ = await second_drive_task
+
+                async def finalize(websocket: Any, *, suffix: str, step: dict[str, Any]) -> tuple[Any, list[Any], str]:
+                    nonlocal ready_count
+                    ready_count += 1
+                    if ready_count == 2:
+                        ready_for_final_submit.set()
+                    await ready_for_final_submit.wait()
+
+                    request_id = f"{suffix}-special_feature"
+                    await websocket.send(_frame("creator.submit", {"step_id": step["step_id"], "value": "blizna_policzek"}, request_id=request_id))
+                    response = parse_web_envelope(await websocket.recv())
+                    if response.type == "creator.finished":
+                        post_frames = [parse_web_envelope(await websocket.recv()) for _ in range(6)]
+                        return response, post_frames, request_id
+
+                    self.assertEqual(response.type, "creator.validation_error")
+                    self.assertEqual(response.request_id, request_id)
+                    self.assertEqual(response.payload["step_id"], "special_feature")
+                    self.assertEqual(response.payload["field"], "username_taken")
+                    return response, [], request_id
+
+                first_finalize_task = asyncio.create_task(
+                    finalize(first, suffix="first", step=first_step)
+                )
+                second_finalize_task = asyncio.create_task(
+                    finalize(second, suffix="second", step=second_step)
+                )
+                first_result, second_result = await asyncio.gather(first_finalize_task, second_finalize_task)
 
                 results = [first_result, second_result]
                 finished_results = [result for result in results if result[0].type == "creator.finished"]
@@ -436,6 +577,60 @@ class WebSocketGatewayIntegrationTests(unittest.IsolatedAsyncioTestCase):
                 await second.wait_closed()
                 self.assertNotEqual(first.close_code, 1011)
                 self.assertNotEqual(second.close_code, 1011)
+
+    async def test_web_creator_oversized_submit_preserves_request_id_and_socket(self) -> None:
+        config = WebSocketGatewayConfig(
+            allowed_origins=("http://localhost:3000",),
+            limits=WebSocketTransportLimits(message_rate_limit_count=500, command_rate_limit_count=500),
+        )
+        answers = {
+            "name": "Nowy",
+            "gender_id": "f",
+            "age": "24",
+        }
+        oversized_value = "ż" * 64 + "a"
+        self.assertEqual(len(oversized_value.encode("utf-8")), 129)
+
+        async with websocket_gateway_context(self.server, config) as (_gateway, port):
+            async with self._connect(port, "http://localhost:3000") as websocket:
+                step, _ = await _drive_creator_to_special_feature(
+                    websocket,
+                    suffix="oversize",
+                    username="oversize-step",
+                    password="secret",
+                    answers=answers,
+                )
+
+                self.assertEqual(step["step_id"], "special_feature")
+                request_id = "oversize-creator-1"
+                await websocket.send(_frame("creator.submit", {"step_id": step["step_id"], "value": oversized_value}, request_id=request_id))
+                raw_error = await websocket.recv()
+                error = parse_web_envelope(raw_error)
+                self.assertEqual(error.type, "creator.validation_error")
+                self.assertEqual(error.request_id, request_id)
+                self.assertEqual(error.payload["step_id"], "special_feature")
+                self.assertEqual(error.payload["field"], "value")
+                self.assertEqual(error.payload["code"], "creator_value_too_long")
+                self.assertEqual(error.payload["message"], "Odpowiedź jest zbyt długa.")
+                self.assertNotIn("Input exceeds the transport limit", raw_error)
+
+                await websocket.send(_frame("creator.submit", {"step_id": step["step_id"], "value": "blizna_policzek"}, request_id="oversize-creator-2"))
+                finished = parse_web_envelope(await websocket.recv())
+                self.assertEqual(finished.type, "creator.finished")
+                self.assertEqual(finished.request_id, "oversize-creator-2")
+
+                post_frames = [parse_web_envelope(await websocket.recv()) for _ in range(6)]
+                self.assertEqual([frame.type for frame in post_frames].count("session.ready"), 1)
+                self.assertNotIn("protocol.error", [frame.type for frame in post_frames])
+                self.assertNotIn(
+                    "Input exceeds the transport limit.",
+                    "".join(frame.payload.get("text", "") for frame in post_frames if frame.type == "output.text"),
+                )
+
+                await websocket.send(_frame("connection.ping", {}, request_id="oversize-ping"))
+                pong = parse_web_envelope(await websocket.recv())
+                self.assertEqual(pong.type, "connection.pong")
+                self.assertEqual(pong.request_id, "oversize-ping")
 
     async def test_web_creator_cancel_and_disconnect_do_not_persist(self) -> None:
         config = WebSocketGatewayConfig(allowed_origins=("http://localhost:3000",))
@@ -548,23 +743,29 @@ class WebSocketGatewayIntegrationTests(unittest.IsolatedAsyncioTestCase):
         }
         async with websocket_gateway_context(self.server, config) as (_gateway, port):
             async with self._connect(port, "http://localhost:3000") as websocket:
-                response, post_frames, request_id = await _drive_web_creator(
+                step, _ = await _drive_creator_to_special_feature(
                     websocket,
                     suffix="invalid",
                     username="invalid-final",
                     password="secret",
                     answers=answers,
-                    final_override="nieprawidlowy-wybor",
                 )
+                self.assertEqual(step["step_id"], "special_feature")
+
+                request_id = "invalid-final-special-feature"
+                await websocket.send(_frame("creator.submit", {"step_id": step["step_id"], "value": "nieprawidlowy-wybor"}, request_id=request_id))
+                response = parse_web_envelope(await websocket.recv())
                 self.assertEqual(response.type, "creator.validation_error")
                 self.assertEqual(response.request_id, request_id)
                 self.assertEqual(response.payload["step_id"], "special_feature")
-                self.assertFalse(post_frames)
+                self.assertEqual(response.payload["field"], "special_feature")
                 self.assertFalse(self.server.repo.player_exists("invalid-final"))
-                with self.assertRaises(asyncio.TimeoutError):
-                    await asyncio.wait_for(websocket.recv(), timeout=0.2)
-                await websocket.close()
-                await websocket.wait_closed()
+
+                await websocket.send(_frame("creator.submit", {"step_id": step["step_id"], "value": "blizna_policzek"}, request_id="invalid-final-retry"))
+                finished = parse_web_envelope(await websocket.recv())
+                self.assertEqual(finished.type, "creator.finished")
+                post_frames = [parse_web_envelope(await websocket.recv()) for _ in range(6)]
+                self.assertEqual([frame.type for frame in post_frames].count("session.ready"), 1)
 
     async def test_creator_back_and_cancel_keep_user_on_the_current_step(self) -> None:
         config = WebSocketGatewayConfig(allowed_origins=("http://localhost:3000",))

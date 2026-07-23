@@ -49,7 +49,7 @@ from astergard.characters.models import Character
 from astergard.characters.professions import ProfessionError, build_selection, profession_menu_text
 from astergard.database.repository import UsernameTakenError
 from astergard.commands.parser import CommandParser
-from astergard.protocol.web_v1 import COMMAND_LENGTH_LIMIT
+from astergard.protocol.web_v1 import COMMAND_LENGTH_LIMIT, CREATOR_STEP_ID_MAX_BYTES
 from astergard.server.context import GameContext
 
 
@@ -57,6 +57,13 @@ from astergard.server.context import GameContext
 class LoginResult:
     character: Character | None
     close_connection: bool = False
+
+
+CREATOR_SUBMIT_VALUE_LIMIT = 128
+
+
+def utf8_byte_length(value: str) -> int:
+    return len(value.encode("utf-8"))
 
 
 class SessionFlow:
@@ -126,13 +133,14 @@ class SessionFlow:
         key: str,
         *,
         allow_empty: bool = False,
+        max_bytes: int | None = COMMAND_LENGTH_LIMIT,
     ) -> str:
         value = message.payload.get(key)
         if not isinstance(value, str):
             raise ValueError(f"Message {message.kind.value} requires string field {key!r}.")
         if not allow_empty and not value:
             raise ValueError(f"Message {message.kind.value} requires non-empty field {key!r}.")
-        if len(value.encode("utf-8")) > COMMAND_LENGTH_LIMIT:
+        if max_bytes is not None and utf8_byte_length(value) > max_bytes:
             raise ValueError("Input exceeds the transport limit.")
         return value
 
@@ -234,8 +242,26 @@ class SessionFlow:
             message = await self._await_message(transport, SessionInputKind.CREATOR)
             try:
                 if message.kind == SessionInputKind.CREATOR_SUBMIT:
-                    step_id = self._string_payload(message, "step_id")
-                    value = self._string_payload(message, "value", allow_empty=True)
+                    step_id = self._string_payload(message, "step_id", max_bytes=CREATOR_STEP_ID_MAX_BYTES)
+                    try:
+                        value = self._string_payload(message, "value", allow_empty=True, max_bytes=CREATOR_SUBMIT_VALUE_LIMIT)
+                    except ValueError as exc:
+                        code = None
+                        message_text = str(exc)
+                        if message_text == "Input exceeds the transport limit.":
+                            code = "creator_value_too_long"
+                            message_text = "Odpowiedź jest zbyt długa."
+                        await transport.send_event(
+                            make_creator_validation_error_event(
+                                step_id,
+                                "value",
+                                message_text,
+                                code=code,
+                                request_id=message.request_id,
+                                sequence=self._next_sequence(transport),
+                            )
+                        )
+                        continue
                     profile = flow.submit(step_id, value)
                     if profile is not None:
                         try:
@@ -272,7 +298,7 @@ class SessionFlow:
                     )
                     continue
                 if message.kind == SessionInputKind.CREATOR_BACK:
-                    step_id = self._string_payload(message, "step_id")
+                    step_id = self._string_payload(message, "step_id", max_bytes=CREATOR_STEP_ID_MAX_BYTES)
                     step = flow.back(step_id)
                     await transport.send_event(
                         make_creator_step_event(
@@ -283,7 +309,7 @@ class SessionFlow:
                     )
                     continue
                 if message.kind == SessionInputKind.CREATOR_CANCEL:
-                    step_id = self._string_payload(message, "step_id")
+                    step_id = self._string_payload(message, "step_id", max_bytes=CREATOR_STEP_ID_MAX_BYTES)
                     flow.cancel(step_id)
                     await transport.send_event(
                         make_creator_cancelled_event(
@@ -295,7 +321,7 @@ class SessionFlow:
                     )
                     return None
             except WebCreatorValidationError as exc:
-                step_id = self._string_payload(message, "step_id")
+                step_id = self._string_payload(message, "step_id", max_bytes=CREATOR_STEP_ID_MAX_BYTES)
                 await transport.send_event(
                     make_creator_validation_error_event(
                         step_id,
@@ -392,7 +418,7 @@ class SessionFlow:
         request_id = first.request_id
         password = first.payload.get("password")
         if isinstance(password, str) and password:
-            if len(password.encode("utf-8")) > COMMAND_LENGTH_LIMIT:
+            if utf8_byte_length(password) > COMMAND_LENGTH_LIMIT:
                 raise ValueError("Input exceeds the transport limit.")
             return username, password, request_id
 

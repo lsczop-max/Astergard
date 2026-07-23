@@ -261,10 +261,13 @@ def make_creator_validation_error_event(
     field: str,
     message: str,
     *,
+    code: str | None = None,
     request_id: str | None = None,
     sequence: int | None = None,
 ) -> SessionEvent:
-    payload = {"step_id": step_id, "field": field, "message": message}
+    payload: dict[str, Any] = {"step_id": step_id, "field": field, "message": message}
+    if code is not None:
+        payload["code"] = code
     return SessionEvent("creator.validation_error", payload, request_id=request_id, sequence=sequence)
 
 

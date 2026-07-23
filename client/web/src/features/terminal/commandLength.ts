@@ -1,9 +1,8 @@
 import { MAX_COMMAND_BYTES } from '../../protocol/webProtocol';
-
-const UTF8_ENCODER = new TextEncoder();
+import { utf8ByteLength as encodeUtf8ByteLength } from '../../protocol/utf8';
 
 export function utf8ByteLength(value: string): number {
-  return UTF8_ENCODER.encode(value).byteLength;
+  return encodeUtf8ByteLength(value);
 }
 
 export function isWithinCommandByteLimit(value: string): boolean {

@@ -16,6 +16,7 @@ import {
   type ServerEnvelope,
   type SessionHelloPayload,
 } from '../protocol/webProtocol';
+import { utf8ByteLength } from '../protocol/utf8';
 
 export type TransportState = 'disconnected' | 'connecting' | 'handshaking' | 'authenticating' | 'ready' | 'closing' | 'error';
 
@@ -229,7 +230,7 @@ export class AstergardWebSocketTransport {
     if (this.state !== 'ready') {
       throw new Error('Komenda może zostać wysłana dopiero po zalogowaniu.');
     }
-    if (byteLength(command) > MAX_COMMAND_BYTES) {
+    if (utf8ByteLength(command) > MAX_COMMAND_BYTES) {
       throw new Error('Komenda przekracza limit 512 znaków.');
     }
     if (this.pendingHas('command')) {
@@ -486,8 +487,4 @@ export class AstergardWebSocketTransport {
       }
     }
   }
-}
-
-function byteLength(text: string): number {
-  return new TextEncoder().encode(text).byteLength;
 }

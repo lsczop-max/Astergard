@@ -85,6 +85,7 @@ RESPONSE_MESSAGE_TYPES = {
 MESSAGE_SIZE_LIMIT = 8192
 WEB_MESSAGE_MAX_BYTES = MESSAGE_SIZE_LIMIT
 COMMAND_LENGTH_LIMIT = 512
+CREATOR_STEP_ID_MAX_BYTES = 64
 
 
 class WebProtocolError(ValueError):
@@ -232,13 +233,13 @@ def _validate_creator_start(payload: dict[str, Any]) -> None:
 
 def _validate_creator_step_ref(payload: dict[str, Any]) -> None:
     _require_allowed_keys(payload, {"step_id"})
-    _require_string_field(payload, "step_id", max_length=COMMAND_LENGTH_LIMIT)
+    _require_string_field(payload, "step_id", max_length=CREATOR_STEP_ID_MAX_BYTES)
 
 
 def _validate_creator_submit(payload: dict[str, Any]) -> None:
     _require_allowed_keys(payload, {"step_id", "value"})
-    _require_string_field(payload, "step_id", max_length=COMMAND_LENGTH_LIMIT)
-    _require_string_field(payload, "value", allow_empty=True, max_length=COMMAND_LENGTH_LIMIT)
+    _require_string_field(payload, "step_id", max_length=CREATOR_STEP_ID_MAX_BYTES)
+    _require_string_field(payload, "value", allow_empty=True)
 
 
 def _validate_creator_choice(payload: dict[str, Any]) -> None:
@@ -251,7 +252,7 @@ def _validate_creator_choice(payload: dict[str, Any]) -> None:
 
 def _validate_creator_step(payload: dict[str, Any]) -> None:
     _require_allowed_keys(payload, {"step_id", "title", "prompt", "input_type", "choices", "back_available", "cancel_available"})
-    _require_string_field(payload, "step_id", max_length=COMMAND_LENGTH_LIMIT)
+    _require_string_field(payload, "step_id", max_length=CREATOR_STEP_ID_MAX_BYTES)
     _require_string_field(payload, "title", max_length=COMMAND_LENGTH_LIMIT)
     _require_string_field(payload, "prompt", allow_empty=True, max_length=COMMAND_LENGTH_LIMIT * 8)
     input_type = _require_string_field(payload, "input_type", max_length=COMMAND_LENGTH_LIMIT)
@@ -280,10 +281,12 @@ def _validate_creator_started(payload: dict[str, Any]) -> None:
 
 
 def _validate_creator_validation_error(payload: dict[str, Any]) -> None:
-    _require_allowed_keys(payload, {"step_id", "field", "message"})
-    _require_string_field(payload, "step_id", max_length=COMMAND_LENGTH_LIMIT)
+    _require_allowed_keys(payload, {"step_id", "field", "message", "code"})
+    _require_string_field(payload, "step_id", max_length=CREATOR_STEP_ID_MAX_BYTES)
     _require_string_field(payload, "field", max_length=COMMAND_LENGTH_LIMIT)
     _require_string_field(payload, "message", allow_empty=True, max_length=COMMAND_LENGTH_LIMIT * 8)
+    if "code" in payload:
+        _require_string_field(payload, "code", max_length=COMMAND_LENGTH_LIMIT)
 
 
 def _validate_creator_cancelled(payload: dict[str, Any]) -> None:

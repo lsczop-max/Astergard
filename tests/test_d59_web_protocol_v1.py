@@ -8,9 +8,12 @@ from typing import Any, cast
 from astergard.application.session_transport import (
     SessionCapability,
     SessionEvent,
+    SessionInput,
     SessionInputKind,
     TcpSessionTransport,
 )
+from astergard.application.session_flow import utf8_byte_length
+from astergard.application.web_creator_flow import WebCreatorFlow
 from astergard.gmcp import core_hello_packet, gmcp_negotiation_packet, room_info_packet
 from astergard.protocol.web_v1 import (
     WebProtocolError,
@@ -92,7 +95,7 @@ class WebProtocolV1Tests(unittest.TestCase):
             ),
             build_web_envelope(
                 "creator.validation_error",
-                {"step_id": "name", "field": "name", "message": "Imię nie może być puste."},
+                {"step_id": "name", "field": "name", "code": "name_required", "message": "Imię nie może być puste."},
                 request_id="2c",
                 sequence=6,
             ),
@@ -227,6 +230,114 @@ class WebProtocolV1Tests(unittest.TestCase):
         self.assertEqual(overlong.request_id, "overlong-1")
         self.assertEqual(invalid.request_id, "invalid-2")
         self.assertNotEqual(overlong.request_id, invalid.request_id)
+
+    def test_creator_submit_value_limit_is_128_bytes_and_recovers_on_retry(self) -> None:
+        async def run() -> None:
+            with TestGameHarness() as harness:
+                server = harness.require_server()
+                username = "limit-check"
+                password = "secret"
+                self.assertFalse(server.repo.player_exists(username))
+
+                short_value = "ż" * 64
+                long_value = f"{short_value}a"
+                command_512 = "ż" * 256
+                command_513 = f"{command_512}a"
+                self.assertEqual(utf8_byte_length(short_value), 128)
+                self.assertEqual(utf8_byte_length(long_value), 129)
+                self.assertEqual(utf8_byte_length(command_512), 512)
+                self.assertEqual(utf8_byte_length(command_513), 513)
+
+                command_message = SessionInput(
+                    SessionInputKind.COMMAND,
+                    {"command": command_512},
+                    request_id="cmd-1",
+                )
+                self.assertEqual(
+                    server.session_flow._string_payload(command_message, "command", allow_empty=True, max_bytes=512),
+                    command_512,
+                )
+                with self.assertRaises(ValueError):
+                    server.session_flow._string_payload(
+                        SessionInput(
+                            SessionInputKind.COMMAND,
+                            {"command": command_513},
+                            request_id="cmd-2",
+                        ),
+                        "command",
+                        allow_empty=True,
+                        max_bytes=512,
+                    )
+
+                creator_value_message = SessionInput(
+                    SessionInputKind.CREATOR_SUBMIT,
+                    {"step_id": "special_feature", "value": short_value},
+                    request_id="submit-1",
+                )
+                self.assertEqual(
+                    server.session_flow._string_payload(creator_value_message, "value", allow_empty=True, max_bytes=128),
+                    short_value,
+                )
+                with self.assertRaises(ValueError) as ctx:
+                    server.session_flow._string_payload(
+                        SessionInput(
+                            SessionInputKind.CREATOR_SUBMIT,
+                            {"step_id": "special_feature", "value": long_value},
+                            request_id="submit-2",
+                        ),
+                        "value",
+                        allow_empty=True,
+                        max_bytes=128,
+                    )
+                self.assertIn("Input exceeds the transport limit", str(ctx.exception))
+
+                flow = WebCreatorFlow(username, password)
+                queued_inputs: list[tuple[SessionInputKind, dict[str, object], str | None]] = [
+                    (SessionInputKind.HELLO, {}, "hello-1"),
+                    (SessionInputKind.CREATOR_START, {"username": username, "password": password}, "start-1"),
+                ]
+                while True:
+                    step = flow.current_step()
+                    step_id = step.step_id
+                    if step_id == "special_feature":
+                        queued_inputs.append((SessionInputKind.CREATOR_SUBMIT, {"step_id": step_id, "value": long_value}, "submit-long"))
+                        queued_inputs.append((SessionInputKind.CREATOR_SUBMIT, {"step_id": step_id, "value": "blizna_policzek"}, "submit-retry"))
+                        break
+                    value_map = {
+                        "name": "Nowy",
+                        "gender_id": "f",
+                        "age": "24",
+                    }
+                    if step.input_type == "choice" and step_id not in value_map:
+                        value = step.choices[0].value if step.choices else ""
+                    else:
+                        value = value_map[step_id]
+                    queued_inputs.append((SessionInputKind.CREATOR_SUBMIT, {"step_id": step_id, "value": value}, f"submit-{step_id}"))
+                    flow.submit(step_id, value)
+
+                transport = MemorySessionTransport()
+                for kind, payload, request_id in queued_inputs:
+                    transport.queue_input(kind, payload, request_id=request_id)
+
+                login = await server.session_flow.login(transport)
+                self.assertIsNotNone(login.character)
+                assert login.character is not None
+                await server.session_flow.send_initial_view(transport, server.make_context(login.character))
+
+                event_types = [event.type for event in transport.outbound_events]
+                self.assertEqual(event_types.count("creator.validation_error"), 1)
+                self.assertEqual(event_types.count("creator.finished"), 1)
+                self.assertEqual(event_types.count("session.ready"), 1)
+                validation_error = next(event for event in transport.outbound_events if event.type == "creator.validation_error")
+                self.assertEqual(validation_error.request_id, "submit-long")
+                self.assertEqual(validation_error.payload["step_id"], "special_feature")
+                self.assertEqual(validation_error.payload["field"], "value")
+                self.assertEqual(validation_error.payload["code"], "creator_value_too_long")
+                self.assertEqual(validation_error.payload["message"], "Odpowiedź jest zbyt długa.")
+                finished = next(event for event in transport.outbound_events if event.type == "creator.finished")
+                self.assertEqual(finished.request_id, "submit-retry")
+
+        asyncio.run(run())
 
     def test_password_is_redacted_from_repr_and_errors(self) -> None:
         envelope = build_web_envelope("auth.login", {"username": "tester", "password": "secret"}, request_id="1")

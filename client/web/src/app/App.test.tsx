@@ -218,4 +218,66 @@ describe('App StrictMode transport lifecycle', () => {
     expect(secondSocket.listeners.get('error')?.size ?? 0).toBe(0);
     expect(MockWebSocket.instances).toHaveLength(2);
   });
+
+  it('sends the current creator step id with the selected option id', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    const socket = MockWebSocket.instances[0];
+
+    await act(async () => {
+      socket.open();
+      socket.message(
+        JSON.stringify({
+          version: 1,
+          type: 'output.text',
+          payload: { text: 'Karczmarz podnosi wzrok znad kufla. Jak się przedstawiasz?' },
+          sequence: 1,
+        }),
+      );
+    });
+
+    await user.click(screen.getByLabelText('Nowa postać'));
+    await user.type(screen.getByLabelText('Nazwa nowego konta'), 'nowa');
+    await user.type(screen.getByLabelText('Nowe hasło'), 'sekret');
+    await user.click(screen.getByRole('button', { name: 'Rozpocznij tworzenie' }));
+
+    const start = parseProtocolEnvelope(socket.sent.at(-1) as string);
+    expect(start.type).toBe('creator.start');
+
+    await act(async () => {
+      socket.message(
+        JSON.stringify({
+          version: 1,
+          type: 'creator.started',
+          payload: {
+            username: 'nowa',
+            step: {
+              step_id: 'special_feature',
+              title: 'Cechy szczególne',
+              prompt: 'Wybierz cechę szczególną.',
+              input_type: 'choice',
+              choices: [
+                { value: 'blizna_policzek', label: 'wąska blizna na policzku' },
+                { value: 'tatuaż', label: 'tatuaż' },
+              ],
+              back_available: true,
+              cancel_available: true,
+            },
+          },
+          request_id: start.request_id,
+          sequence: 2,
+        }),
+      );
+    });
+
+    const specialFeatureSelect = screen.getByLabelText('Wybór');
+    await user.selectOptions(specialFeatureSelect, 'blizna_policzek');
+    await user.click(screen.getByRole('button', { name: 'Zatwierdź' }));
+
+    const submit = parseProtocolEnvelope(socket.sent.at(-1) as string);
+    expect(submit.type).toBe('creator.submit');
+    expect(submit.payload).toEqual({ step_id: 'special_feature', value: 'blizna_policzek' });
+    expect(Object.keys(submit.payload)).toEqual(['step_id', 'value']);
+  });
 });
