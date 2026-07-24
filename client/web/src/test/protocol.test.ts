@@ -133,6 +133,81 @@ describe('protocol validation', () => {
     }
   });
 
+  it('accepts public room.info special_exits and rejects hidden metadata', () => {
+    const valid = JSON.stringify({
+      version: 1,
+      type: 'room.info',
+      payload: {
+        num: 7,
+        name: 'Most przy bramie',
+        area: 'Centrum_Twierdza',
+        coords: { x: 1, y: 2, z: 0 },
+        exits: { n: 8 },
+        special_exits: [
+          {
+            direction: 'sekretny-most',
+            target: 61,
+            kind: 'most',
+            visible: true,
+            door: true,
+            locked: false,
+          },
+        ],
+      },
+      sequence: 1,
+    });
+    expect(parseProtocolEnvelope(valid)).toEqual({
+      version: 1,
+      type: 'room.info',
+      payload: {
+        num: 7,
+        name: 'Most przy bramie',
+        area: 'Centrum_Twierdza',
+        coords: { x: 1, y: 2, z: 0 },
+        exits: { n: 8 },
+        special_exits: [
+          {
+            direction: 'sekretny-most',
+            target: 61,
+            kind: 'most',
+            visible: true,
+            door: true,
+            locked: false,
+          },
+        ],
+      },
+      sequence: 1,
+    });
+
+    expect(() =>
+      parseProtocolEnvelope(
+        JSON.stringify({
+          version: 1,
+          type: 'room.info',
+          payload: {
+            num: 7,
+            name: 'Most przy bramie',
+            area: 'Centrum_Twierdza',
+            coords: { x: 1, y: 2, z: 0 },
+            exits: { n: 8 },
+            special_exits: [
+              {
+                direction: 'sekretny-most',
+                target: 61,
+                kind: 'most',
+                visible: true,
+                door: true,
+                locked: false,
+                hidden: true,
+              },
+            ],
+          },
+          sequence: 1,
+        }),
+      ),
+    ).toThrow(/unknown fields/);
+  });
+
   it('enforces 64-byte UTF-8 step_id limits across creator messages', () => {
     const stepId64 = 'ż'.repeat(32);
     const stepId65 = `${stepId64}a`;

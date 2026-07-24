@@ -5,6 +5,7 @@ from collections import deque
 from typing import Any
 
 from astergard.characters.models import Character
+from astergard.gmcp import iter_public_exits, location_room_info
 from astergard.world.manager import WorldManager
 
 
@@ -14,16 +15,14 @@ class MinimapService:
     def __init__(self, enabled: bool = False) -> None:
         self.enabled = enabled
 
-    def _room_payload(self, room_id: int, room: Any) -> dict[str, Any]:
+    def _room_payload(self, room_id: int, room: Any, world: WorldManager) -> dict[str, Any]:
+        info = location_room_info(room, world).to_dict()
         return {
-            "room_id": room.id,
-            "name": room.name,
-            "zone": room.zone,
-            "coords": {"x": getattr(room, "map_x", 0), "y": getattr(room, "map_y", 0), "z": getattr(room, "map_z", 0)},
-            "exits": {
-                direction: exit_data.target_room
-                for direction, exit_data in sorted(room.exits.items())
-            },
+            "room_id": room_id,
+            "name": info["name"],
+            "zone": info["area"],
+            "coords": info["coords"],
+            "exits": info["exits"],
         }
 
     def _nearby_rooms(self, world: WorldManager, origin_room_id: int, radius: int = 3) -> dict[str, dict[str, Any]]:
@@ -37,10 +36,10 @@ class MinimapService:
             room = world.locations.get(room_id)
             if room is None:
                 continue
-            result[str(room_id)] = self._room_payload(room_id, room)
+            result[str(room_id)] = self._room_payload(room_id, room, world)
             if distance >= radius:
                 continue
-            for exit_data in room.exits.values():
+            for _direction, exit_data, _mudlet_direction in iter_public_exits(room):
                 target_room_id = exit_data.target_room
                 next_distance = distance + 1
                 if next_distance > radius:
@@ -60,7 +59,7 @@ class MinimapService:
         location = world.get_location(character.room_id)
         rooms: dict[str, dict[str, Any]] = {}
         for room_id, room in sorted(world.locations.items()):
-            rooms[str(room_id)] = self._room_payload(room_id, room)
+            rooms[str(room_id)] = self._room_payload(room_id, room, world)
 
         # TODO: DEBUG ONLY - remove full map payload before public alpha.
         return {
@@ -88,10 +87,7 @@ class MinimapService:
         current_zone = "" if location is None else location.zone
         exits = {}
         if location is not None:
-            exits = {
-                direction: exit_data.target_room
-                for direction, exit_data in sorted(location.exits.items())
-            }
+            exits = self._room_payload(current_room_id, location, world)["exits"]
         return {
             "type": "map_update",
             "current_room_id": current_room_id,

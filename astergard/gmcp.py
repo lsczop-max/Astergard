@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Iterator
 
 from astergard.world.manager import REGION_LABELS
 
@@ -63,35 +63,34 @@ def mudlet_area_label(area: str) -> str:
     return REGION_LABELS.get(area, area)
 
 
+def _special_exit_payload(direction: str, exit_: Any, mudlet_direction: str | None) -> dict[str, Any]:
+    return {
+        "direction": direction if mudlet_direction is None else mudlet_direction,
+        "target": exit_.target_room,
+        "kind": exit_.kind or (direction if mudlet_direction is None else ("door" if exit_.is_door else mudlet_direction)),
+        "visible": exit_.visible,
+        "door": exit_.is_door,
+        "locked": exit_.is_locked,
+    }
+
+
+def iter_public_exits(location: Any) -> Iterator[tuple[str, Any, str | None]]:
+    for direction, exit_ in sorted(location.exits.items()):
+        if not exit_.visible:
+            continue
+        yield direction, exit_, POLISH_TO_MUDLET_DIRECTION.get(direction)
+
+
 def location_room_info(location, world) -> RoomInfo:
     exits: dict[str, int] = {}
     special_exits: list[dict[str, Any]] = []
-    for direction, exit_ in sorted(location.exits.items()):
-        mudlet_direction = POLISH_TO_MUDLET_DIRECTION.get(direction)
+    for direction, exit_, mudlet_direction in iter_public_exits(location):
         if mudlet_direction is None:
-            special_exits.append(
-                {
-                    "direction": direction,
-                    "target": exit_.target_room,
-                    "kind": exit_.kind or direction,
-                    "visible": exit_.visible,
-                    "door": exit_.is_door,
-                    "locked": exit_.is_locked,
-                }
-            )
+            special_exits.append(_special_exit_payload(direction, exit_, None))
             continue
         exits[mudlet_direction] = exit_.target_room
-        if exit_.is_door or exit_.kind or not exit_.visible:
-            special_exits.append(
-                {
-                    "direction": mudlet_direction,
-                    "target": exit_.target_room,
-                    "kind": exit_.kind or ("door" if exit_.is_door else mudlet_direction),
-                    "visible": exit_.visible,
-                    "door": exit_.is_door,
-                    "locked": exit_.is_locked,
-                }
-            )
+        if exit_.is_door or exit_.kind:
+            special_exits.append(_special_exit_payload(direction, exit_, mudlet_direction))
     return RoomInfo(
         num=location.id,
         name=location.name,

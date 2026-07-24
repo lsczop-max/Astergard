@@ -25,6 +25,8 @@ from astergard.protocol.web_v1 import (
 from astergard.server.gateway import WebSocketGateway, WebSocketGatewayConfig
 from astergard.testing import TestGameHarness
 from astergard.world.manager import STARTING_ROOM_ID
+from astergard.world.models import Exit
+from astergard.gmcp import POLISH_TO_MUDLET_DIRECTION
 
 
 def _frame(message_type: str, payload: dict[str, Any], *, request_id: str) -> str:
@@ -248,6 +250,70 @@ class WebSocketGatewayIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     [frame.sequence for frame in [greeting] + login_frames + command_frames],
                     list(range(1, 11)),
                 )
+
+    async def test_public_room_info_omits_hidden_special_exits(self) -> None:
+        self.assertTrue(self.server.repo.register("roominfo", "secret"))
+        character = self.server.repo.load("roominfo")
+        location = next(loc for loc in self.server.world.locations.values() if "gora" not in loc.exits)
+        character.room_id = location.id
+        self.server.repo.save(character)
+        location.exits["sekretny-most"] = Exit(61, is_door=True, kind="most", description="Jawny most", visible=True)
+        location.exits["gora"] = Exit(987654, is_door=True, is_locked=True, kind="Wieża Magów", description="Sekretna brama", visible=False)
+        snapshot = {direction: (exit_.target_room, exit_.is_door, exit_.is_locked, exit_.kind, exit_.description, exit_.visible) for direction, exit_ in location.exits.items()}
+
+        config = WebSocketGatewayConfig(
+            allowed_origins=("http://localhost:3000",),
+            limits=WebSocketTransportLimits(message_rate_limit_count=20, command_rate_limit_count=20),
+        )
+        async with websocket_gateway_context(self.server, config) as (_gateway, port):
+            async with self._connect(port, "http://localhost:3000") as websocket:
+                await websocket.send(_frame("session.hello", {"client": "tests", "transport": "websocket"}, request_id="hello-1"))
+                await websocket.recv()
+                await websocket.send(_frame("auth.login", {"username": "roominfo", "password": "secret"}, request_id="login-1"))
+                login_frames_raw = [await websocket.recv() for _ in range(6)]
+                login_frames = [parse_web_envelope(raw) for raw in login_frames_raw]
+                self.assertEqual(
+                    [frame.type for frame in login_frames],
+                    ["auth.result", "output.text", "room.info", "character.vitals", "output.prompt", "session.ready"],
+                )
+
+                room_raw = login_frames_raw[2]
+                room = login_frames[2]
+                self.assertEqual(room.type, "room.info")
+                self.assertNotIn("Wieża Magów", room_raw)
+                self.assertNotIn("987654", room_raw)
+                self.assertNotIn("gora", room_raw)
+                expected_exits = {
+                    POLISH_TO_MUDLET_DIRECTION[direction]: target
+                    for direction, (target, _is_door, _is_locked, _kind, _description, visible) in snapshot.items()
+                    if visible and direction in POLISH_TO_MUDLET_DIRECTION
+                }
+                self.assertEqual(
+                    room.payload["exits"],
+                    expected_exits,
+                )
+                self.assertEqual(
+                    {direction: (exit_.target_room, exit_.is_door, exit_.is_locked, exit_.kind, exit_.description, exit_.visible) for direction, exit_ in location.exits.items()},
+                    snapshot,
+                )
+                self.assertTrue(
+                    any(
+                        entry["direction"] == "sekretny-most"
+                        and entry["target"] == 61
+                        and entry["kind"] == "most"
+                        and entry["visible"] is True
+                        and entry["door"] is True
+                        and entry["locked"] is False
+                        for entry in room.payload.get("special_exits", [])
+                    )
+                )
+                self.assertFalse(any(entry["direction"] == "up" and entry["target"] == 987654 for entry in room.payload.get("special_exits", [])))
+
+                await websocket.send(_frame("command.execute", {"command": "spojrz"}, request_id="cmd-1"))
+                command_frames = [parse_web_envelope(await websocket.recv()) for _ in range(3)]
+                self.assertEqual([frame.type for frame in command_frames], ["output.text", "command.result", "output.prompt"])
+                self.assertEqual(command_frames[1].request_id, "cmd-1")
+                self.assertIsNone(websocket.close_code)
 
     async def test_ob_siebie_matches_tcp_output_text(self) -> None:
         self.assertTrue(self.server.repo.register("mirror", "secret"))

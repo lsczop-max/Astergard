@@ -159,7 +159,16 @@ export interface RoomInfoPayload {
   exits: Record<string, number>;
   area_label?: string;
   terrain?: string;
-  special_exits?: unknown[];
+  special_exits?: PublicSpecialExitPayload[];
+}
+
+export interface PublicSpecialExitPayload {
+  direction: string;
+  target: number;
+  kind: string;
+  visible: boolean;
+  door: boolean;
+  locked: boolean;
 }
 
 export interface CommandResultPayload {
@@ -494,8 +503,30 @@ function validateRoomInfo(payload: Record<string, unknown>): void {
   }
   if ('area_label' in payload) requireString(payload.area_label, 'area_label', { maxBytes: MAX_COMMAND_BYTES });
   if ('terrain' in payload) requireString(payload.terrain, 'terrain', { maxBytes: MAX_COMMAND_BYTES });
-  if ('special_exits' in payload && !Array.isArray(payload.special_exits)) {
-    fail('invalid_payload', "Payload field 'special_exits' must be an array.");
+  if ('special_exits' in payload) {
+    if (!Array.isArray(payload.special_exits)) {
+      fail('invalid_payload', "Payload field 'special_exits' must be an array.");
+    }
+    payload.special_exits.forEach((entry, index) => {
+      if (!isPlainObject(entry)) {
+        fail('invalid_payload', `Payload field 'special_exits[${index}]' must be an object.`);
+      }
+      requireAllowedKeys(entry, ['direction', 'target', 'kind', 'visible', 'door', 'locked']);
+      requireString(entry.direction, `special_exits[${index}].direction`, { maxBytes: MAX_COMMAND_BYTES });
+      if (!isExactNumber(entry.target) || entry.target < 0) {
+        fail('invalid_payload', `Payload field 'special_exits[${index}].target' must be a non-negative integer.`);
+      }
+      requireString(entry.kind, `special_exits[${index}].kind`, { maxBytes: MAX_COMMAND_BYTES });
+      if (entry.visible !== true) {
+        fail('invalid_payload', `Payload field 'special_exits[${index}].visible' must be true.`);
+      }
+      if (typeof entry.door !== 'boolean') {
+        fail('invalid_payload', `Payload field 'special_exits[${index}].door' must be a boolean.`);
+      }
+      if (typeof entry.locked !== 'boolean') {
+        fail('invalid_payload', `Payload field 'special_exits[${index}].locked' must be a boolean.`);
+      }
+    });
   }
 }
 

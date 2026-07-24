@@ -133,6 +133,45 @@ class WebProtocolV1Tests(unittest.TestCase):
             decoded = parse_web_envelope(encoded)
             self.assertEqual(decoded, envelope)
 
+    def test_room_info_keeps_public_special_exits_only(self) -> None:
+        special_exit: dict[str, Any] = {
+            "direction": "sekretny-most",
+            "target": 61,
+            "kind": "most",
+            "visible": True,
+            "door": True,
+            "locked": False,
+        }
+        payload: dict[str, Any] = {
+            "num": 7,
+            "name": "Most przy bramie",
+            "area": "Centrum_Twierdza",
+            "coords": {"x": 1, "y": 2, "z": 0},
+            "exits": {"n": 8},
+            "special_exits": [special_exit],
+        }
+        encoded = serialize_web_envelope(build_web_envelope("room.info", payload, sequence=1))
+        parsed = parse_web_envelope(encoded)
+        self.assertEqual(parsed.payload["special_exits"][0]["direction"], "sekretny-most")
+        self.assertEqual(parsed.payload["special_exits"][0]["target"], 61)
+
+        with self.assertRaises(WebProtocolError):
+            parse_web_envelope(
+                json.dumps(
+                    {
+                        "version": 1,
+                        "type": "room.info",
+                        "sequence": 1,
+                        "payload": {
+                            **payload,
+                            "special_exits": [{**special_exit, "hidden": True}],
+                        },
+                    },
+                    separators=(",", ":"),
+                    ensure_ascii=False,
+                )
+            )
+
     def test_bool_version_sequence_and_empty_request_id_are_rejected(self) -> None:
         cases = [
             {"version": True, "type": "session.hello", "payload": {}, "request_id": "1"},

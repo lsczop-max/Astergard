@@ -9,8 +9,9 @@ from pathlib import Path
 from typing import Any, cast
 
 from astergard.application.session_transport import TcpSessionTransport
-from astergard.gmcp import IAC, SE, SB, room_info_packet
+from astergard.gmcp import IAC, POLISH_TO_MUDLET_DIRECTION, SE, SB, room_info_packet, room_info_payload
 from astergard.testing import FakeReader, FakeWriter, TestGameHarness
+from astergard.world.models import Exit
 from tools.build_mudlet_package import main as build_mudlet_package
 from tools.lua_syntax import validate_lua_structure
 from tools.mudlet_support import (
@@ -63,6 +64,35 @@ class MudletClientTests(unittest.TestCase):
             self.assertEqual(decoded["version"], "0.1.0")
             self.assertEqual(len(decoded["rooms"]), len(server.world.locations))
 
+    def test_export_map_file_omits_hidden_special_exits(self) -> None:
+        with TestGameHarness() as harness, tempfile.TemporaryDirectory() as tmp:
+            server = harness.require_server()
+            location = next(loc for loc in server.world.locations.values() if "gora" not in loc.exits)
+            location.exits["sekretny-most"] = Exit(61, is_door=True, kind="most", description="Jawny most", visible=True)
+            location.exits["gora"] = Exit(987654, is_door=True, is_locked=True, kind="Wieża Magów", description="Sekretna brama", visible=False)
+            snapshot = {direction: (exit_.target_room, exit_.is_door, exit_.is_locked, exit_.kind, exit_.description, exit_.visible) for direction, exit_ in location.exits.items()}
+
+            output = Path(tmp) / MAP_FILENAME
+            export_map_file(server.world, output)
+            decoded = json.loads(output.read_text(encoding="utf-8"))
+            room = next(room for room in decoded["rooms"] if room["num"] == location.id)
+            serialized = output.read_text(encoding="utf-8")
+            self.assertNotIn("Wieża Magów", serialized)
+            self.assertNotIn("987654", serialized)
+            self.assertNotIn("gora", serialized)
+            special_exits = room.get("special_exits", [])
+            injected = next(entry for entry in special_exits if entry["direction"] == "sekretny-most")
+            self.assertEqual(injected["target"], 61)
+            self.assertEqual(injected["kind"], "most")
+            self.assertTrue(injected["visible"])
+            self.assertTrue(injected["door"])
+            self.assertFalse(injected["locked"])
+            self.assertNotIn("gora", {entry["direction"] for entry in special_exits})
+            self.assertEqual(
+                {direction: (exit_.target_room, exit_.is_door, exit_.is_locked, exit_.kind, exit_.description, exit_.visible) for direction, exit_ in location.exits.items()},
+                snapshot,
+            )
+
     def test_build_release_archive_contains_client_files(self) -> None:
         with tempfile.TemporaryDirectory():
             paths = mudlet_paths()
@@ -89,6 +119,44 @@ class MudletClientTests(unittest.TestCase):
             self.assertTrue(packet.startswith(bytes([IAC, SB])))
             self.assertTrue(packet.endswith(bytes([IAC, SE])))
             self.assertIn(b"Room.Info", packet)
+
+    def test_room_info_packet_omits_hidden_special_exits(self) -> None:
+        with TestGameHarness() as harness:
+            server = harness.require_server()
+            location = next(loc for loc in server.world.locations.values() if "gora" not in loc.exits)
+            location.exits["sekretny-most"] = Exit(61, is_door=True, kind="most", description="Jawny most", visible=True)
+            location.exits["gora"] = Exit(987654, is_door=True, is_locked=True, kind="Wieża Magów", description="Sekretna brama", visible=False)
+            snapshot = {direction: (exit_.target_room, exit_.is_door, exit_.is_locked, exit_.kind, exit_.description, exit_.visible) for direction, exit_ in location.exits.items()}
+
+            payload = room_info_payload(location, server.world)
+            packet = room_info_packet(location, server.world)
+            text = packet.decode("utf-8", errors="ignore")
+            self.assertNotIn("Wieża Magów", text)
+            self.assertNotIn("987654", text)
+            self.assertNotIn("gora", text)
+
+            expected_exits = {
+                POLISH_TO_MUDLET_DIRECTION[direction]: target
+                for direction, (target, _is_door, _is_locked, _kind, _description, visible) in snapshot.items()
+                if visible and direction in POLISH_TO_MUDLET_DIRECTION
+            }
+            self.assertEqual(payload["exits"], expected_exits)
+            self.assertEqual(
+                {direction: (exit_.target_room, exit_.is_door, exit_.is_locked, exit_.kind, exit_.description, exit_.visible) for direction, exit_ in location.exits.items()},
+                snapshot,
+            )
+            self.assertTrue(
+                any(
+                    entry["direction"] == "sekretny-most"
+                    and entry["target"] == 61
+                    and entry["kind"] == "most"
+                    and entry["visible"] is True
+                    and entry["door"] is True
+                    and entry["locked"] is False
+                    for entry in payload.get("special_exits", [])
+                )
+            )
+            self.assertFalse(any(entry["direction"] == "up" and entry["target"] == 987654 for entry in payload.get("special_exits", [])))
 
     def test_initial_view_sends_room_info(self) -> None:
         with TestGameHarness() as harness:

@@ -363,6 +363,20 @@ def _validate_room_info(payload: dict[str, Any]) -> None:
         special_exits = payload["special_exits"]
         if type(special_exits) is not list:
             raise WebProtocolError("invalid_payload", "Payload field 'special_exits' must be an array.")
+        for index, entry in enumerate(special_exits):
+            if type(entry) is not dict:
+                raise WebProtocolError("invalid_payload", f"Payload field 'special_exits[{index}]' must be an object.")
+            allowed_special_exit_keys = {"direction", "target", "kind", "visible", "door", "locked"}
+            _require_allowed_keys(entry, allowed_special_exit_keys)
+            _require_string_field(entry, "direction", max_length=COMMAND_LENGTH_LIMIT)
+            _ensure_exact_int(entry.get("target"), f"special_exits[{index}].target", minimum=0)
+            _require_string_field(entry, "kind", max_length=COMMAND_LENGTH_LIMIT)
+            if entry.get("visible") is not True:
+                raise WebProtocolError("invalid_payload", f"Payload field 'special_exits[{index}].visible' must be true.")
+            if type(entry.get("door")) is not bool:
+                raise WebProtocolError("invalid_payload", f"Payload field 'special_exits[{index}].door' must be a boolean.")
+            if type(entry.get("locked")) is not bool:
+                raise WebProtocolError("invalid_payload", f"Payload field 'special_exits[{index}].locked' must be a boolean.")
 
 
 def _validate_command_result(payload: dict[str, Any]) -> None:

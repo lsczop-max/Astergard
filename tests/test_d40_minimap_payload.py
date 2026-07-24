@@ -3,16 +3,33 @@ from __future__ import annotations
 import asyncio
 import json
 import os
+import re
 import unittest
 from typing import Any, cast
 from unittest.mock import patch
 
 from astergard.application.session_transport import TcpSessionTransport
+from astergard.gmcp import POLISH_TO_MUDLET_DIRECTION
 from astergard.testing import FakeReader, FakeWriter, TestGameHarness
+from astergard.world.models import Exit
 from astergard.utils import send_to_client
 
 
 class MinimapPayloadTests(unittest.TestCase):
+    def _map_payloads(self, text: str) -> list[dict[str, Any]]:
+        return [json.loads(match) for match in re.findall(r"<MAP_JSON>(.*?)</MAP_JSON>", text)]
+
+    def _snapshot_exits(self, *locations: Any) -> dict[int, dict[str, Exit]]:
+        return {location.id: dict(location.exits) for location in locations}
+
+    def _restore_exits(self, server: Any, snapshots: dict[int, dict[str, Exit]]) -> None:
+        for room_id, exits in snapshots.items():
+            location = server.world.get_location(room_id)
+            if location is None:
+                continue
+            location.exits.clear()
+            location.exits.update(exits)
+
     def test_full_payload_contains_all_world_rooms(self) -> None:
         with TestGameHarness() as harness:
             server = harness.require_server()
@@ -130,6 +147,313 @@ class MinimapPayloadTests(unittest.TestCase):
             self.assertIn("Kierujesz się na południe.", moved_text)
             self.assertNotIn("<MAP_JSON>", moved_text)
             self.assertEqual(moved_text.count(expected_prompt), 1)
+
+    def test_map_payload_omits_hidden_exits_in_full_and_incremental_updates(self) -> None:
+        with patch.dict(os.environ, {"ASTERGARD_MUDLET_MAP": "1"}, clear=False):
+            with TestGameHarness() as harness:
+                server = harness.require_server()
+                self.assertTrue(server.mudlet_map_enabled)
+                self.assertTrue(server.services.minimap_service.enabled)
+                self.assertTrue(server.repo.register("entry", "secret"))
+                character = server.repo.load("entry")
+                location = next(loc for loc in server.world.locations.values() if "gora" not in loc.exits)
+                location.exits["sekretny-most"] = Exit(61, is_door=True, kind="most", description="Jawny most", visible=True)
+                location.exits["gora"] = Exit(987654, is_door=True, is_locked=True, kind="Wieża Magów", description="Sekretna brama", visible=False)
+                snapshot = {
+                    direction: (exit_.target_room, exit_.is_door, exit_.is_locked, exit_.kind, exit_.description, exit_.visible)
+                    for direction, exit_ in location.exits.items()
+                }
+                character.room_id = location.id
+                server.repo.save(character)
+
+                reader = FakeReader.from_text_lines(["entry", "secret", "look", "poludnie"])
+                writer = FakeWriter()
+                transport = TcpSessionTransport(cast(Any, reader), cast(Any, writer))
+                login = asyncio.run(server.session_flow.login(transport))
+                self.assertIsNotNone(login.character)
+                assert login.character is not None
+
+                asyncio.run(server.session_flow.send_initial_view(transport, server.make_context(login.character)))
+                initial_text = writer.text()
+                initial_payloads = [json.loads(match) for match in re.findall(r"<MAP_JSON>(.*?)</MAP_JSON>", initial_text)]
+                self.assertEqual(len(initial_payloads), 1)
+                self.assertEqual(initial_payloads[0]["type"], "full_map_debug")
+                expected_exits = {
+                    POLISH_TO_MUDLET_DIRECTION[direction]: target
+                    for direction, (target, _is_door, _is_locked, _kind, _description, visible) in snapshot.items()
+                    if visible and direction in POLISH_TO_MUDLET_DIRECTION
+                }
+                self.assertEqual(
+                    initial_payloads[0]["rooms"][str(location.id)]["exits"],
+                    expected_exits,
+                )
+                self.assertNotIn("Wieża Magów", initial_text)
+                self.assertNotIn("987654", initial_text)
+                self.assertNotIn("gora", initial_text)
+                self.assertEqual(
+                    {direction: (exit_.target_room, exit_.is_door, exit_.is_locked, exit_.kind, exit_.description, exit_.visible) for direction, exit_ in location.exits.items()},
+                    snapshot,
+                )
+
+                writer.clear()
+                server.clients[transport] = login.character
+                asyncio.run(server.session_flow.command_loop(transport, server.make_context(login.character)))
+                command_text = writer.text()
+                command_payloads = [json.loads(match) for match in re.findall(r"<MAP_JSON>(.*?)</MAP_JSON>", command_text)]
+                self.assertEqual([payload["type"] for payload in command_payloads], ["map_update", "map_update"])
+                self.assertEqual(command_payloads[0]["exits"], expected_exits)
+                moved_location = server.world.get_location(login.character.room_id)
+                self.assertIsNotNone(moved_location)
+                assert moved_location is not None
+                expected_moved_exits = {
+                    POLISH_TO_MUDLET_DIRECTION[direction]: exit_.target_room
+                    for direction, exit_ in moved_location.exits.items()
+                    if exit_.visible and direction in POLISH_TO_MUDLET_DIRECTION
+                }
+                self.assertEqual(command_payloads[1]["exits"], expected_moved_exits)
+                self.assertIn("Kierujesz się na południe.", command_text)
+                self.assertNotIn("Wieża Magów", command_text)
+                self.assertNotIn("987654", command_text)
+                self.assertNotIn("gora", command_text)
+                self.assertEqual(
+                    {direction: (exit_.target_room, exit_.is_door, exit_.is_locked, exit_.kind, exit_.description, exit_.visible) for direction, exit_ in location.exits.items()},
+                    snapshot,
+                )
+
+    def test_map_payload_handles_room_without_public_exits(self) -> None:
+        with patch.dict(os.environ, {"ASTERGARD_MUDLET_MAP": "1"}, clear=False):
+            with TestGameHarness() as harness:
+                server = harness.require_server()
+                self.assertTrue(server.repo.register("entry", "secret"))
+                character = server.repo.load("entry")
+                location = next(loc for loc in server.world.locations.values() if loc.id != 14)
+                original_exits = dict(location.exits)
+                location.exits.clear()
+                location.exits["sekretny-most"] = Exit(
+                    987654,
+                    is_door=True,
+                    kind="most",
+                    description="Jawny most",
+                    visible=False,
+                )
+                snapshot = {
+                    direction: (exit_.target_room, exit_.is_door, exit_.is_locked, exit_.kind, exit_.description, exit_.visible)
+                    for direction, exit_ in location.exits.items()
+                }
+                character.room_id = location.id
+                server.repo.save(character)
+
+                reader = FakeReader.from_text_lines(["entry", "secret", "look"])
+                writer = FakeWriter()
+                transport = TcpSessionTransport(cast(Any, reader), cast(Any, writer))
+                login = asyncio.run(server.session_flow.login(transport))
+                self.assertIsNotNone(login.character)
+                assert login.character is not None
+
+                asyncio.run(server.session_flow.send_initial_view(transport, server.make_context(login.character)))
+                initial_text = writer.text()
+                initial_payloads = [json.loads(match) for match in re.findall(r"<MAP_JSON>(.*?)</MAP_JSON>", initial_text)]
+                self.assertEqual(len(initial_payloads), 1)
+                self.assertEqual(initial_payloads[0]["type"], "full_map_debug")
+                self.assertNotIn("sekretny-most", initial_text)
+                self.assertNotIn("987654", initial_text)
+                self.assertEqual(initial_payloads[0]["rooms"][str(location.id)]["exits"], {})
+                self.assertEqual(
+                    {direction: (exit_.target_room, exit_.is_door, exit_.is_locked, exit_.kind, exit_.description, exit_.visible) for direction, exit_ in location.exits.items()},
+                    snapshot,
+                )
+
+                writer.clear()
+                server.clients[transport] = login.character
+                asyncio.run(server.session_flow.command_loop(transport, server.make_context(login.character)))
+                command_text = writer.text()
+                command_payloads = [json.loads(match) for match in re.findall(r"<MAP_JSON>(.*?)</MAP_JSON>", command_text)]
+                self.assertEqual([payload["type"] for payload in command_payloads], ["map_update"])
+                self.assertNotIn("sekretny-most", command_text)
+                self.assertNotIn("987654", command_text)
+                self.assertEqual(command_payloads[0]["exits"], {})
+                self.assertEqual(
+                    {direction: (exit_.target_room, exit_.is_door, exit_.is_locked, exit_.kind, exit_.description, exit_.visible) for direction, exit_ in location.exits.items()},
+                    snapshot,
+                )
+                location.exits.clear()
+                location.exits.update(original_exits)
+
+    def test_map_update_uses_visible_graph_for_nearby_rooms(self) -> None:
+        with patch.dict(os.environ, {"ASTERGARD_MUDLET_MAP": "1"}, clear=False):
+            with TestGameHarness() as harness:
+                server = harness.require_server()
+                self.assertTrue(server.repo.register("entry", "secret"))
+                character = server.repo.load("entry")
+
+                origin = server.world.get_location(60)
+                hidden_target = server.world.get_location(61)
+                move_target = server.world.get_location(62)
+                hidden_continuation = server.world.get_location(63)
+                self.assertIsNotNone(origin)
+                self.assertIsNotNone(hidden_target)
+                self.assertIsNotNone(move_target)
+                self.assertIsNotNone(hidden_continuation)
+                assert origin is not None and hidden_target is not None and move_target is not None and hidden_continuation is not None
+
+                snapshots = self._snapshot_exits(origin, hidden_target, move_target, hidden_continuation)
+                try:
+                    for room in (origin, hidden_target, move_target, hidden_continuation):
+                        room.exits.clear()
+
+                    origin.exits["gora"] = Exit(hidden_target.id, kind="Wieża Magów", description="Sekretne przejście", visible=False)
+                    hidden_target.exits["wschod"] = Exit(hidden_continuation.id, kind="most", description="Jawny pomost", visible=True)
+                    origin.exits["poludnie"] = Exit(move_target.id, kind="droga", description="Jawna droga na południe", visible=True)
+                    character.room_id = origin.id
+                    server.repo.save(character)
+
+                    reader = FakeReader.from_text_lines(["entry", "secret", "look", "poludnie"])
+                    writer = FakeWriter()
+                    transport = TcpSessionTransport(cast(Any, reader), cast(Any, writer))
+                    login = asyncio.run(server.session_flow.login(transport))
+                    self.assertIsNotNone(login.character)
+                    assert login.character is not None
+
+                    asyncio.run(server.session_flow.send_initial_view(transport, server.make_context(login.character)))
+                    writer.clear()
+                    server.clients[transport] = login.character
+                    asyncio.run(server.session_flow.command_loop(transport, server.make_context(login.character)))
+                    command_text = writer.text()
+                    payloads = self._map_payloads(command_text)
+                    self.assertEqual([payload["type"] for payload in payloads], ["map_update", "map_update"])
+
+                    look_payload = payloads[0]
+                    move_payload = payloads[1]
+                    self.assertEqual(look_payload["current_room_id"], origin.id)
+                    self.assertEqual(look_payload["exits"], {"s": move_target.id})
+                    self.assertEqual(set(look_payload["nearby_rooms"]), {str(origin.id), str(move_target.id)})
+                    self.assertNotIn(str(hidden_target.id), command_text)
+                    self.assertNotIn(str(hidden_continuation.id), command_text)
+                    self.assertNotIn("Wieża Magów", command_text)
+                    self.assertNotIn("gora", command_text)
+
+                    self.assertEqual(move_payload["current_room_id"], move_target.id)
+                    self.assertEqual(move_payload["exits"], {})
+                    self.assertEqual(set(move_payload["nearby_rooms"]), {str(move_target.id)})
+                    self.assertNotIn(str(hidden_target.id), command_text)
+                    self.assertNotIn(str(hidden_continuation.id), command_text)
+                    self.assertNotIn("Wieża Magów", command_text)
+                    self.assertNotIn("gora", command_text)
+                    self.assertEqual(
+                        {direction: (exit_.target_room, exit_.is_door, exit_.is_locked, exit_.kind, exit_.description, exit_.visible) for direction, exit_ in origin.exits.items()},
+                        {
+                            "gora": (hidden_target.id, False, False, "Wieża Magów", "Sekretne przejście", False),
+                            "poludnie": (move_target.id, False, False, "droga", "Jawna droga na południe", True),
+                        },
+                    )
+                finally:
+                    self._restore_exits(server, snapshots)
+
+    def test_map_update_uses_alternative_visible_routes_and_handles_graph_edges(self) -> None:
+        with patch.dict(os.environ, {"ASTERGARD_MUDLET_MAP": "1"}, clear=False):
+            with TestGameHarness() as harness:
+                server = harness.require_server()
+                self.assertTrue(server.repo.register("entry", "secret"))
+                character = server.repo.load("entry")
+
+                origin = server.world.get_location(70)
+                hidden_mid = server.world.get_location(71)
+                target = server.world.get_location(72)
+                one_way_source = server.world.get_location(73)
+                one_way_target = server.world.get_location(74)
+                missing_source = server.world.get_location(75)
+                cycle_source = server.world.get_location(76)
+                cycle_target = server.world.get_location(77)
+                self.assertIsNotNone(origin)
+                self.assertIsNotNone(hidden_mid)
+                self.assertIsNotNone(target)
+                self.assertIsNotNone(one_way_source)
+                self.assertIsNotNone(one_way_target)
+                self.assertIsNotNone(missing_source)
+                self.assertIsNotNone(cycle_source)
+                self.assertIsNotNone(cycle_target)
+                assert (
+                    origin is not None
+                    and hidden_mid is not None
+                    and target is not None
+                    and one_way_source is not None
+                    and one_way_target is not None
+                    and missing_source is not None
+                    and cycle_source is not None
+                    and cycle_target is not None
+                )
+
+                snapshots = self._snapshot_exits(origin, hidden_mid, target, one_way_source, one_way_target, missing_source, cycle_source, cycle_target)
+                try:
+                    for room in (origin, hidden_mid, target, one_way_source, one_way_target, missing_source, cycle_source, cycle_target):
+                        room.exits.clear()
+
+                    origin.exits["gora"] = Exit(hidden_mid.id, kind="Wieża Magów", description="Sekretne przejście", visible=False)
+                    hidden_mid.exits["wschod"] = Exit(target.id, kind="most", description="Jawny most", visible=True)
+                    character.room_id = origin.id
+                    server.repo.save(character)
+
+                    reader = FakeReader.from_text_lines(["entry", "secret", "look"])
+                    writer = FakeWriter()
+                    transport = TcpSessionTransport(cast(Any, reader), cast(Any, writer))
+                    login = asyncio.run(server.session_flow.login(transport))
+                    self.assertIsNotNone(login.character)
+                    assert login.character is not None
+                    asyncio.run(server.session_flow.send_initial_view(transport, server.make_context(login.character)))
+                    writer.clear()
+                    server.clients[transport] = login.character
+                    asyncio.run(server.session_flow.command_loop(transport, server.make_context(login.character)))
+                    payload = self._map_payloads(writer.text())[0]
+                    self.assertEqual(set(payload["nearby_rooms"]), {str(origin.id)})
+                    self.assertNotIn(str(hidden_mid.id), writer.text())
+                    self.assertNotIn(str(target.id), writer.text())
+
+                    origin.exits["poludnie"] = Exit(target.id, kind="droga", description="Jawna droga", visible=True)
+                    server.repo.save(character)
+                    second_reader = FakeReader.from_text_lines(["look"])
+                    second_writer = FakeWriter()
+                    second_transport = TcpSessionTransport(cast(Any, second_reader), cast(Any, second_writer))
+                    server.clients[second_transport] = login.character
+                    asyncio.run(server.session_flow.command_loop(second_transport, server.make_context(login.character)))
+                    second_payload = self._map_payloads(second_writer.text())[0]
+                    self.assertEqual(set(second_payload["nearby_rooms"]), {str(origin.id), str(target.id)})
+                    self.assertIn(str(target.id), second_writer.text())
+
+                    one_way_source.exits["poludnie"] = Exit(one_way_target.id, kind="droga", description="Jednostronna droga", visible=True)
+                    login.character.room_id = one_way_source.id
+                    server.repo.save(login.character)
+                    one_way_reader = FakeReader.from_text_lines(["look"])
+                    one_way_writer = FakeWriter()
+                    one_way_transport = TcpSessionTransport(cast(Any, one_way_reader), cast(Any, one_way_writer))
+                    server.clients[one_way_transport] = login.character
+                    asyncio.run(server.session_flow.command_loop(one_way_transport, server.make_context(login.character)))
+                    one_way_payload = self._map_payloads(one_way_writer.text())[0]
+                    self.assertEqual(set(one_way_payload["nearby_rooms"]), {str(one_way_source.id), str(one_way_target.id)})
+
+                    missing_source.exits["poludnie"] = Exit(999999, kind="droga", description="Zaginiona droga", visible=True)
+                    login.character.room_id = missing_source.id
+                    server.repo.save(login.character)
+                    missing_reader = FakeReader.from_text_lines(["look"])
+                    missing_writer = FakeWriter()
+                    missing_transport = TcpSessionTransport(cast(Any, missing_reader), cast(Any, missing_writer))
+                    server.clients[missing_transport] = login.character
+                    asyncio.run(server.session_flow.command_loop(missing_transport, server.make_context(login.character)))
+                    missing_payload = self._map_payloads(missing_writer.text())[0]
+                    self.assertEqual(set(missing_payload["nearby_rooms"]), {str(missing_source.id)})
+
+                    cycle_source.exits["wschod"] = Exit(cycle_target.id, kind="droga", description="Pętla 1", visible=True)
+                    cycle_target.exits["zachod"] = Exit(cycle_source.id, kind="droga", description="Pętla 2", visible=True)
+                    login.character.room_id = cycle_source.id
+                    server.repo.save(login.character)
+                    cycle_reader = FakeReader.from_text_lines(["look"])
+                    cycle_writer = FakeWriter()
+                    cycle_transport = TcpSessionTransport(cast(Any, cycle_reader), cast(Any, cycle_writer))
+                    server.clients[cycle_transport] = login.character
+                    asyncio.run(server.session_flow.command_loop(cycle_transport, server.make_context(login.character)))
+                    cycle_payload = self._map_payloads(cycle_writer.text())[0]
+                    self.assertEqual(set(cycle_payload["nearby_rooms"]), {str(cycle_source.id), str(cycle_target.id)})
+                finally:
+                    self._restore_exits(server, snapshots)
 
     def test_map_payload_is_enabled_via_env(self) -> None:
         with patch.dict(os.environ, {"ASTERGARD_MUDLET_MAP": "1"}, clear=False):
