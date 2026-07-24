@@ -6,11 +6,9 @@ from typing import Any
 
 from astergard.characters.models import Character
 from astergard.combat.manager import CombatManager
-from astergard.crafting.services import CraftingService
 from astergard.database.repository import PlayerRepository
 from astergard.economy.services import EconomyService
 from astergard.factions.reputation import FactionManager
-from astergard.magic.services import MagicService
 from astergard.npcs.manager import NPCManager
 from astergard.quests.manager import QuestManager
 from astergard.world.manager import WorldManager
@@ -84,15 +82,6 @@ class EconomyContext:
     event_bus: EventBus
     npcs: NPCManager
     economy: EconomyService
-
-
-@dataclass(slots=True)
-class MagicCraftingContext:
-    character: Character
-    event_bus: EventBus
-    npcs: NPCManager
-    magic: MagicService
-    crafting: CraftingService
 
 
 @dataclass(slots=True)

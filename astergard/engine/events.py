@@ -50,7 +50,6 @@ class DomainEventType(StrEnum):
     ECONOMY_ITEM_BOUGHT = "economy.item_bought"
     ECONOMY_ITEM_SOLD = "economy.item_sold"
 
-    MAGIC_CAST = "magic.cast"
     CRAFTING_ATTEMPTED = "crafting.attempted"
 
 

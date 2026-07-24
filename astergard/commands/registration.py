@@ -3,13 +3,13 @@ from __future__ import annotations
 from astergard.application.command_bus import CommandBus, CommandDefinition
 from astergard.admin.gm_commands import build_admin_handlers
 from astergard.commands.character_sheet import build_character_sheet_handlers
+from astergard.commands.crafting import build_crafting_handlers
 from astergard.commands.combat import build_combat_handlers
 from astergard.commands.communication import build_communication_handlers
 from astergard.commands.dispatcher import CommandDispatcher
 from astergard.commands.economy import build_economy_handlers
 from astergard.commands.exploration import DIRECTIONS, build_exploration_handlers
 from astergard.commands.inventory import build_inventory_handlers
-from astergard.commands.magic_crafting import build_magic_crafting_handlers
 from astergard.commands.social_systems import build_social_handlers
 from astergard.commands.system import build_system_handlers
 from astergard.commands.engine import PermissionLevel
@@ -48,7 +48,6 @@ COMMAND_DEFINITIONS: dict[str, CommandDefinitionTuple] = {
     "offer": ("Ekonomia", ["oferta", "lista", "towary"], "Pokazuje ofertę kupca.", "oferta", 0.0, False, ""),
     "buy": ("Ekonomia", ["kup", "kupno", "nabyj"], "Kupuje przedmiot od kupca.", "kup <id/nazwa>", 0.5, True, "przedmiot"),
     "sell": ("Ekonomia", ["sprzedaj", "sprzed", "zbyj"], "Sprzedaje przedmiot kupcowi.", "sprzedaj <przedmiot>", 0.5, True, "przedmiot"),
-    "cast": ("Magia", ["czaruj", "rzuc", "rzuć", "inkantuj"], "Rzuca czar.", "czaruj <czar>", 1.0, True, "czar"),
     "craft": ("Crafting", ["craft", "stworz", "stwórz", "wykonaj", "zrob", "zrób", "wykuj"], "Tworzy przedmiot według receptury.", "craft <receptura>", 1.0, True, "receptura"),
     "ranking": ("System", ["ranking"], "Pokazuje ranking graczy.", "ranking [kategoria]", 5.0, False, "kategoria"),
     "save": ("System", ["zapisz", "save"], "Zapisuje postać.", "zapisz", 3.0, False, ""),
@@ -85,7 +84,7 @@ def build_command_bus(services) -> CommandBus:
     handlers.update(build_economy_handlers(services.economy_service))
     handlers.update(build_exploration_handlers(services.exploration_service))
     handlers.update(build_inventory_handlers(services.inventory_service))
-    handlers.update(build_magic_crafting_handlers(services.magic_crafting_service))
+    handlers.update(build_crafting_handlers(services.crafting))
     handlers.update(build_social_handlers(services.quest_service))
     handlers.update(build_system_handlers(services.system_service, services.minimap_service))
     handlers.update(build_admin_handlers(services.admin_service))

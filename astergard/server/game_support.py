@@ -52,7 +52,6 @@ class GameServerSupportMixin:
         self.quests = self.services.quests
         self.economy = self.services.economy
         self.crafting = self.services.crafting
-        self.magic = self.services.magic
         self.weather = self.services.weather
         self.admin = self.services.admin
         self.dispatcher = self.services.dispatcher
@@ -83,7 +82,6 @@ class GameServerSupportMixin:
             "cmd_sell": "sprzedaj",
             "cmd_search": "szukaj",
             "cmd_consume": "zjedz",
-            "cmd_cast": "czaruj",
             "cmd_craft": "craft",
             "cmd_reputation": "reputacja",
             "cmd_ranking": "ranking",

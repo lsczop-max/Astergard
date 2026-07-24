@@ -62,7 +62,6 @@ class HeartbeatService:
         modifier = self.services.weather.regen_modifier(loc.zone if loc else "")
         regen = int((2 + character.stats.wytrzymalosc // 4) * modifier)
         character.stats.kondycja = min(character.stats.max_kondycja, character.stats.kondycja + regen)
-        self.services.magic.tick(character)
         self.services.event_bus.emit("character.tick_completed", username=character.username, room_id=character.room_id)
 
     def process_combat_rounds(self) -> None:

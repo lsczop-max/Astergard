@@ -10,7 +10,6 @@ from astergard.application.use_case_contexts import (
     EconomyContext,
     ExplorationContext,
     InventoryContext,
-    MagicCraftingContext,
     LocationChangeOutbox,
     QuestContext,
     SystemContext,
@@ -35,7 +34,6 @@ class GameContext:
     combat_port: CombatContext
     quest_port: QuestContext
     economy_port: EconomyContext
-    magic_crafting_port: MagicCraftingContext
     system_port: SystemContext
     communication_port: CommunicationContext
     admin_port: AdminContext
@@ -60,9 +58,6 @@ class GameContext:
 
     def economy_context(self) -> EconomyContext:
         return self.economy_port
-
-    def magic_crafting_context(self) -> MagicCraftingContext:
-        return self.magic_crafting_port
 
     def system_context(self) -> SystemContext:
         return self.system_port

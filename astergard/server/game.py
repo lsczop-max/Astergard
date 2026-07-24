@@ -39,7 +39,6 @@ class GameServer(GameServerSupportMixin):
     cmd_sell: CommandFunc
     cmd_search: CommandFunc
     cmd_consume: CommandFunc
-    cmd_cast: CommandFunc
     cmd_craft: CommandFunc
     cmd_reputation: CommandFunc
     cmd_ranking: CommandFunc

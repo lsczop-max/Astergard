@@ -10,7 +10,6 @@ from astergard.application.use_case_contexts import (
     EconomyContext,
     ExplorationContext,
     InventoryContext,
-    MagicCraftingContext,
     LocationChangeOutbox,
     QuestContext,
     SystemContext,
@@ -64,13 +63,6 @@ class GameContextAssembler:
             ),
             quest_port=QuestContext(character=character, event_bus=self.services.event_bus, npcs=self.services.npcs, quests=self.services.quests),
             economy_port=EconomyContext(character=character, event_bus=self.services.event_bus, npcs=self.services.npcs, economy=self.services.economy),
-            magic_crafting_port=MagicCraftingContext(
-                character=character,
-                event_bus=self.services.event_bus,
-                npcs=self.services.npcs,
-                magic=self.services.magic,
-                crafting=self.services.crafting,
-            ),
             system_port=SystemContext(character=character, event_bus=self.services.event_bus, repo=self.services.repo),
             communication_port=CommunicationContext(character=character, event_bus=self.services.event_bus),
             admin_port=AdminContext(

@@ -101,7 +101,6 @@ class HeartbeatFlushTests(unittest.IsolatedAsyncioTestCase):
         self.server.clients[transport] = character
 
         with (
-            patch.object(self.server.heartbeat.services.magic, "tick", return_value=None),
             patch.object(self.server.heartbeat.services.npcs, "ai_tick", return_value=None),
             patch.object(self.server.heartbeat.services.npcs, "respawn_tick", return_value=None),
             patch.object(self.server.heartbeat, "process_combat_rounds", return_value=None),

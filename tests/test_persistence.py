@@ -39,7 +39,8 @@ class PersistenceTests(unittest.TestCase):
             backpack = Item("plecak", "Stary plecak.", 0.8, 5, "backpack", "container", is_container=True, capacity=20.0)
             backpack.contains.append(Item("krzemień", "Mały krzemień.", 0.1, 1, "flint"))
             char.inventory.append(backpack)
-            char.active_effects.append(Effect("Wzmocnienie", "sila", 4, 19))
+            char.active_effects.append(Effect("Opatrunek", "kondycja", 5, 3))
+            char.active_effects.append(Effect("Stabilizacja", "sila_woli", 2, 7))
             repo.save(char)
 
             loaded = repo.load("persist")
@@ -64,7 +65,22 @@ class PersistenceTests(unittest.TestCase):
             self.assertEqual(equipped.vnum, "simple_sword")
             loaded_pack = next(item for item in loaded.inventory if item.vnum == "backpack")
             self.assertEqual(loaded_pack.contains[0].vnum, "flint")
-            self.assertEqual(loaded.active_effects[0].name, "Wzmocnienie")
+            self.assertEqual([effect.name for effect in loaded.active_effects], ["Opatrunek", "Stabilizacja"])
+            self.assertEqual(loaded.active_effects[0].modifier_stat, "kondycja")
+            self.assertEqual(loaded.active_effects[0].value, 5)
+            self.assertEqual(loaded.active_effects[0].duration_ticks, 3)
+            self.assertEqual(loaded.active_effects[1].modifier_stat, "sila_woli")
+            self.assertEqual(loaded.active_effects[1].value, 2)
+            self.assertEqual(loaded.active_effects[1].duration_ticks, 7)
+            repo.save(loaded)
+            reloaded = repo.load("persist")
+            self.assertEqual([effect.name for effect in reloaded.active_effects], ["Opatrunek", "Stabilizacja"])
+            self.assertEqual(reloaded.active_effects[0].modifier_stat, "kondycja")
+            self.assertEqual(reloaded.active_effects[0].value, 5)
+            self.assertEqual(reloaded.active_effects[0].duration_ticks, 3)
+            self.assertEqual(reloaded.active_effects[1].modifier_stat, "sila_woli")
+            self.assertEqual(reloaded.active_effects[1].value, 2)
+            self.assertEqual(reloaded.active_effects[1].duration_ticks, 7)
 
     def test_repository_closes_connections_under_resource_warning_as_error(self) -> None:
         with tempfile.NamedTemporaryFile() as tmp:

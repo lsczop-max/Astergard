@@ -12,7 +12,7 @@ class SaveLoadEngineTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             db = Path(tmp) / "mud.db"
             services = GameBootstrapper(str(db)).build()
-            self.assertEqual(services.repo.current_schema_version(), 10)
+            self.assertEqual(services.repo.current_schema_version(), 11)
             self.assertTrue(services.repo.register("tester", "secret"))
             character = services.repo.load("tester")
             character.gold = 123

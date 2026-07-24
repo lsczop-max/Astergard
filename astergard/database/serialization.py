@@ -176,6 +176,44 @@ def _purge_legacy_ranged_items(items: list[Item], *, context: str, username: str
     return kept
 
 
+def _warn_invalid_effects_json(username: str, *, skipped: int | None = None) -> None:
+    if skipped is None:
+        message = f"Nieprawidłowe effects_json w zapisie postaci {username}; użyto pustej listy efektów."
+    else:
+        message = f"Nieprawidłowe elementy effects_json w zapisie postaci {username}; pominięto {skipped} element(ów)."
+    warnings.warn(message, stacklevel=2)
+
+
+def _decode_active_effects(raw_value: object, *, username: str) -> list[Effect]:
+    if raw_value is None or raw_value == "":
+        _warn_invalid_effects_json(username)
+        return []
+    if not isinstance(raw_value, (str, bytes, bytearray)):
+        _warn_invalid_effects_json(username)
+        return []
+    try:
+        decoded = json.loads(raw_value)
+    except (json.JSONDecodeError, TypeError):
+        _warn_invalid_effects_json(username)
+        return []
+    if not isinstance(decoded, list):
+        _warn_invalid_effects_json(username)
+        return []
+    active_effects: list[Effect] = []
+    skipped = 0
+    for effect_data in decoded:
+        if not isinstance(effect_data, dict):
+            skipped += 1
+            continue
+        try:
+            active_effects.append(Effect.from_dict(effect_data))
+        except (KeyError, TypeError, ValueError, OverflowError):
+            skipped += 1
+    if skipped:
+        _warn_invalid_effects_json(username, skipped=skipped)
+    return active_effects
+
+
 def _resolve_legacy_gender_id(profile_raw: dict[str, Any]) -> str:
     raw_gender_id = profile_raw.get("gender_id")
     gender_source = raw_gender_id if raw_gender_id not in {None, ""} else profile_raw.get("gender_description", "")
@@ -291,7 +329,7 @@ class CharacterStateSerializer:
         for slot in EQUIPMENT_SLOTS:
             char.equipment.setdefault(slot, None)
         char.resolve_equipment_conflicts()
-        char.active_effects = [Effect.from_dict(effect) for effect in json.loads(row[17])]
+        char.active_effects = _decode_active_effects(row[17] if len(row) > 17 else None, username=username)
         if len(row) > 18 and row[18]:
             char.combat_style = str(row[18])
         profile_raw = json.loads(row[19]) if len(row) > 19 and row[19] else {}
