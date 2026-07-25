@@ -113,14 +113,12 @@ class HeartbeatFlushTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(transport.outbound_events, [])
         self.assertFalse(transport.closed)
         self.assertIs(self.server.clients.get(transport), character)
-        self.assertNotIn(id(transport), self.server.session_flow._sequence_by_transport)
 
         await self.server._flush_heartbeat_vitals(changed)
 
         self.assertEqual(transport.outbound_events, [])
         self.assertFalse(transport.closed)
         self.assertIs(self.server.clients.get(transport), character)
-        self.assertNotIn(id(transport), self.server.session_flow._sequence_by_transport)
 
     async def test_heartbeat_routes_by_character_identity_and_skips_tcp(self) -> None:
         first = Character("same")

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { utf8ByteLength } from '../protocol/utf8';
-import { MAX_CREATOR_STEP_ID_BYTES, parseProtocolEnvelope, serializeWebEnvelope } from '../protocol/webProtocol';
+import { MAP_CONTRACT_VERSION, MAX_CREATOR_STEP_ID_BYTES, MAX_SAFE_INTEGER, parseProtocolEnvelope, serializeWebEnvelope } from '../protocol/webProtocol';
 
 describe('protocol validation', () => {
   it('rejects sequence duplicate and regression fields', () => {
@@ -206,6 +206,148 @@ describe('protocol validation', () => {
         }),
       ),
     ).toThrow(/unknown fields/);
+  });
+
+  it('round-trips public map.snapshot and map.update payloads with strict shapes', () => {
+    const snapshot = {
+      map_version: MAP_CONTRACT_VERSION,
+      sync_id: 'sync-1',
+      chunk_index: 0,
+      complete: false,
+      current_room_id: 1,
+      rooms: [
+        { room_id: 1, name: 'Start', region: 'Astergard', x: 0, y: 0, z: 0 },
+        { room_id: 2, name: 'Ścieżka', region: 'Astergard', x: 1, y: 0, z: 0 },
+      ],
+      edges: [{ from_room_id: 1, to_room_id: 2, direction: 'wschod' }],
+    } as const;
+    expect(parseProtocolEnvelope(JSON.stringify({ version: 1, type: 'map.snapshot', payload: snapshot, sequence: 1 }))).toEqual({
+      version: 1,
+      type: 'map.snapshot',
+      payload: snapshot,
+      sequence: 1,
+    });
+
+    const update = {
+      map_version: MAP_CONTRACT_VERSION,
+      sync_id: 'sync-1',
+      current_room_id: 2,
+      rooms: [{ room_id: 2, name: 'Ścieżka', region: 'Astergard', x: 1, y: 0, z: 0 }],
+      edges: [{ from_room_id: 1, to_room_id: 2, direction: 'wschod' }],
+    } as const;
+    expect(parseProtocolEnvelope(JSON.stringify({ version: 1, type: 'map.update', payload: update, sequence: 2 }))).toEqual({
+      version: 1,
+      type: 'map.update',
+      payload: update,
+      sequence: 2,
+    });
+
+    const invalidSnapshotPayloads = [
+      JSON.stringify({ version: 1, type: 'map.snapshot', payload: { ...snapshot, rooms: [{ room_id: 1, name: 'Start', region: 'Astergard', x: 0, y: 0, z: 0 }, { room_id: 1, name: 'Dup', region: 'Astergard', x: 1, y: 0, z: 0 }] }, sequence: 1 }),
+      JSON.stringify({ version: 1, type: 'map.snapshot', payload: { ...snapshot, rooms: [{ room_id: '1', name: 'Start', region: 'Astergard', x: 0, y: 0, z: 0 }] }, sequence: 1 }),
+      JSON.stringify({ version: 1, type: 'map.snapshot', payload: { ...snapshot, rooms: [{ room_id: Number.MAX_SAFE_INTEGER + 1, name: 'Start', region: 'Astergard', x: 0, y: 0, z: 0 }] }, sequence: 1 }),
+      JSON.stringify({ version: 1, type: 'map.snapshot', payload: { ...snapshot, rooms: [{ room_id: 1.5, name: 'Start', region: 'Astergard', x: 0, y: 0, z: 0 }] }, sequence: 1 }),
+      '{"version":1,"type":"map.snapshot","payload":{"map_version":1,"sync_id":"sync-1","chunk_index":0,"complete":false,"current_room_id":1,"rooms":[{"room_id":NaN,"name":"Start","region":"Astergard","x":0,"y":0,"z":0}],"edges":[]},"sequence":1}',
+      '{"version":1,"type":"map.snapshot","payload":{"map_version":1,"sync_id":"sync-1","chunk_index":0,"complete":false,"current_room_id":1,"rooms":[{"room_id":Infinity,"name":"Start","region":"Astergard","x":0,"y":0,"z":0}],"edges":[]},"sequence":1}',
+      '{"version":1,"type":"map.snapshot","payload":{"map_version":1,"sync_id":"sync-1","chunk_index":0,"complete":false,"current_room_id":1,"rooms":[{"room_id":1,"name":"Start","region":"Astergard","x":0,"y":0,"z":0},{"room_id":null,"name":"Dup","region":"Astergard","x":1,"y":0,"z":0}],"edges":[]},"sequence":1}',
+      '{"version":1,"type":"map.snapshot","payload":{"map_version":1,"sync_id":"sync-1","chunk_index":0,"complete":false,"current_room_id":1,"rooms":[{"room_id":1,"name":"Start","region":"Astergard","x":0,"y":0,"z":0},{"room_id":2,"name":"Dup","region":"Astergard","x":1,"y":0,"z":0.5}],"edges":[]},"sequence":1}',
+      JSON.stringify({ version: 1, type: 'map.snapshot', payload: { ...snapshot, edges: [{ from_room_id: 1, to_room_id: 2, direction: 'sekret' }] }, sequence: 1 }),
+      JSON.stringify({ version: 1, type: 'map.snapshot', payload: { ...snapshot, current_room_id: '1' }, sequence: 1 }),
+      JSON.stringify({ version: 1, type: 'map.snapshot', payload: { ...snapshot, chunk_index: 1.5 }, sequence: 1 }),
+      JSON.stringify({ version: 1, type: 'map.snapshot', payload: { ...snapshot, extra: true }, sequence: 1 }),
+    ];
+    for (const raw of invalidSnapshotPayloads) {
+      expect(() => parseProtocolEnvelope(raw)).toThrow();
+    }
+
+    const invalidUpdatePayloads = [
+      JSON.stringify({ version: 1, type: 'map.update', payload: { ...update, current_room_id: '2' }, sequence: 2 }),
+      JSON.stringify({ version: 1, type: 'map.update', payload: { ...update, edges: [{ from_room_id: 1, to_room_id: '2', direction: 'wschod' }] }, sequence: 2 }),
+      JSON.stringify({ version: 1, type: 'map.update', payload: { ...update, edges: [{ from_room_id: 1, to_room_id: 2.5, direction: 'wschod' }] }, sequence: 2 }),
+      JSON.stringify({ version: 1, type: 'map.update', payload: { ...update, edges: [{ from_room_id: Number.MAX_SAFE_INTEGER + 1, to_room_id: 2, direction: 'wschod' }] }, sequence: 2 }),
+      '{"version":1,"type":"map.update","payload":{"map_version":1,"sync_id":"sync-1","current_room_id":2,"rooms":[{"room_id":1,"name":"Start","region":"Astergard","x":0,"y":0,"z":0},{"room_id":2,"name":"Ścieżka","region":"Astergard","x":1,"y":0,"z":Infinity}],"edges":[{"from_room_id":1,"to_room_id":2,"direction":"wschod"}]},"sequence":2}',
+      '{"version":1,"type":"map.update","payload":{"map_version":1,"sync_id":"sync-1","current_room_id":2,"rooms":[{"room_id":1,"name":"Start","region":"Astergard","x":0,"y":0,"z":0},{"room_id":2,"name":"Ścieżka","region":"Astergard","x":1.25,"y":0,"z":0}],"edges":[{"from_room_id":1,"to_room_id":2,"direction":"wschod"}]},"sequence":2}',
+    ];
+    for (const raw of invalidUpdatePayloads) {
+      expect(() => parseProtocolEnvelope(raw)).toThrow();
+    }
+
+    expect(() =>
+      parseProtocolEnvelope(
+        JSON.stringify({
+          version: 1,
+          type: 'map.update',
+          payload: { ...update, hidden: true },
+          sequence: 2,
+        }),
+      ),
+    ).toThrow(/unknown fields/);
+  });
+
+  it('enforces safe integer bounds for public map payloads', () => {
+    const snapshot = {
+      map_version: MAP_CONTRACT_VERSION,
+      sync_id: 'sync-safe',
+      chunk_index: MAX_SAFE_INTEGER,
+      complete: false,
+      current_room_id: MAX_SAFE_INTEGER,
+      rooms: [
+        {
+          room_id: MAX_SAFE_INTEGER,
+          name: 'Pokój bezpieczny',
+          region: 'Astergard',
+          x: -MAX_SAFE_INTEGER,
+          y: 0,
+          z: MAX_SAFE_INTEGER,
+        },
+      ],
+      edges: [],
+    } as const;
+    expect(parseProtocolEnvelope(JSON.stringify({ version: 1, type: 'map.snapshot', payload: snapshot, sequence: 1 }))).toEqual({
+      version: 1,
+      type: 'map.snapshot',
+      payload: snapshot,
+      sequence: 1,
+    });
+
+    const update = {
+      map_version: MAP_CONTRACT_VERSION,
+      sync_id: 'sync-safe',
+      current_room_id: MAX_SAFE_INTEGER,
+      rooms: [
+        {
+          room_id: MAX_SAFE_INTEGER,
+          name: 'Pokój bezpieczny',
+          region: 'Astergard',
+          x: -MAX_SAFE_INTEGER,
+          y: 0,
+          z: MAX_SAFE_INTEGER,
+        },
+      ],
+      edges: [],
+    } as const;
+    expect(parseProtocolEnvelope(JSON.stringify({ version: 1, type: 'map.update', payload: update, sequence: 2 }))).toEqual({
+      version: 1,
+      type: 'map.update',
+      payload: update,
+      sequence: 2,
+    });
+
+    const invalidPayloads = [
+      JSON.stringify({ version: 1, type: 'map.snapshot', payload: { ...snapshot, chunk_index: MAX_SAFE_INTEGER + 1 }, sequence: 1 }),
+      JSON.stringify({ version: 1, type: 'map.snapshot', payload: { ...snapshot, current_room_id: MAX_SAFE_INTEGER + 1 }, sequence: 1 }),
+      JSON.stringify({ version: 1, type: 'map.snapshot', payload: { ...snapshot, rooms: [{ room_id: MAX_SAFE_INTEGER + 1, name: 'Start', region: 'Astergard', x: 0, y: 0, z: 0 }] }, sequence: 1 }),
+      JSON.stringify({ version: 1, type: 'map.snapshot', payload: { ...snapshot, rooms: [{ room_id: 1, name: 'Start', region: 'Astergard', x: -MAX_SAFE_INTEGER - 1, y: 0, z: 0 }] }, sequence: 1 }),
+      JSON.stringify({ version: 1, type: 'map.snapshot', payload: { ...snapshot, map_version: 2 }, sequence: 1 }),
+      JSON.stringify({ version: 1, type: 'map.snapshot', payload: { ...snapshot, rooms: [{ room_id: true, name: 'Start', region: 'Astergard', x: 0, y: 0, z: 0 }] }, sequence: 1 }),
+      JSON.stringify({ version: 1, type: 'map.snapshot', payload: { ...snapshot, rooms: [{ room_id: 1.5, name: 'Start', region: 'Astergard', x: 0, y: 0, z: 0 }] }, sequence: 1 }),
+      JSON.stringify({ version: 1, type: 'map.update', payload: { ...update, current_room_id: MAX_SAFE_INTEGER + 1 }, sequence: 2 }),
+      JSON.stringify({ version: 1, type: 'map.update', payload: { ...update, rooms: [{ room_id: MAX_SAFE_INTEGER + 1, name: 'Start', region: 'Astergard', x: 0, y: 0, z: 0 }] }, sequence: 2 }),
+      '{"version":1,"type":"map.update","payload":{"map_version":1,"sync_id":"sync-safe","current_room_id":1,"rooms":[{"room_id":1,"name":"Start","region":"Astergard","x":0,"y":0,"z":Infinity}],"edges":[]},"sequence":2}',
+    ];
+    for (const raw of invalidPayloads) {
+      expect(() => parseProtocolEnvelope(raw)).toThrow();
+    }
   });
 
   it('enforces 64-byte UTF-8 step_id limits across creator messages', () => {

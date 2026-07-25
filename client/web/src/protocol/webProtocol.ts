@@ -4,6 +4,8 @@ export const WEB_PROTOCOL_VERSION = 1 as const;
 export const MAX_PROTOCOL_MESSAGE_BYTES = 8192;
 export const MAX_COMMAND_BYTES = 512;
 export const MAX_CREATOR_STEP_ID_BYTES = 64;
+export const MAP_CONTRACT_VERSION = 1 as const;
+export const MAX_SAFE_INTEGER = Number.MAX_SAFE_INTEGER;
 
 export type ClientMessageType =
   | 'session.hello'
@@ -26,12 +28,21 @@ export type ServerMessageType =
   | 'output.text'
   | 'output.prompt'
   | 'room.info'
+  | 'map.snapshot'
+  | 'map.update'
   | 'command.result'
   | 'connection.pong'
   | 'protocol.error';
 
 export type RequestMessageType = ClientMessageType;
-export type StreamMessageType = 'session.ready' | 'character.vitals' | 'output.text' | 'output.prompt' | 'room.info';
+export type StreamMessageType =
+  | 'session.ready'
+  | 'character.vitals'
+  | 'output.text'
+  | 'output.prompt'
+  | 'room.info'
+  | 'map.snapshot'
+  | 'map.update';
 export type ResponseMessageType =
   | 'auth.result'
   | 'creator.started'
@@ -171,6 +182,39 @@ export interface PublicSpecialExitPayload {
   locked: boolean;
 }
 
+export interface MapRoomPayload {
+  room_id: number;
+  name: string;
+  region: string;
+  x: number;
+  y: number;
+  z: number;
+}
+
+export interface MapEdgePayload {
+  from_room_id: number;
+  to_room_id: number;
+  direction: string;
+}
+
+export interface MapSnapshotPayload {
+  map_version: number;
+  sync_id: string;
+  chunk_index: number;
+  complete: boolean;
+  current_room_id: number;
+  rooms: MapRoomPayload[];
+  edges: MapEdgePayload[];
+}
+
+export interface MapUpdatePayload {
+  map_version: number;
+  sync_id: string;
+  current_room_id: number;
+  rooms: MapRoomPayload[];
+  edges: MapEdgePayload[];
+}
+
 export interface CommandResultPayload {
   command: string;
   success: boolean;
@@ -215,6 +259,8 @@ export type ServerEnvelope =
   | Envelope<'output.text', OutputTextPayload>
   | Envelope<'output.prompt', OutputPromptPayload>
   | Envelope<'room.info', RoomInfoPayload>
+  | Envelope<'map.snapshot', MapSnapshotPayload>
+  | Envelope<'map.update', MapUpdatePayload>
   | Envelope<'command.result', CommandResultPayload>
   | Envelope<'connection.pong', ConnectionPongPayload>
   | Envelope<'protocol.error', ProtocolErrorPayload>;
@@ -253,6 +299,8 @@ const SERVER_MESSAGE_TYPES = new Set<ServerMessageType>([
   'output.text',
   'output.prompt',
   'room.info',
+  'map.snapshot',
+  'map.update',
   'command.result',
   'connection.pong',
   'protocol.error',
@@ -267,7 +315,15 @@ const REQUEST_MESSAGE_TYPES = new Set<RequestMessageType>([
   'command.execute',
   'connection.ping',
 ]);
-const STREAM_MESSAGE_TYPES = new Set<StreamMessageType>(['session.ready', 'character.vitals', 'output.text', 'output.prompt', 'room.info']);
+const STREAM_MESSAGE_TYPES = new Set<StreamMessageType>([
+  'session.ready',
+  'character.vitals',
+  'output.text',
+  'output.prompt',
+  'room.info',
+  'map.snapshot',
+  'map.update',
+]);
 const RESPONSE_MESSAGE_TYPES = new Set<ResponseMessageType>([
   'auth.result',
   'creator.started',
@@ -318,6 +374,19 @@ function requireInteger(value: unknown, field: string, options?: { min?: number 
   }
   if (options?.min !== undefined && value < options.min) {
     fail('invalid_payload', `Payload field '${field}' must be at least ${options.min}.`);
+  }
+  return value;
+}
+
+function requireSafeInteger(value: unknown, field: string, options?: { min?: number; max?: number }): number {
+  if (typeof value !== 'number' || !Number.isSafeInteger(value)) {
+    fail('invalid_payload', `Payload field '${field}' must be an integer.`);
+  }
+  if (options?.min !== undefined && value < options.min) {
+    fail('invalid_payload', `Payload field '${field}' must be at least ${options.min}.`);
+  }
+  if (options?.max !== undefined && value > options.max) {
+    fail('invalid_payload', `Payload field '${field}' must be at most ${options.max}.`);
   }
   return value;
 }
@@ -530,6 +599,103 @@ function validateRoomInfo(payload: Record<string, unknown>): void {
   }
 }
 
+const MAP_DIRECTIONS = new Set([
+  'polnoc',
+  'poludnie',
+  'wschod',
+  'zachod',
+  'polnocny-wschod',
+  'polnocny-zachod',
+  'poludniowy-wschod',
+  'poludniowy-zachod',
+  'gora',
+  'dol',
+]);
+
+function validateMapRoom(payload: Record<string, unknown>): MapRoomPayload {
+  requireAllowedKeys(payload, ['room_id', 'name', 'region', 'x', 'y', 'z']);
+  const room_id = requireSafeInteger(payload.room_id, 'room_id', { min: 0, max: MAX_SAFE_INTEGER });
+  const name = requireString(payload.name, 'name', { maxBytes: MAX_COMMAND_BYTES });
+  const region = requireString(payload.region, 'region', { maxBytes: MAX_COMMAND_BYTES });
+  const x = requireSafeInteger(payload.x, 'x', { min: -MAX_SAFE_INTEGER, max: MAX_SAFE_INTEGER });
+  const y = requireSafeInteger(payload.y, 'y', { min: -MAX_SAFE_INTEGER, max: MAX_SAFE_INTEGER });
+  const z = requireSafeInteger(payload.z, 'z', { min: -MAX_SAFE_INTEGER, max: MAX_SAFE_INTEGER });
+  return { room_id, name, region, x, y, z };
+}
+
+function validateMapEdge(payload: Record<string, unknown>): MapEdgePayload {
+  requireAllowedKeys(payload, ['from_room_id', 'to_room_id', 'direction']);
+  const from_room_id = requireSafeInteger(payload.from_room_id, 'from_room_id', { min: 0, max: MAX_SAFE_INTEGER });
+  const to_room_id = requireSafeInteger(payload.to_room_id, 'to_room_id', { min: 0, max: MAX_SAFE_INTEGER });
+  const direction = requireString(payload.direction, 'direction', { maxBytes: MAX_COMMAND_BYTES });
+  if (!MAP_DIRECTIONS.has(direction)) {
+    fail('invalid_payload', "Payload field 'direction' must be one of the known map directions.");
+  }
+  return { from_room_id, to_room_id, direction };
+}
+
+function validateMapRoomList(payload: Record<string, unknown>): MapRoomPayload[] {
+  if (!Array.isArray(payload.rooms)) {
+    fail('invalid_payload', "Payload field 'rooms' must be an array.");
+  }
+  const seen = new Set<number>();
+  const rooms: MapRoomPayload[] = [];
+  for (const [index, room] of payload.rooms.entries()) {
+    if (!isPlainObject(room)) {
+      fail('invalid_payload', `Payload field 'rooms[${index}]' must be an object.`);
+    }
+    const roomPayload = validateMapRoom(room);
+    if (seen.has(roomPayload.room_id)) {
+      fail('invalid_payload', "Payload field 'rooms' contains duplicate room_id values.");
+    }
+    seen.add(roomPayload.room_id);
+    rooms.push(roomPayload);
+  }
+  return rooms;
+}
+
+function validateMapEdgeList(payload: Record<string, unknown>): MapEdgePayload[] {
+  if (!Array.isArray(payload.edges)) {
+    fail('invalid_payload', "Payload field 'edges' must be an array.");
+  }
+  const edges: MapEdgePayload[] = [];
+  for (const [index, edge] of payload.edges.entries()) {
+    if (!isPlainObject(edge)) {
+      fail('invalid_payload', `Payload field 'edges[${index}]' must be an object.`);
+    }
+    edges.push(validateMapEdge(edge));
+  }
+  return edges;
+}
+
+function validateMapSnapshot(payload: Record<string, unknown>): void {
+  requireAllowedKeys(payload, ['map_version', 'sync_id', 'chunk_index', 'complete', 'current_room_id', 'rooms', 'edges']);
+  requireSafeInteger(payload.map_version, 'map_version');
+  if (payload.map_version !== MAP_CONTRACT_VERSION) {
+    fail('invalid_payload', "Payload field 'map_version' must match the current map contract version.");
+  }
+  requireString(payload.sync_id, 'sync_id', { maxBytes: MAX_COMMAND_BYTES });
+  requireSafeInteger(payload.chunk_index, 'chunk_index', { min: 0, max: MAX_SAFE_INTEGER });
+  if (typeof payload.complete !== 'boolean') {
+    fail('invalid_payload', "Payload field 'complete' must be a boolean.");
+  }
+  requireSafeInteger(payload.current_room_id, 'current_room_id', { min: 0, max: MAX_SAFE_INTEGER });
+  validateMapRoomList(payload);
+  validateMapEdgeList(payload);
+}
+
+function validateMapUpdate(payload: Record<string, unknown>): void {
+  requireAllowedKeys(payload, ['map_version', 'sync_id', 'current_room_id', 'rooms', 'edges']);
+  requireSafeInteger(payload.map_version, 'map_version');
+  if (payload.map_version !== MAP_CONTRACT_VERSION) {
+    fail('invalid_payload', "Payload field 'map_version' must match the current map contract version.");
+  }
+  requireString(payload.sync_id, 'sync_id', { maxBytes: MAX_COMMAND_BYTES });
+  requireSafeInteger(payload.current_room_id, 'current_room_id', { min: 0, max: MAX_SAFE_INTEGER });
+  validateMapRoomList(payload);
+  validateMapEdgeList(payload);
+}
+
 function validateCommandResult(payload: Record<string, unknown>): void {
   requireAllowedKeys(payload, ['command', 'success']);
   requireString(payload.command, 'command', { maxBytes: MAX_COMMAND_BYTES });
@@ -570,6 +736,8 @@ function validatePayload(type: string, payload: unknown): void {
   if (type === 'output.text') return validateTextPayload(payload, 'text');
   if (type === 'output.prompt') return validateTextPayload(payload, 'prompt');
   if (type === 'room.info') return validateRoomInfo(payload);
+  if (type === 'map.snapshot') return validateMapSnapshot(payload);
+  if (type === 'map.update') return validateMapUpdate(payload);
   if (type === 'command.result') return validateCommandResult(payload);
   if (type === 'connection.pong') return validateConnectionPong(payload);
   if (type === 'protocol.error') return validateProtocolError(payload);

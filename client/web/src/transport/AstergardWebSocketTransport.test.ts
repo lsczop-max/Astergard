@@ -255,6 +255,54 @@ describe('transport', () => {
     expect(transport.getState()).toBe('ready');
   });
 
+  it('forwards map snapshot and update stream messages', async () => {
+    const transport = makeTransport();
+    const messages: string[] = [];
+    transport.subscribe((event) => {
+      if (event.kind === 'message') {
+        messages.push(event.message.type);
+      }
+    });
+    transport.connect();
+    const socket = MockWebSocket.instances[0];
+    socket.open();
+    socket.message(serializeWebEnvelope({ version: 1, type: 'session.ready', payload: { transport: 'websocket' }, sequence: 1 }));
+    socket.message(
+      serializeWebEnvelope({
+        version: 1,
+        type: 'map.snapshot',
+        payload: {
+          map_version: 1,
+          sync_id: 'sync-1',
+          chunk_index: 0,
+          complete: true,
+          current_room_id: 1,
+          rooms: [{ room_id: 1, name: 'Start', region: 'Astergard', x: 0, y: 0, z: 0 }],
+          edges: [],
+        },
+        sequence: 2,
+      }),
+    );
+    socket.message(
+      serializeWebEnvelope({
+        version: 1,
+        type: 'map.update',
+        payload: {
+          map_version: 1,
+          sync_id: 'sync-1',
+          current_room_id: 1,
+          rooms: [],
+          edges: [],
+        },
+        sequence: 3,
+      }),
+    );
+
+    expect(messages).toContain('map.snapshot');
+    expect(messages).toContain('map.update');
+    expect(transport.getState()).toBe('ready');
+  });
+
   it('rejects duplicate, gap, and regression sequence', () => {
     const transport = makeTransport();
     const events: string[] = [];

@@ -28,6 +28,8 @@ ServerMessageType = Literal[
     "output.text",
     "output.prompt",
     "room.info",
+    "map.snapshot",
+    "map.update",
     "command.result",
     "connection.pong",
     "protocol.error",
@@ -55,6 +57,8 @@ SERVER_MESSAGE_TYPES = {
     "output.text",
     "output.prompt",
     "room.info",
+    "map.snapshot",
+    "map.update",
     "command.result",
     "connection.pong",
     "protocol.error",
@@ -69,7 +73,7 @@ REQUEST_MESSAGE_TYPES = {
     "command.execute",
     "connection.ping",
 }
-STREAM_MESSAGE_TYPES = {"session.ready", "character.vitals", "output.text", "output.prompt", "room.info"}
+STREAM_MESSAGE_TYPES = {"session.ready", "character.vitals", "output.text", "output.prompt", "room.info", "map.snapshot", "map.update"}
 RESPONSE_MESSAGE_TYPES = {
     "auth.result",
     "creator.started",
@@ -86,6 +90,20 @@ MESSAGE_SIZE_LIMIT = 8192
 WEB_MESSAGE_MAX_BYTES = MESSAGE_SIZE_LIMIT
 COMMAND_LENGTH_LIMIT = 512
 CREATOR_STEP_ID_MAX_BYTES = 64
+MAP_CONTRACT_VERSION = 1
+MAX_SAFE_INTEGER = 9007199254740991
+MAP_DIRECTIONS = {
+    "polnoc",
+    "poludnie",
+    "wschod",
+    "zachod",
+    "polnocny-wschod",
+    "polnocny-zachod",
+    "poludniowy-wschod",
+    "poludniowy-zachod",
+    "gora",
+    "dol",
+}
 
 
 class WebProtocolError(ValueError):
@@ -161,11 +179,13 @@ def _ensure_known_message_type(message_type: str) -> None:
         raise WebProtocolError("unknown_type", "Unknown protocol message type.")
 
 
-def _ensure_exact_int(value: Any, field: str, *, minimum: int | None = None) -> int:
+def _ensure_exact_int(value: Any, field: str, *, minimum: int | None = None, maximum: int | None = None) -> int:
     if type(value) is not int:
         raise WebProtocolError("invalid_payload", f"Payload field {field!r} must be an integer.")
     if minimum is not None and value < minimum:
         raise WebProtocolError("invalid_payload", f"Payload field {field!r} must be at least {minimum}.")
+    if maximum is not None and value > maximum:
+        raise WebProtocolError("invalid_payload", f"Payload field {field!r} must be at most {maximum}.")
     return value
 
 
@@ -379,6 +399,77 @@ def _validate_room_info(payload: dict[str, Any]) -> None:
                 raise WebProtocolError("invalid_payload", f"Payload field 'special_exits[{index}].locked' must be a boolean.")
 
 
+def _validate_map_room(payload: dict[str, Any]) -> None:
+    _require_allowed_keys(payload, {"room_id", "name", "region", "x", "y", "z"})
+    _ensure_exact_int(payload.get("room_id"), "room_id", minimum=0, maximum=MAX_SAFE_INTEGER)
+    _require_string_field(payload, "name", max_length=COMMAND_LENGTH_LIMIT)
+    _require_string_field(payload, "region", max_length=COMMAND_LENGTH_LIMIT)
+    _ensure_exact_int(payload.get("x"), "x", minimum=-MAX_SAFE_INTEGER, maximum=MAX_SAFE_INTEGER)
+    _ensure_exact_int(payload.get("y"), "y", minimum=-MAX_SAFE_INTEGER, maximum=MAX_SAFE_INTEGER)
+    _ensure_exact_int(payload.get("z"), "z", minimum=-MAX_SAFE_INTEGER, maximum=MAX_SAFE_INTEGER)
+
+
+def _validate_map_edge(payload: dict[str, Any]) -> None:
+    _require_allowed_keys(payload, {"from_room_id", "to_room_id", "direction"})
+    _ensure_exact_int(payload.get("from_room_id"), "from_room_id", minimum=0, maximum=MAX_SAFE_INTEGER)
+    _ensure_exact_int(payload.get("to_room_id"), "to_room_id", minimum=0, maximum=MAX_SAFE_INTEGER)
+    direction = _require_string_field(payload, "direction", max_length=COMMAND_LENGTH_LIMIT)
+    if direction not in MAP_DIRECTIONS:
+        raise WebProtocolError("invalid_payload", "Payload field 'direction' must be one of the known map directions.")
+
+
+def _validate_map_room_list(payload: dict[str, Any]) -> dict[int, dict[str, Any]]:
+    rooms = payload.get("rooms")
+    if type(rooms) is not list:
+        raise WebProtocolError("invalid_payload", "Payload field 'rooms' must be an array.")
+    seen: dict[int, dict[str, Any]] = {}
+    for index, room in enumerate(rooms):
+        if type(room) is not dict:
+            raise WebProtocolError("invalid_payload", f"Payload field 'rooms[{index}]' must be an object.")
+        _validate_map_room(room)
+        room_id = room["room_id"]
+        if room_id in seen:
+            raise WebProtocolError("invalid_payload", "Payload field 'rooms' contains duplicate room_id values.")
+        seen[room_id] = room
+    return seen
+
+
+def _validate_map_edge_list(payload: dict[str, Any]) -> list[dict[str, Any]]:
+    edges = payload.get("edges")
+    if type(edges) is not list:
+        raise WebProtocolError("invalid_payload", "Payload field 'edges' must be an array.")
+    validated: list[dict[str, Any]] = []
+    for index, edge in enumerate(edges):
+        if type(edge) is not dict:
+            raise WebProtocolError("invalid_payload", f"Payload field 'edges[{index}]' must be an object.")
+        _validate_map_edge(edge)
+        validated.append(edge)
+    return validated
+
+
+def _validate_map_snapshot(payload: dict[str, Any]) -> None:
+    _require_allowed_keys(payload, {"map_version", "sync_id", "chunk_index", "complete", "current_room_id", "rooms", "edges"})
+    if type(payload.get("map_version")) is not int or payload["map_version"] != MAP_CONTRACT_VERSION:
+        raise WebProtocolError("invalid_payload", "Payload field 'map_version' must match the current map contract version.")
+    _require_string_field(payload, "sync_id", max_length=COMMAND_LENGTH_LIMIT)
+    _ensure_exact_int(payload.get("chunk_index"), "chunk_index", minimum=0, maximum=MAX_SAFE_INTEGER)
+    if type(payload.get("complete")) is not bool:
+        raise WebProtocolError("invalid_payload", "Payload field 'complete' must be a boolean.")
+    _ensure_exact_int(payload.get("current_room_id"), "current_room_id", minimum=0, maximum=MAX_SAFE_INTEGER)
+    _validate_map_room_list(payload)
+    _validate_map_edge_list(payload)
+
+
+def _validate_map_update(payload: dict[str, Any]) -> None:
+    _require_allowed_keys(payload, {"map_version", "sync_id", "current_room_id", "rooms", "edges"})
+    if type(payload.get("map_version")) is not int or payload["map_version"] != MAP_CONTRACT_VERSION:
+        raise WebProtocolError("invalid_payload", "Payload field 'map_version' must match the current map contract version.")
+    _require_string_field(payload, "sync_id", max_length=COMMAND_LENGTH_LIMIT)
+    _ensure_exact_int(payload.get("current_room_id"), "current_room_id", minimum=0, maximum=MAX_SAFE_INTEGER)
+    _validate_map_room_list(payload)
+    _validate_map_edge_list(payload)
+
+
 def _validate_command_result(payload: dict[str, Any]) -> None:
     _require_allowed_keys(payload, {"command", "success"})
     _require_string_field(payload, "command", max_length=COMMAND_LENGTH_LIMIT)
@@ -455,6 +546,12 @@ def _validate_payload_shape(message_type: str, payload: dict[str, Any]) -> None:
         return
     if message_type == "room.info":
         _validate_room_info(payload)
+        return
+    if message_type == "map.snapshot":
+        _validate_map_snapshot(payload)
+        return
+    if message_type == "map.update":
+        _validate_map_update(payload)
         return
     if message_type == "command.result":
         _validate_command_result(payload)

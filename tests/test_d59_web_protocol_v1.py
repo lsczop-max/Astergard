@@ -16,6 +16,7 @@ from astergard.application.session_flow import utf8_byte_length
 from astergard.application.web_creator_flow import WebCreatorFlow
 from astergard.gmcp import core_hello_packet, gmcp_negotiation_packet, room_info_packet
 from astergard.protocol.web_v1 import (
+    MAX_SAFE_INTEGER,
     WebProtocolError,
     build_web_envelope,
     parse_web_envelope,
@@ -124,9 +125,33 @@ class WebProtocolV1Tests(unittest.TestCase):
                 },
                 sequence=11,
             ),
-            build_web_envelope("command.result", {"command": "spojrz", "success": True}, request_id="3", sequence=12),
-            build_web_envelope("connection.pong", {"nonce": "abc"}, request_id="4", sequence=13),
-            build_web_envelope("protocol.error", {"code": "invalid_json", "message": "Protocol message is not valid JSON."}, request_id="5", sequence=14),
+            build_web_envelope(
+                "map.snapshot",
+                {
+                    "map_version": 1,
+                    "sync_id": "sync-1",
+                    "chunk_index": 0,
+                    "complete": True,
+                    "current_room_id": 14,
+                    "rooms": [{"room_id": 14, "name": "Karczma", "region": "Astergard", "x": 1, "y": 2, "z": 0}],
+                    "edges": [],
+                },
+                sequence=12,
+            ),
+            build_web_envelope(
+                "map.update",
+                {
+                    "map_version": 1,
+                    "sync_id": "sync-1",
+                    "current_room_id": 14,
+                    "rooms": [],
+                    "edges": [],
+                },
+                sequence=13,
+            ),
+            build_web_envelope("command.result", {"command": "spojrz", "success": True}, request_id="3", sequence=14),
+            build_web_envelope("connection.pong", {"nonce": "abc"}, request_id="4", sequence=15),
+            build_web_envelope("protocol.error", {"code": "invalid_json", "message": "Protocol message is not valid JSON."}, request_id="5", sequence=16),
         ]
         for envelope in envelopes:
             encoded = serialize_web_envelope(envelope)
@@ -232,6 +257,73 @@ class WebProtocolV1Tests(unittest.TestCase):
                     separators=(",", ":"),
                 )
             )
+
+    def test_safe_integer_bounds_for_map_payloads_are_enforced(self) -> None:
+        snapshot = {
+            "map_version": 1,
+            "sync_id": "sync-safe",
+            "chunk_index": MAX_SAFE_INTEGER,
+            "complete": False,
+            "current_room_id": MAX_SAFE_INTEGER,
+            "rooms": [
+                {
+                    "room_id": MAX_SAFE_INTEGER,
+                    "name": "Pokoj bezpieczny",
+                    "region": "Astergard",
+                    "x": -MAX_SAFE_INTEGER,
+                    "y": 0,
+                    "z": MAX_SAFE_INTEGER,
+                },
+            ],
+            "edges": [],
+        }
+        parsed_snapshot = parse_web_envelope(
+            json.dumps({"version": 1, "type": "map.snapshot", "payload": snapshot, "sequence": 1}, separators=(",", ":"), ensure_ascii=False)
+        )
+        self.assertEqual(parsed_snapshot.payload, snapshot)
+
+        update = {
+            "map_version": 1,
+            "sync_id": "sync-safe",
+            "current_room_id": MAX_SAFE_INTEGER,
+            "rooms": [
+                {
+                    "room_id": MAX_SAFE_INTEGER,
+                    "name": "Pokoj bezpieczny",
+                    "region": "Astergard",
+                    "x": -MAX_SAFE_INTEGER,
+                    "y": 0,
+                    "z": MAX_SAFE_INTEGER,
+                },
+            ],
+            "edges": [],
+        }
+        parsed_update = parse_web_envelope(
+            json.dumps({"version": 1, "type": "map.update", "payload": update, "sequence": 2}, separators=(",", ":"), ensure_ascii=False)
+        )
+        self.assertEqual(parsed_update.payload, update)
+
+        invalid_cases = [
+            ({"version": 1, "type": "map.snapshot", "payload": {**snapshot, "chunk_index": MAX_SAFE_INTEGER + 1}, "sequence": 1}, "chunk_index", None),
+            ({"version": 1, "type": "map.snapshot", "payload": {**snapshot, "current_room_id": MAX_SAFE_INTEGER + 1}, "sequence": 1}, "current_room_id", None),
+            ({"version": 1, "type": "map.snapshot", "payload": {**snapshot, "rooms": [{"room_id": MAX_SAFE_INTEGER + 1, "name": "Start", "region": "Astergard", "x": 0, "y": 0, "z": 0}]}, "sequence": 1}, "room_id", None),
+            ({"version": 1, "type": "map.snapshot", "payload": {**snapshot, "rooms": [{"room_id": 1, "name": "Start", "region": "Astergard", "x": -MAX_SAFE_INTEGER - 1, "y": 0, "z": 0}]}, "sequence": 1}, "x", None),
+            ({"version": 1, "type": "map.snapshot", "payload": {**snapshot, "map_version": 2}, "sequence": 1}, "map_version", None),
+            ({"version": 1, "type": "map.snapshot", "payload": {**snapshot, "rooms": [{"room_id": True, "name": "Start", "region": "Astergard", "x": 0, "y": 0, "z": 0}]}, "sequence": 1}, "room_id", None),
+            ({"version": 1, "type": "map.snapshot", "payload": {**snapshot, "rooms": [{"room_id": 1.5, "name": "Start", "region": "Astergard", "x": 0, "y": 0, "z": 0}]}, "sequence": 1}, "room_id", None),
+            ({"version": 1, "type": "map.update", "payload": {**update, "current_room_id": MAX_SAFE_INTEGER + 1}, "sequence": 2}, "current_room_id", None),
+            ({"version": 1, "type": "map.update", "payload": {**update, "rooms": [{"room_id": MAX_SAFE_INTEGER + 1, "name": "Start", "region": "Astergard", "x": 0, "y": 0, "z": 0}]}, "sequence": 2}, "room_id", None),
+            ({"version": 1, "type": "map.update", "payload": {**update, "rooms": [{"room_id": 1, "name": "Start", "region": "Astergard", "x": 0, "y": 0, "z": float("inf")}]}, "sequence": 2}, None, "invalid_json"),
+            ({"version": 1, "type": "map.update", "payload": {**update, "rooms": [{"room_id": 1, "name": "Start", "region": "Astergard", "x": 0, "y": 0, "z": float("nan")}]}, "sequence": 2}, None, "invalid_json"),
+        ]
+        for raw, field, code in invalid_cases:
+            with self.subTest(field=field):
+                with self.assertRaises(WebProtocolError) as ctx:
+                    parse_web_envelope(json.dumps(raw, separators=(",", ":"), ensure_ascii=False))
+                if field is not None:
+                    self.assertIn(field, str(ctx.exception))
+                if code is not None:
+                    self.assertEqual(ctx.exception.code, code)
 
     def test_whitespace_command_execute_is_rejected_with_request_id(self) -> None:
         raw = json.dumps(
@@ -501,6 +593,7 @@ class WebProtocolV1Tests(unittest.TestCase):
             self.assertIn("auth.result", event_types)
             self.assertIn("character.vitals", event_types)
             self.assertIn("room.info", event_types)
+            self.assertIn("map.snapshot", event_types)
             self.assertIn("session.ready", event_types)
             self.assertIn("command.result", event_types)
 
@@ -517,6 +610,69 @@ class WebProtocolV1Tests(unittest.TestCase):
                 sorted(event.sequence for event in transport.outbound_events if event.sequence is not None),
             )
             self.assertNotIn(SessionCapability.DEBUG_MAP, transport.capabilities)
+
+    def test_web_map_snapshot_chunks_500_visited_rooms_and_stays_under_transport_limit(self) -> None:
+        async def run() -> None:
+            with TestGameHarness() as harness:
+                server = harness.require_server()
+                self.assertTrue(server.repo.register("mapper", "secret"))
+                character = server.repo.load("mapper")
+                character.room_id = 60
+                character.visited_room_ids = set(server.world.locations)
+                server.repo.save(character)
+
+                transport = MemorySessionTransport()
+                transport.queue_input(SessionInputKind.HELLO, {})
+                transport.queue_input(
+                    SessionInputKind.CREDENTIALS,
+                    {"username": "mapper", "password": "secret"},
+                    request_id="login-1",
+                )
+
+                login = await server.session_flow.login(transport)
+                self.assertIsNotNone(login.character)
+                assert login.character is not None
+                server.session_flow._web_map_sync_by_transport[id(transport)] = "sync-500"
+                transport._sequence = 997
+
+                await server.session_flow.send_initial_view(transport, server.make_context(login.character))
+
+                snapshot_events = [event for event in transport.outbound_events if event.type == "map.snapshot"]
+                self.assertGreater(len(snapshot_events), 1)
+                self.assertEqual(snapshot_events[0].sequence, 999)
+                self.assertEqual(snapshot_events[1].sequence, 1000)
+
+                payloads = [event.payload for event in snapshot_events]
+                expected_payloads = server.services.minimap_service.build_web_snapshot_payloads(
+                    login.character,
+                    server.world,
+                    sync_id="sync-500",
+                    starting_sequence=999,
+                )
+                self.assertEqual(payloads, expected_payloads)
+                self.assertEqual(payloads, server.services.minimap_service.build_web_snapshot_payloads(
+                    login.character,
+                    server.world,
+                    sync_id="sync-500",
+                    starting_sequence=999,
+                ))
+                self.assertEqual(
+                    len({room["room_id"] for payload in payloads for room in payload["rooms"]}),
+                    len(server.world.locations),
+                )
+                self.assertTrue(
+                    all(
+                        len(
+                            serialize_web_envelope(
+                                build_web_envelope("map.snapshot", payload, sequence=event.sequence),
+                            ).encode("utf-8")
+                        )
+                        <= 8192
+                        for event, payload in zip(snapshot_events, payloads, strict=True)
+                    )
+                )
+
+        asyncio.run(run())
 
 
 if __name__ == "__main__":

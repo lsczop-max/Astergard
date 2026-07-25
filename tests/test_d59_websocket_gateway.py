@@ -14,6 +14,7 @@ from websockets.exceptions import InvalidStatusCode
 from websockets.server import serve
 
 from astergard.application.websocket_transport import WebSocketTransportLimits
+from astergard.application.session_transport import SessionEvent
 from astergard.items.models import Item
 from astergard.protocol.web_v1 import (
     COMMAND_LENGTH_LIMIT,
@@ -21,6 +22,7 @@ from astergard.protocol.web_v1 import (
     build_web_envelope,
     parse_web_envelope,
     serialize_web_envelope,
+    WebProtocolError,
 )
 from astergard.server.gateway import WebSocketGateway, WebSocketGatewayConfig
 from astergard.testing import TestGameHarness
@@ -81,7 +83,7 @@ async def _drive_web_creator(
             step = response.payload
             continue
         if response.type == "creator.finished":
-            post_frames = [parse_web_envelope(await websocket.recv()) for _ in range(6)]
+            post_frames = [parse_web_envelope(await websocket.recv()) for _ in range(7)]
             return response, post_frames, request_id
             return response, [], request_id
 
@@ -162,6 +164,28 @@ class ScriptedWebSocket:
         self.closed.append((code, reason))
 
 
+class BlockingSendWebSocket:
+    def __init__(self) -> None:
+        self.sent: list[str] = []
+        self.closed: list[tuple[int | None, str | None]] = []
+        self.first_send_started = asyncio.Event()
+        self.release_first_send = asyncio.Event()
+        self._blocked_once = False
+
+    async def recv(self) -> str | bytes:
+        raise EOFError
+
+    async def send(self, data: str) -> None:
+        if not self._blocked_once:
+            self._blocked_once = True
+            self.first_send_started.set()
+            await self.release_first_send.wait()
+        self.sent.append(data)
+
+    async def close(self, code: int = 1000, reason: str = "session closed") -> None:
+        self.closed.append((code, reason))
+
+
 @asynccontextmanager
 async def websocket_gateway_context(server: Any, config: WebSocketGatewayConfig):
     gateway = WebSocketGateway(server, config)
@@ -230,25 +254,25 @@ class WebSocketGatewayIntegrationTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(greeting.sequence, 1)
 
                 await websocket.send(_frame("auth.login", {"username": "web", "password": "secret"}, request_id="login-1"))
-                login_frames = [parse_web_envelope(await websocket.recv()) for _ in range(6)]
+                login_frames = [parse_web_envelope(await websocket.recv()) for _ in range(7)]
                 self.assertEqual(
                     [frame.type for frame in login_frames],
-                    ["auth.result", "output.text", "room.info", "character.vitals", "output.prompt", "session.ready"],
+                    ["auth.result", "output.text", "room.info", "map.snapshot", "character.vitals", "output.prompt", "session.ready"],
                 )
-                self.assertEqual([frame.sequence for frame in login_frames], [2, 3, 4, 5, 6, 7])
+                self.assertEqual([frame.sequence for frame in login_frames], [2, 3, 4, 5, 6, 7, 8])
                 self.assertEqual(login_frames[0].request_id, "login-1")
                 self.assertEqual(login_frames[-1].payload["transport"], "web")
-                self.assertEqual(login_frames[3].payload["condition_max"], 12)
-                self.assertEqual(login_frames[3].payload["stamina_max"], character.stats.max_kondycja)
+                self.assertEqual(login_frames[4].payload["condition_max"], 12)
+                self.assertEqual(login_frames[4].payload["stamina_max"], character.stats.max_kondycja)
 
                 await websocket.send(_frame("command.execute", {"command": "spojrz"}, request_id="cmd-1"))
                 command_frames = [parse_web_envelope(await websocket.recv()) for _ in range(3)]
                 self.assertEqual([frame.type for frame in command_frames], ["output.text", "command.result", "output.prompt"])
-                self.assertEqual([frame.sequence for frame in command_frames], [8, 9, 10])
+                self.assertEqual([frame.sequence for frame in command_frames], [9, 10, 11])
                 self.assertEqual(command_frames[1].request_id, "cmd-1")
                 self.assertEqual(
                     [frame.sequence for frame in [greeting] + login_frames + command_frames],
-                    list(range(1, 11)),
+                    list(range(1, 12)),
                 )
 
     async def test_public_room_info_omits_hidden_special_exits(self) -> None:
@@ -270,11 +294,11 @@ class WebSocketGatewayIntegrationTests(unittest.IsolatedAsyncioTestCase):
                 await websocket.send(_frame("session.hello", {"client": "tests", "transport": "websocket"}, request_id="hello-1"))
                 await websocket.recv()
                 await websocket.send(_frame("auth.login", {"username": "roominfo", "password": "secret"}, request_id="login-1"))
-                login_frames_raw = [await websocket.recv() for _ in range(6)]
+                login_frames_raw = [await websocket.recv() for _ in range(7)]
                 login_frames = [parse_web_envelope(raw) for raw in login_frames_raw]
                 self.assertEqual(
                     [frame.type for frame in login_frames],
-                    ["auth.result", "output.text", "room.info", "character.vitals", "output.prompt", "session.ready"],
+                    ["auth.result", "output.text", "room.info", "map.snapshot", "character.vitals", "output.prompt", "session.ready"],
                 )
 
                 room_raw = login_frames_raw[2]
@@ -359,7 +383,7 @@ class WebSocketGatewayIntegrationTests(unittest.IsolatedAsyncioTestCase):
                 await websocket.send(_frame("session.hello", {"client": "tests", "transport": "websocket"}, request_id="hello-1"))
                 await websocket.recv()
                 await websocket.send(_frame("auth.login", {"username": "mirror", "password": "secret"}, request_id="login-1"))
-                for _ in range(6):
+                for _ in range(7):
                     await websocket.recv()
                 await websocket.send(_frame("command.execute", {"command": "ob siebie"}, request_id="look-1"))
                 frames = [parse_web_envelope(await websocket.recv()) for _ in range(3)]
@@ -462,12 +486,12 @@ class WebSocketGatewayIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     self.assertEqual(response.request_id, request_id)
                     break
 
-                post_creation_frames = [parse_web_envelope(await websocket.recv()) for _ in range(6)]
+                post_creation_frames = [parse_web_envelope(await websocket.recv()) for _ in range(7)]
                 frame_types = [frame.type for frame in post_creation_frames]
-                self.assertEqual(frame_types, ["output.text", "output.text", "room.info", "character.vitals", "output.prompt", "session.ready"])
+                self.assertEqual(frame_types, ["output.text", "output.text", "room.info", "map.snapshot", "character.vitals", "output.prompt", "session.ready"])
                 self.assertEqual(frame_types.count("session.ready"), 1)
                 self.assertNotIn("auth.result", frame_types)
-                self.assertEqual(post_creation_frames[4].payload["prompt"], ">")
+                self.assertEqual(post_creation_frames[5].payload["prompt"], ">")
                 self.assertNotIn("secret", "".join(frame.payload.get("text", "") if frame.type == "output.text" else "" for frame in post_creation_frames))
                 character = self.server.repo.load("newbie")
                 self.assertEqual(character.name, "Nowy")
@@ -502,7 +526,7 @@ class WebSocketGatewayIntegrationTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(finished.type, "creator.finished")
                 self.assertEqual(finished.request_id, request_id)
 
-                post_frames = [parse_web_envelope(await websocket.recv()) for _ in range(6)]
+                post_frames = [parse_web_envelope(await websocket.recv()) for _ in range(7)]
                 frame_types = [frame.type for frame in post_frames]
                 self.assertEqual(frame_types.count("session.ready"), 1)
                 self.assertNotIn("protocol.error", frame_types)
@@ -544,7 +568,7 @@ class WebSocketGatewayIntegrationTests(unittest.IsolatedAsyncioTestCase):
                 finished = parse_web_envelope(await websocket.recv())
                 self.assertEqual(finished.type, "creator.finished")
                 self.assertEqual(finished.request_id, recovery_request_id)
-                post_frames = [parse_web_envelope(await websocket.recv()) for _ in range(6)]
+                post_frames = [parse_web_envelope(await websocket.recv()) for _ in range(7)]
                 self.assertEqual([frame.type for frame in post_frames].count("session.ready"), 1)
 
     async def test_web_creator_conflict_is_controlled_and_atomic_with_barrier(self) -> None:
@@ -591,7 +615,7 @@ class WebSocketGatewayIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     await websocket.send(_frame("creator.submit", {"step_id": step["step_id"], "value": "blizna_policzek"}, request_id=request_id))
                     response = parse_web_envelope(await websocket.recv())
                     if response.type == "creator.finished":
-                        post_frames = [parse_web_envelope(await websocket.recv()) for _ in range(6)]
+                        post_frames = [parse_web_envelope(await websocket.recv()) for _ in range(7)]
                         return response, post_frames, request_id
 
                     self.assertEqual(response.type, "creator.validation_error")
@@ -685,7 +709,7 @@ class WebSocketGatewayIntegrationTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(finished.type, "creator.finished")
                 self.assertEqual(finished.request_id, "oversize-creator-2")
 
-                post_frames = [parse_web_envelope(await websocket.recv()) for _ in range(6)]
+                post_frames = [parse_web_envelope(await websocket.recv()) for _ in range(7)]
                 self.assertEqual([frame.type for frame in post_frames].count("session.ready"), 1)
                 self.assertNotIn("protocol.error", [frame.type for frame in post_frames])
                 self.assertNotIn(
@@ -775,8 +799,8 @@ class WebSocketGatewayIntegrationTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(greeting.type, "output.text")
 
                 await websocket.send(_frame("auth.login", {"username": "returning", "password": "secret"}, request_id="relogin-login"))
-                frames = [parse_web_envelope(await websocket.recv()) for _ in range(6)]
-                self.assertEqual([frame.type for frame in frames], ["auth.result", "output.text", "room.info", "character.vitals", "output.prompt", "session.ready"])
+                frames = [parse_web_envelope(await websocket.recv()) for _ in range(7)]
+                self.assertEqual([frame.type for frame in frames], ["auth.result", "output.text", "room.info", "map.snapshot", "character.vitals", "output.prompt", "session.ready"])
                 self.assertEqual(frames[0].request_id, "relogin-login")
                 self.assertEqual(frames[-1].payload["username"], "returning")
 
@@ -791,8 +815,8 @@ class WebSocketGatewayIntegrationTests(unittest.IsolatedAsyncioTestCase):
                 await websocket.send(_frame("session.hello", {"client": "tests", "transport": "websocket"}, request_id="hello-1"))
                 await websocket.recv()
                 await websocket.send(_frame("auth.login", {"username": "walker", "password": "secret"}, request_id="login-1"))
-                login_frames = [parse_web_envelope(await websocket.recv()) for _ in range(6)]
-                initial_vitals = login_frames[3]
+                login_frames = [parse_web_envelope(await websocket.recv()) for _ in range(7)]
+                initial_vitals = login_frames[4]
 
                 await websocket.send(_frame("command.execute", {"command": "szukaj"}, request_id="search-1"))
                 command_frames = [parse_web_envelope(await websocket.recv()) for _ in range(4)]
@@ -830,7 +854,7 @@ class WebSocketGatewayIntegrationTests(unittest.IsolatedAsyncioTestCase):
                 await websocket.send(_frame("creator.submit", {"step_id": step["step_id"], "value": "blizna_policzek"}, request_id="invalid-final-retry"))
                 finished = parse_web_envelope(await websocket.recv())
                 self.assertEqual(finished.type, "creator.finished")
-                post_frames = [parse_web_envelope(await websocket.recv()) for _ in range(6)]
+                post_frames = [parse_web_envelope(await websocket.recv()) for _ in range(7)]
                 self.assertEqual([frame.type for frame in post_frames].count("session.ready"), 1)
 
     async def test_creator_back_and_cancel_keep_user_on_the_current_step(self) -> None:
@@ -875,15 +899,16 @@ class WebSocketGatewayIntegrationTests(unittest.IsolatedAsyncioTestCase):
                 await websocket.send(_frame("session.hello", {"client": "tests", "transport": "websocket"}, request_id="hello-1"))
                 await websocket.recv()
                 await websocket.send(_frame("auth.login", {"username": "walker", "password": "secret"}, request_id="login-1"))
-                for _ in range(6):
+                for _ in range(7):
                     await websocket.recv()
 
                 await websocket.send(_frame("command.execute", {"command": "poludnie"}, request_id="move-1"))
-                frames = [parse_web_envelope(await websocket.recv()) for _ in range(5)]
-                self.assertEqual([frame.type for frame in frames], ["room.info", "output.text", "command.result", "character.vitals", "output.prompt"])
+                frames = [parse_web_envelope(await websocket.recv()) for _ in range(6)]
+                self.assertEqual([frame.type for frame in frames], ["room.info", "output.text", "map.update", "command.result", "character.vitals", "output.prompt"])
                 self.assertLess(frames[0].sequence or 0, frames[1].sequence or 0)
                 self.assertLess(frames[1].sequence or 0, frames[2].sequence or 0)
                 self.assertLess(frames[2].sequence or 0, frames[3].sequence or 0)
+                self.assertLessEqual(len(serialize_web_envelope(frames[2]).encode("utf-8")), WEB_MESSAGE_MAX_BYTES)
 
     async def test_ping_pong_preserves_request_id(self) -> None:
         self.assertTrue(self.server.repo.register("ping", "secret"))
@@ -893,7 +918,7 @@ class WebSocketGatewayIntegrationTests(unittest.IsolatedAsyncioTestCase):
                 await websocket.send(_frame("session.hello", {"client": "tests", "transport": "websocket"}, request_id="hello-1"))
                 await websocket.recv()
                 await websocket.send(_frame("auth.login", {"username": "ping", "password": "secret"}, request_id="login-1"))
-                for _ in range(6):
+                for _ in range(7):
                     await websocket.recv()
                 await websocket.send(_frame("connection.ping", {"nonce": "abc"}, request_id="ping-1"))
                 pong = parse_web_envelope(await websocket.recv())
@@ -940,7 +965,7 @@ class WebSocketGatewayIntegrationTests(unittest.IsolatedAsyncioTestCase):
                 await websocket.send(_frame("session.hello", {"client": "tests", "transport": "websocket"}, request_id="hello-1"))
                 await websocket.recv()
                 await websocket.send(_frame("auth.login", {"username": "len", "password": "secret"}, request_id="login-1"))
-                for _ in range(6):
+                for _ in range(7):
                     await websocket.recv()
                 await websocket.send(_frame("command.execute", {"command": "ż" * (COMMAND_LENGTH_LIMIT + 1)}, request_id="cmd-1"))
                 error = parse_web_envelope(await websocket.recv())
@@ -954,7 +979,7 @@ class WebSocketGatewayIntegrationTests(unittest.IsolatedAsyncioTestCase):
                 await websocket.send(_frame("session.hello", {"client": "tests", "transport": "websocket"}, request_id="hello-1"))
                 await websocket.recv()
                 await websocket.send(_frame("auth.login", {"username": "blank", "password": "secret"}, request_id="login-1"))
-                for _ in range(6):
+                for _ in range(7):
                     await websocket.recv()
 
                 await websocket.send(_frame("command.execute", {"command": "   "}, request_id="cmd-blank"))
@@ -986,7 +1011,7 @@ class WebSocketGatewayIntegrationTests(unittest.IsolatedAsyncioTestCase):
                 await websocket.send(_frame("session.hello", {"client": "tests", "transport": "websocket"}, request_id="hello-1"))
                 await websocket.recv()
                 await websocket.send(_frame("auth.login", {"username": "disconnect", "password": "secret"}, request_id="login-1"))
-                for _ in range(6):
+                for _ in range(7):
                     await websocket.recv()
                 await websocket.close()
             await asyncio.wait_for(websocket.wait_closed(), timeout=2.0)
@@ -1005,7 +1030,7 @@ class WebSocketGatewayIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     await websocket.send(_frame("session.hello", {"client": "tests", "transport": "websocket"}, request_id="hello-1"))
                     await websocket.recv()
                     await websocket.send(_frame("auth.login", {"username": "same", "password": "secret"}, request_id="login-1"))
-                    for _ in range(6):
+                    for _ in range(7):
                         await websocket.recv()
 
                 await first.send(_frame("command.execute", {"command": "spojrz"}, request_id="cmd-1"))
@@ -1161,3 +1186,130 @@ class WebSocketGatewayDeadlineTests(unittest.IsolatedAsyncioTestCase):
         kwargs = serve_mock.call_args.kwargs
         self.assertEqual(kwargs["ping_timeout"], 17.0)
         self.assertEqual(kwargs["close_timeout"], 6.0)
+
+
+class WebSocketTransportConcurrencyTests(unittest.IsolatedAsyncioTestCase):
+    async def asyncSetUp(self) -> None:
+        self.harness = TestGameHarness().start()
+        self.server = self.harness.require_server()
+
+    async def asyncTearDown(self) -> None:
+        self.harness.close()
+
+    def _make_transport(self, websocket: Any) -> Any:
+        from astergard.application.websocket_transport import WebSocketSessionTransport
+
+        return WebSocketSessionTransport(cast(Any, websocket), limits=WebSocketTransportLimits())
+
+    async def test_snapshot_batch_blocks_other_outbound_frames_and_keeps_sequence_exact(self) -> None:
+        self.assertTrue(self.server.repo.register("mapper", "secret"))
+        character = self.server.repo.load("mapper")
+        character.room_id = 60
+        character.visited_room_ids = set(self.server.world.locations)
+        self.server.repo.save(character)
+
+        websocket = BlockingSendWebSocket()
+        transport = self._make_transport(websocket)
+        transport._sequence = 998
+
+        batch_task = asyncio.create_task(
+            transport.send_map_snapshot_batch(
+                lambda starting_sequence: self.server.services.minimap_service.build_web_snapshot_payloads(
+                    character,
+                    self.server.world,
+                    sync_id="sync-500",
+                    starting_sequence=starting_sequence,
+                )
+            )
+        )
+        await asyncio.wait_for(websocket.first_send_started.wait(), timeout=2.0)
+
+        vitals_task = asyncio.create_task(
+            transport.send_event(
+                SessionEvent(
+                    "character.vitals",
+                    {
+                        "condition_current": 9,
+                        "condition_max": 12,
+                        "stamina_current": 88,
+                        "stamina_max": 100,
+                    },
+                )
+            )
+        )
+        prompt_task = asyncio.create_task(transport.send_prompt("> "))
+        error_task = asyncio.create_task(
+            transport.send_event(
+                SessionEvent("protocol.error", {"code": "boom", "message": "boom"})
+            )
+        )
+
+        websocket.release_first_send.set()
+        await asyncio.wait_for(asyncio.gather(batch_task, vitals_task, prompt_task, error_task), timeout=4.0)
+        await transport.send_event(SessionEvent("output.text", {"text": "after"}))
+
+        frames = [parse_web_envelope(frame) for frame in websocket.sent]
+        snapshot_frames = [frame for frame in frames if frame.type == "map.snapshot"]
+        expected_payloads = self.server.services.minimap_service.build_web_snapshot_payloads(
+            character,
+            self.server.world,
+            sync_id="sync-500",
+            starting_sequence=999,
+        )
+        self.assertEqual(len(snapshot_frames), len(expected_payloads))
+        self.assertEqual(frames[: len(snapshot_frames)], snapshot_frames)
+        self.assertTrue(all(frame.type == "map.snapshot" for frame in frames[: len(snapshot_frames)]))
+        self.assertFalse(any(frame.type == "map.snapshot" for frame in frames[len(snapshot_frames) :]))
+        self.assertEqual([frame.sequence for frame in snapshot_frames], list(range(999, 999 + len(snapshot_frames))))
+        self.assertEqual([frame.payload for frame in snapshot_frames], expected_payloads)
+        self.assertEqual([frame.sequence for frame in frames], list(range(999, 999 + len(frames))))
+        self.assertLessEqual(max(len(frame.encode("utf-8")) for frame in websocket.sent), WEB_MESSAGE_MAX_BYTES)
+        self.assertEqual(frames[-1].type, "output.text")
+        self.assertEqual(frames[-1].payload["text"], "after")
+
+    async def test_parallel_send_event_and_oversized_batch_are_atomic_and_release_the_lock(self) -> None:
+        websocket = BlockingSendWebSocket()
+        transport = self._make_transport(websocket)
+
+        first_task = asyncio.create_task(transport.send_event(SessionEvent("output.text", {"text": "pierwszy"})))
+        await asyncio.wait_for(websocket.first_send_started.wait(), timeout=2.0)
+        second_task = asyncio.create_task(transport.send_event(SessionEvent("output.prompt", {"prompt": "> "})))
+        websocket.release_first_send.set()
+        await asyncio.wait_for(asyncio.gather(first_task, second_task), timeout=2.0)
+
+        sent_frames = [parse_web_envelope(frame) for frame in websocket.sent]
+        self.assertEqual([frame.sequence for frame in sent_frames], [1, 2])
+        self.assertEqual([frame.type for frame in sent_frames], ["output.text", "output.prompt"])
+
+        oversized_websocket = BlockingSendWebSocket()
+        oversized_transport = self._make_transport(oversized_websocket)
+        oversized_transport._sequence = 41
+        too_large_payload = {
+            "map_version": 1,
+            "sync_id": "sync-big",
+            "chunk_index": 0,
+            "complete": True,
+            "current_room_id": 1,
+            "rooms": [
+                {
+                    "room_id": 1,
+                    "name": "Start" + ("ż" * 5000),
+                    "region": "Astergard",
+                    "x": 0,
+                    "y": 0,
+                    "z": 0,
+                }
+            ],
+            "edges": [],
+        }
+
+        with self.assertRaises(WebProtocolError) as ctx:
+            await oversized_transport.send_map_snapshot_batch(lambda _starting_sequence: [too_large_payload])
+        self.assertEqual(ctx.exception.code, "message_too_large")
+        self.assertEqual(oversized_websocket.sent, [])
+        self.assertEqual(oversized_transport._sequence, 41)
+
+        oversized_websocket.release_first_send.set()
+        await asyncio.wait_for(oversized_transport.send_event(SessionEvent("output.text", {"text": "after"})), timeout=2.0)
+        self.assertEqual(len(oversized_websocket.sent), 1)
+        self.assertEqual(parse_web_envelope(oversized_websocket.sent[0]).sequence, 42)

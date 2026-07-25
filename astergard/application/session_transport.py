@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 from dataclasses import dataclass
 from enum import Enum
+from collections.abc import Callable, Sequence
 from typing import Any, Protocol, runtime_checkable
 
 from astergard.gmcp import (
@@ -87,6 +88,7 @@ class SessionTransport(Protocol):
     async def send_text(self, text: str) -> None: ...
     async def send_prompt(self, prompt: str) -> None: ...
     async def send_event(self, event: SessionEvent) -> None: ...
+    async def send_map_snapshot_batch(self, payload_factory: Callable[[int], Sequence[dict[str, Any]]]) -> None: ...
     async def close(self) -> None: ...
 
 
@@ -175,6 +177,9 @@ class TcpSessionTransport:
             packet = gmcp_payload(ROOM_INFO_PACKAGE, event.payload)
             await self._send_packet(packet)
             return
+
+    async def send_map_snapshot_batch(self, payload_factory: Callable[[int], Sequence[dict[str, Any]]]) -> None:
+        raise NotImplementedError("TCP transport does not support web map snapshots.")
 
     async def _send_packet(self, packet: bytes) -> None:
         self.writer.write(packet)

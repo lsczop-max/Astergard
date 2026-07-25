@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections import deque
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 from typing import Any, Deque
 
@@ -29,6 +30,11 @@ class MemorySessionTransport:
     outbound_prompts: list[str] = field(default_factory=list)
     outbound_events: list[SessionEvent] = field(default_factory=list)
     closed: bool = False
+    _sequence: int = 0
+
+    def _next_sequence(self) -> int:
+        self._sequence += 1
+        return self._sequence
 
     def queue_input(
         self,
@@ -79,7 +85,23 @@ class MemorySessionTransport:
         self.outbound_prompts.append(prompt)
 
     async def send_event(self, event: SessionEvent) -> None:
-        self.outbound_events.append(event)
+        sequence = event.sequence if event.sequence is not None else self._next_sequence()
+        self._sequence = max(self._sequence, sequence)
+        self.outbound_events.append(
+            SessionEvent(
+                event.type,
+                dict(event.payload),
+                request_id=event.request_id,
+                sequence=sequence,
+            )
+        )
+
+    async def send_map_snapshot_batch(self, payload_factory: Callable[[int], Sequence[dict[str, Any]]]) -> None:
+        starting_sequence = self._sequence + 1
+        payloads = list(payload_factory(starting_sequence))
+        for payload in payloads:
+            sequence = self._next_sequence()
+            self.outbound_events.append(SessionEvent("map.snapshot", dict(payload), sequence=sequence))
 
     def emit_event(self, event: SessionEvent) -> None:
         self.outbound_events.append(event)

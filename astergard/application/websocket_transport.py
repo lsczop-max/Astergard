@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 from collections import deque
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 from math import isfinite
 from time import monotonic
@@ -86,9 +87,11 @@ class WebSocketSessionTransport:
     _deadline_at: float | None = None
     _message_limiter: _SlidingWindowLimiter = field(init=False)
     _command_limiter: _SlidingWindowLimiter = field(init=False)
+    _outbound_lock: asyncio.Lock = field(init=False)
 
     def __post_init__(self) -> None:
         self._validate_limits()
+        self._outbound_lock = asyncio.Lock()
         self._message_limiter = _SlidingWindowLimiter(
             self.limits.message_rate_limit_count,
             self.limits.message_rate_limit_window_seconds,
@@ -122,10 +125,6 @@ class WebSocketSessionTransport:
             self._deadline_at = monotonic() + timeout
         return self._deadline_at
 
-    def _next_sequence(self) -> int:
-        self._sequence += 1
-        return self._sequence
-
     def _allowed_request_type(self, expected: SessionInputKind, message_type: str) -> bool:
         if message_type == "connection.ping":
             return expected != SessionInputKind.HELLO
@@ -154,28 +153,11 @@ class WebSocketSessionTransport:
         remaining = deadline - monotonic()
         return remaining
 
-    async def _send_envelope(
-        self,
-        message_type: str,
-        payload: dict[str, Any],
-        *,
-        request_id: str | None = None,
-    ) -> None:
-        if self._closed:
-            raise EOFError
-        envelope = build_web_envelope(
-            message_type,
-            payload,
-            request_id=request_id,
-            sequence=self._next_sequence(),
-        )
-        await self.websocket.send(serialize_web_envelope(envelope))
-
     async def _send_protocol_error(self, code: str, message: str, request_id: str | None = None) -> None:
         if self._closed:
             return
         try:
-            await self._send_envelope(
+            await self._send_single_envelope(
                 "protocol.error",
                 {"code": code, "message": message},
                 request_id=request_id,
@@ -234,6 +216,65 @@ class WebSocketSessionTransport:
         if command and not self._command_limiter.allow(now):
             return False
         return True
+
+    def _build_serialized_envelope(
+        self,
+        message_type: str,
+        payload: dict[str, Any],
+        *,
+        request_id: str | None = None,
+        sequence: int,
+    ) -> str:
+        envelope = build_web_envelope(
+            message_type,
+            payload,
+            request_id=request_id,
+            sequence=sequence,
+        )
+        serialized = serialize_web_envelope(envelope)
+        if len(serialized.encode("utf-8")) > self.limits.message_max_bytes:
+            raise WebProtocolError("message_too_large", f"WebSocket frame {message_type} exceeds the transport limit.")
+        return serialized
+
+    async def _send_serialized(self, serialized: str) -> None:
+        await self.websocket.send(serialized)
+
+    async def _send_single_envelope(
+        self,
+        message_type: str,
+        payload: dict[str, Any],
+        *,
+        request_id: str | None = None,
+    ) -> None:
+        async with self._outbound_lock:
+            sequence = self._sequence + 1
+            serialized = self._build_serialized_envelope(
+                message_type,
+                payload,
+                request_id=request_id,
+                sequence=sequence,
+            )
+            await self._send_serialized(serialized)
+            self._sequence = sequence
+
+    async def _send_snapshot_batch_locked(
+        self,
+        payload_factory: Callable[[int], Sequence[dict[str, Any]]],
+    ) -> None:
+        starting_sequence = self._sequence + 1
+        payloads = list(payload_factory(starting_sequence))
+        serialized_frames: list[str] = []
+        for offset, payload in enumerate(payloads):
+            serialized_frames.append(
+                self._build_serialized_envelope(
+                    "map.snapshot",
+                    dict(payload),
+                    sequence=starting_sequence + offset,
+                )
+            )
+        for offset, serialized in enumerate(serialized_frames):
+            await self._send_serialized(serialized)
+            self._sequence = starting_sequence + offset
 
     async def read_input(
         self,
@@ -323,19 +364,25 @@ class WebSocketSessionTransport:
         raise EOFError
 
     async def send_text(self, text: str) -> None:
-        await self._send_envelope("output.text", {"text": text})
+        await self._send_single_envelope("output.text", {"text": text})
 
     async def send_prompt(self, prompt: str) -> None:
-        await self._send_envelope("output.prompt", {"prompt": prompt})
+        await self._send_single_envelope("output.prompt", {"prompt": prompt})
 
     async def send_event(self, event: SessionEvent) -> None:
         if self._closed:
             raise EOFError
-        await self._send_envelope(
+        await self._send_single_envelope(
             event.type,
             dict(event.payload),
             request_id=event.request_id,
         )
+
+    async def send_map_snapshot_batch(self, payload_factory: Callable[[int], Sequence[dict[str, Any]]]) -> None:
+        if self._closed:
+            raise EOFError
+        async with self._outbound_lock:
+            await self._send_snapshot_batch_locked(payload_factory)
 
     async def close(self, close_code: int = 1000, reason: str = "session closed") -> None:
         if self._closed:

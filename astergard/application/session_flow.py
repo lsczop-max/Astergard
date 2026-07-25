@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from uuid import uuid4
 from typing import Any
 
 from astergard.application.bootstrap import GameServices
@@ -8,6 +9,7 @@ from astergard.application.session_transport import (
     SessionInput,
     SessionInputKind,
     SessionCapability,
+    SessionEvent,
     SessionTransport,
     SessionTransportKind,
     is_debug_map_allowed,
@@ -25,7 +27,6 @@ from astergard.application.session_transport import (
     make_protocol_error_event,
     make_room_info_event,
     make_session_ready_event,
-    next_sequence,
 )
 from astergard.application.web_creator_flow import WebCreatorFlow, WebCreatorValidationError
 from astergard.server.gmcp_bridge import send_room_info_for_character
@@ -49,7 +50,7 @@ from astergard.characters.models import Character
 from astergard.characters.professions import ProfessionError, build_selection, profession_menu_text
 from astergard.database.repository import UsernameTakenError
 from astergard.commands.parser import CommandParser
-from astergard.protocol.web_v1 import COMMAND_LENGTH_LIMIT, CREATOR_STEP_ID_MAX_BYTES
+from astergard.protocol.web_v1 import COMMAND_LENGTH_LIMIT, CREATOR_STEP_ID_MAX_BYTES, WebProtocolError
 from astergard.server.context import GameContext
 
 
@@ -80,27 +81,67 @@ class SessionFlow:
         self.prompt_renderer = prompt_renderer
         self.map_payload_enabled = bool(getattr(self.services.minimap_service, "enabled", False))
         self._gmcp_announced_transports: set[int] = set()
-        self._sequence_by_transport: dict[int, int] = {}
         self._last_vitals_by_transport: dict[int, dict[str, Any]] = {}
+        self._web_map_sync_by_transport: dict[int, str] = {}
 
     def _transport_key(self, transport: SessionTransport) -> int:
         return id(transport)
 
-    def _next_sequence(self, transport: SessionTransport) -> int:
-        key = self._transport_key(transport)
-        current = self._sequence_by_transport.get(key, 0)
-        sequence = next_sequence(current)
-        self._sequence_by_transport[key] = sequence
-        return sequence
-
     def clear_transport_state(self, transport: SessionTransport) -> None:
         key = self._transport_key(transport)
-        self._sequence_by_transport.pop(key, None)
         self._last_vitals_by_transport.pop(key, None)
         self._gmcp_announced_transports.discard(key)
+        self._web_map_sync_by_transport.pop(key, None)
 
     def _map_update_enabled(self, transport: SessionTransport) -> bool:
         return self.map_payload_enabled and is_debug_map_allowed(transport)
+
+    def _web_map_enabled(self, transport: SessionTransport) -> bool:
+        return SessionCapability.WEB_JSON in transport.capabilities
+
+    def _web_map_sync_id(self, transport: SessionTransport) -> str:
+        key = self._transport_key(transport)
+        sync_id = self._web_map_sync_by_transport.get(key)
+        if sync_id is None:
+            sync_id = uuid4().hex
+            self._web_map_sync_by_transport[key] = sync_id
+        return sync_id
+
+    async def _send_web_map_snapshot(self, transport: SessionTransport, context: GameContext) -> None:
+        if not self._web_map_enabled(transport):
+            return
+        sync_id = self._web_map_sync_id(transport)
+        await transport.send_map_snapshot_batch(
+            lambda starting_sequence: self.services.minimap_service.build_web_snapshot_payloads(
+                context.character,
+                context.world,
+                sync_id=sync_id,
+                starting_sequence=starting_sequence,
+            )
+        )
+
+    async def _send_web_map_update(
+        self,
+        transport: SessionTransport,
+        context: GameContext,
+        *,
+        previous_visited_room_ids: set[int],
+    ) -> None:
+        if not self._web_map_enabled(transport):
+            return
+        sync_id = self._web_map_sync_id(transport)
+        payload = self.services.minimap_service.build_web_update_payload(
+            context.character,
+            context.world,
+            sync_id=sync_id,
+            previous_visited_room_ids=previous_visited_room_ids,
+        )
+        try:
+            await transport.send_event(SessionEvent("map.update", payload))
+        except WebProtocolError as exc:
+            if exc.code != "message_too_large":
+                raise
+            await self._send_web_map_snapshot(transport, context)
 
     async def _await_message(self, transport: SessionTransport, expected: SessionInputKind) -> SessionInput:
         while True:
@@ -109,7 +150,6 @@ class SessionFlow:
                 await transport.send_event(
                     make_connection_pong_event(
                         message.request_id,
-                        sequence=self._next_sequence(transport),
                     )
                 )
                 continue
@@ -162,7 +202,6 @@ class SessionFlow:
             make_room_info_event(
                 location,
                 context.world,
-                sequence=self._next_sequence(transport),
             )
         )
 
@@ -175,7 +214,6 @@ class SessionFlow:
         await transport.send_event(
             make_character_vitals_event(
                 payload,
-                sequence=self._next_sequence(transport),
             )
         )
 
@@ -235,7 +273,6 @@ class SessionFlow:
                 username,
                 flow.start_payload()["step"],
                 request_id=start_request_id,
-                sequence=self._next_sequence(transport),
             )
         )
         while not flow.finished and not flow.cancelled:
@@ -258,7 +295,6 @@ class SessionFlow:
                                 message_text,
                                 code=code,
                                 request_id=message.request_id,
-                                sequence=self._next_sequence(transport),
                             )
                         )
                         continue
@@ -273,7 +309,6 @@ class SessionFlow:
                                     "username_taken",
                                     "Ta nazwa użytkownika jest już zajęta.",
                                     request_id=message.request_id,
-                                    sequence=self._next_sequence(transport),
                                 )
                             )
                             continue
@@ -283,7 +318,6 @@ class SessionFlow:
                                 username,
                                 character_name=profile.name,
                                 request_id=message.request_id,
-                                sequence=self._next_sequence(transport),
                             )
                         )
                         character = self.services.repo.load(username)
@@ -293,7 +327,6 @@ class SessionFlow:
                         make_creator_step_event(
                             flow.current_step_dict(),
                             request_id=message.request_id,
-                            sequence=self._next_sequence(transport),
                         )
                     )
                     continue
@@ -304,7 +337,6 @@ class SessionFlow:
                         make_creator_step_event(
                             step.to_dict(),
                             request_id=message.request_id,
-                            sequence=self._next_sequence(transport),
                         )
                     )
                     continue
@@ -316,7 +348,6 @@ class SessionFlow:
                             username,
                             reason="cancelled_by_user",
                             request_id=message.request_id,
-                            sequence=self._next_sequence(transport),
                         )
                     )
                     return None
@@ -328,7 +359,6 @@ class SessionFlow:
                         exc.field,
                         exc.message,
                         request_id=message.request_id,
-                        sequence=self._next_sequence(transport),
                     )
                 )
         return None
@@ -448,7 +478,6 @@ class SessionFlow:
                                     "username",
                                     "Ta nazwa użytkownika jest już zajęta.",
                                     request_id=request_id,
-                                    sequence=self._next_sequence(transport),
                                 )
                             )
                             continue
@@ -467,7 +496,6 @@ class SessionFlow:
                                 username,
                                 reason="unknown_character",
                                 request_id=request_id,
-                                sequence=self._next_sequence(transport),
                             )
                         )
                         continue
@@ -479,7 +507,6 @@ class SessionFlow:
                                 username,
                                 reason="invalid_credentials",
                                 request_id=request_id,
-                                sequence=self._next_sequence(transport),
                             )
                         )
                         continue
@@ -490,7 +517,6 @@ class SessionFlow:
                             True,
                             username,
                             request_id=request_id,
-                            sequence=self._next_sequence(transport),
                         )
                     )
                     return LoginResult(character)
@@ -508,7 +534,6 @@ class SessionFlow:
                             username,
                             reason="invalid_credentials",
                             request_id=request_id,
-                            sequence=self._next_sequence(transport),
                         )
                     )
                     return LoginResult(None, close_connection=True)
@@ -519,9 +544,8 @@ class SessionFlow:
                         True,
                         username,
                         request_id=request_id,
-                        sequence=self._next_sequence(transport),
                     )
-                    )
+                )
                 return LoginResult(character)
 
             profile = await self._collect_creation_profile(transport)
@@ -538,7 +562,6 @@ class SessionFlow:
                     True,
                     username,
                     request_id=request_id,
-                    sequence=self._next_sequence(transport),
                 )
             )
             return LoginResult(character)
@@ -550,7 +573,6 @@ class SessionFlow:
                     "input_too_long",
                     "Input exceeds the transport limit.",
                     request_id=request_id,
-                    sequence=self._next_sequence(transport),
                 )
             )
             return LoginResult(None, close_connection=True)
@@ -562,6 +584,7 @@ class SessionFlow:
             await self.services.dispatcher.commands["look"](context, None, 1),
         )
         await self._send_room_info(transport, context)
+        await self._send_web_map_snapshot(transport, context)
         await self._send_full_map_debug(transport, context)
         await self._send_character_vitals(transport, context.character, force=True)
         await transport.send_prompt(self.prompt_renderer(context.character, transport))
@@ -569,7 +592,6 @@ class SessionFlow:
             make_session_ready_event(
                 transport.kind,
                 context.character.username,
-                sequence=self._next_sequence(transport),
             )
         )
 
@@ -591,13 +613,21 @@ class SessionFlow:
                 )
                 needs_full_map = spec is not None and spec.name == "debug_map"
                 needs_minimap_update = spec is not None and spec.name in {"look", "move"}
+                previous_visited_room_ids = set(character.visited_room_ids)
                 before_room_id = character.room_id
                 output = await self.services.dispatcher.execute_line(context, raw)
                 if character.room_id != before_room_id:
+                    character.visit_current_room()
                     context.location_changes.record(character)
                 await self._flush_location_changes(context)
                 if output:
                     await transport.send_text(output)
+                if character.room_id != before_room_id:
+                    await self._send_web_map_update(
+                        transport,
+                        context,
+                        previous_visited_room_ids=previous_visited_room_ids,
+                    )
                 if needs_full_map:
                     await self._send_full_map_debug(transport, context)
                 elif needs_minimap_update:
@@ -607,7 +637,6 @@ class SessionFlow:
                         raw,
                         success=True,
                         request_id=message.request_id,
-                        sequence=self._next_sequence(transport),
                     )
                 )
                 await self._send_character_vitals(transport, character)
@@ -620,7 +649,6 @@ class SessionFlow:
                         "input_too_long",
                         "Input exceeds the transport limit.",
                         request_id=message.request_id if message is not None else None,
-                        sequence=self._next_sequence(transport),
                     )
                 )
                 break

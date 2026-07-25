@@ -461,6 +461,8 @@ export class AstergardWebSocketTransport {
       envelope.type === 'output.text' ||
       envelope.type === 'output.prompt' ||
       envelope.type === 'room.info' ||
+      envelope.type === 'map.snapshot' ||
+      envelope.type === 'map.update' ||
       envelope.type === 'character.vitals' ||
       envelope.type === 'command.result' ||
       envelope.type === 'connection.pong' ||
