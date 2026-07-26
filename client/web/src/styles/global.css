@@ -324,6 +324,205 @@ h2 {
   gap: 0.75rem;
 }
 
+.world-map-panel {
+  display: grid;
+  gap: 0.85rem;
+  min-height: 0;
+}
+
+.world-map-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.world-map-summary {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.map-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.map-toolbar-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.map-toolbar-actions {
+  margin-left: auto;
+}
+
+.map-zoom-readout {
+  min-width: 4ch;
+  text-align: center;
+  color: var(--muted);
+  font-family: 'IBM Plex Mono', 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
+}
+
+.map-floor-button {
+  min-height: 38px;
+  border-radius: 999px;
+  padding: 0.45rem 0.85rem;
+  border: 1px solid rgba(195, 162, 90, 0.24);
+  background: rgba(10, 9, 8, 0.92);
+  color: var(--text);
+}
+
+.map-floor-button.is-active {
+  border-color: rgba(159, 211, 212, 0.65);
+  color: var(--cyan-bright);
+  box-shadow: inset 0 0 0 1px rgba(159, 211, 212, 0.15);
+}
+
+.map-stage {
+  position: relative;
+  min-height: 0;
+  height: clamp(320px, 42vh, 520px);
+  overflow: hidden;
+  border-radius: 18px;
+  border: 1px solid rgba(195, 162, 90, 0.18);
+  background:
+    radial-gradient(circle at 20% 20%, rgba(111, 165, 167, 0.08), transparent 30%),
+    linear-gradient(180deg, rgba(10, 9, 8, 0.96), rgba(19, 16, 13, 0.98));
+}
+
+.map-empty-frame {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.map-empty-state {
+  padding: 1.5rem;
+  text-align: center;
+  color: var(--muted);
+}
+
+.map-sync-indicator {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  padding: 0.45rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid rgba(159, 211, 212, 0.35);
+  background: rgba(14, 14, 13, 0.92);
+  color: var(--cyan-bright);
+  font-size: 0.82rem;
+  backdrop-filter: blur(8px);
+}
+
+.map-canvas {
+  touch-action: none;
+  user-select: none;
+  cursor: grab;
+}
+
+.map-canvas.is-dragging {
+  cursor: grabbing;
+}
+
+.map-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.map-background {
+  fill: rgba(10, 9, 8, 0.96);
+}
+
+.map-edge {
+  stroke: rgba(176, 163, 141, 0.42);
+  stroke-width: 2.1;
+  fill: none;
+  marker-end: url(#map-arrow);
+}
+
+.map-edge-bidirectional {
+  stroke: rgba(159, 211, 212, 0.48);
+}
+
+.map-edge-oneway {
+  stroke-dasharray: 7 5;
+}
+
+.map-room {
+  cursor: pointer;
+  outline: none;
+}
+
+.map-room-hit {
+  fill: transparent;
+}
+
+.map-room-tile {
+  fill: rgba(52, 44, 36, 0.96);
+  stroke: rgba(181, 162, 126, 0.58);
+  stroke-linejoin: round;
+}
+
+.map-room.is-focus-target .map-room-tile {
+  stroke: rgba(223, 200, 127, 0.92);
+}
+
+.map-room.is-current .map-room-tile {
+  fill: rgba(111, 165, 167, 0.92);
+  stroke: rgba(191, 243, 244, 0.98);
+  filter: drop-shadow(0 0 7px rgba(111, 165, 167, 0.42));
+}
+
+.map-room.is-active .map-room-tile {
+  stroke: rgba(223, 200, 127, 0.92);
+}
+
+.map-room:focus-visible .map-room-tile {
+  stroke: var(--gold-bright);
+  stroke-width: 3;
+}
+
+.map-room-label {
+  pointer-events: none;
+}
+
+.map-room-label text {
+  fill: var(--text);
+  font-size: 0.9rem;
+  font-weight: 700;
+  font-family: 'IBM Plex Mono', 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
+  paint-order: stroke;
+  stroke: rgba(11, 10, 9, 0.96);
+  stroke-width: 4px;
+  stroke-linejoin: round;
+}
+
+.map-level-indicator {
+  pointer-events: none;
+}
+
+.map-level-indicator circle {
+  fill: rgba(12, 11, 10, 0.96);
+  stroke: rgba(195, 162, 90, 0.55);
+  stroke-width: 1.2px;
+}
+
+.map-level-indicator text {
+  fill: var(--gold-bright);
+  font-size: 0.72rem;
+  font-weight: 700;
+  font-family: 'IBM Plex Mono', 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
+}
+
 .room-info {
   display: grid;
   gap: 0.75rem;

@@ -6,6 +6,7 @@ import { CommandBar } from '../features/terminal/CommandBar';
 import { ConnectionStatus } from '../features/terminal/ConnectionStatus';
 import { RoomInfoPanel } from '../features/terminal/RoomInfoPanel';
 import { TerminalView } from '../features/terminal/TerminalView';
+import { WorldMapPanel } from '../features/map/WorldMapPanel';
 import { AppStoreProvider, useAppStore } from '../store/AppStore';
 import { AstergardWebSocketTransport } from '../transport/AstergardWebSocketTransport';
 import { buildWebSocketUrl } from '../transport/url';
@@ -108,6 +109,7 @@ function AppShell() {
         </aside>
 
         <section className="terminal-pane">
+          <WorldMapPanel />
           <CharacterVitalsPanel vitals={state.vitals} />
           <TerminalView lines={state.terminalLines} prompt={state.prompt} />
           <CommandBar transportRef={transportRef} disabled={state.connectionState !== 'ready'} />

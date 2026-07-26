@@ -280,4 +280,68 @@ describe('App StrictMode transport lifecycle', () => {
     expect(submit.payload).toEqual({ step_id: 'special_feature', value: 'blizna_policzek' });
     expect(Object.keys(submit.payload)).toEqual(['step_id', 'value']);
   });
+
+  it('shows the map panel inside the main application shell after login', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    const socket = MockWebSocket.instances[0];
+
+    await act(async () => {
+      socket.open();
+      socket.message(
+        JSON.stringify({
+          version: 1,
+          type: 'output.text',
+          payload: { text: 'Karczmarz podnosi wzrok znad kufla. Jak się przedstawiasz?' },
+          sequence: 1,
+        }),
+      );
+    });
+
+    await user.type(screen.getByLabelText('Nazwa użytkownika'), 'ala');
+    await user.type(screen.getByLabelText('Hasło'), 'tajne');
+    await user.click(screen.getByRole('button', { name: 'Zaloguj' }));
+
+    await act(async () => {
+      socket.message(
+        JSON.stringify({
+          version: 1,
+          type: 'auth.result',
+          payload: { success: true, username: 'ala' },
+          request_id: parseProtocolEnvelope(socket.sent[1]).request_id,
+          sequence: 2,
+        }),
+      );
+      socket.message(
+        JSON.stringify({
+          version: 1,
+          type: 'map.snapshot',
+          payload: {
+            map_version: 1,
+            sync_id: 'sync-1',
+            chunk_index: 0,
+            complete: true,
+            current_room_id: 1,
+            rooms: [{ room_id: 1, name: 'Start', region: 'Astergard', x: 0, y: 0, z: 0 }],
+            edges: [],
+          },
+          sequence: 3,
+        }),
+      );
+      socket.message(
+        JSON.stringify({
+          version: 1,
+          type: 'session.ready',
+          payload: { transport: 'websocket', username: 'ala' },
+          sequence: 4,
+        }),
+      );
+    });
+
+    expect(screen.getByRole('heading', { name: 'Odkryta mapa' })).toBeInTheDocument();
+    expect(screen.queryByText('Mapa pojawi się po wejściu do gry.')).not.toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Mapa odkrytej okolicy' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Komenda')).toBeEnabled();
+  });
 });
