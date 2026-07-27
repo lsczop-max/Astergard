@@ -1,0 +1,493 @@
+{
+  "schemaVersion": 1,
+  "createdAt": "2026-07-26T21:15:00.000Z",
+  "scope": {
+    "forestRoomIds": "87–156",
+    "wetlandRoomIds": "157–186",
+    "status": "projekt balansu do kalibracji na parametrach istniejącego systemu walki"
+  },
+  "principles": [
+    "Początkujący musi móc rozpoznać zagrożenie i wycofać się przed walką.",
+    "Łup ma wynikać z rodzaju przeciwnika i umiejętności pozyskania, nie z abstrakcyjnej tabeli skarbów.",
+    "Myśliwy, zielarz i rybak otrzymują odmienne źródła dochodu; przewaga profesji nie blokuje podstawowej eksploracji innym postaciom.",
+    "Silny przeciwnik w łatwej strefie może wystąpić tylko jako widoczny ślad lub zdarzenie do ominięcia, nie jako losowa zasadzka.",
+    "Brak łuków i kusz w wyposażeniu przeciwników zgodnie z kanonem projektu."
+  ],
+  "threatScale": {
+    "noviceBaseline": 1,
+    "easySolo": {
+      "budget": "0,45–0,75",
+      "intendedOutcome": "wyraźna przewaga początkującego po podstawowym szkoleniu"
+    },
+    "easyPair": {
+      "budget": "0,8–1,15",
+      "intendedOutcome": "krótka walka wymagająca uwagi"
+    },
+    "mediumSolo": {
+      "budget": "1,0–1,35",
+      "intendedOutcome": "równy lub lekko trudny przeciwnik"
+    },
+    "mediumGroup": {
+      "budget": "1,4–1,9",
+      "intendedOutcome": "walka ryzykowna dla samotnego początkującego"
+    },
+    "deepThreat": {
+      "budget": "2,0–3,0",
+      "intendedOutcome": "cel dla przygotowanej postaci; początkujący powinien się wycofać"
+    }
+  },
+  "enemies": [
+    {
+      "id": "forest_feral_dog",
+      "name": "zdziczały pies",
+      "biome": "forest",
+      "threat": 0.5,
+      "behavior": "ostrzega warczeniem, walczy samotnie lub w parze",
+      "loot": [
+        "marna skóra",
+        "mięso niskiej jakości"
+      ],
+      "professionBonus": "myśliwy ogranicza uszkodzenie skóry"
+    },
+    {
+      "id": "forest_gaunt_wolf",
+      "name": "wychudzony wilk",
+      "biome": "forest",
+      "threat": 0.7,
+      "behavior": "krąży przed atakiem i łatwo odstępuje po zranieniu",
+      "loot": [
+        "wilcza skóra",
+        "kły"
+      ],
+      "professionBonus": "tropiciel wcześniej wykrywa obecność"
+    },
+    {
+      "id": "forest_young_boar",
+      "name": "młody dzik",
+      "biome": "forest",
+      "threat": 0.85,
+      "behavior": "szarżuje po czytelnym ostrzeżeniu",
+      "loot": [
+        "dziczyzna",
+        "skóra",
+        "małe kły"
+      ],
+      "professionBonus": "myśliwy poprawia uzysk mięsa i skóry"
+    },
+    {
+      "id": "forest_poacher",
+      "name": "samotny kłusownik",
+      "biome": "forest",
+      "threat": 1,
+      "behavior": "używa noża, włóczni albo toporka; może próbować odejść",
+      "loot": [
+        "drobne monety",
+        "narzędzia kłusownicze",
+        "uszkodzone skóry"
+      ],
+      "professionBonus": "postać społeczna może uniknąć walki lub uzyskać informację"
+    },
+    {
+      "id": "forest_adult_wolf",
+      "name": "dorosły wilk",
+      "biome": "forest",
+      "threat": 1.2,
+      "behavior": "próbuje obejść przeciwnika; bywa częścią małej watahy",
+      "loot": [
+        "dobra wilcza skóra",
+        "kły"
+      ],
+      "professionBonus": "tropienie ujawnia liczebność grupy"
+    },
+    {
+      "id": "forest_boar",
+      "name": "dorosły odyniec",
+      "biome": "forest",
+      "threat": 1.45,
+      "behavior": "broni terenu i wykonuje silną szarżę",
+      "loot": [
+        "duża porcja dziczyzny",
+        "gruba skóra",
+        "kły"
+      ],
+      "professionBonus": "myśliwy może przygotować bezpieczniejszą pozycję"
+    },
+    {
+      "id": "forest_robber_pair",
+      "name": "para leśnych rabusiów",
+      "biome": "forest",
+      "threat": 1.7,
+      "behavior": "jeden wiąże walką, drugi próbuje obejść; broń wyłącznie biała",
+      "loot": [
+        "monety",
+        "prowiant",
+        "używane wyposażenie"
+      ],
+      "professionBonus": "wcześniejsze wykrycie pozwala ominąć zasadzkę"
+    },
+    {
+      "id": "forest_wolf_pack",
+      "name": "mała wilcza wataha",
+      "biome": "forest",
+      "threat": 2.2,
+      "behavior": "otacza, testuje obronę i ściga tylko w głębi",
+      "loot": [
+        "kilka skór zależnie od umiejętności",
+        "kły"
+      ],
+      "professionBonus": "myśliwy rozpoznaje i może rozproszyć część watahy"
+    },
+    {
+      "id": "forest_old_bear",
+      "name": "stary niedźwiedź",
+      "biome": "forest",
+      "threat": 2.8,
+      "behavior": "poprzedzony śladami, rykiem i zniszczoną korą; nie pojawia się bez ostrzeżenia",
+      "loot": [
+        "ciężka skóra",
+        "tłuszcz",
+        "pazury"
+      ],
+      "professionBonus": "fachowe oprawienie warunkuje wartość trofeum"
+    },
+    {
+      "id": "wetland_mud_rat",
+      "name": "szczur błotny",
+      "biome": "wetland",
+      "threat": 0.4,
+      "behavior": "atak grupowy tylko w małej liczbie",
+      "loot": [
+        "marna skóra",
+        "drobne mięso"
+      ],
+      "professionBonus": "brak; podstawowy przeciwnik treningowy"
+    },
+    {
+      "id": "wetland_water_snake",
+      "name": "wąż wodny",
+      "biome": "wetland",
+      "threat": 0.6,
+      "behavior": "sygnalizowany ruchem wody; krótki atak i odskok",
+      "loot": [
+        "skóra węża",
+        "gruczoł jadowy tylko przy udanym pozyskaniu"
+      ],
+      "professionBonus": "zielarz lub myśliwy bezpieczniej pozyskuje składnik"
+    },
+    {
+      "id": "wetland_feral_dog",
+      "name": "zabłocony zdziczały pies",
+      "biome": "wetland",
+      "threat": 0.7,
+      "behavior": "korzysta z trzcin i atakuje z bliska",
+      "loot": [
+        "marna skóra",
+        "obroża lub ślad po właścicielu"
+      ],
+      "professionBonus": "tropiciel wykrywa ślady na brzegu"
+    },
+    {
+      "id": "wetland_young_boar",
+      "name": "młody dzik z szuwarów",
+      "biome": "wetland",
+      "threat": 0.9,
+      "behavior": "wychodzi z trzcin po głośnym ostrzeżeniu",
+      "loot": [
+        "dziczyzna",
+        "skóra"
+      ],
+      "professionBonus": "myśliwy zwiększa jakość łupu"
+    },
+    {
+      "id": "wetland_smuggler",
+      "name": "przemytnik z mokradeł",
+      "biome": "wetland",
+      "threat": 1.15,
+      "behavior": "walczy nożem, pałką albo krótką włócznią; może próbować uciec",
+      "loot": [
+        "drobny przemyt",
+        "monety",
+        "wskazówka o trasie"
+      ],
+      "professionBonus": "postać społeczna może podjąć rozmowę"
+    },
+    {
+      "id": "wetland_boar",
+      "name": "dzik bagienny",
+      "biome": "wetland",
+      "threat": 1.35,
+      "behavior": "trudniejszy przez grząski teren, nie przez sztucznie wysokie statystyki",
+      "loot": [
+        "dziczyzna",
+        "gruba skóra",
+        "kły"
+      ],
+      "professionBonus": "znajomość terenu ogranicza karę ruchową"
+    }
+  ],
+  "encounterTables": [
+    {
+      "id": "forest_easy",
+      "rooms": "40 lokacji oznaczonych difficultyTier=łatwa",
+      "emptyOrNoncombatWeight": 55,
+      "entries": [
+        [
+          "forest_feral_dog",
+          18
+        ],
+        [
+          "forest_gaunt_wolf",
+          12
+        ],
+        [
+          "forest_young_boar",
+          8
+        ],
+        [
+          "forest_poacher",
+          2
+        ],
+        [
+          "tropy lub zasób bez walki",
+          5
+        ]
+      ],
+      "hardEncounterRule": "Brak przeciwników o budżecie powyżej 1,15."
+    },
+    {
+      "id": "forest_medium",
+      "rooms": "20 lokacji oznaczonych difficultyTier=średnia",
+      "emptyOrNoncombatWeight": 40,
+      "entries": [
+        [
+          "forest_gaunt_wolf",
+          10
+        ],
+        [
+          "forest_young_boar",
+          10
+        ],
+        [
+          "forest_poacher",
+          8
+        ],
+        [
+          "forest_adult_wolf",
+          14
+        ],
+        [
+          "forest_boar",
+          10
+        ],
+        [
+          "forest_robber_pair",
+          4
+        ],
+        [
+          "ostrzeżenie o zagrożeniu z głębi",
+          4
+        ]
+      ],
+      "hardEncounterRule": "Spotkanie grupowe musi pozwalać na uniknięcie przed rozpoczęciem walki."
+    },
+    {
+      "id": "forest_deep",
+      "rooms": "10 lokacji oznaczonych difficultyTier=głębia",
+      "emptyOrNoncombatWeight": 30,
+      "entries": [
+        [
+          "forest_adult_wolf",
+          12
+        ],
+        [
+          "forest_boar",
+          14
+        ],
+        [
+          "forest_robber_pair",
+          10
+        ],
+        [
+          "forest_wolf_pack",
+          10
+        ],
+        [
+          "forest_old_bear",
+          4
+        ],
+        [
+          "rzadkie trofeum lub legowisko bez przeciwnika",
+          20
+        ]
+      ],
+      "hardEncounterRule": "Wataha i niedźwiedź wymagają tropów ostrzegawczych w co najmniej jednej sąsiedniej lokacji."
+    },
+    {
+      "id": "wetland_easy",
+      "rooms": "18 lokacji oznaczonych difficultyTier=łatwa",
+      "emptyOrNoncombatWeight": 55,
+      "entries": [
+        [
+          "wetland_mud_rat",
+          18
+        ],
+        [
+          "wetland_water_snake",
+          10
+        ],
+        [
+          "wetland_feral_dog",
+          8
+        ],
+        [
+          "wetland_young_boar",
+          4
+        ],
+        [
+          "zioła, łowisko albo bezpieczna sucha kępa",
+          5
+        ]
+      ],
+      "hardEncounterRule": "Teren nie może jednocześnie blokować odwrotu i wzmacniać przeciwnika."
+    },
+    {
+      "id": "wetland_moderate",
+      "rooms": "12 lokacji oznaczonych difficultyTier=umiarkowana",
+      "emptyOrNoncombatWeight": 42,
+      "entries": [
+        [
+          "wetland_water_snake",
+          10
+        ],
+        [
+          "wetland_feral_dog",
+          10
+        ],
+        [
+          "wetland_young_boar",
+          12
+        ],
+        [
+          "wetland_smuggler",
+          8
+        ],
+        [
+          "wetland_boar",
+          6
+        ],
+        [
+          "rzadkie zioło lub ślad przemytu",
+          12
+        ]
+      ],
+      "hardEncounterRule": "Najtrudniejszy pojedynczy przeciwnik pozostaje w zasięgu przygotowanego początkującego; grupy muszą być możliwe do ominięcia."
+    }
+  ],
+  "lootEconomy": [
+    {
+      "category": "skóry pospolite",
+      "sources": [
+        "psy",
+        "wilki",
+        "młode dziki"
+      ],
+      "sinkRoomId": "38",
+      "sink": "Skórzany Kaftan",
+      "rule": "pełna wartość wymaga umiejętnego oprawienia; uszkodzenie w walce obniża jakość"
+    },
+    {
+      "category": "ciężkie skóry i trofea",
+      "sources": [
+        "odyniec",
+        "niedźwiedź"
+      ],
+      "sinkRoomId": "38",
+      "sink": "Skórzany Kaftan",
+      "rule": "rzadsze, cięższe i trudniejsze do transportu; brak automatycznej wysokiej ceny"
+    },
+    {
+      "category": "mięso",
+      "sources": [
+        "dziki",
+        "wybrane drobne zwierzęta"
+      ],
+      "sinkRoomId": "14",
+      "sink": "Karczma pod Żurawiem",
+      "rule": "psuje się i ma ograniczony dzienny popyt"
+    },
+    {
+      "category": "zioła leśne i bagienne",
+      "sources": [
+        "punkty zbioru w obu biomach"
+      ],
+      "sinkRoomId": "40",
+      "sink": "Zielarnia przy Podcieniach",
+      "rule": "dostępność zależna od pogody i czasu od ostatniego zbioru"
+    },
+    {
+      "category": "składniki specjalne",
+      "sources": [
+        "gruczoły, tłuszcz, pazury, kły"
+      ],
+      "sinkRoomId": "40",
+      "sink": "Zielarnia przy Podcieniach",
+      "rule": "skup wyłącznie dla konkretnych receptur lub zamówień, aby nie pompować waluty"
+    },
+    {
+      "category": "towary przemytnicze",
+      "sources": [
+        "przemytnicy i ślady w mokradłach"
+      ],
+      "sinkRoomId": "24",
+      "sink": "Komora Myta",
+      "rule": "wybór: oddać władzom, zwrócić właścicielowi albo wykorzystać w wątku; nie zwykły skup"
+    }
+  ],
+  "spawnAndRecovery": {
+    "occupiedRoomCap": "Maksymalnie 25–35% lokacji expowiska jednocześnie zawiera aktywne spotkanie bojowe.",
+    "localRespawn": "Nie odradzać przeciwnika w tej samej lokacji natychmiast po zwycięstwie; używać puli regionalnej.",
+    "migration": "Zwierzę może przemieścić się o jedną lokację w obrębie swojej strefy, ale nie na trakt ani do miasta.",
+    "pursuit": "Słabi przeciwnicy ścigają najwyżej 1 lokację; średni 1–2; głębokie zagrożenia nie przekraczają granicy strefy.",
+    "resourceRecovery": "Pospolite zasoby wracają szybciej niż rzadkie; dokładne czasy należy skalibrować do liczby aktywnych graczy."
+  },
+  "acceptanceTests": [
+    {
+      "id": "easy_win_rate",
+      "target": "Postać po podstawowym szkoleniu wygrywa 85–95% pojedynczych łatwych spotkań bez zużycia całych zasobów."
+    },
+    {
+      "id": "easy_escape",
+      "target": "Z łatwej strefy można skutecznie wycofać się w co najmniej 90% prób po rozpoznaniu zagrożenia."
+    },
+    {
+      "id": "income_parity",
+      "target": "Mediana dochodu z polowania, zielarstwa i prostych prac miejskich różni się najwyżej o około 20% przy porównywalnym czasie i ryzyku."
+    },
+    {
+      "id": "profession_identity",
+      "target": "Myśliwy osiąga lepszy uzysk skór, zielarz roślin, a rybak zasobów wodnych; żadna z tych przewag nie jest wyłącznie premią do obrażeń."
+    },
+    {
+      "id": "danger_gradient",
+      "target": "Średni budżet zagrożenia rośnie wraz z najkrótszą odległością od traktu; nie może maleć w kolejnych pasmach."
+    },
+    {
+      "id": "no_spawn_lock",
+      "target": "Żadne losowe spotkanie nie blokuje jedynego wyjścia z obszaru ani nie odradza się na lokacji wejściowej."
+    },
+    {
+      "id": "loot_sink",
+      "target": "Każdy sprzedawalny łup ma limit, konsumenta lub koszt pozyskania zapobiegający nieskończonemu bezryzykownemu dochodowi."
+    },
+    {
+      "id": "manual_session",
+      "target": "Przejść ręcznie co najmniej trzy sesje: 15 minut las łatwy, 30 minut las z wejściem w strefę średnią, 20 minut mokradeł."
+    }
+  ],
+  "unresolvedForRepositoryCalibration": [
+    "Bazowe punkty życia, obrażenia, obrona i tempo regeneracji postaci początkującej.",
+    "Wzór doświadczenia oraz ograniczenia różnicy poziomów.",
+    "Aktualne ceny skupu, zużycie ekwipunku i tempo odradzania zasobów.",
+    "Rzeczywista liczba równoczesnych graczy oraz mechanizm regionalnych pul respawnu."
+  ]
+}

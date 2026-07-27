@@ -1,0 +1,590 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Astergard Map Studio</title>
+  <style>
+    :root {
+      --ink-0:#0d1110; --ink-1:#121715; --ink-2:#171d1b; --ink-3:#202724;
+      --line:#313936; --line-soft:#252c29; --text:#e9e7df; --muted:#939c97;
+      --faint:#69736e; --accent:#d39a5f; --accent-2:#edb576; --danger:#d76f65;
+      --warning:#daa85c; --info:#7698b8; --good:#73a180;
+    }
+    *{box-sizing:border-box}
+    html,body{width:100%;height:100%;margin:0;overflow:hidden;background:var(--ink-0)}
+    body{color:var(--text);font:13px Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+    button,input,select,textarea{font:inherit}
+    button{color:inherit}
+    button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{
+      outline:2px solid var(--accent);outline-offset:2px
+    }
+    button:disabled{opacity:.35;cursor:not-allowed!important}
+    .app{width:100vw;height:100vh;min-width:1000px;display:grid;grid-template-rows:64px minmax(0,1fr)}
+    .topbar{
+      z-index:20;display:grid;grid-template-columns:minmax(300px,1fr) auto minmax(390px,1fr);
+      align-items:center;gap:22px;padding:0 16px 0 14px;background:#111614;
+      border-bottom:1px solid var(--line);box-shadow:0 5px 22px #0003
+    }
+    .brand{min-width:0;display:flex;align-items:center;gap:11px}
+    .brand-mark{
+      width:36px;height:36px;display:grid;place-items:center;flex:0 0 auto;color:#21170e;
+      background:var(--accent);border:1px solid var(--accent-2);border-radius:7px;
+      font:900 21px Georgia,serif;box-shadow:inset 0 0 0 2px #22180f47
+    }
+    .brand-line{display:flex;align-items:baseline;gap:6px;line-height:1;letter-spacing:.08em}
+    .brand-line span{font:800 14px Georgia,serif}.brand-line b{color:var(--accent);font-size:9px;letter-spacing:.18em}
+    #projectName{width:min(320px,30vw);height:20px;margin-top:4px;padding:0;color:var(--muted);background:transparent;border:0;font-size:11px}
+    #projectName:hover,#projectName:focus{color:var(--text)}
+    .stats{display:flex;justify-content:center;gap:18px;color:var(--muted);font-size:11px;white-space:nowrap}
+    .stats span{display:flex;align-items:baseline;gap:5px}.stats b{color:var(--text);font-size:14px}
+    .top-actions{display:flex;justify-content:flex-end;gap:7px}
+    .btn,.primary,.danger-btn{
+      min-height:34px;padding:0 12px;border-radius:5px;border:1px solid var(--line);
+      cursor:pointer;font-size:11px;font-weight:650
+    }
+    .btn{color:#c5cac7;background:var(--ink-2)}.btn:hover{color:var(--text);background:var(--ink-3);border-color:#48514d}
+    .primary{color:#21170e;background:var(--accent);border-color:var(--accent-2)}.primary:hover{background:var(--accent-2)}
+    .danger-btn{width:100%;color:#efaaa3;background:#702b2533;border-color:#d76f6559}.danger-btn:hover{background:#702b2559}
+    .workspace{min-height:0;display:grid;grid-template-columns:218px minmax(500px,1fr) 312px}
+    .left,.right{z-index:10;min-height:0;background:var(--ink-1);overflow-y:auto}
+    .left{display:flex;flex-direction:column;border-right:1px solid var(--line)}
+    .right{border-left:1px solid var(--line)}
+    .section-label,.eyebrow{display:block;color:#78827d;font-size:9px;line-height:1;font-weight:750;letter-spacing:.14em;text-transform:uppercase}
+    .tools{padding:16px 12px 10px}.tools>.section-label{margin:0 6px 10px}
+    .tool{
+      width:100%;min-height:42px;display:grid;grid-template-columns:34px 1fr;align-items:center;gap:5px;
+      margin-bottom:3px;padding:4px 7px;color:#bdc3bf;text-align:left;background:transparent;
+      border:1px solid transparent;border-radius:5px;cursor:pointer
+    }
+    .tool:hover{color:var(--text);background:var(--ink-2)}
+    .tool.active{color:var(--text);background:#28271f;border-color:#584632;box-shadow:inset 3px 0 var(--accent)}
+    .tool.delete{color:#b98b86}.tool-icon{display:grid;place-items:center;color:var(--muted);font-size:19px}
+    .tool.active .tool-icon{color:var(--accent)}
+    .tool>span:last-child{display:flex;align-items:center;justify-content:space-between;gap:6px}
+    .tool b{font-size:11px;font-weight:620}.tool small,.key{
+      min-width:21px;padding:2px 4px;color:var(--faint);text-align:center;background:var(--ink-0);
+      border:1px solid var(--line-soft);border-radius:3px;font:9px/1.2 ui-monospace,monospace
+    }
+    .history{display:grid;grid-template-columns:32px 32px 1fr;align-items:center;gap:4px;padding:9px 12px;border-block:1px solid var(--line-soft)}
+    .history button,.floor button,.zoom button,.icon-btn{
+      display:grid;place-items:center;height:30px;color:var(--muted);background:var(--ink-2);
+      border:1px solid var(--line);border-radius:4px;cursor:pointer
+    }
+    .history button:hover,.floor button:hover,.zoom button:hover,.icon-btn:hover{color:var(--text);border-color:#4b5550}
+    .history span{color:var(--faint);text-align:right;font-size:9px}
+    .panel-section{padding:15px 14px;border-bottom:1px solid var(--line-soft)}
+    .section-heading{min-height:20px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+    #floorName{color:var(--accent);font-size:10px}.floor{display:grid;grid-template-columns:32px 1fr 32px;gap:5px;margin-top:10px}
+    .floor input{width:100%;height:30px;color:var(--text);text-align:center;background:var(--ink-0);border:1px solid var(--line);border-radius:4px;font:12px ui-monospace,monospace}
+    .icon-btn{width:25px;height:25px;font-size:14px}
+    .regions{display:grid;gap:3px;margin-top:9px}
+    .region{display:grid;grid-template-columns:15px 9px 1fr auto;align-items:center;gap:7px;min-height:28px;color:#b3bab6;cursor:pointer;font-size:10px}
+    .region input{accent-color:var(--accent)}.swatch{width:8px;height:8px;border-radius:2px;box-shadow:0 0 0 1px #fff2}.region small{color:var(--faint);font:9px ui-monospace,monospace}
+    #search{width:100%;height:32px;margin-top:10px;padding:0 9px;color:var(--text);background:var(--ink-0);border:1px solid var(--line);border-radius:4px;font-size:10px}
+    .search-results{display:grid;gap:2px;margin-top:5px}
+    .search-results button{
+      min-width:0;display:grid;grid-template-columns:25px 1fr auto;gap:5px;align-items:center;
+      min-height:30px;padding:4px 6px;color:var(--muted);text-align:left;background:var(--ink-2);
+      border:1px solid transparent;border-radius:3px;cursor:pointer
+    }
+    .search-results button:hover{color:var(--text);border-color:var(--line)}.search-results b{color:var(--accent);font:9px ui-monospace,monospace}
+    .search-results span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:9px}.search-results small{color:var(--faint);font:8px ui-monospace,monospace}
+    .north{display:grid;grid-template-columns:auto auto 1fr;align-items:center;gap:6px;margin-top:auto;padding:13px 16px;color:var(--muted);border-top:1px solid var(--line-soft)}
+    .north b,.north i{color:var(--accent);font-style:normal}.north b{font-family:Georgia,serif}.north small{color:var(--faint);font-size:9px}
+    .stage{position:relative;min-width:0;min-height:0;overflow:hidden;background:#131816}
+    .stage::before{content:"";position:absolute;inset:0;pointer-events:none;box-shadow:inset 0 0 80px #0003}
+    .stage-head{position:absolute;z-index:6;top:12px;left:14px;right:14px;display:flex;align-items:center;justify-content:space-between;pointer-events:none}
+    .floor-badge{display:flex;align-items:baseline;gap:8px;padding:8px 10px;color:var(--muted);background:#121715e6;border:1px solid var(--line);border-radius:5px;box-shadow:0 4px 16px #0003}
+    .floor-badge b{color:var(--text);font-size:11px}.zoom{display:flex;gap:3px;pointer-events:auto}.zoom button{min-width:30px;padding:0 8px;font-size:11px}.zoom .zoom-value{min-width:52px;font:9px ui-monospace,monospace}.zoom .fit{margin-left:4px}
+    #map{width:100%;height:100%;display:block;touch-action:none;user-select:none;cursor:grab}.stage[data-tool="add"] #map{cursor:crosshair}.stage[data-tool="connect"] #map{cursor:cell}
+    .grid-line{fill:none;stroke:#232b28;stroke-width:1}.grid-dot{fill:#303936}
+    .edge-line{stroke:#777c72;stroke-width:3;stroke-linecap:round;vector-effect:non-scaling-stroke}
+    .edge-hit{stroke:transparent;stroke-width:14;cursor:pointer}.arrow{fill:#8f9589}
+    .edge:hover .edge-line,.edge.selected .edge-line{stroke:var(--accent)}.edge.selected .arrow{fill:var(--accent)}
+    .edge.door .edge-line{stroke-dasharray:15 4 3 4}.edge.locked .edge-line{stroke-dasharray:7 7}.edge.vertical .edge-line{stroke:#9180aa}
+    .edge-label rect{fill:#111614;stroke:#343c38;stroke-width:1;vector-effect:non-scaling-stroke}.edge-label text{fill:#a9afa9;font:600 9px ui-monospace,monospace;pointer-events:none}
+    .room-shadow{fill:#050706;opacity:.55;transform:translate(2px,3px)}
+    .room-body{stroke:#111513;stroke-width:3;vector-effect:non-scaling-stroke;cursor:pointer;transition:filter .12s,stroke .12s}
+    .room:hover .room-body{filter:brightness(1.15);stroke:#d9d8ce}.room.selected .room-body{stroke:#f6e3c6;filter:brightness(1.1)}
+    .room.connect-source .room-body{stroke:var(--accent-2);stroke-width:5}.room.dim{opacity:.2}
+    .room-id{fill:#111513;font:800 12px ui-monospace,monospace;pointer-events:none}
+    .vertical-mark{fill:#c9b5df;font:800 13px ui-monospace,monospace;paint-order:stroke;stroke:#111614;stroke-width:4px;pointer-events:none}
+    .caption{pointer-events:none}.caption rect{fill:#0c100ee6;stroke:#2d3632;stroke-width:1;vector-effect:non-scaling-stroke}.caption text{fill:#cbd0cc;font:500 9px system-ui}
+    .room-issue{stroke:#151917;stroke-width:2;vector-effect:non-scaling-stroke}.room-issue.error{fill:var(--danger)}.room-issue.warning{fill:var(--warning)}
+    .banner,.suggestion{
+      position:absolute;z-index:8;left:50%;transform:translateX(-50%);background:#202019;
+      border:1px solid #67533a;box-shadow:0 10px 32px #0005;border-radius:6px
+    }
+    .banner{top:64px;padding:8px 13px;color:#d8c7ad;font-size:10px}
+    .suggestion{bottom:45px;width:min(660px,calc(100% - 40px));min-height:58px;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:9px 10px 9px 13px}
+    .suggestion>div{display:flex;align-items:center;gap:9px}.suggestion .copy{display:grid;gap:2px}.suggestion .copy b{font-size:11px}.suggestion .copy small{color:var(--muted);font-size:9px}.suggestion-symbol{color:var(--accent);font-size:22px}
+    .stage-status{position:absolute;z-index:5;left:0;right:0;bottom:0;height:27px;display:flex;align-items:center;gap:7px;padding:0 12px;color:#78817c;background:#0d1110f0;border-top:1px solid var(--line);font-size:8px}
+    .dot{width:6px;height:6px;background:var(--good);border-radius:50%;box-shadow:0 0 0 3px #73a1801a}.dot.bad{background:var(--danger);box-shadow:0 0 0 3px #d76f651a}.divider{width:1px;height:10px;margin:0 2px;background:var(--line)}
+    .empty-floor{position:absolute;top:50%;left:50%;width:290px;transform:translate(-50%,-50%);text-align:center;pointer-events:none}
+    .empty-floor>span{width:46px;height:46px;display:grid;place-items:center;margin:0 auto 12px;color:var(--accent);background:#24231d;border:1px solid #544531;border-radius:50%;font-size:25px}
+    .empty-floor h2{margin:0 0 6px;font:600 17px Georgia,serif}.empty-floor p{margin:0 0 14px;color:var(--muted);font-size:10px;line-height:1.5}.empty-floor button{pointer-events:auto}
+    .tabs{position:sticky;z-index:4;top:0;display:grid;grid-template-columns:1fr 1fr;min-height:46px;background:var(--ink-1);border-bottom:1px solid var(--line)}
+    .tabs button{position:relative;display:flex;align-items:center;justify-content:center;gap:6px;color:var(--muted);background:transparent;border:0;border-bottom:2px solid transparent;cursor:pointer;font-size:10px}
+    .tabs button.active{color:var(--text);border-bottom-color:var(--accent)}.tabs button span{min-width:18px;padding:2px 5px;color:var(--muted);background:var(--ink-3);border-radius:10px;font:8px ui-monospace,monospace}.tabs button span.bad{color:#f1bbb5;background:#4a2521}
+    .inspector,.validation{padding:16px}.selection-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:17px;padding-bottom:14px;border-bottom:1px solid var(--line-soft)}
+    .selection-head h2{margin:5px 0 0;font:600 17px/1.25 Georgia,serif}.selection-id{flex:0 0 auto;padding:5px 7px;color:var(--accent);background:#24231d;border:1px solid #51432f;border-radius:4px;font:10px ui-monospace,monospace}
+    .inspector>label,.coord label{display:grid;gap:6px;margin-bottom:13px}.inspector label>span{color:#858f89;font-size:9px;font-weight:650}
+    .inspector input,.inspector select,.inspector textarea{width:100%;color:var(--text);background:#0e1311;border:1px solid var(--line);border-radius:4px}
+    .inspector input,.inspector select{height:34px;padding:0 9px;font-size:10px}.inspector textarea{padding:8px 9px;resize:vertical;font-size:10px;line-height:1.5}
+    .coord{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.coord.two{grid-template-columns:1fr 1fr}.coord label{min-width:0}.coord input{font-family:ui-monospace,monospace}
+    .local-exits{margin-top:18px;padding-top:15px;border-top:1px solid var(--line-soft)}
+    .local-exits button{width:100%;min-height:34px;display:grid;grid-template-columns:32px 1fr auto;align-items:center;gap:6px;margin-top:4px;padding:0 8px;color:var(--muted);text-align:left;background:var(--ink-2);border:1px solid transparent;border-radius:4px;cursor:pointer}
+    .local-exits button:hover{color:var(--text);border-color:var(--line)}.local-exits button b{color:var(--accent);font:10px ui-monospace,monospace}.local-exits button span{font-size:10px}.local-exits p{color:var(--faint);font-size:9px}
+    .edge-summary{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:14px}.edge-summary>div{display:grid;gap:3px;padding:10px;background:var(--ink-2);border:1px solid var(--line-soft);border-radius:4px}.edge-summary span{color:var(--faint);font-size:8px;text-transform:uppercase}.edge-summary b{font:11px ui-monospace,monospace}
+    .toggle{display:grid!important;grid-template-columns:1fr auto;align-items:center;gap:12px!important;padding:11px;background:var(--ink-2);border:1px solid var(--line-soft);border-radius:4px}.toggle>span{display:grid;gap:3px}.toggle>span b{color:var(--text);font-size:10px}.toggle>span small{color:var(--faint);font-size:8px;line-height:1.35}.toggle input{width:32px;height:18px;accent-color:var(--accent)}
+    .empty-inspector{display:grid;place-items:center;padding:90px 25px;text-align:center}.empty-inspector>span{color:var(--faint);font-size:34px}.empty-inspector h2{margin:14px 0 6px;font:600 17px Georgia,serif}.empty-inspector p{max-width:220px;margin:0;color:var(--muted);font-size:10px;line-height:1.6}
+    .validation-head{display:flex;align-items:center;gap:12px;padding:4px 0 15px;border-bottom:1px solid var(--line-soft)}
+    .health{width:48px;height:48px;display:grid;place-items:center;flex:0 0 auto;border:3px solid var(--good);border-radius:50%;font-size:19px}.health.bad{border-color:var(--danger)}.health.warn{border-color:var(--warning)}
+    .validation-head h2{margin:5px 0 2px;font:600 17px Georgia,serif}.validation-head p{margin:0;color:var(--faint);font-size:9px}
+    .issue-counts{display:flex;flex-wrap:wrap;gap:9px 12px;padding:13px 0}.issue-counts span{display:flex;align-items:center;gap:5px;color:var(--muted);font-size:8px}.issue-counts i,.issue-card>i{width:6px;height:6px;border-radius:50%}.error{background:var(--danger)}.warning{background:var(--warning)}.info{background:var(--info)}
+    .issues{display:grid;gap:5px}.issue-card{display:grid;grid-template-columns:7px 1fr auto;align-items:start;gap:8px;width:100%;padding:10px 8px;color:var(--text);text-align:left;background:var(--ink-2);border:1px solid var(--line-soft);border-radius:4px;cursor:pointer}
+    .issue-card:hover{border-color:#47514c;background:var(--ink-3)}.issue-card>i{margin-top:3px}.issue-card>span{display:grid;gap:4px}.issue-card b{font-size:9px}.issue-card small{color:var(--muted);font-size:8px;line-height:1.45}.issue-card em{color:var(--faint);font-style:normal}
+    .all-good{padding:35px 15px;text-align:center}.all-good>span{width:38px;height:38px;display:grid;place-items:center;margin:auto;color:var(--good);border:1px solid var(--good);border-radius:50%}.all-good h3{margin:12px 0 4px;font:600 15px Georgia,serif}.all-good p{margin:0;color:var(--muted);font-size:9px}
+    .hidden{display:none!important}
+    .mobile{display:none}
+    @media(max-width:999px){
+      .app{display:none}.mobile{min-height:100vh;display:grid;place-content:center;gap:8px;padding:30px;text-align:center}.mobile b{font:600 21px Georgia,serif}.mobile span{color:var(--muted)}
+      html,body{overflow:auto}
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark">A</div>
+        <div>
+          <div class="brand-line"><span>ASTERGARD</span><b>MAP STUDIO</b></div>
+          <input id="projectName" aria-label="Nazwa projektu">
+        </div>
+      </div>
+      <div class="stats" id="stats"></div>
+      <div class="top-actions">
+        <button class="btn" id="newBtn">Nowy</button>
+        <button class="btn" id="loadBtn">Wczytaj</button>
+        <button class="btn" id="jsonBtn">JSON</button>
+        <button class="primary" id="svgBtn">Eksport SVG</button>
+        <input class="hidden" id="fileInput" type="file" accept=".json,application/json">
+      </div>
+    </header>
+    <section class="workspace">
+      <aside class="left">
+        <div class="tools">
+          <span class="section-label">Narzędzia</span>
+          <button class="tool active" data-tool="select"><span class="tool-icon">↖</span><span><b>Wybierz</b><small>V</small></span></button>
+          <button class="tool" data-tool="add"><span class="tool-icon">＋</span><span><b>Dodaj lokację</b><small>A</small></span></button>
+          <button class="tool" data-tool="connect"><span class="tool-icon">⌁</span><span><b>Połącz</b><small>C</small></span></button>
+          <button class="tool delete" id="deleteBtn"><span class="tool-icon">×</span><span><b>Usuń zaznaczone</b><small>Del</small></span></button>
+        </div>
+        <div class="history">
+          <button id="undoBtn" title="Cofnij">↶</button>
+          <button id="redoBtn" title="Ponów">↷</button>
+          <span id="historyCount">0 zmian</span>
+        </div>
+        <div class="panel-section">
+          <div class="section-heading"><span class="section-label">Poziom mapy</span><span id="floorName">Parter</span></div>
+          <div class="floor"><button id="floorDown">−</button><input id="floorInput" type="number" value="0" aria-label="Poziom Z"><button id="floorUp">＋</button></div>
+        </div>
+        <div class="panel-section">
+          <div class="section-heading"><span class="section-label">Regiony</span><button class="icon-btn" id="addRegion" title="Dodaj region">＋</button></div>
+          <div class="regions" id="regions"></div>
+        </div>
+        <div class="panel-section">
+          <label class="section-label" for="search">Szukaj lokacji</label>
+          <input id="search" placeholder="ID lub nazwa…">
+          <div class="search-results" id="searchResults"></div>
+        </div>
+        <div class="north"><b>N</b><i>↑</i><small>północ u góry</small></div>
+      </aside>
+      <section class="stage" id="stage" data-tool="select">
+        <div class="stage-head">
+          <div class="floor-badge"><span class="eyebrow" id="floorBadge">POZIOM 0</span><b id="floorRoomCount">0 lokacji</b></div>
+          <div class="zoom">
+            <button id="zoomOut" aria-label="Pomniejsz">−</button>
+            <button class="zoom-value" id="zoomValue">100%</button>
+            <button id="zoomIn" aria-label="Powiększ">＋</button>
+            <button class="fit" id="centerBtn">Wyśrodkuj</button>
+          </div>
+        </div>
+        <div class="banner hidden" id="connectBanner"></div>
+        <div class="suggestion hidden" id="suggestion">
+          <div><span class="suggestion-symbol">↔</span><span class="copy"><b>Dodać drogę powrotną?</b><small>Program jedynie sugeruje — decyzja należy do Ciebie.</small></span></div>
+          <div><button class="btn" id="leaveOneWay">Zostaw jednokierunkowe</button><button class="primary" id="addReverse">Dodaj powrót</button></div>
+        </div>
+        <svg id="map" aria-label="Mapa świata">
+          <defs>
+            <pattern id="grid" width="56" height="56" patternUnits="userSpaceOnUse">
+              <path d="M 56 0 L 0 0 0 56" class="grid-line"></path>
+              <circle cx="0" cy="0" r="1.5" class="grid-dot"></circle>
+            </pattern>
+            <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+              <path d="M0 0 L10 5 L0 10z" class="arrow"></path>
+            </marker>
+          </defs>
+          <g id="world">
+            <rect id="background" x="-12000" y="-12000" width="24000" height="24000" fill="url(#grid)"></rect>
+            <g id="edgeLayer"></g>
+            <g id="roomLayer"></g>
+          </g>
+        </svg>
+        <div class="empty-floor hidden" id="emptyFloor"><span>＋</span><h2>Ten poziom jest pusty</h2><p>Wybierz „Dodaj lokację”, a następnie kliknij pole siatki.</p><button class="primary" id="firstRoom">Dodaj pierwszą lokację</button></div>
+        <div class="stage-status">
+          <span class="dot" id="statusDot"></span><span id="status">Gotowy</span><span class="divider"></span>
+          <span id="autosave">Autosave —</span><span class="divider"></span><span>Siatka 1 × 1</span>
+          <span class="divider"></span><span id="toolHint">Przeciągnij tło, aby przesunąć</span>
+        </div>
+      </section>
+      <aside class="right">
+        <div class="tabs">
+          <button class="active" data-panel="properties">Właściwości</button>
+          <button data-panel="validation">Walidacja <span id="issueBadge">0</span></button>
+        </div>
+        <div id="rightContent"></div>
+      </aside>
+    </section>
+  </main>
+  <div class="mobile"><b>Astergard Map Studio działa najlepiej na komputerze.</b><span>Do precyzyjnego rysowania mapy potrzebny jest szerszy ekran.</span></div>
+  <script>
+  "use strict";
+  (() => {
+    const GRID=56, STORE="astergard-map-studio-v1";
+    const COLORS=["#d39a5f","#739982","#7d8fb3","#a87982","#9a8b6a","#8b78a6","#6c9a9a"];
+    const initial={
+      schemaVersion:1,name:"Region I — szkic ręczny",updatedAt:new Date(0).toISOString(),
+      regions:[
+        {id:"centrum",name:"Centrum Astergardu",color:"#d39a5f",visible:true},
+        {id:"trakt",name:"Trakt przy Murze",color:"#739982",visible:true}
+      ],
+      rooms:[
+        {id:"0",name:"Brama Dymnych Chorągwi",regionId:"centrum",x:0,y:0,z:0,terrain:"miasto",function:"brama",notes:"Punkt wejścia do miasta."},
+        {id:"1",name:"Plac Przed Wartownią",regionId:"centrum",x:0,y:-1,z:0,terrain:"bruk",function:"węzeł",notes:""},
+        {id:"14",name:"Karczma pod Żurawiem",regionId:"centrum",x:-1,y:-1,z:0,terrain:"wnętrze",function:"start",notes:"Docelowa lokacja startowa gracza."},
+        {id:"20",name:"Trakt Przy Murze",regionId:"trakt",x:1,y:0,z:0,terrain:"trakt",function:"droga",notes:""},
+        {id:"21",name:"Dziedziniec Suchych Studni",regionId:"centrum",x:0,y:-2,z:0,terrain:"bruk",function:"dziedziniec",notes:""}
+      ],
+      edges:[
+        {id:"edge-0-1",from:"0",to:"1",direction:"N",reverseDirection:"S",bidirectional:true,passageType:"open"},
+        {id:"edge-1-14",from:"1",to:"14",direction:"W",reverseDirection:"E",bidirectional:true,passageType:"door"},
+        {id:"edge-0-20",from:"0",to:"20",direction:"E",reverseDirection:"W",bidirectional:true,passageType:"open"},
+        {id:"edge-1-21",from:"1",to:"21",direction:"N",reverseDirection:"S",bidirectional:true,passageType:"open"}
+      ]
+    };
+    const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+    const clone=o=>JSON.parse(JSON.stringify(o));
+    const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+    const xml=esc;
+    let project=loadStored()||clone(initial), past=[], future=[];
+    let tool="select", panel="properties", selectedRoom="0", selectedEdge=null, floor=0;
+    let zoom=1, pan={x:520,y:350}, drag=null, dragPosition=null, connectSource=null, reverseSuggestion=null;
+    let saveTimer=null, search="";
+
+    function loadStored(){
+      try{
+        const p=JSON.parse(localStorage.getItem(STORE));
+        return p&&p.schemaVersion===1&&Array.isArray(p.rooms)&&Array.isArray(p.edges)&&Array.isArray(p.regions)?p:null;
+      }catch{return null}
+    }
+    function stamp(p){p.updatedAt=new Date().toISOString();return p}
+    function commit(next,msg){
+      past.push(clone(project));if(past.length>80)past.shift();future=[];
+      project=stamp(next);status(msg||"Zapisano zmianę");scheduleSave();render();
+    }
+    function mutate(fn,msg){const next=clone(project);fn(next);commit(next,msg)}
+    function scheduleSave(){
+      clearTimeout(saveTimer);saveTimer=setTimeout(()=>{
+        localStorage.setItem(STORE,JSON.stringify(project));
+        $("#autosave").textContent="Autosave "+new Intl.DateTimeFormat("pl",{hour:"2-digit",minute:"2-digit",second:"2-digit"}).format(new Date());
+      },250);
+    }
+    function status(msg){$("#status").textContent=msg}
+    function undo(){
+      if(!past.length)return;future.unshift(clone(project));project=past.pop();status("Cofnięto zmianę");scheduleSave();render()
+    }
+    function redo(){
+      if(!future.length)return;past.push(clone(project));project=future.shift();status("Ponowiono zmianę");scheduleSave();render()
+    }
+    function nextId(){
+      const ids=project.rooms.map(r=>Number(r.id)).filter(n=>Number.isInteger(n)&&n>=0);
+      return String(ids.length?Math.max(...ids)+1:0)
+    }
+    function uid(){return "edge-"+Date.now()+"-"+Math.random().toString(16).slice(2)}
+    function infer(a,b){
+      if(b.z>a.z)return["U","D"];if(b.z<a.z)return["D","U"];
+      const dx=Math.sign(b.x-a.x),dy=Math.sign(b.y-a.y);
+      return({"0,-1":["N","S"],"1,-1":["NE","SW"],"1,0":["E","W"],"1,1":["SE","NW"],"0,1":["S","N"],"-1,1":["SW","NE"],"-1,0":["W","E"],"-1,-1":["NW","SE"]}[dx+","+dy]||["?","?"])
+    }
+    function validate(){
+      const out=[],ids=new Map(),coords=new Map(),roomById=id=>project.rooms.find(r=>r.id===id);
+      project.rooms.forEach(r=>{
+        ids.set(r.id,(ids.get(r.id)||0)+1);
+        const k=`${r.x},${r.y},${r.z}`;coords.set(k,[...(coords.get(k)||[]),r.id]);
+        if(!r.name.trim())out.push({id:"name-"+r.id,severity:"warning",title:"Lokacja bez nazwy",detail:`Lokacja ${r.id} nie ma nazwy roboczej.`,roomId:r.id});
+        if(!project.regions.some(x=>x.id===r.regionId))out.push({id:"region-"+r.id,severity:"error",title:"Nieistniejący region",detail:`Lokacja ${r.id} wskazuje region „${r.regionId}”.`,roomId:r.id})
+      });
+      ids.forEach((count,id)=>{if(count>1)out.push({id:"dup-"+id,severity:"error",title:"Powtórzone ID",detail:`ID ${id} występuje ${count} razy.`,roomId:id})});
+      coords.forEach((roomIds,pos)=>{if(roomIds.length>1)out.push({id:"col-"+pos,severity:"error",title:"Kolizja lokacji",detail:`Lokacje ${roomIds.join(", ")} zajmują pole ${pos}.`,roomId:roomIds[0]})});
+      project.edges.forEach(e=>{
+        const a=roomById(e.from),b=roomById(e.to);
+        if(!a||!b){out.push({id:"broken-"+e.id,severity:"error",title:"Uszkodzone połączenie",detail:`Połączenie wskazuje nieistniejącą lokację (${e.from} → ${e.to}).`,edgeId:e.id});return}
+        const expected=infer(a,b)[0];
+        if(e.direction!==expected)out.push({id:"dir-"+e.id,severity:"warning",title:"Kierunek nie zgadza się z mapą",detail:`${a.id} → ${b.id} ma kierunek ${e.direction}, położenie sugeruje ${expected}.`,edgeId:e.id,roomId:a.id});
+        if(!e.bidirectional)out.push({id:"one-"+e.id,severity:"info",title:"Połączenie jednokierunkowe",detail:`${a.id} → ${b.id} nie ma zatwierdzonego powrotu.`,edgeId:e.id,roomId:a.id});
+        if(a.z!==b.z&&e.passageType!=="vertical")out.push({id:"vert-"+e.id,severity:"warning",title:"Przejście między poziomami",detail:`${a.id} → ${b.id} zmienia poziom, ale nie jest oznaczone jako pionowe.`,edgeId:e.id,roomId:a.id})
+      });
+      if(project.rooms.length>1){
+        const seen=new Set(),queue=[project.rooms[0].id];
+        while(queue.length){const id=queue.shift();if(seen.has(id))continue;seen.add(id);project.edges.forEach(e=>{if(e.from===id)queue.push(e.to);if(e.to===id)queue.push(e.from)})}
+        project.rooms.filter(r=>!seen.has(r.id)).forEach(r=>out.push({id:"disc-"+r.id,severity:"warning",title:"Odłączona lokacja",detail:`Lokacja ${r.id} nie jest połączona z główną częścią mapy.`,roomId:r.id}))
+      }
+      return out
+    }
+    function visibleRooms(){
+      const visible=new Set(project.regions.filter(r=>r.visible).map(r=>r.id));
+      return project.rooms.filter(r=>r.z===floor&&visible.has(r.regionId))
+    }
+    function currentIssuesFor(id,issues){return issues.filter(i=>i.roomId===id)}
+    function transform(){ $("#world").setAttribute("transform",`translate(${pan.x} ${pan.y}) scale(${zoom})`) }
+    function render(){
+      const issues=validate(),rooms=visibleRooms(),visible=new Set(rooms.map(r=>r.id));
+      $("#projectName").value=project.name;
+      $("#stats").innerHTML=`<span><b>${project.rooms.length}</b> lokacji</span><span><b>${project.edges.length}</b> połączeń</span><span><b>${project.regions.length}</b> regionów</span>`;
+      $("#historyCount").textContent=past.length+" zmian";$("#undoBtn").disabled=!past.length;$("#redoBtn").disabled=!future.length;
+      $("#deleteBtn").disabled=!selectedRoom&&!selectedEdge;
+      $("#floorInput").value=floor;$("#floorName").textContent=floor===0?"Parter":"Z "+floor;$("#floorBadge").textContent="POZIOM "+floor;$("#floorRoomCount").textContent=rooms.length+" lokacji";
+      $("#zoomValue").textContent=Math.round(zoom*100)+"%";$("#stage").dataset.tool=tool;
+      $$(".tool[data-tool]").forEach(b=>b.classList.toggle("active",b.dataset.tool===tool));
+      $("#toolHint").textContent=tool==="select"?"Przeciągnij tło, aby przesunąć":tool==="add"?"Kliknij pole siatki":"Wybierz dwie lokacje";
+      $("#emptyFloor").classList.toggle("hidden",rooms.length!==0);
+      $("#connectBanner").classList.toggle("hidden",!connectSource);
+      $("#connectBanner").innerHTML=connectSource?`Łączysz od <b>${esc(connectSource)}</b>. Kliknij lokację docelową lub ponownie źródło, aby anulować.`:"";
+      $("#suggestion").classList.toggle("hidden",!reverseSuggestion);
+      const errorCount=issues.filter(i=>i.severity==="error").length;
+      $("#statusDot").classList.toggle("bad",!!errorCount);
+      $("#issueBadge").textContent=issues.length;$("#issueBadge").classList.toggle("bad",!!errorCount);
+      renderRegions();renderSearch();renderEdges(rooms,visible);renderRooms(rooms,issues);renderPanel(issues);transform()
+    }
+    function renderRegions(){
+      $("#regions").innerHTML=project.regions.map(r=>`<label class="region"><input type="checkbox" data-region="${esc(r.id)}" ${r.visible?"checked":""}><span class="swatch" style="background:${r.color}"></span><span>${esc(r.name)}</span><small>${project.rooms.filter(x=>x.regionId===r.id).length}</small></label>`).join("");
+      $$("[data-region]").forEach(input=>input.addEventListener("change",()=>mutate(p=>{const r=p.regions.find(x=>x.id===input.dataset.region);r.visible=input.checked},"Zmieniono widoczność regionu")))
+    }
+    function renderSearch(){
+      if(!search.trim()){ $("#searchResults").innerHTML="";return }
+      const q=search.toLocaleLowerCase("pl");
+      const matches=project.rooms.filter(r=>(r.id+" "+r.name).toLocaleLowerCase("pl").includes(q)).slice(0,8);
+      $("#searchResults").innerHTML=matches.length?matches.map(r=>`<button data-result="${esc(r.id)}"><b>${esc(r.id)}</b><span>${esc(r.name||"Lokacja "+r.id)}</span><small>Z${r.z}</small></button>`).join(""):"<small>Brak wyników.</small>";
+      $$("[data-result]").forEach(b=>b.addEventListener("click",()=>focusRoom(project.rooms.find(r=>r.id===b.dataset.result))))
+    }
+    function pos(r){return drag&&drag.kind==="room"&&drag.roomId===r.id&&dragPosition?dragPosition:r}
+    function renderEdges(rooms,visible){
+      $("#edgeLayer").innerHTML=project.edges.filter(e=>visible.has(e.from)&&visible.has(e.to)).map(e=>{
+        const a=pos(rooms.find(r=>r.id===e.from)),b=pos(rooms.find(r=>r.id===e.to));
+        const mx=(a.x+b.x)*GRID/2,my=(a.y+b.y)*GRID/2;
+        return `<g class="edge ${esc(e.passageType)} ${selectedEdge===e.id?"selected":""}" data-edge="${esc(e.id)}">
+          <line class="edge-hit" x1="${a.x*GRID}" y1="${a.y*GRID}" x2="${b.x*GRID}" y2="${b.y*GRID}"></line>
+          <line class="edge-line" x1="${a.x*GRID}" y1="${a.y*GRID}" x2="${b.x*GRID}" y2="${b.y*GRID}" ${e.bidirectional?'marker-start="url(#arrow)"':""} marker-end="url(#arrow)"></line>
+          <g class="edge-label" transform="translate(${mx} ${my})"><rect x="-19" y="-10" width="38" height="20" rx="4"></rect><text text-anchor="middle" y="4">${esc(e.direction+(e.bidirectional?"/"+e.reverseDirection:""))}</text></g>
+        </g>`
+      }).join("");
+      $$(".edge").forEach(g=>g.addEventListener("pointerdown",ev=>{ev.stopPropagation();selectedEdge=g.dataset.edge;selectedRoom=null;panel="properties";render()}))
+    }
+    function renderRooms(rooms,issues){
+      const q=search.trim().toLocaleLowerCase("pl");
+      $("#roomLayer").innerHTML=rooms.map(r=>{
+        const p=pos(r),region=project.regions.find(x=>x.id===r.regionId),local=currentIssuesFor(r.id,issues);
+        const sev=local.some(i=>i.severity==="error")?"error":local.some(i=>i.severity==="warning")?"warning":"";
+        const dim=q&&!(r.id+" "+r.name).toLocaleLowerCase("pl").includes(q);
+        const vertical=[...new Set(project.edges.filter(e=>e.from===r.id||e.to===r.id).map(e=>{
+          const other=project.rooms.find(x=>x.id===(e.from===r.id?e.to:e.from));
+          return other&&other.z>r.z?"↑":other&&other.z<r.z?"↓":""
+        }).filter(Boolean))].join("");
+        return `<g class="room ${selectedRoom===r.id?"selected":""} ${connectSource===r.id?"connect-source":""} ${dim?"dim":""}" data-room="${esc(r.id)}" transform="translate(${p.x*GRID} ${p.y*GRID})">
+          <rect class="room-shadow" x="-24" y="-19" width="48" height="38" rx="6"></rect>
+          <rect class="room-body" x="-24" y="-19" width="48" height="38" rx="6" fill="${region?region.color:"#d39a5f"}"></rect>
+          <text class="room-id" text-anchor="middle" y="5">${esc(r.id)}</text>
+          ${vertical?`<text class="vertical-mark" x="-34" y="-24">${vertical}</text>`:""}
+          ${sev?`<circle class="room-issue ${sev}" cx="21" cy="-16" r="5"></circle>`:""}
+          <g class="caption" transform="translate(0 32)"><rect x="-66" y="-10" width="132" height="21" rx="4"></rect><text text-anchor="middle" y="5">${esc(r.name||"Lokacja "+r.id)}</text></g>
+          <title>${esc(r.id+" — "+(r.name||"Lokacja")+" ("+r.x+", "+r.y+", "+r.z+")")}</title>
+        </g>`
+      }).join("");
+      $$(".room").forEach(g=>g.addEventListener("pointerdown",ev=>roomDown(ev,g.dataset.room)))
+    }
+    function renderPanel(issues){
+      $$(".tabs button").forEach(b=>b.classList.toggle("active",b.dataset.panel===panel));
+      if(panel==="validation"){renderValidation(issues);return}
+      const room=project.rooms.find(r=>r.id===selectedRoom),edge=project.edges.find(e=>e.id===selectedEdge);
+      if(room){renderRoomInspector(room);return}
+      if(edge){renderEdgeInspector(edge);return}
+      $("#rightContent").innerHTML='<div class="empty-inspector"><span>◇</span><h2>Nic nie zaznaczono</h2><p>Wybierz lokację lub połączenie na mapie, aby edytować jego dane.</p></div>'
+    }
+    function field(label,id,value,type="text",placeholder=""){
+      return `<label><span>${label}</span><input id="${id}" type="${type}" value="${esc(value)}" placeholder="${esc(placeholder)}"></label>`
+    }
+    function renderRoomInspector(r){
+      const exits=project.edges.filter(e=>e.from===r.id||e.to===r.id);
+      $("#rightContent").innerHTML=`<div class="inspector">
+        <div class="selection-head"><div><span class="eyebrow">LOKACJA</span><h2>${esc(r.name||"Lokacja "+r.id)}</h2></div><span class="selection-id">#${esc(r.id)}</span></div>
+        ${field("ID lokacji","f-id",r.id)}${field("Nazwa robocza","f-name",r.name)}
+        <label><span>Region</span><select id="f-region">${project.regions.map(x=>`<option value="${esc(x.id)}" ${x.id===r.regionId?"selected":""}>${esc(x.name)}</option>`).join("")}</select></label>
+        <div class="coord">${field("X","f-x",r.x,"number")}${field("Y","f-y",r.y,"number")}${field("Z","f-z",r.z,"number")}</div>
+        ${field("Rodzaj terenu","f-terrain",r.terrain,"text","np. bruk, trakt, wnętrze")}
+        ${field("Funkcja miejsca","f-function",r.function,"text","np. węzeł, sklep, brama")}
+        <label><span>Uwagi projektowe</span><textarea id="f-notes" rows="5" placeholder="Dane robocze — nie są opisem widocznym w grze.">${esc(r.notes)}</textarea></label>
+        <div class="local-exits"><div class="section-heading"><span class="section-label">Wyjścia</span><span>${exits.length}</span></div>
+          ${exits.map(e=>{const outward=e.from===r.id;return `<button data-inspect-edge="${e.id}"><b>${esc(outward?e.direction:e.reverseDirection)}</b><span>do #${esc(outward?e.to:e.from)}</span><small>${e.bidirectional?"↔":"→"}</small></button>`}).join("")||"<p>Brak połączeń. Użyj narzędzia „Połącz”.</p>"}
+        </div>
+      </div>`;
+      const change=(id,patch,msg)=>$(id).addEventListener("change",()=>mutate(p=>{Object.assign(p.rooms.find(x=>x.id===selectedRoom),patch($(id).value))},msg));
+      $("#f-id").addEventListener("change",()=>{const old=r.id,next=$("#f-id").value;mutate(p=>{p.rooms.find(x=>x.id===old).id=next;p.edges.forEach(e=>{if(e.from===old)e.from=next;if(e.to===old)e.to=next})},"Zmieniono ID lokacji");selectedRoom=next});
+      change("#f-name",v=>({name:v}),"Zmieniono nazwę");change("#f-region",v=>({regionId:v}),"Zmieniono region");
+      change("#f-x",v=>({x:Number(v)}),"Zmieniono X");change("#f-y",v=>({y:Number(v)}),"Zmieniono Y");change("#f-z",v=>({z:Number(v)}),"Zmieniono Z");
+      change("#f-terrain",v=>({terrain:v}),"Zmieniono teren");change("#f-function",v=>({function:v}),"Zmieniono funkcję");change("#f-notes",v=>({notes:v}),"Zmieniono uwagi");
+      $$("[data-inspect-edge]").forEach(b=>b.addEventListener("click",()=>{selectedEdge=b.dataset.inspectEdge;selectedRoom=null;render()}))
+    }
+    function renderEdgeInspector(e){
+      const dirs=["N","NE","E","SE","S","SW","W","NW","U","D","?"];
+      $("#rightContent").innerHTML=`<div class="inspector">
+        <div class="selection-head"><div><span class="eyebrow">POŁĄCZENIE</span><h2>${esc(e.from)} → ${esc(e.to)}</h2></div><span class="selection-id">${e.bidirectional?"↔":"→"}</span></div>
+        <div class="edge-summary"><div><span>Źródło</span><b>#${esc(e.from)}</b></div><div><span>Cel</span><b>#${esc(e.to)}</b></div></div>
+        <div class="coord two">
+          <label><span>Kierunek</span><select id="e-dir">${dirs.map(d=>`<option ${d===e.direction?"selected":""}>${d}</option>`).join("")}</select></label>
+          <label><span>Powrót</span><select id="e-rev">${dirs.map(d=>`<option ${d===e.reverseDirection?"selected":""}>${d}</option>`).join("")}</select></label>
+        </div>
+        <label><span>Rodzaj przejścia</span><select id="e-type">
+          <option value="open" ${e.passageType==="open"?"selected":""}>Otwarte</option><option value="door" ${e.passageType==="door"?"selected":""}>Drzwi</option>
+          <option value="locked" ${e.passageType==="locked"?"selected":""}>Zamknięte / blokowane</option><option value="vertical" ${e.passageType==="vertical"?"selected":""}>Pionowe</option>
+        </select></label>
+        <label class="toggle"><span><b>Połączenie zwrotne</b><small>Dodaje logiczny powrót bez drugiej nakładającej się linii.</small></span><input id="e-bi" type="checkbox" ${e.bidirectional?"checked":""}></label>
+        <button class="danger-btn" id="deleteEdge">Usuń połączenie</button>
+      </div>`;
+      [["#e-dir","direction"],["#e-rev","reverseDirection"],["#e-type","passageType"]].forEach(([id,key])=>$(id).addEventListener("change",()=>mutate(p=>{p.edges.find(x=>x.id===selectedEdge)[key]=$(id).value},"Zmieniono połączenie")));
+      $("#e-bi").addEventListener("change",()=>mutate(p=>{p.edges.find(x=>x.id===selectedEdge).bidirectional=$("#e-bi").checked},"Zmieniono połączenie zwrotne"));
+      $("#deleteEdge").addEventListener("click",deleteSelection)
+    }
+    function renderValidation(issues){
+      const errors=issues.filter(i=>i.severity==="error").length,warnings=issues.filter(i=>i.severity==="warning").length,infos=issues.filter(i=>i.severity==="info").length;
+      $("#rightContent").innerHTML=`<div class="validation">
+        <div class="validation-head"><div class="health ${errors?"bad":warnings?"warn":""}">${errors?"!":warnings?"△":"✓"}</div><div><span class="eyebrow">STAN MAPY</span><h2>${errors?errors+" błędów":warnings?warnings+" ostrzeżeń":"Mapa spójna"}</h2><p>${issues.length} wszystkich uwag</p></div></div>
+        <div class="issue-counts"><span><i class="error"></i>${errors} błędów</span><span><i class="warning"></i>${warnings} ostrzeżeń</span><span><i class="info"></i>${infos} informacji</span></div>
+        <div class="issues">${issues.map(i=>`<button class="issue-card" data-issue="${esc(i.id)}"><i class="${i.severity}"></i><span><b>${esc(i.title)}</b><small>${esc(i.detail)}</small></span><em>›</em></button>`).join("")||'<div class="all-good"><span>✓</span><h3>Nie znaleziono problemów</h3><p>ID, współrzędne, regiony i połączenia są spójne.</p></div>'}</div>
+      </div>`;
+      $$("[data-issue]").forEach(b=>b.addEventListener("click",()=>{const i=issues.find(x=>x.id===b.dataset.issue);if(i.roomId){const r=project.rooms.find(x=>x.id===i.roomId);if(r)focusRoom(r)}else if(i.edgeId){selectedEdge=i.edgeId;selectedRoom=null;panel="properties";render()}}))
+    }
+    function setTool(next){tool=next;connectSource=null;render()}
+    function canvasPoint(clientX,clientY){const rect=$("#map").getBoundingClientRect();return{x:(clientX-rect.left-pan.x)/zoom,y:(clientY-rect.top-pan.y)/zoom}}
+    function addRoom(clientX,clientY){
+      const p=canvasPoint(clientX,clientY),id=nextId(),region=project.regions.find(r=>r.visible)||project.regions[0];
+      mutate(next=>next.rooms.push({id,name:"Nowa lokacja "+id,regionId:region?region.id:"region-i",x:Math.round(p.x/GRID),y:Math.round(p.y/GRID),z:floor,terrain:"",function:"",notes:""}),"Dodano lokację "+id);
+      selectedRoom=id;selectedEdge=null;tool="select";render()
+    }
+    function roomDown(ev,id){
+      ev.stopPropagation();if(ev.button!==0)return;
+      const room=project.rooms.find(r=>r.id===id);
+      if(tool==="connect"){
+        if(!connectSource){connectSource=id;selectedRoom=id;selectedEdge=null;status("Początek połączenia: "+id+". Wybierz cel.");render();return}
+        if(connectSource===id){connectSource=null;status("Anulowano połączenie");render();return}
+        const source=project.rooms.find(r=>r.id===connectSource);
+        if(project.edges.some(e=>(e.from===source.id&&e.to===id)||(e.bidirectional&&e.from===id&&e.to===source.id))){status("Te lokacje są już połączone");return}
+        const dirs=infer(source,room),newEdge={id:uid(),from:source.id,to:id,direction:dirs[0],reverseDirection:dirs[1],bidirectional:false,passageType:source.z===room.z?"open":"vertical"};
+        mutate(p=>p.edges.push(newEdge),`Dodano przejście ${source.id} → ${id}`);reverseSuggestion=newEdge.id;connectSource=null;selectedEdge=newEdge.id;selectedRoom=null;render();return
+      }
+      selectedRoom=id;selectedEdge=null;panel="properties";
+      drag={kind:"room",pointerId:ev.pointerId,roomId:id,startClientX:ev.clientX,startClientY:ev.clientY,startX:room.x,startY:room.y};
+      dragPosition={x:room.x,y:room.y};$("#map").setPointerCapture(ev.pointerId);render()
+    }
+    function deleteSelection(){
+      if(selectedRoom){const id=selectedRoom;mutate(p=>{p.rooms=p.rooms.filter(r=>r.id!==id);p.edges=p.edges.filter(e=>e.from!==id&&e.to!==id)},"Usunięto lokację "+id);selectedRoom=null}
+      else if(selectedEdge){const id=selectedEdge;mutate(p=>p.edges=p.edges.filter(e=>e.id!==id),"Usunięto połączenie");selectedEdge=null}
+      render()
+    }
+    function focusRoom(r){
+      if(!r)return;floor=r.z;const rect=$("#map").getBoundingClientRect();pan={x:rect.width/2-r.x*GRID*zoom,y:rect.height/2-r.y*GRID*zoom};selectedRoom=r.id;selectedEdge=null;panel="properties";render()
+    }
+    function download(name,content,type){
+      const blob=new Blob([content],{type}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),0)
+    }
+    function safeName(){return(project.name||"astergard_mapa").toLocaleLowerCase("pl").replace(/\s+/g,"_").replace(/[^\p{L}\p{N}_-]+/gu,"")}
+    function exportSvg(){
+      const rooms=project.rooms.filter(r=>r.z===floor),ids=new Set(rooms.map(r=>r.id)),edges=project.edges.filter(e=>ids.has(e.from)&&ids.has(e.to));
+      const xs=rooms.map(r=>r.x),ys=rooms.map(r=>r.y),minX=Math.min(...xs,0)-2,maxX=Math.max(...xs,0)+2,minY=Math.min(...ys,0)-2,maxY=Math.max(...ys,0)+2;
+      const w=(maxX-minX)*GRID,h=(maxY-minY)*GRID,pt=r=>({x:(r.x-minX)*GRID,y:(r.y-minY)*GRID});
+      const lines=edges.map(e=>{const a=pt(rooms.find(r=>r.id===e.from)),b=pt(rooms.find(r=>r.id===e.to));return`<line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" stroke="#8d8a78" stroke-width="3"${e.passageType==="locked"?' stroke-dasharray="8 7"':""}/>`}).join("");
+      const nodes=rooms.map(r=>{const p=pt(r),reg=project.regions.find(x=>x.id===r.regionId);return`<g transform="translate(${p.x} ${p.y})"><rect x="-21" y="-16" width="42" height="32" rx="5" fill="${reg?reg.color:"#d39a5f"}" stroke="#171b19" stroke-width="3"/><text x="0" y="4" text-anchor="middle" font-family="sans-serif" font-size="12" font-weight="700" fill="#111">${xml(r.id)}</text><title>${xml(r.name)}</title></g>`}).join("");
+      download(`${safeName()}_z${floor}.svg`,`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><rect width="100%" height="100%" fill="#151918"/>${lines}${nodes}</svg>`,"image/svg+xml")
+    }
+    function newProject(){
+      commit({schemaVersion:1,name:"Nowa mapa Astergardu",updatedAt:new Date().toISOString(),regions:[{id:"region-i",name:"Region I",color:COLORS[0],visible:true}],rooms:[],edges:[]},"Utworzono pusty projekt");
+      selectedRoom=null;selectedEdge=null;floor=0;zoom=1;pan={x:520,y:350};render()
+    }
+    $$(".tool[data-tool]").forEach(b=>b.addEventListener("click",()=>setTool(b.dataset.tool)));
+    $$(".tabs button").forEach(b=>b.addEventListener("click",()=>{panel=b.dataset.panel;render()}));
+    $("#undoBtn").addEventListener("click",undo);$("#redoBtn").addEventListener("click",redo);$("#deleteBtn").addEventListener("click",deleteSelection);
+    $("#floorDown").addEventListener("click",()=>{floor--;render()});$("#floorUp").addEventListener("click",()=>{floor++;render()});
+    $("#floorInput").addEventListener("change",()=>{floor=Number($("#floorInput").value)||0;render()});
+    $("#search").addEventListener("input",()=>{search=$("#search").value;renderSearch();renderRooms(visibleRooms(),validate())});
+    $("#projectName").addEventListener("change",()=>mutate(p=>p.name=$("#projectName").value,"Zmieniono nazwę projektu"));
+    $("#newBtn").addEventListener("click",newProject);$("#jsonBtn").addEventListener("click",()=>download(safeName()+".json",JSON.stringify(project,null,2),"application/json"));
+    $("#svgBtn").addEventListener("click",exportSvg);$("#loadBtn").addEventListener("click",()=>$("#fileInput").click());
+    $("#fileInput").addEventListener("change",async()=>{
+      const file=$("#fileInput").files[0];$("#fileInput").value="";if(!file)return;
+      try{const p=JSON.parse(await file.text());if(p.schemaVersion!==1||!Array.isArray(p.rooms)||!Array.isArray(p.edges)||!Array.isArray(p.regions))throw 0;commit(p,"Wczytano "+file.name);selectedRoom=null;selectedEdge=null}
+      catch{status("Nie udało się wczytać pliku JSON")}
+    });
+    $("#addRegion").addEventListener("click",()=>{
+      const name=prompt("Nazwa nowego regionu:");if(!name||!name.trim())return;
+      let base=name.toLocaleLowerCase("pl").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||"region",id=base,n=2;
+      while(project.regions.some(r=>r.id===id))id=base+"-"+n++;
+      mutate(p=>p.regions.push({id,name:name.trim(),color:COLORS[p.regions.length%COLORS.length],visible:true}),"Dodano region „"+name.trim()+"”")
+    });
+    $("#zoomOut").addEventListener("click",()=>{zoom=Math.max(.35,zoom-.1);render()});$("#zoomIn").addEventListener("click",()=>{zoom=Math.min(2.25,zoom+.1);render()});$("#zoomValue").addEventListener("click",()=>{zoom=1;render()});
+    $("#centerBtn").addEventListener("click",()=>{pan={x:520,y:350};zoom=1;render()});$("#firstRoom").addEventListener("click",()=>setTool("add"));
+    $("#leaveOneWay").addEventListener("click",()=>{reverseSuggestion=null;render()});
+    $("#addReverse").addEventListener("click",()=>{if(!reverseSuggestion)return;mutate(p=>p.edges.find(e=>e.id===reverseSuggestion).bidirectional=true,"Dodano połączenie zwrotne");reverseSuggestion=null;render()});
+    $("#map").addEventListener("pointerdown",ev=>{
+      if(ev.target.closest(".room,.edge"))return;
+      if(tool==="add"&&ev.button===0){addRoom(ev.clientX,ev.clientY);return}
+      if(tool==="select"&&(ev.button===0||ev.button===1)){
+        selectedRoom=null;selectedEdge=null;drag={kind:"pan",pointerId:ev.pointerId,startClientX:ev.clientX,startClientY:ev.clientY,startPanX:pan.x,startPanY:pan.y};
+        $("#map").setPointerCapture(ev.pointerId);render()
+      }
+    });
+    $("#map").addEventListener("pointermove",ev=>{
+      if(!drag||drag.pointerId!==ev.pointerId)return;
+      if(drag.kind==="pan"){pan={x:drag.startPanX+ev.clientX-drag.startClientX,y:drag.startPanY+ev.clientY-drag.startClientY};transform();return}
+      dragPosition={x:drag.startX+Math.round((ev.clientX-drag.startClientX)/zoom/GRID),y:drag.startY+Math.round((ev.clientY-drag.startClientY)/zoom/GRID)};
+      renderEdges(visibleRooms(),new Set(visibleRooms().map(r=>r.id)));renderRooms(visibleRooms(),validate())
+    });
+    function pointerUp(ev){
+      if(!drag||drag.pointerId!==ev.pointerId)return;
+      if(drag.kind==="room"&&dragPosition){
+        const room=project.rooms.find(r=>r.id===drag.roomId);
+        if(room&&(room.x!==dragPosition.x||room.y!==dragPosition.y)){const target={...dragPosition};drag=null;dragPosition=null;mutate(p=>Object.assign(p.rooms.find(r=>r.id===room.id),target),"Przesunięto lokację "+room.id)}
+      }
+      drag=null;dragPosition=null;if($("#map").hasPointerCapture(ev.pointerId))$("#map").releasePointerCapture(ev.pointerId);render()
+    }
+    $("#map").addEventListener("pointerup",pointerUp);$("#map").addEventListener("pointercancel",pointerUp);
+    $("#map").addEventListener("wheel",ev=>{
+      ev.preventDefault();const rect=$("#map").getBoundingClientRect(),px=ev.clientX-rect.left,py=ev.clientY-rect.top,next=Math.min(2.25,Math.max(.35,zoom*(ev.deltaY>0?.9:1.1))),ratio=next/zoom;
+      pan={x:px-(px-pan.x)*ratio,y:py-(py-pan.y)*ratio};zoom=next;render()
+    },{passive:false});
+    window.addEventListener("keydown",ev=>{
+      const typing=ev.target.matches("input,textarea,select,[contenteditable=true]");
+      if((ev.ctrlKey||ev.metaKey)&&ev.key.toLowerCase()==="z"){ev.preventDefault();ev.shiftKey?redo():undo();return}
+      if((ev.ctrlKey||ev.metaKey)&&ev.key.toLowerCase()==="y"){ev.preventDefault();redo();return}
+      if(typing)return;
+      if(ev.key==="Delete"||ev.key==="Backspace"){ev.preventDefault();deleteSelection()}
+      if(ev.key==="Escape"){connectSource=null;reverseSuggestion=null;setTool("select")}
+      if(ev.key.toLowerCase()==="v")setTool("select");if(ev.key.toLowerCase()==="a")setTool("add");if(ev.key.toLowerCase()==="c")setTool("connect")
+    });
+    scheduleSave();render();
+  })();
+  </script>
+</body>
+</html>

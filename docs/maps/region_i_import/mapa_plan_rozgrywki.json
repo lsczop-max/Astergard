@@ -1,0 +1,2137 @@
+{
+  "schemaVersion": 1,
+  "mapName": "Region I — szkic ręczny",
+  "sourceCardsCreatedAt": "2026-07-26T20:35:00.000Z",
+  "createdAt": "2026-07-26T20:35:00.000Z",
+  "designContract": {
+    "playerGoal": "Poznać Astergard jako bezpieczną bazę i wybrać gospodarczy lub eksploracyjny kierunek wyprawy.",
+    "boundaries": "Pilot kończy się przy wejściu do kopalń i na skraju osady rybackiej; oba dalsze regiony pozostają osobnymi etapami.",
+    "progression": "Miasto jest bezpieczne; ryzyko rośnie stopniowo na północnym trakcie. Trakt nadrzeczny skupia się na gospodarce i eksploracji, nie na obowiązkowej walce.",
+    "economyRule": "Każdy pozyskiwany zasób ma wskazany punkt zbytu lub konsumpcji.",
+    "npcRule": "NPC pojawia się tylko wtedy, gdy realizuje usługę, przepływ informacji, pętlę gospodarczą albo konsekwencję świata.",
+    "professionRule": "Preferowana profesja zwiększa wydajność lub otwiera działania, ale podstawowa podróż pozostaje dostępna dla wszystkich.",
+    "combatRule": "Losowe walki nie mogą wypełniać pustych odcinków; zagrożenia muszą mieć sygnał i kontrgrę.",
+    "sideAreaRule": "Istniejące trakty pozostają bez zmian. Expowiska są osobnymi obszarami bocznymi, a ich wyjścia wolno dodać dopiero po narysowaniu mapy.",
+    "beginnerRule": "Oba expowiska muszą oferować bezpieczny odwrót na trakt, stopniowanie zagrożenia i alternatywny dochód poza samą walką."
+  },
+  "plannedSideAreas": [
+    {
+      "id": "polnocny-las",
+      "workingName": "Las u Podnóża",
+      "connectorRoomId": "62",
+      "status": "mapped_carded_and_balanced",
+      "contentFile": "mapa_balans_expowisk.json",
+      "mappedRoomIds": "87–156",
+      "actualRoomCount": 70,
+      "targetAudience": "początkujące postacie",
+      "targetRoomCount": {
+        "min": 50,
+        "recommended": 70,
+        "max": 80
+      },
+      "primaryLoop": "krótkie wyprawy bojowo-łowieckie",
+      "terrainIdentity": "suchszy las i gęste zarośla u podnóża",
+      "combatIdentity": "czytelne tropy, ruchliwe pojedyncze cele lub małe grupy, możliwość wyboru starcia",
+      "economyIdentity": "skóry, pospolite składniki leśne i zlecenia ochrony traktu",
+      "professionAdvantages": [
+        "myśliwy: lepsze tropienie i skóry",
+        "zielarz: poboczne rośliny",
+        "tropiciel: wcześniejsze wykrywanie zagrożeń"
+      ],
+      "topology": {
+        "form": "nieregularna siatka z pętlami, skrótami i ślepymi odnogami",
+        "compass": "W skali całego lasu wykorzystać wszystkie osiem kierunków kompasu; pojedyncza lokacja ma zwykle 2–4 wyjścia, wyjątkowo 1 albo 5.",
+        "deadEnds": "Ślepe odnogi muszą zawierać zasób, legowisko, punkt orientacyjny, sekret albo bezpieczne miejsce.",
+        "navigation": "Co 8–12 lokacji umieścić wyraźny punkt orientacyjny; unikać regularnego kwadratu i identycznych skrzyżowań.",
+        "returnPath": "Z pierwszej strefy zawsze istnieją co najmniej dwie czytelne drogi powrotu ku wyjściu na trakt."
+      },
+      "progressionBands": [
+        {
+          "band": "skraj lasu",
+          "approximateRooms": "1–40 od wejścia i w bocznych pętlach pierwszej strefy",
+          "difficulty": "łatwa",
+          "encounterRule": "Przeważają słabe zwierzęta i pojedyncze, czytelnie zapowiadane zagrożenia.",
+          "purpose": "Nauka walki, odwrotu, tropienia i pozyskiwania podstawowego łupu."
+        },
+        {
+          "band": "głębszy las",
+          "approximateRooms": "od 41 do początku ostatnich 10 lokacji wybranego wariantu mapy",
+          "difficulty": "średnia",
+          "encounterRule": "Rośnie udział silniejszych osobników i małych grup; słabe zwierzęta nadal występują.",
+          "purpose": "Płynne przejście od początkującego expowiska do ostrożniejszych wypraw."
+        },
+        {
+          "band": "dzika głębia",
+          "approximateRooms": "ostatnie około 10 lokacji najdalej od traktu",
+          "difficulty": "podwyższona",
+          "encounterRule": "Groźni przeciwnicy są częstsi, ale nie gwarantowani; przed wejściem muszą pojawić się ślady ostrzegawcze.",
+          "purpose": "Ryzyko dla przygotowanych postaci i cel przyszłych zadań."
+        }
+      ],
+      "difficultyMetric": "Liczy się najkrótsza odległość w ruchach od wyjścia na trakt, nie numer lokacji ani położenie na rysunku.",
+      "prohibitedShortcut": "Brak połączenia przecinającego góry lub omijającego drogę do kopalń."
+    },
+    {
+      "id": "nadrzeczne-mokradla",
+      "workingName": "Nadrzeczne Szuwary",
+      "connectorRoomId": "84",
+      "status": "mapped_carded_and_balanced",
+      "contentFile": "mapa_balans_expowisk.json",
+      "mappedRoomIds": "157–186",
+      "actualRoomCount": 30,
+      "targetAudience": "początkujące postacie",
+      "targetRoomCount": {
+        "min": 20,
+        "recommended": 30,
+        "max": 38
+      },
+      "primaryLoop": "krótkie wyprawy bojowo-zbierackie",
+      "terrainIdentity": "mokradła, trzciny, płytka woda i grząskie wyspy",
+      "combatIdentity": "wolniejszy ruch, ograniczona widoczność i przeciwnicy sygnalizowani dźwiękiem lub śladami w wodzie",
+      "economyIdentity": "zioła bagienne, drobne składniki, ryby i zamówienia osady",
+      "professionAdvantages": [
+        "zielarz: rozpoznawanie roślin",
+        "rybak: zasoby wodne",
+        "tropiciel: bezpieczniejsze przejścia"
+      ],
+      "topology": {
+        "form": "nieregularna, mniejsza siatka kanałów, wysp, kęp trzcin i ślepych zatok",
+        "compass": "W skali obszaru wykorzystać wszystkie osiem kierunków; przejścia z pojedynczej lokacji ogranicza woda, grząski grunt i gęste szuwary.",
+        "deadEnds": "Ślepe odnogi kończą się stanowiskiem ziół, łowiskiem, suchą wyspą, legowiskiem albo śladem fabularnym.",
+        "navigation": "Suche wyspy, samotne wierzby, pale i odgłosy rzeki tworzą punkty orientacyjne.",
+        "returnPath": "Z łatwej strefy muszą istnieć dwie drogi powrotu; głębsze zatoki mogą mieć jedno wyjście, jeśli gracz otrzymuje ostrzeżenie."
+      },
+      "progressionBands": [
+        {
+          "band": "zewnętrzne szuwary",
+          "approximateRooms": "około 60% obszaru najbliżej traktu",
+          "difficulty": "łatwa",
+          "encounterRule": "Słabe stworzenia, zasoby zielarskie i czytelne ścieżki odwrotu."
+        },
+        {
+          "band": "grząskie zatoki",
+          "approximateRooms": "około 40% obszaru dalej od traktu",
+          "difficulty": "łatwa do umiarkowanej",
+          "encounterRule": "Większym zagrożeniem jest teren, ograniczona widoczność i możliwość połączenia dwóch słabych przeciwników."
+        }
+      ],
+      "difficultyMetric": "Odległość od traktu wpływa na ryzyko, ale mokradła pozostają obszarem początkującym; nie umieszczać w głębi skoku do przeciwników wysokiego poziomu.",
+      "prohibitedShortcut": "Brak połączenia omijającego wejście do osady rybackiej."
+    }
+  ],
+  "loops": [
+    {
+      "id": "start_and_orientation",
+      "audience": [
+        "nowa postać",
+        "każda profesja"
+      ],
+      "promise": "Gracz zaczyna bezpiecznie, poznaje podstawowe usługi i sam wybiera pierwszy kierunek.",
+      "route": [
+        "81",
+        "14",
+        "1",
+        "21",
+        "29",
+        "0",
+        "20"
+      ],
+      "activities": [
+        "odpoczynek",
+        "rozmowy i plotki",
+        "uzupełnienie wody",
+        "zakup podstaw",
+        "wybór północnego lub południowego celu"
+      ],
+      "returnReasons": [
+        "nocleg",
+        "posiłek",
+        "wiadomości",
+        "miejski punkt zbiórki"
+      ],
+      "failureCost": "Brak kary bojowej; koszt stanowią czas i drobne wydatki."
+    },
+    {
+      "id": "mining_economy",
+      "audience": [
+        "górnik",
+        "kupiec",
+        "tragarz",
+        "rzemieślnik",
+        "ochroniarz"
+      ],
+      "promise": "Ruda przemieszcza się od kopalń przez drogę do skupu i miejskich warsztatów.",
+      "route": [
+        "20",
+        "58",
+        "63",
+        "67",
+        "73",
+        "74",
+        "75",
+        "76",
+        "37",
+        "41",
+        "32",
+        "39"
+      ],
+      "activities": [
+        "transport",
+        "ocena próbek",
+        "sprzedaż minerałów",
+        "naprawa wozów",
+        "ochrona ładunku",
+        "zamówienia płatnerskie"
+      ],
+      "returnReasons": [
+        "odnawiające się zlecenia transportowe",
+        "zmienne ceny partii rudy",
+        "naprawy wyposażenia",
+        "informacje o stanie kopalń"
+      ],
+      "failureCost": "Utrata części ładunku, uszkodzenie narzędzi albo opóźnienie; nie automatyczna śmierć."
+    },
+    {
+      "id": "river_and_fishing",
+      "audience": [
+        "rybak",
+        "przewoźnik",
+        "kucharz",
+        "kupiec",
+        "zielarz"
+      ],
+      "promise": "Rzeka zapewnia żywność, transport, rośliny nadrzeczne i wiadomości spoza miasta.",
+      "route": [
+        "48",
+        "47",
+        "45",
+        "20",
+        "64",
+        "82",
+        "83",
+        "84",
+        "85",
+        "86",
+        "14"
+      ],
+      "activities": [
+        "połów",
+        "naprawa sieci",
+        "przewóz",
+        "handel rybami",
+        "zbiór roślin",
+        "dostawy do karczmy"
+      ],
+      "returnReasons": [
+        "zmienne połowy",
+        "zamówienia karczmy",
+        "transport rzeczny",
+        "sezonowe zioła"
+      ],
+      "failureCost": "Zmarnowany czas, uszkodzone sieci, przemoczenie lub utrata części połowu."
+    },
+    {
+      "id": "hunter_and_herbalist",
+      "audience": [
+        "myśliwy",
+        "zielarz",
+        "tropiciel"
+      ],
+      "promise": "Profesje terenowe zarabiają dzięki wiedzy o konkretnych siedliskach, a nie dzięki samym statystykom walki.",
+      "route": [
+        "40",
+        "60",
+        "61",
+        "62",
+        "63",
+        "67",
+        "84",
+        "83"
+      ],
+      "activities": [
+        "rozpoznawanie tropów",
+        "zbiór ziół",
+        "pozyskanie składników",
+        "sprzedaż w zielarni",
+        "ostrzeganie karawan"
+      ],
+      "returnReasons": [
+        "odradzające się zasoby",
+        "pogodowe warianty zbiorów",
+        "rzadkie tropy",
+        "zamówienia zielarki"
+      ],
+      "failureCost": "Niska wydajność bez właściwych umiejętności; możliwość zasadzki lub zgubienia śladu."
+    },
+    {
+      "id": "beginner_forest_hunting",
+      "audience": [
+        "początkująca postać",
+        "myśliwy",
+        "tropiciel"
+      ],
+      "promise": "Zejście z północnego traktu prowadzi do czytelnego, niskopoziomowego expowiska opartego na tropieniu, walce i pozyskiwaniu skór.",
+      "route": [
+        "20",
+        "58",
+        "59",
+        "60",
+        "61",
+        "62"
+      ],
+      "activities": [
+        "tropienie",
+        "bezpieczne polowanie",
+        "pozyskiwanie skór",
+        "zbiór leśny",
+        "nauka oceny zagrożenia"
+      ],
+      "returnReasons": [
+        "odnawiające się tropy",
+        "skóry do sprzedaży",
+        "zamówienia miejskie",
+        "zmienne ślady zależne od pogody"
+      ],
+      "failureCost": "Ucieczka na trakt pozostaje dostępna; strata czasu lub części zdobyczy zamiast gwałtownego skoku trudności.",
+      "expansionTarget": "polnocny-las"
+    },
+    {
+      "id": "beginner_wetland_hunting",
+      "audience": [
+        "początkująca postać",
+        "zielarz",
+        "rybak",
+        "tropiciel"
+      ],
+      "promise": "Zejście z południowego traktu prowadzi do niskopoziomowego expowiska uczącego walki w trudnym terenie i gospodarowania wytrzymałością.",
+      "route": [
+        "20",
+        "64",
+        "82",
+        "83",
+        "84"
+      ],
+      "activities": [
+        "walka w szuwarach",
+        "zbiór roślin bagiennych",
+        "poszukiwanie przejść",
+        "pozyskiwanie drobnych surowców",
+        "nauka odwrotu"
+      ],
+      "returnReasons": [
+        "zioła i składniki",
+        "sezonowe zasoby",
+        "zlecenia zielarki i rybaków",
+        "zmienny poziom wody"
+      ],
+      "failureCost": "Błoto i wilgoć obniżają tempo, lecz nie mogą tworzyć nieuniknionej śmierci ani blokować odwrotu.",
+      "expansionTarget": "nadrzeczne-mokradla"
+    },
+    {
+      "id": "frontier_governance",
+      "audience": [
+        "każda postać",
+        "strażnik",
+        "kurier",
+        "kupiec"
+      ],
+      "promise": "Jedna brama i mała obsada tworzą decyzje o priorytetach zamiast dekoracyjnej administracji.",
+      "route": [
+        "0",
+        "22",
+        "24",
+        "25",
+        "34",
+        "29",
+        "20"
+      ],
+      "activities": [
+        "kontrola ładunków",
+        "zgłoszenia",
+        "zezwolenia",
+        "ogłoszenia",
+        "wybór zleceń dla miasta"
+      ],
+      "returnReasons": [
+        "nowe obwieszczenia",
+        "zmiana bezpieczeństwa traktów",
+        "rozliczenie zadań",
+        "pozwolenia handlowe"
+      ],
+      "failureCost": "Opłata, odmowa dostępu do usługi lub gorsza reputacja; nie arbitralna blokada całej gry."
+    },
+    {
+      "id": "urban_secrets",
+      "audience": [
+        "badacz",
+        "złodziej",
+        "postać społeczna"
+      ],
+      "promise": "Miasto ma drugą warstwę: stare fundamenty, spory własnościowe i nieformalny handel.",
+      "route": [
+        "24",
+        "41",
+        "56",
+        "57",
+        "53",
+        "54",
+        "80",
+        "31"
+      ],
+      "activities": [
+        "badanie znaków",
+        "zdobywanie informacji",
+        "eksploracja ruin",
+        "odkrywanie dokumentów",
+        "negocjacje"
+      ],
+      "returnReasons": [
+        "etapowe odkrycia",
+        "zmieniające się informacje NPC",
+        "zamknięte wcześniej skrytki"
+      ],
+      "failureCost": "Podejrzliwość mieszkańców, ryzyko zawalenia lub utrata dostępu do informacji."
+    }
+  ],
+  "services": [
+    {
+      "id": "inn",
+      "roomId": "14",
+      "purpose": "nocleg, posiłki, plotki i punkt startowy"
+    },
+    {
+      "id": "stable",
+      "roomId": "77",
+      "purpose": "obsługa zwierząt i wozów bez wprowadzania mechaniki jazdy konnej"
+    },
+    {
+      "id": "water",
+      "roomId": "21",
+      "purpose": "bezpłatne uzupełnianie wody i lokalne informacje"
+    },
+    {
+      "id": "customs",
+      "roomId": "24",
+      "purpose": "myto, dokumenty przewozowe i kontrola ładunków"
+    },
+    {
+      "id": "town_hall",
+      "roomId": "25",
+      "purpose": "ogłoszenia, zezwolenia i sprawy miejskie"
+    },
+    {
+      "id": "mayor_audience",
+      "roomId": "34",
+      "purpose": "zadania regionalne i decyzje fabularne"
+    },
+    {
+      "id": "general_store",
+      "roomId": "35",
+      "purpose": "podstawowe wyposażenie podróżne"
+    },
+    {
+      "id": "weapon_store",
+      "roomId": "36",
+      "purpose": "broń użytkowa i ostrzenie; bez łuków i kusz"
+    },
+    {
+      "id": "ore_exchange",
+      "roomId": "37",
+      "purpose": "wycena i skup minerałów"
+    },
+    {
+      "id": "ore_warehouse",
+      "roomId": "41",
+      "purpose": "rozliczenia większych partii oraz ślady nadużyć"
+    },
+    {
+      "id": "light_armor",
+      "roomId": "38",
+      "purpose": "lekkie pancerze i naprawa skór"
+    },
+    {
+      "id": "armorer",
+      "roomId": "39",
+      "purpose": "metalowe pancerze i naprawy"
+    },
+    {
+      "id": "herbalist",
+      "roomId": "40",
+      "purpose": "skup ziół, identyfikacja roślin i proste preparaty"
+    },
+    {
+      "id": "river_port",
+      "roomId": "48",
+      "purpose": "przeładunek, transport rzeczny i informacje"
+    },
+    {
+      "id": "mining_access",
+      "roomId": "76",
+      "purpose": "zlecenia oraz kontrola wejścia do przyszłego okręgu kopalń"
+    },
+    {
+      "id": "fishing_access",
+      "roomId": "86",
+      "purpose": "handel połowem i wejście do przyszłej osady rybackiej"
+    }
+  ],
+  "npcRoles": [
+    {
+      "id": "innkeeper",
+      "homeRoomId": "14",
+      "schedule": "stały",
+      "interactions": [
+        "handel",
+        "plotki",
+        "nocleg"
+      ],
+      "systemicRole": "spina start, rynek, kopalnie i osadę przez informacje od gości",
+      "personalName": null
+    },
+    {
+      "id": "cook",
+      "homeRoomId": "79",
+      "schedule": "dzień i wieczór",
+      "interactions": [
+        "zamówienia żywności",
+        "proste prace"
+      ],
+      "systemicRole": "tworzy popyt na ryby, zioła i produkty pól",
+      "personalName": null
+    },
+    {
+      "id": "stablehand",
+      "homeRoomId": "77",
+      "schedule": "dzień",
+      "interactions": [
+        "opieka nad zwierzętami",
+        "informacje o traktach"
+      ],
+      "systemicRole": "obserwuje stan karawan bez dodawania jazdy konnej",
+      "personalName": null
+    },
+    {
+      "id": "gate_sergeant",
+      "homeRoomId": "22",
+      "schedule": "zmiany",
+      "interactions": [
+        "zgłoszenia",
+        "bezpieczeństwo"
+      ],
+      "systemicRole": "zarządza małą obsadą i wybiera priorytety",
+      "personalName": null
+    },
+    {
+      "id": "customs_clerk",
+      "homeRoomId": "24",
+      "schedule": "dzień",
+      "interactions": [
+        "myto",
+        "dokumenty"
+      ],
+      "systemicRole": "kontroluje przepływ gospodarczy przez jedyną bramę",
+      "personalName": null
+    },
+    {
+      "id": "mayor",
+      "homeRoomId": "34",
+      "schedule": "wybrane godziny",
+      "interactions": [
+        "zadania regionalne",
+        "decyzje"
+      ],
+      "systemicRole": "uruchamia większe konsekwencje, nie codzienne zakupy",
+      "personalName": null
+    },
+    {
+      "id": "quartermaster",
+      "homeRoomId": "35",
+      "schedule": "dzień",
+      "interactions": [
+        "sprzedaż",
+        "skup używanych narzędzi"
+      ],
+      "systemicRole": "zaopatruje wyprawy",
+      "personalName": null
+    },
+    {
+      "id": "arms_dealer",
+      "homeRoomId": "36",
+      "schedule": "dzień",
+      "interactions": [
+        "sprzedaż",
+        "ostrzenie"
+      ],
+      "systemicRole": "sprzedaje broń białą zgodną z kanonem",
+      "personalName": null
+    },
+    {
+      "id": "ore_assayer",
+      "homeRoomId": "37",
+      "schedule": "dzień",
+      "interactions": [
+        "wycena",
+        "skup"
+      ],
+      "systemicRole": "nagradza jakość i wiedzę o rudzie",
+      "personalName": null
+    },
+    {
+      "id": "ore_factor",
+      "homeRoomId": "41",
+      "schedule": "dzień",
+      "interactions": [
+        "kontrakty",
+        "księgi"
+      ],
+      "systemicRole": "obsługuje hurt i wątki gospodarcze",
+      "personalName": null
+    },
+    {
+      "id": "leatherworker",
+      "homeRoomId": "38",
+      "schedule": "dzień",
+      "interactions": [
+        "pancerze lekkie",
+        "naprawy"
+      ],
+      "systemicRole": "obsługuje mobilne profesje",
+      "personalName": null
+    },
+    {
+      "id": "armorer",
+      "homeRoomId": "39",
+      "schedule": "dzień",
+      "interactions": [
+        "pancerze metalowe",
+        "naprawy"
+      ],
+      "systemicRole": "wiąże rudę z wyposażeniem bojowym",
+      "personalName": null
+    },
+    {
+      "id": "herbalist",
+      "homeRoomId": "40",
+      "schedule": "dzień",
+      "interactions": [
+        "skup ziół",
+        "identyfikacja"
+      ],
+      "systemicRole": "zapewnia odrębny dochód zbieracki",
+      "personalName": null
+    },
+    {
+      "id": "dock_foreman",
+      "homeRoomId": "47",
+      "schedule": "dzień",
+      "interactions": [
+        "praca",
+        "transport"
+      ],
+      "systemicRole": "rozdziela zlecenia przeładunkowe",
+      "personalName": null
+    },
+    {
+      "id": "old_ferryman",
+      "homeRoomId": "57",
+      "schedule": "nieregularnie",
+      "interactions": [
+        "wiedza o rzece",
+        "zadania"
+      ],
+      "systemicRole": "prowadzi gracza ku osadzie i sekretom rzeki",
+      "personalName": null
+    },
+    {
+      "id": "field_farmer",
+      "homeRoomId": "60",
+      "schedule": "sezonowo",
+      "interactions": [
+        "prace polowe",
+        "ostrzeżenia"
+      ],
+      "systemicRole": "wiąże miasto z zapleczem żywnościowym",
+      "personalName": null
+    },
+    {
+      "id": "shepherd",
+      "homeRoomId": "61",
+      "schedule": "sezonowo",
+      "interactions": [
+        "informacje",
+        "tropy"
+      ],
+      "systemicRole": "sygnalizuje zagrożenia przed górami",
+      "personalName": null
+    },
+    {
+      "id": "road_worker",
+      "homeRoomId": "66",
+      "schedule": "czasowo",
+      "interactions": [
+        "naprawy drogi",
+        "zlecenia"
+      ],
+      "systemicRole": "uzasadnia utrzymanie traktu",
+      "personalName": null
+    },
+    {
+      "id": "mine_traffic_overseer",
+      "homeRoomId": "76",
+      "schedule": "zmiany",
+      "interactions": [
+        "dostęp",
+        "zlecenia transportowe"
+      ],
+      "systemicRole": "kontroluje przejście do kopalń",
+      "personalName": null
+    },
+    {
+      "id": "net_mender",
+      "homeRoomId": "85",
+      "schedule": "dzień",
+      "interactions": [
+        "naprawa sieci",
+        "informacje o połowach"
+      ],
+      "systemicRole": "wprowadza pętlę rybacką przed osadą",
+      "personalName": null
+    }
+  ],
+  "resources": [
+    {
+      "id": "common_field_herbs",
+      "roomIds": [
+        "60",
+        "61"
+      ],
+      "yieldDescription": "pospolite zioła i rośliny użytkowe",
+      "risk": "niska",
+      "preferredProfessions": [
+        "zielarz"
+      ],
+      "sinkRoomId": "40"
+    },
+    {
+      "id": "hazelnuts_and_tracks",
+      "roomIds": [
+        "62"
+      ],
+      "yieldDescription": "orzechy, tropy drobnej zwierzyny, zioła skraju lasu",
+      "risk": "niska/średnia",
+      "preferredProfessions": [
+        "myśliwy",
+        "zielarz"
+      ],
+      "sinkRoomId": "40"
+    },
+    {
+      "id": "common_mineral_samples",
+      "roomIds": [
+        "63",
+        "67"
+      ],
+      "yieldDescription": "pospolite próbki skał i minerałów",
+      "risk": "niska",
+      "preferredProfessions": [
+        "górnik",
+        "badacz"
+      ],
+      "sinkRoomId": "37"
+    },
+    {
+      "id": "spilled_ore",
+      "roomIds": [
+        "73",
+        "74"
+      ],
+      "yieldDescription": "drobiny i rozsypane fragmenty rudy",
+      "risk": "średnia, kontrolowana limitem",
+      "preferredProfessions": [
+        "górnik",
+        "tragarz"
+      ],
+      "sinkRoomId": "37"
+    },
+    {
+      "id": "river_herbs",
+      "roomIds": [
+        "84"
+      ],
+      "yieldDescription": "rośliny wilgotnych łąk",
+      "risk": "średnia, zależna od pogody",
+      "preferredProfessions": [
+        "zielarz"
+      ],
+      "sinkRoomId": "40"
+    },
+    {
+      "id": "shore_fishing",
+      "roomIds": [
+        "83",
+        "85",
+        "86"
+      ],
+      "yieldDescription": "ryby i surowce z sieci",
+      "risk": "niska/średnia, zależna od pory",
+      "preferredProfessions": [
+        "rybak"
+      ],
+      "sinkRoomId": "14"
+    },
+    {
+      "id": "rumors",
+      "roomIds": [
+        "14",
+        "21",
+        "29",
+        "57"
+      ],
+      "yieldDescription": "informacje otwierające cele i warianty zadań",
+      "risk": "zmienna",
+      "preferredProfessions": [
+        "każda profesja"
+      ],
+      "sinkRoomId": null
+    }
+  ],
+  "hazards": [
+    {
+      "id": "unstable_ruin",
+      "roomIds": [
+        "56"
+      ],
+      "nature": "niestabilna konstrukcja",
+      "severity": "eksploracyjne",
+      "counterplay": "ostrożność, oględziny, wycofanie"
+    },
+    {
+      "id": "brush_ambush",
+      "roomIds": [
+        "62"
+      ],
+      "nature": "ograniczona widoczność i możliwość zasadzki",
+      "severity": "niskie",
+      "counterplay": "tropienie i nasłuch"
+    },
+    {
+      "id": "cliff_edge",
+      "roomIds": [
+        "68"
+      ],
+      "nature": "urwisko i uszkodzony murek",
+      "severity": "średnie sytuacyjne",
+      "counterplay": "pogoda, ostrożny ruch, naprawa"
+    },
+    {
+      "id": "old_chokepoint",
+      "roomIds": [
+        "69"
+      ],
+      "nature": "dogodne miejsce napadu lub wymuszenia",
+      "severity": "średnie",
+      "counterplay": "informacja od pasterza lub karawany"
+    },
+    {
+      "id": "loose_traverse",
+      "roomIds": [
+        "72"
+      ],
+      "nature": "osypujący się żwir",
+      "severity": "średnie sytuacyjne",
+      "counterplay": "właściwe wyposażenie i pogoda"
+    },
+    {
+      "id": "wet_meadows",
+      "roomIds": [
+        "84"
+      ],
+      "nature": "grząski grunt i ograniczone przejście po deszczu",
+      "severity": "niskie",
+      "counterplay": "znajomość terenu lub kładki"
+    }
+  ],
+  "secrets": [
+    {
+      "id": "customs_discrepancy",
+      "roomId": "24",
+      "clue": "Niezgodności między pobranym mytem a księgami magazynu.",
+      "relatedRoomIds": [
+        "41",
+        "34"
+      ],
+      "payoffType": "wątek gospodarczy"
+    },
+    {
+      "id": "ore_ledgers",
+      "roomId": "41",
+      "clue": "Partie rudy znikające między kopalnią a miejskim składem.",
+      "relatedRoomIds": [
+        "37",
+        "74",
+        "76"
+      ],
+      "payoffType": "śledztwo i reputacja"
+    },
+    {
+      "id": "ruin_cache",
+      "roomId": "56",
+      "clue": "Skrytka poprzedniego właściciela pod ocalałym kominem.",
+      "relatedRoomIds": [
+        "31",
+        "53"
+      ],
+      "payoffType": "eksploracja etapowa"
+    },
+    {
+      "id": "river_chart",
+      "roomId": "57",
+      "clue": "Stara mapa nurtu wskazująca zapomniane miejsce przy rzece.",
+      "relatedRoomIds": [
+        "83",
+        "86"
+      ],
+      "payoffType": "przyszła eksploracja rzeczna"
+    },
+    {
+      "id": "old_foundation",
+      "roomId": "80",
+      "clue": "Starszy fundament pod karczmą i zamurowany fragment odpływu.",
+      "relatedRoomIds": [
+        "14",
+        "79"
+      ],
+      "payoffType": "mały sekret startowego obszaru"
+    },
+    {
+      "id": "chokepoint_beams",
+      "roomId": "69",
+      "clue": "Ślady dawnej zapory używanej podczas sporu o kopalnie.",
+      "relatedRoomIds": [
+        "67",
+        "73"
+      ],
+      "payoffType": "historia regionu"
+    }
+  ],
+  "roomCoverage": [
+    {
+      "roomId": "0",
+      "roomName": "Brama Dymnych Chorągwi",
+      "density": "transition",
+      "gameplayRefs": {
+        "loops": [
+          "start_and_orientation",
+          "frontier_governance"
+        ],
+        "services": [],
+        "npcRoles": [],
+        "resources": [],
+        "hazards": [],
+        "secrets": []
+      },
+      "designIntent": "Lokacja prowadzi gracza między aktywnościami i musi czytelnie zapowiadać następny cel."
+    },
+    {
+      "roomId": "1",
+      "roomName": "Plac Przed Wartownią",
+      "density": "transition",
+      "gameplayRefs": {
+        "loops": [
+          "start_and_orientation"
+        ],
+        "services": [],
+        "npcRoles": [],
+        "resources": [],
+        "hazards": [],
+        "secrets": []
+      },
+      "designIntent": "Lokacja prowadzi gracza między aktywnościami i musi czytelnie zapowiadać następny cel."
+    },
+    {
+      "roomId": "14",
+      "roomName": "Karczma pod Żurawiem",
+      "density": "active",
+      "gameplayRefs": {
+        "loops": [
+          "start_and_orientation",
+          "river_and_fishing"
+        ],
+        "services": [
+          "inn"
+        ],
+        "npcRoles": [
+          "innkeeper"
+        ],
+        "resources": [
+          "rumors"
+        ],
+        "hazards": [],
+        "secrets": []
+      },
+      "designIntent": "Lokacja zawiera konkretną usługę, zasób, zagrożenie, sekret albo rolę NPC."
+    },
+    {
+      "roomId": "20",
+      "roomName": "Trakt Przy Murze",
+      "density": "transition",
+      "gameplayRefs": {
+        "loops": [
+          "start_and_orientation",
+          "mining_economy",
+          "river_and_fishing",
+          "beginner_forest_hunting",
+          "beginner_wetland_hunting",
+          "frontier_governance"
+        ],
+        "services": [],
+        "npcRoles": [],
+        "resources": [],
+        "hazards": [],
+        "secrets": []
+      },
+      "designIntent": "Lokacja prowadzi gracza między aktywnościami i musi czytelnie zapowiadać następny cel."
+    },
+    {
+      "roomId": "21",
+      "roomName": "Dziedziniec Suchych Studni",
+      "density": "active",
+      "gameplayRefs": {
+        "loops": [
+          "start_and_orientation"
+        ],
+        "services": [
+          "water"
+        ],
+        "npcRoles": [],
+        "resources": [
+          "rumors"
+        ],
+        "hazards": [],
+        "secrets": []
+      },
+      "designIntent": "Lokacja zawiera konkretną usługę, zasób, zagrożenie, sekret albo rolę NPC."
+    },
+    {
+      "roomId": "22",
+      "roomName": "Strażnica Bramy",
+      "density": "active",
+      "gameplayRefs": {
+        "loops": [
+          "frontier_governance"
+        ],
+        "services": [],
+        "npcRoles": [
+          "gate_sergeant"
+        ],
+        "resources": [],
+        "hazards": [],
+        "secrets": []
+      },
+      "designIntent": "Lokacja zawiera konkretną usługę, zasób, zagrożenie, sekret albo rolę NPC."
+    },
+    {
+      "roomId": "23",
+      "roomName": "Ulica Wartownicza",
+      "density": "quiet",
+      "gameplayRefs": {
+        "loops": [],
+        "services": [],
+        "npcRoles": [],
+        "resources": [],
+        "hazards": [],
+        "secrets": []
+      },
+      "designIntent": "Lokacja służy rytmowi podróży, orientacji lub wiarygodności; nie wymaga stałej nagrody."
+    },
+    {
+      "roomId": "24",
+      "roomName": "Komora Myta",
+      "density": "active",
+      "gameplayRefs": {
+        "loops": [
+          "frontier_governance",
+          "urban_secrets"
+        ],
+        "services": [
+          "customs"
+        ],
+        "npcRoles": [
+          "customs_clerk"
+        ],
+        "resources": [],
+        "hazards": [],
+        "secrets": [
+          "customs_discrepancy"
+        ]
+      },
+      "designIntent": "Lokacja zawiera konkretną usługę, zasób, zagrożenie, sekret albo rolę NPC."
+    },
+    {
+      "roomId": "25",
+      "roomName": "Niski Ratusz",
+      "density": "active",
+      "gameplayRefs": {
+        "loops": [
+          "frontier_governance"
+        ],
+        "services": [
+          "town_hall"
+        ],
+        "npcRoles": [],
+        "resources": [],
+        "hazards": [],
+        "secrets": []
+      },
+      "designIntent": "Lokacja zawiera konkretną usługę, zasób, zagrożenie, sekret albo rolę NPC."
+    },
+    {
+      "roomId": "26",
+      "roomName": "Wschodnia Pierzeja Rynku",
+      "density": "quiet",
+      "gameplayRefs": {
+        "loops": [],
+        "services": [],
+        "npcRoles": [],
+        "resources": [],
+        "hazards": [],
+        "secrets": []
+      },
+      "designIntent": "Lokacja służy rytmowi podróży, orientacji lub wiarygodności; nie wymaga stałej nagrody."
+    },
+    {
+      "roomId": "27",
+      "roomName": "Podcienia Ratuszowe",
+      "density": "quiet",
+      "gameplayRefs": {
+        "loops": [],
+        "services": [],
+        "npcRoles": [],
+        "resources": [],
+        "hazards": [],
+        "secrets": []
+      },
+      "designIntent": "Lokacja służy rytmowi podróży, orientacji lub wiarygodności; nie wymaga stałej nagrody."
+    },
+    {
+      "roomId": "28",
+      "roomName": "Plac Kupiecki",
+      "density": "transition",
+      "gameplayRefs": {
+        "loops": [],
+        "services": [],
+        "npcRoles": [],
+        "resources": [],
+        "hazards": [],
+        "secrets": []
+      },
+      "designIntent": "Lokacja prowadzi gracza między aktywnościami i musi czytelnie zapowiadać następny cel."
+    },
+    {
+      "roomId": "29",
+      "roomName": "Rynek Astergardu",
+      "density": "active",
+      "gameplayRefs": {
+        "loops": [
+          "start_and_orientation",
+          "frontier_governance"
+        ],
+        "services": [],
+        "npcRoles": [],
+        "resources": [
+          "rumors"
+        ],
+        "hazards": [],
+        "secrets": []
+      },
+      "designIntent": "Lokacja zawiera konkretną usługę, zasób, zagrożenie, sekret albo rolę NPC."
+    },
+    {
+      "roomId": "30",
+      "roomName": "Ulica Kramarska",
+      "density": "quiet",
+      "gameplayRefs": {
+        "loops": [],
+        "services": [],
+        "npcRoles": [],
+        "resources": [],
+        "hazards": [],
+        "secrets": []
+      },
+      "designIntent": "Lokacja służy rytmowi podróży, orientacji lub wiarygodności; nie wymaga stałej nagrody."
+    },
+    {
+      "roomId": "31",
+      "roomName": "Zachodnie Podcienia",
+      "density": "quiet",
+      "gameplayRefs": {
+        "loops": [
+          "urban_secrets"
+        ],
+        "services": [],
+        "npcRoles": [],
+        "resources": [],
+        "hazards": [],
+        "secrets": []
+      },
+      "designIntent": "Lokacja służy rytmowi podróży, orientacji lub wiarygodności; nie wymaga stałej nagrody."
+    },
+    {
+      "roomId": "32",
+      "roomName": "Ulica Rzemieślników",
+      "density": "ambient",
+      "gameplayRefs": {
+        "loops": [
+          "mining_economy"
+        ],
+        "services": [],
+        "npcRoles": [],
+        "resources": [],
+        "hazards": [],
+        "secrets": []
+      },
+      "designIntent": "Lokacja wspiera życie obszaru drobnymi zdarzeniami, bez stałej usługi."
+    },
+    {
+      "roomId": "33",
+      "roomName": "Żelazna Pierzeja",
+      "density": "quiet",
+      "gameplayRefs": {
+        "loops": [],
+        "services": [],
+        "npcRoles": [],
+        "resources": [],
+        "hazards": [],
+        "secrets": []
+      },
+      "designIntent": "Lokacja służy rytmowi podróży, orientacji lub wiarygodności; nie wymaga stałej nagrody."
+    },
+    {
+      "roomId": "34",
+      "roomName": "Gabinet Burmistrza",
+      "density": "active",
+      "gameplayRefs": {
+        "loops": [
+          "frontier_governance"
+        ],
+        "services": [
+          "mayor_audience"
+        ],
+        "npcRoles": [
+          "mayor"
+        ],
+        "resources": [],
+        "hazards": [],
+        "secrets": []
+      },
+      "designIntent": "Lokacja zawiera konkretną usługę, zasób, zagrożenie, sekret albo rolę NPC."
+    },
+    {
+      "roomId": "35",
+      "roomName": "Skład Podróżny",
+      "density": "active",
+      "gameplayRefs": {
+        "loops": [],
+        "services": [
+          "general_store"
+        ],
+        "npcRoles": [
+          "quartermaster"
+        ],
+        "resources": [],
+        "hazards": [],
+        "secrets": []
+      },
+      "designIntent": "Lokacja zawiera konkretną usługę, zasób, zagrożenie, sekret albo rolę NPC."
+    },
+    {
+      "roomId": "36",
+      "roomName": "Sklep pod Ostrzem",
+      "density": "active",
+      "gameplayRefs": {
+        "loops": [],
+        "services": [
+          "weapon_store"
+        ],
+        "npcRoles": [
+          "arms_dealer"
+        ],
+        "resources": [],
+        "hazards": [],
+        "secrets": []
+      },
+      "designIntent": "Lokacja zawiera konkretną usługę, zasób, zagrożenie, sekret albo rolę NPC."
+    },
+    {
+      "roomId": "37",
+      "roomName": "Waga Rudy",
+      "density": "active",
+      "gameplayRefs": {
+        "loops": [
+          "mining_economy"
+        ],
+        "services": [
+          "ore_exchange"
+        ],
+        "npcRoles": [
+          "ore_assayer"
+        ],
+        "resources": [],
+        "hazards": [],
+        "secrets": []
+      },
+      "designIntent": "Lokacja zawiera konkretną usługę, zasób, zagrożenie, sekret albo rolę NPC."
+    },
+    {
+      "roomId": "38",
+      "roomName": "Skórzany Kaftan",
+      "density": "active",
+      "gameplayRefs": {
+        "loops": [],
+        "services": [
+          "light_armor"
+        ],
+        "npcRoles": [
+          "leatherworker"
+        ],
+        "resources": [],
+        "hazards": [],
+        "secrets": []
+      },
+      "designIntent": "Lokacja zawiera konkretną usługę, zasób, zagrożenie, sekret albo rolę NPC."
+    },
+    {
+      "roomId": "39",
+      "roomName": "Płatnernia pod Kowadłem",
+      "density": "active",
+      "gameplayRefs": {
+        "loops": [
+          "mining_economy"
+        ],
+        "services": [
+          "armorer"
+        ],
+        "npcRoles": [
+          "armorer"
+        ],
+        "resources": [],
+        "hazards": [],
+        "secrets": []
+      },
+      "designIntent": "Lokacja zawiera konkretną usługę, zasób, zagrożenie, sekret albo rolę NPC."
+    },
+    {
+      "roomId": "40",
+      "roomName": "Zielarnia przy Podcieniach",
+      "density": "active",
+      "gameplayRefs": {
+        "loops": [
+          "hunter_and_herbalist"
+        ],
+        "services": [
+          "herbalist"
+        ],
+        "npcRoles": [
+          "herbalist"
+        ],
+        "resources": [],
+        "hazards": [],
+        "secrets": []
+      },
+      "designIntent": "Lokacja zawiera konkretną usługę, zasób, zagrożenie, sekret albo rolę NPC."
+    },
+    {
+      "roomId": "41",
+      "roomName": "Magazyn Rudy",
+      "density": "active",
+      "gameplayRefs": {
+        "loops": [
+          "mining_economy",
+          "urban_secrets"
+        ],
+        "services": [
+          "ore_warehouse"
+        ],
+        "npcRoles": [
+          "ore_factor"
+        ],
+        "resources": [],
+        "hazards": [],
+        "secrets": [
+          "ore_ledgers"
+        ]
+      },
+      "designIntent": "Lokacja zawiera konkretną usługę, zasób, zagrożenie, sekret albo rolę NPC."
+    },
+    {
+      "roomId": "42",
+      "roomName": "Ulica Nadbrzeżna",
+      "density": "quiet",
+      "gameplayRefs": {
+        "loops": [],
+        "services": [],
+        "npcRoles": [],
+        "resources": [],
+        "hazards": [],
+        "secrets": []
+      },
+      "designIntent": "Lokacja służy rytmowi podróży, orientacji lub wiarygodności; nie wymaga stałej nagrody."
+    },
+    {
+      "roomId": "43",
+      "roomName": "Plac Czynszowych Domów",
+      "density": "quiet",
+      "gameplayRefs": {
+        "loops": [],
+        "services": [],
+        "npcRoles": [],
+        "resources": [],
+        "hazards": [],
+        "secrets": []
+      },
+      "designIntent": "Lokacja służy rytmowi podróży, orientacji lub wiarygodności; nie wymaga stałej nagrody."
+    },
+    {
+      "roomId": "44",
+      "roomName": "Ulica Kamienic",
+      "density": "quiet",
+      "gameplayRefs": {
+        "loops": [],
+        "services": [],
+        "npcRoles": [],
+        "resources": [],
+        "hazards": [],
+        "secrets": []
+      },
+      "designIntent": "Lokacja służy rytmowi podróży, orientacji lub wiarygodności; nie wymaga stałej nagrody."
+    },
+    {
+      "roomId": "45",
+      "roomName": "Spadek ku Rzece",
+      "density": "quiet",
+      "gameplayRefs": {
+        "loops": [
+          "river_and_fishing"
+        ],
+        "services": [],
+        "npcRoles": [],
+        "resources": [],
+        "hazards": [],
+        "secrets": []
+      },
+      "designIntent": "Lokacja służy rytmowi podróży, orientacji lub wiarygodności; nie wymaga stałej nagrody."
+    },
+    {
+      "roomId": "46",
+      "roomName": "Kamienne Schody",
+      "density": "quiet",
+      "gameplayRefs": {
+        "loops": [],
+        "services": [],
+        "npcRoles": [],
+        "resources": [],
+        "hazards": [],
+        "secrets": []
+      },
+      "designIntent": "Lokacja służy rytmowi podróży, orientacji lub wiarygodności; nie wymaga stałej nagrody."
+    },
+    {
+      "roomId": "47",
+      "roomName": "Plac Tragarzy",
+      "density": "active",
+      "gameplayRefs": {
+        "loops": [
+          "river_and_fishing"
+        ],
+        "services": [],
+        "npcRoles": [
+          "dock_foreman"
+        ],
+        "resources": [],
+        "hazards": [],
+        "secrets": []
+      },
+      "designIntent": "Lokacja zawiera konkretną usługę, zasób, zagrożenie, sekret albo rolę NPC."
+    },
+    {
+      "roomId": "48",
+      "roomName": "Nabrzeże Żurawi",
+      "density": "active",
+      "gameplayRefs": {
+        "loops": [
+          "river_and_fishing"
+        ],
+        "services": [
+          "river_port"
+        ],
+        "npcRoles": [],
+        "resources": [],
+        "hazards": [],
+        "secrets": []
+      },
+      "designIntent": "Lokacja zawiera konkretną usługę, zasób, zagrożenie, sekret albo rolę NPC."
+    },
+    {
+      "roomId": "49",
+      "roomName": "Sień Kamienicy przy Schodach",
+      "density": "quiet",
+      "gameplayRefs": {
+        "loops": [],
+        "services": [],
+        "npcRoles": [],
+        "resources": [],
+        "hazards": [],
+        "secrets": []
+      },
+      "designIntent": "Lokacja służy rytmowi podróży, orientacji lub wiarygodności; nie wymaga stałej nagrody."
+    },
+    {
+      "roomId": "50",
+      "roomName": "Izba od Podwórza",
+      "density": "quiet",
+      "gameplayRefs": {
+        "loops": [],
+        "services": [],
+        "npcRoles": [],
+        "resources": [],
+        "hazards": [],
+        "secrets": []
+      },
+      "designIntent": "Lokacja służy rytmowi podróży, orientacji lub wiarygodności; nie wymaga stałej nagrody."
+    },
+    {
+      "roomId": "51",
+      "roomName": "Sień Kamienicy Kupieckiej",
+      "density": "quiet",
+      "gameplayRefs": {
+        "loops": [],
+        "services": [],
+        "npcRoles": [],
+        "resources": [],
+        "hazards": [],
+        "secrets": []
+      },
+      "designIntent": "Lokacja służy rytmowi podróży, orientacji lub wiarygodności; nie wymaga stałej nagrody."
+    },
+    {
+      "roomId": "52",
+      "roomName": "Izba Kamienicy Kupieckiej",
+      "density": "quiet",
+      "gameplayRefs": {
+        "loops": [],
+        "services": [],
+        "npcRoles": [],
+        "resources": [],
+        "hazards": [],
+        "secrets": []
+      },
+      "designIntent": "Lokacja służy rytmowi podróży, orientacji lub wiarygodności; nie wymaga stałej nagrody."
+    },
+    {
+      "roomId": "53",
+      "roomName": "Sień Kamienicy pod Trzema Belkami",
+      "density": "quiet",
+      "gameplayRefs": {
+        "loops": [
+          "urban_secrets"
+        ],
+        "services": [],
+        "npcRoles": [],
+        "resources": [],
+        "hazards": [],
+        "secrets": []
+      },
+      "designIntent": "Lokacja służy rytmowi podróży, orientacji lub wiarygodności; nie wymaga stałej nagrody."
+    },
+    {
+      "roomId": "54",
+      "roomName": "Izba pod Trzema Belkami",
+      "density": "quiet",
+      "gameplayRefs": {
+        "loops": [
+          "urban_secrets"
+        ],
+        "services": [],
+        "npcRoles": [],
+        "resources": [],
+        "hazards": [],
+        "secrets": []
+      },
+      "designIntent": "Lokacja służy rytmowi podróży, orientacji lub wiarygodności; nie wymaga stałej nagrody."
+    },
+    {
+      "roomId": "55",
+      "roomName": "Wspólna Sień",
+      "density": "quiet",
+      "gameplayRefs": {
+        "loops": [],
+        "services": [],
+        "npcRoles": [],
+        "resources": [],
+        "hazards": [],
+        "secrets": []
+      },
+      "designIntent": "Lokacja służy rytmowi podróży, orientacji lub wiarygodności; nie wymaga stałej nagrody."
+    },
+    {
+      "roomId": "56",
+      "roomName": "Wypalona Kamienica",
+      "density": "active",
+      "gameplayRefs": {
+        "loops": [
+          "urban_secrets"
+        ],
+        "services": [],
+        "npcRoles": [],
+        "resources": [],
+        "hazards": [
+          "unstable_ruin"
+        ],
+        "secrets": [
+          "ruin_cache"
+        ]
+      },
+      "designIntent": "Lokacja zawiera konkretną usługę, zasób, zagrożenie, sekret albo rolę NPC."
+    },
+    {
+      "roomId": "57",
+      "roomName": "Dom Starego Przewoźnika",
+      "density": "active",
+      "gameplayRefs": {
+        "loops": [
+          "urban_secrets"
+        ],
+        "services": [],
+        "npcRoles": [
+          "old_ferryman"
+        ],
+        "resources": [
+          "rumors"
+        ],
+        "hazards": [],
+        "secrets": [
+          "river_chart"
+        ]
+      },
+      "designIntent": "Lokacja zawiera konkretną usługę, zasób, zagrożenie, sekret albo rolę NPC."
+    },
+    {
+      "roomId": "58",
+      "roomName": "Droga za Bramą",
+      "density": "transition",
+      "gameplayRefs": {
+        "loops": [
+          "mining_economy",
+          "beginner_forest_hunting"
+        ],
+        "services": [],
+        "npcRoles": [],
+        "resources": [],
+        "hazards": [],
+        "secrets": []
+      },
+      "designIntent": "Lokacja prowadzi gracza między aktywnościami i musi czytelnie zapowiadać następny cel."
+    },
+    {
+      "roomId": "59",
+      "roomName": "Zakręt pod Murami",
+      "density": "quiet",
+      "gameplayRefs": {
+        "loops": [
+          "beginner_forest_hunting"
+        ],
+        "services": [],
+        "npcRoles": [],
+        "resources": [],
+        "hazards": [],
+        "secrets": []
+      },
+      "designIntent": "Lokacja służy rytmowi podróży, orientacji lub wiarygodności; nie wymaga stałej nagrody."
+    },
+    {
+      "roomId": "60",
+      "roomName": "Pola Pogranicza",
+      "density": "active",
+      "gameplayRefs": {
+        "loops": [
+          "hunter_and_herbalist",
+          "beginner_forest_hunting"
+        ],
+        "services": [],
+        "npcRoles": [
+          "field_farmer"
+        ],
+        "resources": [
+          "common_field_herbs"
+        ],
+        "hazards": [],
+        "secrets": []
+      },
+      "designIntent": "Lokacja zawiera konkretną usługę, zasób, zagrożenie, sekret albo rolę NPC."
+    },
+    {
+      "roomId": "61",
+      "roomName": "Ostatnie Pastwiska",
+      "density": "active",
+      "gameplayRefs": {
+        "loops": [
+          "hunter_and_herbalist",
+          "beginner_forest_hunting"
+        ],
+        "services": [],
+        "npcRoles": [
+          "shepherd"
+        ],
+        "resources": [
+          "common_field_herbs"
+        ],
+        "hazards": [],
+        "secrets": []
+      },
+      "designIntent": "Lokacja zawiera konkretną usługę, zasób, zagrożenie, sekret albo rolę NPC."
+    },
+    {
+      "roomId": "62",
+      "roomName": "Pas Leszczyn",
+      "density": "active",
+      "gameplayRefs": {
+        "loops": [
+          "hunter_and_herbalist",
+          "beginner_forest_hunting"
+        ],
+        "services": [],
+        "npcRoles": [],
+        "resources": [
+          "hazelnuts_and_tracks"
+        ],
+        "hazards": [
+          "brush_ambush"
+        ],
+        "secrets": []
+      },
+      "designIntent": "Lokacja zawiera konkretną usługę, zasób, zagrożenie, sekret albo rolę NPC."
+    },
+    {
+      "roomId": "63",
+      "roomName": "Kamieniste Podnóże",
+      "density": "active",
+      "gameplayRefs": {
+        "loops": [
+          "mining_economy",
+          "hunter_and_herbalist"
+        ],
+        "services": [],
+        "npcRoles": [],
+        "resources": [
+          "common_mineral_samples"
+        ],
+        "hazards": [],
+        "secrets": []
+      },
+      "designIntent": "Lokacja zawiera konkretną usługę, zasób, zagrożenie, sekret albo rolę NPC."
+    },
+    {
+      "roomId": "64",
+      "roomName": "Zejście ku Rzece",
+      "density": "transition",
+      "gameplayRefs": {
+        "loops": [
+          "river_and_fishing",
+          "beginner_wetland_hunting"
+        ],
+        "services": [],
+        "npcRoles": [],
+        "resources": [],
+        "hazards": [],
+        "secrets": []
+      },
+      "designIntent": "Lokacja prowadzi gracza między aktywnościami i musi czytelnie zapowiadać następny cel."
+    },
+    {
+      "roomId": "65",
+      "roomName": "Pierwsze Podejście",
+      "density": "ambient",
+      "gameplayRefs": {
+        "loops": [],
+        "services": [],
+        "npcRoles": [],
+        "resources": [],
+        "hazards": [],
+        "secrets": []
+      },
+      "designIntent": "Lokacja wspiera życie obszaru drobnymi zdarzeniami, bez stałej usługi."
+    },
+    {
+      "roomId": "66",
+      "roomName": "Zakręt pod Skałą",
+      "density": "active",
+      "gameplayRefs": {
+        "loops": [],
+        "services": [],
+        "npcRoles": [
+          "road_worker"
+        ],
+        "resources": [],
+        "hazards": [],
+        "secrets": []
+      },
+      "designIntent": "Lokacja zawiera konkretną usługę, zasób, zagrożenie, sekret albo rolę NPC."
+    },
+    {
+      "roomId": "67",
+      "roomName": "Półka nad Doliną",
+      "density": "active",
+      "gameplayRefs": {
+        "loops": [
+          "mining_economy",
+          "hunter_and_herbalist"
+        ],
+        "services": [],
+        "npcRoles": [],
+        "resources": [
+          "common_mineral_samples"
+        ],
+        "hazards": [],
+        "secrets": []
+      },
+      "designIntent": "Lokacja zawiera konkretną usługę, zasób, zagrożenie, sekret albo rolę NPC."
+    },
+    {
+      "roomId": "68",
+      "roomName": "Droga nad Urwiskiem",
+      "density": "active",
+      "gameplayRefs": {
+        "loops": [],
+        "services": [],
+        "npcRoles": [],
+        "resources": [],
+        "hazards": [
+          "cliff_edge"
+        ],
+        "secrets": []
+      },
+      "designIntent": "Lokacja zawiera konkretną usługę, zasób, zagrożenie, sekret albo rolę NPC."
+    },
+    {
+      "roomId": "69",
+      "roomName": "Ciasna Gardziel",
+      "density": "active",
+      "gameplayRefs": {
+        "loops": [],
+        "services": [],
+        "npcRoles": [],
+        "resources": [],
+        "hazards": [
+          "old_chokepoint"
+        ],
+        "secrets": [
+          "chokepoint_beams"
+        ]
+      },
+      "designIntent": "Lokacja zawiera konkretną usługę, zasób, zagrożenie, sekret albo rolę NPC."
+    },
+    {
+      "roomId": "70",
+      "roomName": "Górne Zbocze",
+      "density": "quiet",
+      "gameplayRefs": {
+        "loops": [],
+        "services": [],
+        "npcRoles": [],
+        "resources": [],
+        "hazards": [],
+        "secrets": []
+      },
+      "designIntent": "Lokacja służy rytmowi podróży, orientacji lub wiarygodności; nie wymaga stałej nagrody."
+    },
+    {
+      "roomId": "71",
+      "roomName": "Wielki Nawrót",
+      "density": "quiet",
+      "gameplayRefs": {
+        "loops": [],
+        "services": [],
+        "npcRoles": [],
+        "resources": [],
+        "hazards": [],
+        "secrets": []
+      },
+      "designIntent": "Lokacja służy rytmowi podróży, orientacji lub wiarygodności; nie wymaga stałej nagrody."
+    },
+    {
+      "roomId": "72",
+      "roomName": "Trawers Szarego Stoku",
+      "density": "active",
+      "gameplayRefs": {
+        "loops": [],
+        "services": [],
+        "npcRoles": [],
+        "resources": [],
+        "hazards": [
+          "loose_traverse"
+        ],
+        "secrets": []
+      },
+      "designIntent": "Lokacja zawiera konkretną usługę, zasób, zagrożenie, sekret albo rolę NPC."
+    },
+    {
+      "roomId": "73",
+      "roomName": "Przedpole Kopalń",
+      "density": "active",
+      "gameplayRefs": {
+        "loops": [
+          "mining_economy"
+        ],
+        "services": [],
+        "npcRoles": [],
+        "resources": [
+          "spilled_ore"
+        ],
+        "hazards": [],
+        "secrets": []
+      },
+      "designIntent": "Lokacja zawiera konkretną usługę, zasób, zagrożenie, sekret albo rolę NPC."
+    },
+    {
+      "roomId": "74",
+      "roomName": "Koleiny Rudnych Wozów",
+      "density": "active",
+      "gameplayRefs": {
+        "loops": [
+          "mining_economy"
+        ],
+        "services": [],
+        "npcRoles": [],
+        "resources": [
+          "spilled_ore"
+        ],
+        "hazards": [],
+        "secrets": []
+      },
+      "designIntent": "Lokacja zawiera konkretną usługę, zasób, zagrożenie, sekret albo rolę NPC."
+    },
+    {
+      "roomId": "75",
+      "roomName": "Droga pod Sztolnie",
+      "density": "transition",
+      "gameplayRefs": {
+        "loops": [
+          "mining_economy"
+        ],
+        "services": [],
+        "npcRoles": [],
+        "resources": [],
+        "hazards": [],
+        "secrets": []
+      },
+      "designIntent": "Lokacja prowadzi gracza między aktywnościami i musi czytelnie zapowiadać następny cel."
+    },
+    {
+      "roomId": "76",
+      "roomName": "Wrota Okręgu Górniczego",
+      "density": "active",
+      "gameplayRefs": {
+        "loops": [
+          "mining_economy"
+        ],
+        "services": [
+          "mining_access"
+        ],
+        "npcRoles": [
+          "mine_traffic_overseer"
+        ],
+        "resources": [],
+        "hazards": [],
+        "secrets": []
+      },
+      "designIntent": "Lokacja zawiera konkretną usługę, zasób, zagrożenie, sekret albo rolę NPC."
+    },
+    {
+      "roomId": "77",
+      "roomName": "Stajnia pod Żurawiem",
+      "density": "active",
+      "gameplayRefs": {
+        "loops": [],
+        "services": [
+          "stable"
+        ],
+        "npcRoles": [
+          "stablehand"
+        ],
+        "resources": [],
+        "hazards": [],
+        "secrets": []
+      },
+      "designIntent": "Lokacja zawiera konkretną usługę, zasób, zagrożenie, sekret albo rolę NPC."
+    },
+    {
+      "roomId": "78",
+      "roomName": "Spiżarnia pod Żurawiem",
+      "density": "quiet",
+      "gameplayRefs": {
+        "loops": [],
+        "services": [],
+        "npcRoles": [],
+        "resources": [],
+        "hazards": [],
+        "secrets": []
+      },
+      "designIntent": "Lokacja służy rytmowi podróży, orientacji lub wiarygodności; nie wymaga stałej nagrody."
+    },
+    {
+      "roomId": "79",
+      "roomName": "Kuchnia pod Żurawiem",
+      "density": "active",
+      "gameplayRefs": {
+        "loops": [],
+        "services": [],
+        "npcRoles": [
+          "cook"
+        ],
+        "resources": [],
+        "hazards": [],
+        "secrets": []
+      },
+      "designIntent": "Lokacja zawiera konkretną usługę, zasób, zagrożenie, sekret albo rolę NPC."
+    },
+    {
+      "roomId": "80",
+      "roomName": "Piwnica pod Żurawiem",
+      "density": "active",
+      "gameplayRefs": {
+        "loops": [
+          "urban_secrets"
+        ],
+        "services": [],
+        "npcRoles": [],
+        "resources": [],
+        "hazards": [],
+        "secrets": [
+          "old_foundation"
+        ]
+      },
+      "designIntent": "Lokacja zawiera konkretną usługę, zasób, zagrożenie, sekret albo rolę NPC."
+    },
+    {
+      "roomId": "81",
+      "roomName": "Izby Gościnne pod Żurawiem",
+      "density": "ambient",
+      "gameplayRefs": {
+        "loops": [
+          "start_and_orientation"
+        ],
+        "services": [],
+        "npcRoles": [],
+        "resources": [],
+        "hazards": [],
+        "secrets": []
+      },
+      "designIntent": "Lokacja wspiera życie obszaru drobnymi zdarzeniami, bez stałej usługi."
+    },
+    {
+      "roomId": "82",
+      "roomName": "Wysoki Brzeg",
+      "density": "quiet",
+      "gameplayRefs": {
+        "loops": [
+          "river_and_fishing",
+          "beginner_wetland_hunting"
+        ],
+        "services": [],
+        "npcRoles": [],
+        "resources": [],
+        "hazards": [],
+        "secrets": []
+      },
+      "designIntent": "Lokacja służy rytmowi podróży, orientacji lub wiarygodności; nie wymaga stałej nagrody."
+    },
+    {
+      "roomId": "83",
+      "roomName": "Zakole Rzeki",
+      "density": "active",
+      "gameplayRefs": {
+        "loops": [
+          "river_and_fishing",
+          "hunter_and_herbalist",
+          "beginner_wetland_hunting"
+        ],
+        "services": [],
+        "npcRoles": [],
+        "resources": [
+          "shore_fishing"
+        ],
+        "hazards": [],
+        "secrets": []
+      },
+      "designIntent": "Lokacja zawiera konkretną usługę, zasób, zagrożenie, sekret albo rolę NPC."
+    },
+    {
+      "roomId": "84",
+      "roomName": "Mokre Łąki",
+      "density": "active",
+      "gameplayRefs": {
+        "loops": [
+          "river_and_fishing",
+          "hunter_and_herbalist",
+          "beginner_wetland_hunting"
+        ],
+        "services": [],
+        "npcRoles": [],
+        "resources": [
+          "river_herbs"
+        ],
+        "hazards": [
+          "wet_meadows"
+        ],
+        "secrets": []
+      },
+      "designIntent": "Lokacja zawiera konkretną usługę, zasób, zagrożenie, sekret albo rolę NPC."
+    },
+    {
+      "roomId": "85",
+      "roomName": "Pierwsze Sieci",
+      "density": "active",
+      "gameplayRefs": {
+        "loops": [
+          "river_and_fishing"
+        ],
+        "services": [],
+        "npcRoles": [
+          "net_mender"
+        ],
+        "resources": [
+          "shore_fishing"
+        ],
+        "hazards": [],
+        "secrets": []
+      },
+      "designIntent": "Lokacja zawiera konkretną usługę, zasób, zagrożenie, sekret albo rolę NPC."
+    },
+    {
+      "roomId": "86",
+      "roomName": "Skraj Osady Rybackiej",
+      "density": "active",
+      "gameplayRefs": {
+        "loops": [
+          "river_and_fishing"
+        ],
+        "services": [
+          "fishing_access"
+        ],
+        "npcRoles": [],
+        "resources": [
+          "shore_fishing"
+        ],
+        "hazards": [],
+        "secrets": []
+      },
+      "designIntent": "Lokacja zawiera konkretną usługę, zasób, zagrożenie, sekret albo rolę NPC."
+    }
+  ],
+  "knownLimitations": [
+    "Same trakty pozostają liniowe z założenia; różnorodność zapewnią osobne zejścia do północnego lasu oraz nadrzecznych szuwarów i mokradeł.",
+    "Trakt nadrzeczny ma tylko sześć lokacji i jest łącznikiem do osady oraz mokradeł, nie pełnym regionem rybackim.",
+    "Nazwy osobiste NPC-ów celowo pozostają nieustalone do czasu sprawdzenia kanonu językowego.",
+    "Nie ustalono jeszcze wartości cen, czasu odradzania zasobów ani parametrów walki — wymagają danych z istniejącego repozytorium."
+  ]
+}

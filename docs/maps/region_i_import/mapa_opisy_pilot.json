@@ -1,0 +1,218 @@
+{
+  "schemaVersion": 1,
+  "createdAt": "2026-07-26T21:40:00.000Z",
+  "updatedAt": "2026-07-26T22:20:00.000Z",
+  "scope": {
+    "roomIds": [
+      "81",
+      "14",
+      "77",
+      "78",
+      "79",
+      "80",
+      "1",
+      "0",
+      "22",
+      "24",
+      "21",
+      "23",
+      "20",
+      "58",
+      "64"
+    ],
+    "purpose": "Pilot opisów strefy startowej, bramy i pierwszego rozgałęzienia traktów.",
+    "status": "production_revised_ready_for_human_review"
+  },
+  "descriptions": [
+    {
+      "id": "81",
+      "name": "Izby Gościnne pod Żurawiem",
+      "description": "Niski korytarz biegnie między drzwiami oznaczonymi cyframi wypalonymi w drewnie. Jedne zbito z równych desek, inne ściągnięto poprzeczną listwą. Podłoga ugina się przy ścianach, a od strony schodów dochodzi głuchy stuk odstawianych kufli.",
+      "inspectables": {
+        "drzwi": "Każde zbito z innych desek, lecz zamki i wypalone numery wykonano według jednego wzoru."
+      },
+      "dynamicHooks": [
+        "zmiana natężenia gwaru z głównej sali"
+      ]
+    },
+    {
+      "id": "14",
+      "name": "Karczma pod Żurawiem",
+      "description": "Dym z paleniska zbiera się pod poczerniałym okapem, zanim uchodzi ponad belki stropu. Ciężkie stoły stoją ciasno przy ścianach. Środek sali pozostawiono wolny między wejściem z placu, schodami na piętro i szynkwasem, którego blat nosi ciemny pas po dłoniach oraz kuflach. Nad wejściem od strony placu wisi szyld z drewnianym żurawiem; jego łańcuch stuka o belkę przy silniejszym wietrze.",
+      "inspectables": {
+        "palenisko": "Kamienny krąg wielokrotnie przekładano, a popiół zsypuje się do żelaznej skrzyni.",
+        "szyld": "Żuraw ma nowy dziób wystrugany z jaśniejszego drewna niż reszta ptaka.",
+        "szynkwas": "Krawędź lady jest ciemna od dłoni, a pod nią stoją zamknięte beczułki."
+      },
+      "dynamicHooks": [
+        "goście zależni od pory dnia",
+        "posiłki z kuchni",
+        "plotki o stanie obu traktów"
+      ]
+    },
+    {
+      "id": "77",
+      "name": "Stajnia pod Żurawiem",
+      "description": "Szerokie wrota otwierają stajnię na plac. Dwa rzędy boksów obejmują klepisko ubite kopytami, a uprząż schnie na kołkach odsuniętych od wilgotnego muru pasem surowych desek.",
+      "inspectables": {
+        "boksy": "Przegrody są niskie i wielokrotnie łatane deskami z różnych gatunków drewna.",
+        "uprząż": "Rzemienie oczyszczono z błota, lecz kilka pasków czeka na przeszycie."
+      },
+      "dynamicHooks": [
+        "liczba zwierząt zależna od ruchu na traktach"
+      ]
+    },
+    {
+      "id": "78",
+      "name": "Spiżarnia pod Żurawiem",
+      "description": "W spiżarni można przejść tylko bokiem między skrzyniami a beczkami ustawionymi na drewnianych podkładkach. Węglowe znaki na pokrywach nie tworzą równego spisu: przy starszych dostawach dopisano krótkie kreski oznaczające kolejne wydania do kuchni.",
+      "inspectables": {
+        "oznaczenia": "Daty i krótkie znaki wskazują dostawcę oraz kolejność zużycia zapasów."
+      },
+      "dynamicHooks": [
+        "dostawy z pól i osady rybackiej"
+      ]
+    },
+    {
+      "id": "79",
+      "name": "Kuchnia pod Żurawiem",
+      "description": "W kuchni żar nie gaśnie nawet wtedy, gdy główna sala pustoszeje. Ceglany piec pękł nad otworem i został spięty żelazną obejmą. Obok stoi blat pocięty tasakiem, dalej półki z miskami i przyprawami. Przy palenisku zaczynają się strome schody do piwnicy.",
+      "inspectables": {
+        "piec": "Cegły nad otworem popękały od gorąca i zostały spięte żelazną obejmą.",
+        "schody": "Stopnie są strome i wilgotne przy dolnej krawędzi."
+      },
+      "dynamicHooks": [
+        "zmieniające się potrawy",
+        "zamówienia na ryby, mięso i zioła"
+      ]
+    },
+    {
+      "id": "80",
+      "name": "Piwnica pod Żurawiem",
+      "description": "Niskie sklepienie pozwala przetaczać beczki tylko wzdłuż jednej ściany. Po przeciwnej stronie płytki odpływ zbiera wodę przy blokach starszego fundamentu. Kamienie są większe niż w murach karczmy, a jedno dawne przejście zamknięto bezładnie ułożonym gruzem.",
+      "inspectables": {
+        "fundament": "Dolne bloki są większe, nieregularne i noszą ślady dawnego zamurowania.",
+        "zamurowane przejście": "Kamienie nie są związane równą zaprawą; między nimi pozostały resztki starego drewnianego nadproża."
+      },
+      "dynamicHooks": [
+        "sekret starego fundamentu"
+      ]
+    },
+    {
+      "id": "1",
+      "name": "Plac Przed Wartownią",
+      "description": "Na środku placu przecinają się dwa półkoliste ślady kół — tyle miejsca potrzebuje zaprzęg zawracający spod bramy. Niska wartownia stoi po wschodniej stronie. Naprzeciw niej, ponad wejściem do karczmy, kołysze się drewniany żuraw. Bruk biegnący ku studni jest szerszy od przejść wydeptanych przy ścianach.",
+      "inspectables": {
+        "koleiny": "Najgłębsze prowadzą ku północy, gdzie zaczyna się droga do rynku.",
+        "wartownia": "Okna wychodzą na plac i bramę, dzięki czemu mała obsada widzi cały ruch przy wejściu.",
+        "szyld": "Drewniany żuraw wskazuje wejście do karczmy po zachodniej stronie placu."
+      },
+      "dynamicHooks": [
+        "odprawa przyjezdnych",
+        "zmiana warty"
+      ]
+    },
+    {
+      "id": "0",
+      "name": "Brama Dymnych Chorągwi",
+      "description": "Między murem a czarnymi belkami strażnicy mieści się jeden wóz. Nad przejazdem wisi krata podnoszona na dwóch łańcuchach. Jej zęby trafiają w płytkie gniazda wykute w bruku. Przez bramę widać rozwidlenie zewnętrznego traktu, zaś od miasta podchodzi pod nią otwarty plac.",
+      "inspectables": {
+        "krata": "Żelazne zęby są starte przy końcach, a kilka nitów wymieniono na jaśniejsze.",
+        "łańcuchy": "Ogniwa błyszczą od smaru tam, gdzie przechodzą przez koła mechanizmu."
+      },
+      "dynamicHooks": [
+        "otwarcie i zamknięcie bramy",
+        "kontrola ładunków"
+      ]
+    },
+    {
+      "id": "22",
+      "name": "Strażnica Bramy",
+      "description": "Wąskie okna strażnicy wychodzą na plac i mechanizm bramy. Dwa stojaki na broń mają więcej pustych gniazd niż zajętych. Nad połatanymi tarczami suszą się płaszcze ostatniej zmiany, a tablicę wart zawieszono przy wspólnej skrzyni z oliwą, kredą i zapasowymi rzemieniami.",
+      "inspectables": {
+        "stojaki": "Wolne gniazda pokazują, że część wyposażenia pozostaje przy ludziach pełniących wartę.",
+        "tablica": "Nazwiska i godziny zmian zapisano kredą; obsada jest niewielka nawet w ciągu dnia."
+      },
+      "dynamicHooks": [
+        "zmiana warty",
+        "decyzje dowódcy o obsadzie traktów"
+      ]
+    },
+    {
+      "id": "24",
+      "name": "Komora Myta",
+      "description": "Ciężki kontuar zostawia przyjezdnym wąski pas między drzwiami a ladą, a po stronie pisarza wydziela miejsce na skrzynię opłat i dokumenty. Na tabliczkach nad wagą poprawiano osobno stawki za wozy, zwierzęta i towary. Jaśniejsze deseczki wskazują najnowsze zmiany.",
+      "inspectables": {
+        "taryfy": "Stawki poprawiano na osobnych deseczkach, zamiast wykonywać cały wykaz od nowa.",
+        "waga": "Jedna szala nosi drobne rysy po kamieniu i rudzie, druga jest ciemna od odważników."
+      },
+      "dynamicHooks": [
+        "zmiany taryf",
+        "niezgodności w księgach"
+      ]
+    },
+    {
+      "id": "21",
+      "name": "Dziedziniec Suchych Studni",
+      "description": "Pośrodku dziedzińca działa ostatnia z trzech studni. Dwa pozostałe szyby zasypano i obwiedziono płaskimi kamieniami, które służą dziś do odstawiania wiader. Rozlana woda spływa płytkim rowkiem ku Ulicy Wartowniczej.",
+      "inspectables": {
+        "studnia": "Między kamieniami cembrowiny widać świeższą zaprawę po ostatniej naprawie.",
+        "zasypane ujęcia": "Przy ścianach dziedzińca zachowały się dwa okrągłe obrysy z kamieni innego koloru."
+      },
+      "dynamicHooks": [
+        "mieszkańcy czerpiący wodę",
+        "lokalne rozmowy"
+      ]
+    },
+    {
+      "id": "23",
+      "name": "Ulica Wartownicza",
+      "description": "Ściana strażnicy i otwarty rynsztok prowadzą od placu ku dziedzińcowi ze studnią. Woda płynie po zachodniej stronie ulicy, gdzie płaskie kamienie chronią krawędź bruku przed wypłukaniem.",
+      "inspectables": {
+        "rynsztok": "Woda niesie piasek i drobne źdźbła słomy od strony studni."
+      },
+      "dynamicHooks": [
+        "spływ deszczówki"
+      ]
+    },
+    {
+      "id": "20",
+      "name": "Trakt Przy Murze",
+      "description": "Droga przylega do podstawy muru, a przed zakrętem rozdziela się na dwa ślady. Głębsze koleiny należą do wozów kursujących ku polom i kopalniom. Druga odnoga schodzi ku rzece, poznaczona lekkimi kołami oraz mułem odpadającym z butów. Z bramy widać oba początki, lecz dalej każdy znika za innym załamaniem terenu.",
+      "inspectables": {
+        "koleiny północne": "Są głębokie, szeroko rozstawione i pełne drobnego pyłu z jasnej skały.",
+        "odnoga południowa": "W błocie częściej widać lekkie koła, ślady pieszych i rozsypane rybie łuski."
+      },
+      "dynamicHooks": [
+        "ruch wozów z rudą",
+        "rybacy idący ku osadzie"
+      ]
+    },
+    {
+      "id": "58",
+      "name": "Droga za Bramą",
+      "description": "Droga ku kopalniom jest jeszcze dość szeroka, by minęły się na niej dwa wozy. Między koleinami leżą odłamki skały wysypane z ładunków, a na poboczu ktoś ułożył kliny do kół obok zerwanego pasa uprzęży. Dalej trakt odgina się od muru ku otwartym polom.",
+      "inspectables": {
+        "koleiny": "Głębokość śladów wskazuje, że wozy wracające ku miastu są cięższe od jadących w góry.",
+        "pobocze": "Leżą tu kliny do kół, zerwane rzemyki i ślady krótkich postojów."
+      },
+      "dynamicHooks": [
+        "karawany górnicze",
+        "pogorszenie drogi po deszczu"
+      ]
+    },
+    {
+      "id": "64",
+      "name": "Zejście ku Rzece",
+      "description": "Południowa odnoga opada między podstawą muru a skarpą wzmocnioną pasami faszyny. Niżej, pomiędzy drzewami, prześwituje rzeka. Płytkie koleiny przecinają ślady lekkich wózków. W wysychającym błocie zostały łuski i połamane źdźbła trzcin.",
+      "inspectables": {
+        "rzeka": "Między drzewami widać fragment nurtu oraz jaśniejsze kamienie wysokiego brzegu.",
+        "skarpa": "Trawę wzmacniają pasy faszyny tam, gdzie woda po deszczu podcina drogę."
+      },
+      "dynamicHooks": [
+        "nadrzeczna mgła",
+        "podmycia po deszczu"
+      ]
+    }
+  ]
+}
