@@ -43,6 +43,12 @@ class GameServerSupportMixin:
             return mudlet_map_enabled
         return os.getenv("ASTERGARD_MUDLET_MAP", "").strip().lower() in {"1", "true", "yes", "on"}
 
+    @staticmethod
+    def _resolve_web_map_reveal_all(reveal_all_web_map: bool | None) -> bool:
+        if reveal_all_web_map is not None:
+            return reveal_all_web_map
+        return os.getenv("ASTERGARD_WEB_MAP_REVEAL_ALL", "").strip().lower() in {"1", "true", "yes", "on"}
+
     def _expose_services(self) -> None:
         self.repo = self.services.repo
         self.world = self.services.world

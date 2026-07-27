@@ -71,8 +71,9 @@ class GameBootstrapper:
     NPC population, command registration, or application services.
     """
 
-    def __init__(self, db_path: str) -> None:
+    def __init__(self, db_path: str, *, reveal_all_web_map: bool = False) -> None:
         self.db_path = db_path
+        self.reveal_all_web_map = reveal_all_web_map
 
     def build(self) -> GameServices:
         rules = default_ruleset()
@@ -117,7 +118,7 @@ class GameBootstrapper:
             economy_service=EconomyApplicationService(economy, factions),
             exploration_service=ExplorationService(rules.movement, rules.search),
             communication_service=CommunicationService(),
-            minimap_service=MinimapService(),
+            minimap_service=MinimapService(reveal_all_web_map=self.reveal_all_web_map),
             system_service=SystemCommandService(),
             save_load=None,  # type: ignore[arg-type]
             observability=observability,

@@ -47,6 +47,17 @@ function installTestPointerEvent(): () => void {
   };
 }
 
+function parseTranslate(transform: string | null): { x: number; y: number } {
+  const match = /translate\(([-\d.]+), ([-\d.]+)\)/.exec(transform ?? '');
+  if (!match) {
+    throw new Error(`Cannot parse transform: ${transform ?? 'null'}`);
+  }
+  return {
+    x: Number(match[1]),
+    y: Number(match[2]),
+  };
+}
+
 describe('WorldMapPanelView', () => {
   it('renders a small map with the current room highlighted and visible labels only for the current node', () => {
     const { container } = render(
@@ -77,6 +88,10 @@ describe('WorldMapPanelView', () => {
     const currentRoom = screen.getByTestId('map-room-2');
     expect(currentRoom).toHaveAttribute('data-room-current', 'true');
     expect(screen.getByRole('img', { name: 'Mapa odkrytej okolicy' })).toBeInTheDocument();
+    expect(screen.getByText('Północ')).toBeInTheDocument();
+    expect(screen.getByText('Południe')).toBeInTheDocument();
+    expect(screen.getByText('Zachód')).toBeInTheDocument();
+    expect(screen.getByText('Wschód')).toBeInTheDocument();
   });
 
   it('keeps north at the top and renders diagonal geometry consistently', () => {
@@ -102,6 +117,64 @@ describe('WorldMapPanelView', () => {
     expect(Number(northEdge.getAttribute('y2'))).toBeLessThan(Number(northEdge.getAttribute('y1')));
     expect(Number(diagonalEdge.getAttribute('x2'))).toBeLessThan(Number(diagonalEdge.getAttribute('x1')));
     expect(Number(diagonalEdge.getAttribute('y2'))).toBeGreaterThan(Number(diagonalEdge.getAttribute('y1')));
+  });
+
+  it('projects all compass directions with north at the top and keeps compass labels fixed', () => {
+    render(
+      <WorldMapPanelView
+        map={makeMap({
+          currentRoomId: 1,
+          roomsById: {
+            1: { room_id: 1, name: 'Centrum', region: 'Miasto', x: 0, y: 0, z: 0 },
+            2: { room_id: 2, name: 'Północ', region: 'Miasto', x: 0, y: 1, z: 0 },
+            3: { room_id: 3, name: 'Południe', region: 'Miasto', x: 0, y: -1, z: 0 },
+            4: { room_id: 4, name: 'Wschód', region: 'Miasto', x: 1, y: 0, z: 0 },
+            5: { room_id: 5, name: 'Zachód', region: 'Miasto', x: -1, y: 0, z: 0 },
+            6: { room_id: 6, name: 'Północny wschód', region: 'Miasto', x: 1, y: 1, z: 0 },
+            7: { room_id: 7, name: 'Północny zachód', region: 'Miasto', x: -1, y: 1, z: 0 },
+            8: { room_id: 8, name: 'Południowy wschód', region: 'Miasto', x: 1, y: -1, z: 0 },
+            9: { room_id: 9, name: 'Południowy zachód', region: 'Miasto', x: -1, y: -1, z: 0 },
+          },
+          edges: [
+            { from_room_id: 1, to_room_id: 2, direction: 'polnoc' },
+            { from_room_id: 1, to_room_id: 3, direction: 'poludnie' },
+            { from_room_id: 1, to_room_id: 4, direction: 'wschod' },
+            { from_room_id: 1, to_room_id: 5, direction: 'zachod' },
+            { from_room_id: 1, to_room_id: 6, direction: 'polnocny-wschod' },
+            { from_room_id: 1, to_room_id: 7, direction: 'polnocny-zachod' },
+            { from_room_id: 1, to_room_id: 8, direction: 'poludniowy-wschod' },
+            { from_room_id: 1, to_room_id: 9, direction: 'poludniowy-zachod' },
+          ],
+        })}
+      />,
+    );
+
+    const center = parseTranslate(screen.getByTestId('map-room-1').getAttribute('transform'));
+    const north = parseTranslate(screen.getByTestId('map-room-2').getAttribute('transform'));
+    const south = parseTranslate(screen.getByTestId('map-room-3').getAttribute('transform'));
+    const east = parseTranslate(screen.getByTestId('map-room-4').getAttribute('transform'));
+    const west = parseTranslate(screen.getByTestId('map-room-5').getAttribute('transform'));
+    const northeast = parseTranslate(screen.getByTestId('map-room-6').getAttribute('transform'));
+    const northwest = parseTranslate(screen.getByTestId('map-room-7').getAttribute('transform'));
+    const southeast = parseTranslate(screen.getByTestId('map-room-8').getAttribute('transform'));
+    const southwest = parseTranslate(screen.getByTestId('map-room-9').getAttribute('transform'));
+
+    expect(north.y).toBeLessThan(center.y);
+    expect(south.y).toBeGreaterThan(center.y);
+    expect(east.x).toBeGreaterThan(center.x);
+    expect(west.x).toBeLessThan(center.x);
+    expect(northeast.x).toBeGreaterThan(center.x);
+    expect(northeast.y).toBeLessThan(center.y);
+    expect(northwest.x).toBeLessThan(center.x);
+    expect(northwest.y).toBeLessThan(center.y);
+    expect(southeast.x).toBeGreaterThan(center.x);
+    expect(southeast.y).toBeGreaterThan(center.y);
+    expect(southwest.x).toBeLessThan(center.x);
+    expect(southwest.y).toBeGreaterThan(center.y);
+    expect(screen.getByText('Północ')).toBeInTheDocument();
+    expect(screen.getByText('Południe')).toBeInTheDocument();
+    expect(screen.getByText('Zachód')).toBeInTheDocument();
+    expect(screen.getByText('Wschód')).toBeInTheDocument();
   });
 
   it('deduplicates reciprocal edges visually and marks one-way links', () => {

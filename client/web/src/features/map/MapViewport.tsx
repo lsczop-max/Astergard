@@ -61,15 +61,22 @@ function oppositeEdgeExists(edges: MapEdgePayload[], fromId: number, toId: numbe
   return edges.some((edge) => edge.from_room_id === toId && edge.to_room_id === fromId);
 }
 
-function buildVisibleEdges(roomsById: Map<number, MapRoomPayload>, rooms: MapRoomPayload[], edges: MapEdgePayload[], focusRoom: MapRoomPayload, zoom: number, pan: Pan): VisibleEdge[] {
+function buildVisibleEdges(
+  roomLookup: Map<number, MapRoomPayload>,
+  rooms: MapRoomPayload[],
+  edges: MapEdgePayload[],
+  focusRoom: MapRoomPayload,
+  zoom: number,
+  pan: Pan,
+): VisibleEdge[] {
   const visibleRoomIds = new Set(rooms.map((room) => room.room_id));
   const grouped = new Map<string, MapEdgePayload[]>();
   for (const edge of edges) {
     if (!visibleRoomIds.has(edge.from_room_id) || !visibleRoomIds.has(edge.to_room_id)) {
       continue;
     }
-    const from = roomsById.get(edge.from_room_id);
-    const to = roomsById.get(edge.to_room_id);
+    const from = roomLookup.get(edge.from_room_id);
+    const to = roomLookup.get(edge.to_room_id);
     if (!from || !to || from.z !== focusRoom.z || to.z !== focusRoom.z) {
       continue;
     }
@@ -81,21 +88,20 @@ function buildVisibleEdges(roomsById: Map<number, MapRoomPayload>, rooms: MapRoo
 
   return [...grouped.entries()].map(([key, entries]) => {
     const first = entries[0] as MapEdgePayload;
-    const fromRoom = roomsById.get(first.from_room_id) ?? focusRoom;
-    const toRoom = roomsById.get(first.to_room_id) ?? focusRoom;
+    const fromRoom = roomLookup.get(first.from_room_id) ?? focusRoom;
+    const toRoom = roomLookup.get(first.to_room_id) ?? focusRoom;
     const reciprocal = entries.some((edge) => oppositeEdgeExists(entries, edge.from_room_id, edge.to_room_id));
     const startRoom = reciprocal ? (fromRoom.room_id < toRoom.room_id ? fromRoom : toRoom) : fromRoom;
     const endRoom = reciprocal ? (startRoom.room_id === fromRoom.room_id ? toRoom : fromRoom) : toRoom;
     const start = projectRoom(startRoom, focusRoom, zoom, pan);
     const end = projectRoom(endRoom, focusRoom, zoom, pan);
-    const bidirectional = reciprocal;
     return {
       key,
       x1: start.x,
       y1: start.y,
       x2: end.x,
       y2: end.y,
-      bidirectional,
+      bidirectional: reciprocal,
       oneWayFrom: startRoom.room_id,
       oneWayTo: endRoom.room_id,
     };
@@ -365,6 +371,12 @@ export function MapViewport({ rooms, roomLookup, edges, focusRoom, currentRoomId
           );
         })}
       </svg>
+      <div className="map-compass" aria-hidden="true">
+        <span className="map-compass-north">Północ</span>
+        <span className="map-compass-south">Południe</span>
+        <span className="map-compass-west">Zachód</span>
+        <span className="map-compass-east">Wschód</span>
+      </div>
     </div>
   );
 }

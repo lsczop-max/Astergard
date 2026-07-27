@@ -34,6 +34,9 @@ describe('App StrictMode transport lifecycle', () => {
       );
     });
 
+    expect(screen.getByRole('region', { name: 'Ekran logowania' })).toBeInTheDocument();
+    expect(screen.getByRole('complementary', { name: 'Panel logowania' })).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Obszar komendy' })).toBeInTheDocument();
     expect(parseProtocolEnvelope(socket.sent[0])).toMatchObject({
       version: 1,
       type: 'session.hello',
@@ -66,7 +69,7 @@ describe('App StrictMode transport lifecycle', () => {
     expect(screen.getByRole('main')).not.toHaveTextContent('tajne');
   });
 
-  it('maps numpad movement only after ready and ignores interactive focus', async () => {
+  it('maps numpad movement from the command input only after ready and ignores top-row digits', async () => {
     const user = userEvent.setup();
     render(<App />);
 
@@ -156,18 +159,135 @@ describe('App StrictMode transport lifecycle', () => {
     });
 
     const initialSentLength = socket.sent.length;
-    fireEvent.keyDown(document.body, { code: 'Numpad8', key: '8' });
+    const commandInput = screen.getByLabelText('Komenda');
+
+    fireEvent.keyDown(document.body, { code: 'Numpad8', key: '8', location: KeyboardEvent.DOM_KEY_LOCATION_NUMPAD });
     expect(socket.sent).toHaveLength(initialSentLength + 1);
+    const firstCommand = parseProtocolEnvelope(socket.sent.at(-1) as string);
+    expect(firstCommand).toMatchObject({
+      version: 1,
+      type: 'command.execute',
+      payload: { command: 'polnoc' },
+    });
+
+    commandInput.focus();
+    fireEvent.keyDown(commandInput, {
+      code: 'Numpad9',
+      key: '9',
+      location: KeyboardEvent.DOM_KEY_LOCATION_NUMPAD,
+      buttons: 1,
+    });
+    expect(socket.sent).toHaveLength(initialSentLength + 1);
+
+    await act(async () => {
+      socket.message(
+        JSON.stringify({
+          version: 1,
+          type: 'command.result',
+          payload: { command: 'polnoc', success: true },
+          request_id: firstCommand.request_id,
+          sequence: 8,
+        }),
+      );
+    });
+
+    fireEvent.keyDown(commandInput, {
+      code: 'Unidentified',
+      key: 'ArrowUp',
+      location: KeyboardEvent.DOM_KEY_LOCATION_NUMPAD,
+      buttons: 1,
+    });
+    expect(socket.sent).toHaveLength(initialSentLength + 2);
     expect(parseProtocolEnvelope(socket.sent.at(-1) as string)).toMatchObject({
       version: 1,
       type: 'command.execute',
       payload: { command: 'polnoc' },
     });
 
-    const commandInput = screen.getByLabelText('Komenda');
-    commandInput.focus();
-    fireEvent.keyDown(commandInput, { code: 'Numpad9', key: '9' });
-    expect(socket.sent).toHaveLength(initialSentLength + 1);
+    fireEvent.keyDown(commandInput, {
+      code: 'Digit8',
+      key: '8',
+      location: KeyboardEvent.DOM_KEY_LOCATION_STANDARD,
+      buttons: 1,
+    });
+    expect(socket.sent).toHaveLength(initialSentLength + 2);
+
+    fireEvent.keyDown(commandInput, {
+      code: 'Numpad8',
+      key: '8',
+      repeat: true,
+      location: KeyboardEvent.DOM_KEY_LOCATION_NUMPAD,
+      buttons: 1,
+    });
+    expect(socket.sent).toHaveLength(initialSentLength + 2);
+  });
+
+  it('blocks numpad movement in login and creator forms before ready', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    const socket = MockWebSocket.instances[0];
+    await act(async () => {
+      socket.open();
+      socket.message(
+        JSON.stringify({
+          version: 1,
+          type: 'output.text',
+          payload: { text: 'Karczmarz podnosi wzrok znad kufla. Jak się przedstawiasz?' },
+          sequence: 1,
+        }),
+      );
+    });
+
+    const beforeReadyLength = socket.sent.length;
+    const username = screen.getByLabelText('Nazwa użytkownika');
+    username.focus();
+    fireEvent.keyDown(username, {
+      code: 'Numpad8',
+      key: '8',
+      location: KeyboardEvent.DOM_KEY_LOCATION_NUMPAD,
+      buttons: 1,
+    });
+    expect(socket.sent).toHaveLength(beforeReadyLength);
+
+    await user.click(screen.getByLabelText('Nowa postać'));
+    await user.type(screen.getByLabelText('Nazwa nowego konta'), 'nowa');
+    await user.type(screen.getByLabelText('Nowe hasło'), 'sekret');
+    await user.click(screen.getByRole('button', { name: 'Rozpocznij tworzenie' }));
+
+    const creatorStartLength = socket.sent.length;
+
+    await act(async () => {
+      socket.message(
+        JSON.stringify({
+          version: 1,
+          type: 'creator.started',
+          payload: {
+            username: 'nowa',
+            step: {
+              step_id: 'name',
+              title: 'Imię',
+              prompt: '— Jak cię zwać?',
+              input_type: 'text',
+              back_available: false,
+              cancel_available: true,
+            },
+          },
+          request_id: parseProtocolEnvelope(socket.sent.at(-1) as string).request_id,
+          sequence: 2,
+        }),
+      );
+    });
+
+    const creatorInput = screen.getByLabelText('Odpowiedź');
+    creatorInput.focus();
+    fireEvent.keyDown(creatorInput, {
+      code: 'Numpad2',
+      key: '2',
+      location: KeyboardEvent.DOM_KEY_LOCATION_NUMPAD,
+      buttons: 1,
+    });
+    expect(socket.sent).toHaveLength(creatorStartLength);
   });
 
   it('replaces the trial transport and keeps the second connection active', () => {
@@ -177,6 +297,8 @@ describe('App StrictMode transport lifecycle', () => {
       </StrictMode>,
     );
 
+    expect(screen.getAllByRole('region', { name: 'Ekran logowania' })).toHaveLength(1);
+    expect(screen.getAllByRole('region', { name: 'Obszar komendy' })).toHaveLength(1);
     expect(MockWebSocket.instances).toHaveLength(2);
 
     const firstSocket = MockWebSocket.instances[0];
@@ -281,7 +403,7 @@ describe('App StrictMode transport lifecycle', () => {
     expect(Object.keys(submit.payload)).toEqual(['step_id', 'value']);
   });
 
-  it('shows the map panel inside the main application shell after login', async () => {
+  it('shows the desktop shell after login with terminal, map, info and command regions', async () => {
     const user = userEvent.setup();
     render(<App />);
 
@@ -339,9 +461,20 @@ describe('App StrictMode transport lifecycle', () => {
       );
     });
 
+    const terminalRegion = screen.getByRole('region', { name: 'Terminal gry' });
+    const mapRegion = screen.getByRole('region', { name: 'Mapa odkrytej okolicy' });
+    const infoRegion = screen.getByRole('region', { name: 'Informacje o postaci i lokacji' });
+    const commandRegion = screen.getByRole('region', { name: 'Obszar komendy' });
+
+    expect(terminalRegion).toBeInTheDocument();
+    expect(mapRegion).toBeInTheDocument();
+    expect(infoRegion).toBeInTheDocument();
+    expect(commandRegion).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Odkryta mapa' })).toBeInTheDocument();
     expect(screen.queryByText('Mapa pojawi się po wejściu do gry.')).not.toBeInTheDocument();
     expect(screen.getByRole('img', { name: 'Mapa odkrytej okolicy' })).toBeInTheDocument();
+    expect(commandRegion).toContainElement(screen.getByLabelText('Komenda'));
+    expect(terminalRegion).not.toContainElement(screen.getByLabelText('Komenda'));
     expect(screen.getByLabelText('Komenda')).toBeEnabled();
   });
 });

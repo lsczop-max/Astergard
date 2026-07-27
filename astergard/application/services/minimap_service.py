@@ -21,8 +21,9 @@ def _chunk_payload_size(type_: str, payload: dict[str, Any], sequence: int) -> i
 class MinimapService:
     """Builds public room projections for debug clients and the web map state."""
 
-    def __init__(self, enabled: bool = False) -> None:
+    def __init__(self, enabled: bool = False, *, reveal_all_web_map: bool = False) -> None:
         self.enabled = enabled
+        self.reveal_all_web_map = reveal_all_web_map
 
     def _room_payload(self, room_id: int, room: Any, world: WorldManager) -> dict[str, Any]:
         info = location_room_info(room, world).to_dict()
@@ -63,6 +64,9 @@ class MinimapService:
         return edges
 
     def _public_visited_rooms(self, character: Character, world: WorldManager) -> list[Any]:
+        if self.reveal_all_web_map:
+            all_rooms = [room for _room_id, room in sorted(world.locations.items()) if room is not None]
+            return all_rooms
         visited_room_ids = set(character.visited_room_ids)
         current_room = world.get_location(character.room_id)
         if current_room is not None:
@@ -224,6 +228,14 @@ class MinimapService:
         current_visited_room_ids = set(character.visited_room_ids)
         if current_location is not None:
             current_visited_room_ids.add(current_location.id)
+
+        if self.reveal_all_web_map:
+            return self._build_web_update_payload(
+                sync_id=sync_id,
+                current_room_id=current_room_id,
+                rooms=[],
+                edges=[],
+            )
 
         rooms: list[dict[str, Any]] = []
         if current_location is not None and current_location.id not in previous_visited_room_ids:

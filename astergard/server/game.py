@@ -12,8 +12,6 @@ from astergard.server.gateway import WebSocketGateway, WebSocketGatewayConfig
 from astergard.server.game_support import GameServerSupportMixin
 from astergard.characters.models import Character
 from astergard.commands.dispatcher import CommandFunc
-
-
 class GameServer(GameServerSupportMixin):
     cmd_look: CommandFunc
     cmd_move: CommandFunc
@@ -45,10 +43,18 @@ class GameServer(GameServerSupportMixin):
     cmd_save: CommandFunc
     cmd_quit: CommandFunc
 
-    def __init__(self, db_path: str = "mud.db", mudlet_map_enabled: bool | None = None) -> None:
+    def __init__(
+        self,
+        db_path: str = "mud.db",
+        mudlet_map_enabled: bool | None = None,
+        web_map_reveal_all: bool | None = None,
+    ) -> None:
         self.clients: dict[SessionTransport, Character] = {}
         self._active_transports: set[SessionTransport] = set()
-        self.services: GameServices = GameBootstrapper(db_path).build()
+        self.services: GameServices = GameBootstrapper(
+            db_path,
+            reveal_all_web_map=self._resolve_web_map_reveal_all(web_map_reveal_all),
+        ).build()
         self.services.server = self
         self.mudlet_map_enabled = self._resolve_mudlet_map_enabled(mudlet_map_enabled)
         self.services.minimap_service.enabled = self.mudlet_map_enabled
@@ -58,7 +64,6 @@ class GameServer(GameServerSupportMixin):
         self.lifecycle = EngineLifecycle(self.services, lambda: list(self.clients.values()), self.services.event_bus, self.services.scheduler)
         self.session_flow = SessionFlow(self.services, self.make_context, self.prompt)
         self._install_compatibility_methods()
-
     async def start(
         self,
         host: str = "0.0.0.0",
@@ -111,10 +116,8 @@ class GameServer(GameServerSupportMixin):
                     pass
                 except Exception:
                     pass
-
     async def handle_connection(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
         await self._run_session(TcpSessionTransport(reader, writer))
-
     async def _run_session(self, transport: SessionTransport) -> None:
         character: Character | None = None
         self._register_transport(transport)
@@ -143,10 +146,8 @@ class GameServer(GameServerSupportMixin):
                 await transport.close()
             except Exception:
                 pass
-
     async def global_heartbeat(self) -> None:
         await self.lifecycle.run_forever(self.heartbeat.tick_once, self._flush_heartbeat_vitals)
-
     async def _flush_heartbeat_vitals(self, changed_characters: list[Character]) -> None:
         if not changed_characters:
             return
@@ -168,9 +169,7 @@ class GameServer(GameServerSupportMixin):
                     await transport.close()
                 except Exception:
                     pass
-
     def shutdown(self, reason: str = "manual") -> None:
         self.lifecycle.request_shutdown(reason)
-
 
 __all__ = ["GameServer"]

@@ -85,14 +85,17 @@ input:focus-visible {
 }
 
 .app-shell {
-  max-width: 1500px;
+  width: 100%;
+  max-width: none;
   height: 100dvh;
-  margin: 0 auto;
+  margin: 0;
   padding: 1rem;
   display: flex;
   flex-direction: column;
   gap: 1rem;
   overflow: hidden;
+  min-width: 0;
+  min-height: 0;
 }
 
 .app-header {
@@ -118,19 +121,95 @@ h2 {
   font-family: 'Palatino Linotype', 'Book Antiqua', Palatino, Georgia, serif;
 }
 
-.layout {
+.workspace {
   flex: 1;
   display: grid;
-  grid-template-columns: minmax(290px, 340px) 1fr;
+  grid-template-rows: minmax(0, 1fr) auto;
   gap: 1rem;
+  min-width: 0;
   min-height: 0;
 }
 
-.sidebar,
-.terminal-pane {
+.workspace-auth,
+.workspace-game {
+  min-width: 0;
+  min-height: 0;
+}
+
+.auth-grid,
+.game-grid {
   display: grid;
   gap: 1rem;
+  min-width: 0;
   min-height: 0;
+}
+
+.auth-grid {
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 0.92fr);
+  align-items: stretch;
+}
+
+.game-grid {
+  grid-template-columns: minmax(0, 2fr) minmax(340px, 1fr);
+  align-items: stretch;
+}
+
+.auth-column,
+.game-sidebar {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+  min-height: 0;
+}
+
+.auth-column {
+  grid-auto-rows: min-content;
+  overflow: auto;
+}
+
+.auth-preview {
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  align-content: start;
+}
+
+.game-terminal-region {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+}
+
+.game-terminal-region > .terminal-shell {
+  flex: 1;
+}
+
+.game-sidebar {
+  grid-template-rows: minmax(320px, 62%) minmax(0, 1fr);
+  overflow: hidden;
+}
+
+.game-status-region {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  align-content: start;
+}
+
+.command-region {
+  min-width: 0;
+  display: flex;
+  align-items: stretch;
+}
+
+.command-region.panel {
+  padding: 0.9rem 1rem;
+}
+
+.command-region .command-bar {
+  width: 100%;
 }
 
 .panel,
@@ -397,6 +476,51 @@ h2 {
     linear-gradient(180deg, rgba(10, 9, 8, 0.96), rgba(19, 16, 13, 0.98));
 }
 
+.map-compass {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.map-compass span {
+  position: absolute;
+  min-width: 5.5rem;
+  padding: 0.28rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid rgba(195, 162, 90, 0.2);
+  background: rgba(12, 11, 10, 0.88);
+  color: var(--gold-bright);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-align: center;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.map-compass-north {
+  top: 0.65rem;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.map-compass-south {
+  bottom: 0.65rem;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.map-compass-west {
+  left: 0.65rem;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.map-compass-east {
+  right: 0.65rem;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
 .map-empty-frame {
   display: flex;
   align-items: center;
@@ -556,22 +680,35 @@ h2 {
 }
 
 @media (max-width: 900px) {
-  .layout {
+  .workspace {
+    grid-template-rows: minmax(0, 1fr) auto;
+  }
+
+  .auth-grid,
+  .game-grid {
     grid-template-columns: 1fr;
   }
 
-  body {
-    overflow: auto;
+  .auth-grid {
+    grid-template-rows: minmax(0, 1fr) minmax(0, 30vh);
+  }
+
+  .game-grid {
+    grid-template-rows: minmax(0, 1fr) minmax(260px, 42vh);
+  }
+
+  .game-sidebar {
+    grid-template-rows: auto auto;
   }
 
   .app-shell {
-    height: auto;
     min-height: 100dvh;
-    overflow: visible;
   }
 
-  .terminal-shell {
-    min-height: 50vh;
+  .auth-column,
+  .auth-preview,
+  .game-sidebar {
+    overflow: auto;
   }
 }
 

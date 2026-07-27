@@ -10,6 +10,7 @@ from unittest.mock import patch
 
 from astergard.application.session_transport import TcpSessionTransport
 from astergard.gmcp import POLISH_TO_MUDLET_DIRECTION
+from astergard.protocol.web_v1 import WEB_MESSAGE_MAX_BYTES, build_web_envelope, serialize_web_envelope
 from astergard.testing import FakeReader, FakeWriter, TestGameHarness
 from astergard.world.models import Exit
 from astergard.utils import send_to_client
@@ -303,6 +304,7 @@ class MinimapPayloadTests(unittest.TestCase):
 
                     origin.exits["gora"] = Exit(hidden_target.id, kind="Wieża Magów", description="Sekretne przejście", visible=False)
                     hidden_target.exits["wschod"] = Exit(hidden_continuation.id, kind="most", description="Jawny pomost", visible=True)
+                    move_target.exits.clear()
                     origin.exits["poludnie"] = Exit(move_target.id, kind="droga", description="Jawna droga na południe", visible=True)
                     character.room_id = origin.id
                     server.repo.save(character)
@@ -492,6 +494,79 @@ class MinimapPayloadTests(unittest.TestCase):
                 self.assertIn('"type":"map_update"', moved_text)
                 self.assertNotIn('"type":"full_map_debug"', moved_text)
                 self.assertEqual(moved_text.count(expected_prompt), 1)
+
+    def test_web_map_snapshot_uses_visited_rooms_by_default(self) -> None:
+        with TestGameHarness() as harness:
+            server = harness.require_server()
+            character = harness.create_character("mapper", room_id=60)
+            character.visited_room_ids = {60}
+
+            payloads = server.services.minimap_service.build_web_snapshot_payloads(character, server.world, starting_sequence=999)
+            self.assertEqual({room["room_id"] for payload in payloads for room in payload["rooms"]}, {60})
+            self.assertEqual(character.visited_room_ids, {60})
+            self.assertTrue(all(
+                len(serialize_web_envelope(build_web_envelope("map.snapshot", payload, sequence=999 + index)).encode("utf-8")) <= WEB_MESSAGE_MAX_BYTES
+                for index, payload in enumerate(payloads)
+            ))
+
+    def test_web_map_reveal_all_includes_every_room_but_keeps_hidden_exits_hidden(self) -> None:
+        with patch.dict(os.environ, {"ASTERGARD_WEB_MAP_REVEAL_ALL": "1"}, clear=False):
+            with TestGameHarness() as harness:
+                server = harness.require_server()
+                self.assertTrue(server.services.minimap_service.reveal_all_web_map)
+                character = harness.create_character("mapper", room_id=60)
+                character.visited_room_ids = {60}
+                original_visited = set(character.visited_room_ids)
+                room = server.world.get_location(60)
+                hidden_target = server.world.get_location(62)
+                assert room is not None
+                assert hidden_target is not None
+                snapshots = self._snapshot_exits(room, hidden_target)
+                room.exits["ukryte_przejscie"] = Exit(hidden_target.id, kind="przejście", description="Ukryty skrót", visible=False)
+                try:
+                    payloads = server.services.minimap_service.build_web_snapshot_payloads(character, server.world, starting_sequence=999)
+                    all_room_ids = {room["room_id"] for payload in payloads for room in payload["rooms"]}
+                    self.assertEqual(all_room_ids, set(server.world.locations))
+                    self.assertEqual(character.visited_room_ids, original_visited)
+                    self.assertTrue(all(
+                        len(serialize_web_envelope(build_web_envelope("map.snapshot", payload, sequence=999 + index)).encode("utf-8")) <= WEB_MESSAGE_MAX_BYTES
+                        for index, payload in enumerate(payloads)
+                    ))
+                    self.assertFalse(
+                        any(
+                            edge["from_room_id"] == room.id and edge["to_room_id"] == hidden_target.id
+                            for payload in payloads
+                            for edge in payload["edges"]
+                        )
+                    )
+                finally:
+                    self._restore_exits(server, snapshots)
+
+    def test_web_map_reveal_all_update_tracks_current_room_without_resending_world(self) -> None:
+        with patch.dict(os.environ, {"ASTERGARD_WEB_MAP_REVEAL_ALL": "1"}, clear=False):
+            with TestGameHarness() as harness:
+                server = harness.require_server()
+                character = harness.create_character("mapper", room_id=60)
+                character.visited_room_ids = {60}
+                first = server.services.minimap_service.build_web_update_payload(
+                    character,
+                    server.world,
+                    sync_id="sync-1",
+                    previous_visited_room_ids={60},
+                )
+                self.assertEqual(first["current_room_id"], 60)
+                self.assertEqual(first["rooms"], [])
+                self.assertEqual(first["edges"], [])
+                character.room_id = 61
+                second = server.services.minimap_service.build_web_update_payload(
+                    character,
+                    server.world,
+                    sync_id="sync-1",
+                    previous_visited_room_ids={60},
+                )
+                self.assertEqual(second["current_room_id"], 61)
+                self.assertEqual(second["rooms"], [])
+                self.assertEqual(second["edges"], [])
 
     def test_debug_map_command_sends_full_payload_only_when_enabled(self) -> None:
         with patch.dict(os.environ, {"ASTERGARD_MUDLET_MAP": "1"}, clear=False):
