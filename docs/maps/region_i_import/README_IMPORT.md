@@ -4,7 +4,7 @@ Stan pakietu: materiał projektowy gotowy do analizy i kontrolowanego wdrożenia
 
 ## Zawartość
 
-- `mapa_astergard_region_I.json` — źródłowa mapa: 170 lokacji i 219 połączeń.
+- `region_i.json` — kanoniczny runtime asset Regionu I: 170 lokacji i 219 połączeń.
 - `mapa_astergard_region_I.svg` — wizualizacja mapy.
 - `mapa_karty_lokacji.json` — karty funkcji wszystkich 170 lokacji.
 - `mapa_plan_rozgrywki.json` — plan aktywności, progresji i sekretów.
@@ -14,17 +14,16 @@ Stan pakietu: materiał projektowy gotowy do analizy i kontrolowanego wdrożenia
 
 ## Ważne
 
-Nie kopiuj tych plików bezpośrednio nad istniejące moduły Pythona. Mapa i materiały
-projektowe muszą najpierw zostać dopasowane do aktualnego modelu świata w
-repozytorium Astergardu. Identyfikatory lokacji, kierunki wyjść i istniejące
-źródło prawdy wymagają sprawdzenia przed importem.
+Kanoniczny runtime asset znajduje się teraz w `astergard/world/data/region_i.json`.
+Pliki w tym katalogu pozostają materiałami projektowymi i referencyjnymi, ale nie
+stanowią już drugiego źródła prawdy.
 
 Plik SVG służy do oglądania mapy, a nie do importowania świata do serwera.
 Opisy pilotażowe obejmują tylko 15 lokacji i nie są kompletem opisów Regionu I.
 
 ## Zalecana kolejność wdrożenia
 
-1. Skopiować cały pakiet do osobnego katalogu importowego w repozytorium.
+1. Utrzymywać `astergard/world/data/region_i.json` jako jedyne źródło prawdy dla topologii.
 2. Porównać identyfikatory oraz wyjścia z bieżącym źródłem świata.
 3. Zintegrować mapę bez tworzenia drugiego źródła prawdy.
 4. Wdrożyć 15 opisów pilotażowych jako mały, odwracalny etap.
