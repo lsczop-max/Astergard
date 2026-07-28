@@ -10,6 +10,7 @@ from astergard.characters.models import Character
 from astergard.combat.manager import CombatManager
 from astergard.factions.reputation import FactionManager
 from astergard.npcs.models import NPC, NPCFactory
+from astergard.world.constants import REGION_I_ZONE_IDS
 from astergard.world.manager import WorldManager
 from astergard.rules.respawn import RespawnRules, default_respawn_rules
 
@@ -45,13 +46,13 @@ class NPCManager:
         self.events: list[NPCActionEvent] = []
 
     def populate(self) -> None:
-        for rid in [0, 5, 20]:
+        for rid in [0, 20, 21]:
             self.spawn("meekhan_soldier", rid)
         self.spawn("merchant", 0)
         self.spawn("astergard_guard", 2)
-        self.spawn("blacksmith", 12)
+        self.spawn("blacksmith", 33)
         self.spawn("innkeeper", 14)
-        self.spawn("woodcutter", 6)
+        self.spawn("woodcutter", 64)
         self.spawn("podgrodzie_woznica", 60)
         self.spawn("podgrodzie_karczmarz", 62)
         self.spawn("podgrodzie_karczmarka", 62)
@@ -185,8 +186,7 @@ class NPCManager:
         if loc is None or not self.rules.can_spawn(len(loc.npc_ids)):
             return None
         npc = self.factory.create(vnum, room_id)
-        if zone is not None:
-            npc.zone = zone
+        npc.zone = loc.zone if loc.zone in REGION_I_ZONE_IDS or zone is None else zone
         npc.home_room_id = room_id
         npc.character.room_id = room_id
         npc.character.combat_identity = npc.id

@@ -132,6 +132,27 @@ async def _read_http_response(reader: asyncio.StreamReader) -> str:
     return b"".join(chunks).decode("latin-1", errors="replace")
 
 
+class _TimedRecvWebSocket:
+    def __init__(self, websocket: Any, *, timeout: float = 2.0) -> None:
+        self._websocket = websocket
+        self._timeout = timeout
+
+    async def recv(self) -> str | bytes:
+        return await asyncio.wait_for(self._websocket.recv(), timeout=self._timeout)
+
+    async def send(self, data: Any) -> Any:
+        return await self._websocket.send(data)
+
+    async def close(self, *args: Any, **kwargs: Any) -> Any:
+        return await self._websocket.close(*args, **kwargs)
+
+    async def wait_closed(self) -> Any:
+        return await self._websocket.wait_closed()
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self._websocket, name)
+
+
 class FakeClock:
     def __init__(self, start: float = 0.0) -> None:
         self.value = start
@@ -219,16 +240,21 @@ class WebSocketGatewayIntegrationTests(unittest.IsolatedAsyncioTestCase):
         self.harness.close()
 
     def _connect(self, port: int, origin: Any, *, subprotocols: Any = None):
-        return connect(
-            f"ws://127.0.0.1:{port}",
-            origin=origin,
-            subprotocols=cast(Any, subprotocols or ["astergard.v1"]),
-            compression=None,
-            ping_interval=None,
-            close_timeout=2,
-            open_timeout=2,
-            max_queue=4,
-        )
+        @asynccontextmanager
+        async def _wrapped_connect():
+            async with connect(
+                f"ws://127.0.0.1:{port}",
+                origin=origin,
+                subprotocols=cast(Any, subprotocols or ["astergard.v1"]),
+                compression=None,
+                ping_interval=None,
+                close_timeout=2,
+                open_timeout=2,
+                max_queue=4,
+            ) as websocket:
+                yield _TimedRecvWebSocket(websocket)
+
+        return _wrapped_connect()
 
     async def _wait_for_cleanup(self, gateway: Any | None = None) -> None:
         async def _cleanup_done() -> None:
@@ -240,7 +266,7 @@ class WebSocketGatewayIntegrationTests(unittest.IsolatedAsyncioTestCase):
     async def test_successful_login_sequence_and_look_command(self) -> None:
         self.assertTrue(self.server.repo.register("web", "secret"))
         character = self.server.repo.load("web")
-        character.room_id = 60
+        character.room_id = 14
         self.server.repo.save(character)
         config = WebSocketGatewayConfig(
             allowed_origins=("http://localhost:3000",),
@@ -278,11 +304,12 @@ class WebSocketGatewayIntegrationTests(unittest.IsolatedAsyncioTestCase):
     async def test_public_room_info_omits_hidden_special_exits(self) -> None:
         self.assertTrue(self.server.repo.register("roominfo", "secret"))
         character = self.server.repo.load("roominfo")
-        location = next(loc for loc in self.server.world.locations.values() if "gora" not in loc.exits)
+        location = self.server.world.get_location(14)
+        assert location is not None
         character.room_id = location.id
         self.server.repo.save(character)
         location.exits["sekretny-most"] = Exit(61, is_door=True, kind="most", description="Jawny most", visible=True)
-        location.exits["gora"] = Exit(987654, is_door=True, is_locked=True, kind="Wieża Magów", description="Sekretna brama", visible=False)
+        location.exits["ukryty-most"] = Exit(987654, is_door=True, is_locked=True, kind="Wieża Magów", description="Sekretna brama", visible=False)
         snapshot = {direction: (exit_.target_room, exit_.is_door, exit_.is_locked, exit_.kind, exit_.description, exit_.visible) for direction, exit_ in location.exits.items()}
 
         config = WebSocketGatewayConfig(
@@ -306,7 +333,8 @@ class WebSocketGatewayIntegrationTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(room.type, "room.info")
                 self.assertNotIn("Wieża Magów", room_raw)
                 self.assertNotIn("987654", room_raw)
-                self.assertNotIn("gora", room_raw)
+                self.assertNotIn("ukryty-most", room_raw)
+                self.assertEqual(room.payload["num"], 14)
                 expected_exits = {
                     POLISH_TO_MUDLET_DIRECTION[direction]: target
                     for direction, (target, _is_door, _is_locked, _kind, _description, visible) in snapshot.items()
@@ -344,7 +372,7 @@ class WebSocketGatewayIntegrationTests(unittest.IsolatedAsyncioTestCase):
         character = self.server.repo.load("mirror")
         character.name = "Agran"
         character.gender_id = "m"
-        character.room_id = 60
+        character.room_id = 14
         character.equipment["bron_glowna"] = Item(
             "długi miecz",
             "Miecz.",
@@ -807,7 +835,7 @@ class WebSocketGatewayIntegrationTests(unittest.IsolatedAsyncioTestCase):
     async def test_web_command_changes_emit_updated_vitals(self) -> None:
         self.assertTrue(self.server.repo.register("walker", "secret"))
         character = self.server.repo.load("walker")
-        character.room_id = 60
+        character.room_id = 14
         self.server.repo.save(character)
         config = WebSocketGatewayConfig(allowed_origins=("http://localhost:3000",))
         async with websocket_gateway_context(self.server, config) as (_gateway, port):
@@ -891,7 +919,7 @@ class WebSocketGatewayIntegrationTests(unittest.IsolatedAsyncioTestCase):
     async def test_move_emits_room_info_before_command_text(self) -> None:
         self.assertTrue(self.server.repo.register("walker", "secret"))
         character = self.server.repo.load("walker")
-        character.room_id = 60
+        character.room_id = 14
         self.server.repo.save(character)
         config = WebSocketGatewayConfig(allowed_origins=("http://localhost:3000",))
         async with websocket_gateway_context(self.server, config) as (_gateway, port):
@@ -902,9 +930,10 @@ class WebSocketGatewayIntegrationTests(unittest.IsolatedAsyncioTestCase):
                 for _ in range(7):
                     await websocket.recv()
 
-                await websocket.send(_frame("command.execute", {"command": "poludnie"}, request_id="move-1"))
+                await websocket.send(_frame("command.execute", {"command": "wschod"}, request_id="move-1"))
                 frames = [parse_web_envelope(await websocket.recv()) for _ in range(6)]
                 self.assertEqual([frame.type for frame in frames], ["room.info", "output.text", "map.update", "command.result", "character.vitals", "output.prompt"])
+                self.assertEqual(frames[0].payload["num"], 1)
                 self.assertLess(frames[0].sequence or 0, frames[1].sequence or 0)
                 self.assertLess(frames[1].sequence or 0, frames[2].sequence or 0)
                 self.assertLess(frames[2].sequence or 0, frames[3].sequence or 0)
@@ -1021,7 +1050,7 @@ class WebSocketGatewayIntegrationTests(unittest.IsolatedAsyncioTestCase):
     async def test_identical_usernames_do_not_cross_route(self) -> None:
         self.assertTrue(self.server.repo.register("same", "secret"))
         character = self.server.repo.load("same")
-        character.room_id = 60
+        character.room_id = 14
         self.server.repo.save(character)
         config = WebSocketGatewayConfig(allowed_origins=("http://localhost:3000",))
         async with websocket_gateway_context(self.server, config) as (_gateway, port):
@@ -1204,7 +1233,7 @@ class WebSocketTransportConcurrencyTests(unittest.IsolatedAsyncioTestCase):
     async def test_snapshot_batch_blocks_other_outbound_frames_and_keeps_sequence_exact(self) -> None:
         self.assertTrue(self.server.repo.register("mapper", "secret"))
         character = self.server.repo.load("mapper")
-        character.room_id = 60
+        character.room_id = 14
         character.visited_room_ids = set(self.server.world.locations)
         self.server.repo.save(character)
 

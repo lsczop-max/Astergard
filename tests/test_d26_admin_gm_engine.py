@@ -25,9 +25,9 @@ class D26AdminGMEngineTests(unittest.TestCase):
                 target = harness.create_character("target", room_id=0)
                 inspect_result = await harness.execute(gm, "inspect target")
                 self.assertIn("Przed tobą stoi zapis o target", inspect_result.output)
-                teleport_result = await harness.execute(gm, "teleport target 5")
-                self.assertIn("target zostaje przeniesiony do lokacji 5", teleport_result.output)
-                self.assertEqual(target.room_id, 5)
+                teleport_result = await harness.execute(gm, "teleport target 20")
+                self.assertIn("target zostaje przeniesiony do lokacji 20", teleport_result.output)
+                self.assertEqual(target.room_id, 20)
 
         asyncio.run(run())
 

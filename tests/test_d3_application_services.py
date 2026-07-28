@@ -19,7 +19,7 @@ class D3ApplicationServiceTests(unittest.TestCase):
         with tempfile.NamedTemporaryFile() as tmp:
             services = GameBootstrapper(tmp.name).build()
         self.assertIsInstance(services, GameServices)
-        self.assertEqual(len(services.world.locations), 500)
+        self.assertEqual(len(services.world.locations), 483)
         self.assertIn("oferta", services.dispatcher.commands)
         self.assertGreater(sum(len(loc.npc_ids) for loc in services.world.locations.values()), 0)
 

@@ -29,7 +29,7 @@ class D36IdentityTests(unittest.TestCase):
                 self.assertGreater(char.global_reputation, global_before)
                 self.assertGreater(char.renown, renown_before)
                 self.assertEqual(char.title, "Rozpoznawalny")
-                self.assertGreater(char.local_reputation.get("Centrum_Twierdza", 0), 0)
+                self.assertGreater(char.local_reputation.get("centrum", 0), 0)
 
         asyncio.run(run())
 

@@ -7,6 +7,7 @@ from astergard.npcs.manager import NPCManager
 from astergard.quests.manager import QUESTS
 from astergard.world.content import make_content_pack
 from astergard.world.manager import OPPOSITE, WorldManager
+from astergard.world.region_i_loader import load_region_i_data
 
 
 AUDITED_EMPTY_ZONES = {
@@ -24,16 +25,17 @@ class D351RWorldAuditTests(unittest.TestCase):
         world.generate_world()
         npcs = NPCManager(world)
         npcs.populate()
+        region_i_ids = load_region_i_data().room_ids
 
-        self.assertEqual(len(world.locations), 500)
+        self.assertEqual(len(world.locations), 483)
         self.assertTrue(all(loc.description.strip() for loc in world.locations.values()))
 
         content = make_content_pack()
         room_ids = [entry.room_id for entry in content]
         self.assertEqual(len(room_ids), len(set(room_ids)))
 
-        seen = {0}
-        queue: deque[int] = deque([0])
+        seen: set[int] = {14}
+        queue: deque[int] = deque([14])
         wrong_exits: list[tuple[int, str, int]] = []
         one_way: list[tuple[int, str, int]] = []
 
@@ -49,7 +51,7 @@ class D351RWorldAuditTests(unittest.TestCase):
                 if exit_.target_room not in seen:
                     seen.add(exit_.target_room)
                     queue.append(exit_.target_room)
-        self.assertEqual(len(seen), len(world.locations))
+        self.assertEqual(seen, set(region_i_ids))
         self.assertFalse(wrong_exits)
         self.assertFalse(one_way)
 

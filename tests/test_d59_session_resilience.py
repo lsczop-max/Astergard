@@ -316,7 +316,7 @@ class D59SessionResilienceTests(unittest.TestCase):
             character.room_id = 60
             server.repo.save(character)
 
-            reader = FakeReader.from_text_lines(["runner", "secret", "poludnie"])
+            reader = FakeReader.from_text_lines(["runner", "secret", "ne"])
             writer = RoomInfoResetWriter()
             asyncio.run(server.handle_connection(cast(Any, reader), cast(Any, writer)))
             self.assertEqual(writer.close_calls, 1)

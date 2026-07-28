@@ -43,7 +43,7 @@ class D351LFortecaDungrimProductionTests(unittest.TestCase):
 
         for room_id in FORTRESS_ROOM_IDS:
             loc = world.locations[room_id]
-            self.assertEqual(loc.zone, "Forteca_Dungrim")
+            self.assertEqual(loc.zone, "polnocny-las")
             self.assertGreaterEqual(len(loc.description.split(".")), 1)
             self.assertGreaterEqual(len(loc.inspectables), 3)
 
@@ -51,7 +51,7 @@ class D351LFortecaDungrimProductionTests(unittest.TestCase):
             candidates = [npc for npc in npcs.by_room(room_id) if npc.vnum == vnum]
             self.assertTrue(candidates, vnum)
             npc = candidates[0]
-            self.assertEqual(npc.zone, "Forteca_Dungrim", vnum)
+            self.assertEqual(npc.zone, "polnocny-las", vnum)
             self.assertEqual(npc.faction, "MEEKHAN", vnum)
             self.assertTrue({"default", "praca", "miejsce", "plotki"}.issubset(npc.dialogue_tree), vnum)
             self.assertTrue({"świt", "dzień", "wieczór", "noc"}.issubset(npc.daily_schedule), vnum)
@@ -75,7 +75,7 @@ class D351LFortecaDungrimProductionTests(unittest.TestCase):
 
         self.assertNotEqual(patrol.room_id, start_room)
         self.assertTrue(any(event.kind in {"move", "patrol"} and event.npc_id == patrol.id for event in events))
-        self.assertEqual(world.locations[patrol.room_id].zone, "Forteca_Dungrim")
+        self.assertEqual(world.locations[patrol.room_id].zone, "polnocny-las")
 
     def test_dungrim_dialogues_and_quests_work_through_real_commands(self) -> None:
         async def run() -> None:
@@ -141,7 +141,7 @@ class D351LFortecaDungrimProductionTests(unittest.TestCase):
 
         for room_id in FORTRESS_ROOM_IDS:
             loc = world.locations[room_id]
-            self.assertEqual(loc.zone, "Forteca_Dungrim")
+            self.assertEqual(loc.zone, "polnocny-las")
             self.assertGreaterEqual(len(loc.inspectables), 3)
             for direction, exit_ in loc.exits.items():
                 opposite = OPPOSITE[direction]

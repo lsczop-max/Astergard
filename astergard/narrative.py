@@ -309,7 +309,19 @@ def _direction_phrase(direction: str) -> str:
     }.get(direction, f"na {polish_direction(direction)}")
 
 
+def _narrative_zone(zone: str) -> str:
+    return {
+        "centrum": "Centrum_Twierdza",
+        "trakt": "Trakty",
+        "trakt-gorniczy": "Trakty",
+        "trakt-nadrzeczny": "Trakty",
+        "polnocny-las": "Puszcza_Ciszy",
+        "nadrzeczne-mokradla": "Bagna_Hookri",
+    }.get(zone, zone)
+
+
 def _terrain_for_zone(zone: str) -> str:
+    zone = _narrative_zone(zone)
     return {
         "Centrum_Twierdza": "miejska",
         "Podgrodzie": "przedmiejska",
@@ -330,6 +342,7 @@ def _terrain_for_zone(zone: str) -> str:
 
 
 def _space_for_zone(zone: str) -> str:
+    zone = _narrative_zone(zone)
     return {
         "Centrum_Twierdza": "otwarta przestrzeń",
         "Podgrodzie": "ulica",
@@ -350,10 +363,12 @@ def _space_for_zone(zone: str) -> str:
 
 
 def _is_indoors(zone: str) -> bool:
+    zone = _narrative_zone(zone)
     return zone in {"Forteca_Dungrim", "Kopalnia_Zelaza", "Jaskinie_Wilkow"}
 
 
 def _is_central_city_zone(zone: str) -> bool:
+    zone = _narrative_zone(zone)
     return zone in {"Centrum_Twierdza", "Podgrodzie"}
 
 
@@ -669,7 +684,8 @@ def _scene_sound_clause(scene: "WorldScene") -> str:
     if profile in _SCENE_SOUND_BY_PROFILE:
         return _SCENE_SOUND_BY_PROFILE[profile]
     title = scene.title.lower()
-    if scene.zone in {"Centrum_Twierdza", "Podgrodzie"}:
+    zone = _narrative_zone(scene.zone)
+    if zone in {"Centrum_Twierdza", "Podgrodzie"}:
         if "karcz" in title or "zajazd" in title:
             return "Przez salę idą kufle, rozmowy i krótkie wybuchy śmiechu."
         if "kuź" in title:
@@ -683,15 +699,15 @@ def _scene_sound_clause(scene: "WorldScene") -> str:
         return ""
     if "karcz" in title or "zajazd" in title:
         return "Przez salę idą kufle, rozmowy i krótkie wybuchy śmiechu."
-    if "kuź" in title or scene.zone in {"Forteca_Dungrim"}:
+    if "kuź" in title or zone in {"Forteca_Dungrim"}:
         return "Metal dźwięczy o metal, a miech syczy przy palenisku."
-    if scene.zone in {"Puszcza_Ciszy", "Knieja_Cichych_Sciezek", "Osada_Mysliwych"}:
+    if zone in {"Puszcza_Ciszy", "Knieja_Cichych_Sciezek", "Osada_Mysliwych"}:
         return "W koronach odzywają się ptaki, a pod nogami szeleszczą liście."
-    if scene.zone in {"Bagna_Hookri"}:
+    if zone in {"Bagna_Hookri"}:
         return "Słychać pluski, żaby i bulgotanie wody pod trzciną."
-    if scene.zone in {"Gory_Mekhara", "Straznica_Przeleczy"}:
+    if zone in {"Gory_Mekhara", "Straznica_Przeleczy"}:
         return "Wiatr świszczy w szczelinach skał i przenosi drobny pył."
-    if scene.zone in {"Kopalnia_Zelaza", "Jaskinie_Wilkow"}:
+    if zone in {"Kopalnia_Zelaza", "Jaskinie_Wilkow"}:
         return "Głos odbija się od skał, a z głębi dochodzi skrzypienie drewna."
     if "port" in title or "most" in title:
         return "Lina skrzypi, woda uderza o pale, a ktoś krótko nawołuje z nabrzeża."
@@ -705,11 +721,12 @@ def _scene_smell_clause(scene: "WorldScene") -> str:
     if profile in _SCENE_SMELL_BY_PROFILE:
         return _SCENE_SMELL_BY_PROFILE[profile]
     title = scene.title.lower()
+    zone = _narrative_zone(scene.zone)
     if "karcz" in title or "zajazd" in title:
         return "Pachnie piwem, pieczonym mięsem, dymem i mokrym drewnem."
-    if "kuź" in title or scene.zone in {"Kopalnia_Zelaza"}:
+    if "kuź" in title or zone in {"Kopalnia_Zelaza"}:
         return "Czuć rozgrzany metal, węgiel i pył ze skały."
-    if scene.zone in {"Centrum_Twierdza", "Podgrodzie"}:
+    if zone in {"Centrum_Twierdza", "Podgrodzie"}:
         if "rynek" in title or "targ" in title:
             return "Czuć płótno, żelazo i surowe drewno kramów."
         if "kaplic" in title or "świąty" in title:
@@ -717,17 +734,17 @@ def _scene_smell_clause(scene: "WorldScene") -> str:
         if "plac" in title or "studnia" in title:
             return "W powietrzu miesza się mokry bruk, pył i dym z pobliskich palenisk."
         return ""
-    if scene.zone in {"Puszcza_Ciszy", "Knieja_Cichych_Sciezek", "Osada_Mysliwych"}:
+    if zone in {"Puszcza_Ciszy", "Knieja_Cichych_Sciezek", "Osada_Mysliwych"}:
         return "W powietrzu unosi się żywica, mokra kora i ziemia po deszczu."
-    if scene.zone in {"Bagna_Hookri"}:
+    if zone in {"Bagna_Hookri"}:
         return "Pachnie torfem, stojącą wodą i gnijącą trzciną."
-    if scene.zone in {"Gory_Mekhara", "Straznica_Przeleczy"}:
+    if zone in {"Gory_Mekhara", "Straznica_Przeleczy"}:
         return "Czuć zimny kamień i ostre powietrze spływające z przełęczy."
     if "staj" in title or "obora" in title:
         return "Pachnie sianem, końską skórą i mokrą deską."
-    if scene.zone in {"Centrum_Twierdza", "Podgrodzie", "Haldun"}:
+    if zone in {"Centrum_Twierdza", "Podgrodzie", "Haldun"}:
         return "W nos uderza dym z palenisk, mokry bruk i zapach pieczywa."
-    return _SMELL_BY_ZONE.get(scene.zone, "W powietrzu czuć kurz, wilgoć i zapach używanego drewna.")
+    return _SMELL_BY_ZONE.get(zone, "W powietrzu czuć kurz, wilgoć i zapach używanego drewna.")
 
 
 def _scene_wear_clause(scene: "WorldScene") -> str:
@@ -735,11 +752,12 @@ def _scene_wear_clause(scene: "WorldScene") -> str:
     if profile in _SCENE_WEAR_BY_PROFILE:
         return _SCENE_WEAR_BY_PROFILE[profile]
     title = scene.title.lower()
+    zone = _narrative_zone(scene.zone)
     if "karcz" in title or "zajazd" in title:
         return "Ławy są wygładzone od łokci, a próg ma rysy od butów."
-    if "kuź" in title or scene.zone in {"Kopalnia_Zelaza"}:
+    if "kuź" in title or zone in {"Kopalnia_Zelaza"}:
         return "Krawędzie stołów są okopcone, a ściany noszą ślady sadzy i uderzeń."
-    if scene.zone in {"Centrum_Twierdza", "Podgrodzie"}:
+    if zone in {"Centrum_Twierdza", "Podgrodzie"}:
         if "rynek" in title or "targ" in title:
             return "Lada jest starta od towaru, a bruk nosi ślady kół i ciężkich skrzyń."
         if "kaplic" in title or "świąty" in title:
@@ -747,15 +765,15 @@ def _scene_wear_clause(scene: "WorldScene") -> str:
         if "plac" in title or "studnia" in title:
             return "Bruk jest wyślizgany przy krawędzi i pocięty przez częsty ruch wzdłuż ścian."
         return ""
-    if scene.zone in {"Puszcza_Ciszy", "Knieja_Cichych_Sciezek", "Osada_Mysliwych"}:
+    if zone in {"Puszcza_Ciszy", "Knieja_Cichych_Sciezek", "Osada_Mysliwych"}:
         return "Korzenie przecinają ścieżkę, a podniesione kępy mchu kryją stare ślady butów."
-    if scene.zone in {"Bagna_Hookri"}:
+    if zone in {"Bagna_Hookri"}:
         return "Na kępach leżą zbutwiałe gałęzie, a przy wodzie stoją stare paliki."
-    if scene.zone in {"Gory_Mekhara", "Straznica_Przeleczy"}:
+    if zone in {"Gory_Mekhara", "Straznica_Przeleczy"}:
         return "Kamień jest starty od butów, a poręcze mają chropowate, wygładzone odcinki."
-    if scene.zone in {"Centrum_Twierdza", "Podgrodzie", "Haldun"}:
+    if zone in {"Centrum_Twierdza", "Podgrodzie", "Haldun"}:
         return "Bruk jest wygładzony przez koła wozów i wiele par butów."
-    return _WEAR_BY_ZONE.get(scene.zone, "Widać ślady używania: starte krawędzie, szorstkie deski i drobne naprawy.")
+    return _WEAR_BY_ZONE.get(zone, "Widać ślady używania: starte krawędzie, szorstkie deski i drobne naprawy.")
 
 
 def _scene_life_clause(scene: "WorldScene") -> str:
@@ -764,7 +782,8 @@ def _scene_life_clause(scene: "WorldScene") -> str:
     if profile in _SCENE_LIFE_BY_PROFILE:
         return _SCENE_LIFE_BY_PROFILE[profile]
     title = scene.title.lower()
-    if scene.zone in {"Centrum_Twierdza", "Podgrodzie"}:
+    zone = _narrative_zone(scene.zone)
+    if zone in {"Centrum_Twierdza", "Podgrodzie"}:
         if "karcz" in title or "zajazd" in title:
             return "Karczmarz liczy kufle, a służba znosi czyste szklanki."
         if "kuź" in title:
@@ -786,7 +805,7 @@ def _scene_life_clause(scene: "WorldScene") -> str:
         return "W środku dnia ruch nie zwalnia: jedni kupują, inni noszą, jeszcze inni pilnują porządku."
     if hour < 20:
         return "Wieczorem ktoś przykrywa towary, zamyka okiennice i zapala pierwsze lampy."
-    return _LIFE_BY_ZONE.get(scene.zone, "Po zmroku zostają głównie patrole, zamknięte drzwi i zwierzęta śpiące przy ścianach.")
+    return _LIFE_BY_ZONE.get(zone, "Po zmroku zostają głównie patrole, zamknięte drzwi i zwierzęta śpiące przy ścianach.")
 
 
 def _render_npc_line(npc, scene: "WorldScene" | None = None) -> str:
@@ -843,6 +862,7 @@ def _inflect_exit_target(target: str, case: str = "locative") -> str:
 
 
 def _infer_exit_kind(zone: str, direction: str, location_name: str) -> str:
+    zone = _narrative_zone(zone)
     lowered = f"{zone} {location_name}".lower()
     if any(token in lowered for token in ("karcz", "dom", "izb", "sala", "pokoj", "korytarz", "komnata")):
         return "drzwi"

@@ -3,22 +3,13 @@ from __future__ import annotations
 from collections import deque
 
 from astergard.world.content import apply_content_pack
+from astergard.world.constants import OPPOSITE, STARTING_ROOM_ID as WORLD_STARTING_ROOM_ID
 from astergard.world.models import Exit, Location
+from astergard.world.region_i_content import apply_region_i_content
+from astergard.world.region_i_loader import RegionIData, load_region_i_data
 
-STARTING_ROOM_ID = 14
-
-OPPOSITE = {
-    "polnoc": "poludnie",
-    "poludnie": "polnoc",
-    "wschod": "zachod",
-    "zachod": "wschod",
-    "polnocny-wschod": "poludniowy-zachod",
-    "poludniowy-zachod": "polnocny-wschod",
-    "polnocny-zachod": "poludniowy-wschod",
-    "poludniowy-wschod": "polnocny-zachod",
-    "gora": "dol",
-    "dol": "gora",
-}
+STARTING_ROOM_ID = WORLD_STARTING_ROOM_ID
+REGION_I_DEPRECATED_ROOM_IDS = frozenset(range(2, 14)) | frozenset(range(15, 20))
 
 REGION_RANGES: tuple[tuple[int, int, str, str], ...] = (
     (0, 59, "Centrum_Twierdza", "Twierdza Astergard"),
@@ -39,6 +30,16 @@ REGION_RANGES: tuple[tuple[int, int, str, str], ...] = (
 )
 
 REGION_LABELS: dict[str, str] = {zone: label for _, _, zone, label in REGION_RANGES}
+REGION_LABELS.update(
+    {
+        "centrum": "Centrum Astergardu",
+        "trakt": "Przedbramie Astergardu",
+        "trakt-gorniczy": "Trakt Górniczy",
+        "trakt-nadrzeczny": "Trakt Nadrzeczny",
+        "polnocny-las": "Las u Podnóża",
+        "nadrzeczne-mokradla": "Nadrzeczne Szuwary",
+    }
+)
 
 REGION_MAP_ORIGINS: dict[str, tuple[int, int, int]] = {
     "Centrum_Twierdza": (0, 0, 0),
@@ -164,7 +165,10 @@ class WorldManager:
         self.ambient_messages_by_zone.clear()
         self._create_locations()
         self._build_region_graph()
+        region_i_data = load_region_i_data()
+        self._activate_region_i_topology(region_i_data)
         apply_content_pack(self.locations)
+        apply_region_i_content(self.locations, region_i_data)
         self._assign_map_coordinates()
 
     def set_ambient_message(self, zone: str, message: str) -> None:
@@ -541,12 +545,50 @@ class WorldManager:
             (42, 180, "zachod"),    # boczna furta na stare drogi
             (55, 95, "wschod"),     # wyjście ku osadzie myśliwych
             (19, 80, "polnoc"),     # droga ku Haldun
-            (125, 335, "polnoc"), (134, 110, "poludniowy-zachod"), (179, 210, "polnocny-zachod"),
+            (134, 110, "poludniowy-zachod"),
             (209, 280, "wschod"), (279, 280, "polnocny-wschod"), (334, 425, "poludnie"), (389, 390, "poludniowy-wschod"),
             (424, 455, "zachod"), (454, 475, "poludnie"),
         ]
         for a, b, direction in roads:
             self._link(a, b, direction)
+
+    def _activate_region_i_topology(self, region_i_data: RegionIData) -> None:
+        room_ids = region_i_data.room_ids
+        purge_room_ids = room_ids | REGION_I_DEPRECATED_ROOM_IDS
+        self._detach_rooms_from_room_ids(purge_room_ids)
+        for deprecated_room_id in REGION_I_DEPRECATED_ROOM_IDS:
+            self.locations.pop(deprecated_room_id, None)
+        for room in region_i_data.rooms:
+            location = self.locations.get(room.id)
+            if location is None:
+                self.locations[room.id] = Location(room.id, room.name, room.name, room.region_id)
+                location = self.locations[room.id]
+            location.name = room.name
+            location.zone = room.region_id
+            location.map_x = room.x
+            location.map_y = room.y
+            location.map_z = room.z
+            location.exits.clear()
+        for edge in region_i_data.edges:
+            self._link(edge.from_room_id, edge.to_room_id, edge.direction)
+            forward = self.locations[edge.from_room_id].exits[edge.direction]
+            reverse = self.locations[edge.to_room_id].exits[edge.reverse_direction]
+            forward.kind = edge.passage_type
+            reverse.kind = edge.passage_type
+            if edge.passage_type == "door":
+                forward.is_door = True
+                reverse.is_door = True
+
+    def _detach_rooms_from_room_ids(self, room_ids: frozenset[int] | set[int]) -> None:
+        if not room_ids:
+            return
+        for location in self.locations.values():
+            if location.id in room_ids:
+                location.exits.clear()
+                continue
+            for direction, exit_ in list(location.exits.items()):
+                if exit_.target_room in room_ids:
+                    del location.exits[direction]
 
     def _assign_map_coordinates(self) -> None:
         for _, _, zone, _ in REGION_RANGES:

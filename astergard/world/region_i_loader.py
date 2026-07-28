@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from astergard.world.manager import OPPOSITE, STARTING_ROOM_ID
+from astergard.world.constants import OPPOSITE, STARTING_ROOM_ID
 
 JSON_TO_RUNTIME_DIRECTION: dict[str, str] = {
     "N": "polnoc",

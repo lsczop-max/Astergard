@@ -736,93 +736,39 @@ def _style_notes(*items: str) -> tuple[str, ...]:
 
 
 REGIONAL_KNOWLEDGE_BANKS: dict[str, RegionalKnowledgeBank] = {
-    "Centrum_Twierdza": _urban_bank(
-        "Centrum_Twierdza",
-        history="Twierdza opiera się na kamieniu, ciosach murarskich i stałym ruchu służb.",
-        trade="Handel w centrum wisi na bramach, składach i krótkich zmianach straży.",
-        notes=_style_notes("bruk", "bramy", "rynsztoki", "cysterna", "cech"),
+    "centrum": _urban_bank(
+        "centrum",
+        history="Centrum Astergardu opiera się na kamieniu, ciosach murarskich i stałym ruchu służb.",
+        trade="Handel w centrum wisi na bramie, placach i krótkich zmianach straży.",
+        notes=_style_notes("bruk", "bramy", "rynsztoki", "cech"),
     ),
-    "Podgrodzie": _urban_bank(
-        "Podgrodzie",
-        history="Podgrodzie jest niższe, bardziej mokre i łatane szybciej niż centrum.",
-        trade="Tu materiał krąży między targiem, wozem i zapleczem miejskim.",
-        notes=_style_notes("błoto", "płoty", "kramy", "warsztaty"),
-    ),
-    "Haldun": _village_bank(
-        "Haldun",
-        history="Haldun stoi na pracy pól, cembrowinach i prostych naprawach po sezonie.",
-        crops="Wieś oddycha zbożem, sianem i wodą ze studni.",
-        notes=_style_notes("zagrody", "zboże", "studnie", "płoty"),
-    ),
-    "Osada_Mysliwych": _hunter_bank(
-        "Osada_Mysliwych",
-        history="Osada myśliwych żyje dymem, skórą i rozchodzeniem się tropów w lesie.",
-        hide="To miejsce bardziej obrabia zdobycz niż ją wystawia.",
-        notes=_style_notes("wędzarnie", "suszarnie", "psy", "tropy"),
-    ),
-    "Forteca_Dungrim": _fortress_bank(
-        "Forteca_Dungrim",
-        history="Forteca Dungrim trzyma ciężar żelaza, kamienia i liczonej warty.",
-        control="Na pierwszym planie stoją brama, meldunek i zapasy.",
-        notes=_style_notes("żelazo", "warta", "skład", "blanki"),
-    ),
-    "Straznica_Przeleczy": _pass_bank(
-        "Straznica_Przeleczy",
-        history="Strażnica jest wąska, surowa i zbudowana pod kontrolę przejazdu.",
-        wind="Wiatr jest tu stałym współautorem wszystkiego, co widoczne.",
-        notes=_style_notes("przełęcz", "skarpa", "meldunek", "liny"),
-    ),
-    "Trakty": _road_bank(
-        "Trakty",
-        history="Trakty żyją koleiną, tłuczniem i ruchami karawan między osadami.",
+    "trakt": _road_bank(
+        "trakt",
+        history="Trakt przybramny żyje koleiną, tłuczniem i ruchem między bramą a rozjazdami.",
         ground="Droga mówi tu językiem kół, kurzu i łatania po deszczu.",
-        notes=_style_notes("koleiny", "miedz", "znaki", "przepusty"),
+        notes=_style_notes("koleiny", "miedza", "znaki", "przepusty"),
     ),
-    "Boczne_Drogi": _road_bank(
-        "Boczne_Drogi",
-        history="Boczne drogi zbierają mniej ruchu, ale więcej brudu i doraźnych napraw.",
-        ground="Tu trasa jest bardziej rolnicza, rozjeżdżona i mniej oficjalna.",
+    "trakt-gorniczy": _pass_bank(
+        "trakt-gorniczy",
+        history="Trakt górniczy niesie rudę, pył i kontrolę nad ruchem ku północnym zabudowaniom.",
+        wind="Wiatr i osypiska robią za główne rzemiosło terenu.",
+        notes=_style_notes("zbocza", "osypiska", "liny", "przejazdy"),
+    ),
+    "trakt-nadrzeczny": _road_bank(
+        "trakt-nadrzeczny",
+        history="Trakt nadrzeczny żyje wilgocią, rybim ruchem i krótkimi postojami przy wodzie.",
+        ground="Tu trasa jest bardziej mokra, rozjeżdżona i mniej oficjalna.",
         notes=_style_notes("błoto", "pobocza", "rozjazdy", "przepusty"),
     ),
-    "Puszcza_Ciszy": _forest_bank(
-        "Puszcza_Ciszy",
-        history="Puszcza Ciszy trzyma mech, korę i ruch tropów pod koronami.",
+    "polnocny-las": _forest_bank(
+        "polnocny-las",
+        history="Północny las trzyma mech, korę i ruch tropów pod koronami.",
         density="To las o czytelnym dnie i gęstym cieniu na bokach ścieżek.",
         notes=_style_notes("polany", "tropy", "żywica", "obóz"),
     ),
-    "Knieja_Cichych_Sciezek": _forest_bank(
-        "Knieja_Cichych_Sciezek",
-        history="Knieja jest głębsza, starsza i mniej chętna do oddawania jasnej drogi.",
-        density="Cień jest tu cięższy, a ścieżka częściej znika niż prowadzi.",
-        notes=_style_notes("knieja", "mech", "gałęzie", "ślady"),
-    ),
-    "Gory_Mekhara": _pass_bank(
-        "Gory_Mekhara",
-        history="Góry Mekhara są warstwą łupku, pyłu i twardego przejścia.",
-        wind="Wiatr i osypiska robią za główne rzemiosło terenu.",
-        notes=_style_notes("zbocza", "osypiska", "liny", "przełęcze"),
-    ),
-    "Kopalnia_Zelaza": _mine_bank(
-        "Kopalnia_Zelaza",
-        history="Kopalnia Żelaza opiera się na obudowie, wózkach i powtarzalnym wydobyciu.",
-        depth="Im głębiej, tym więcej pyłu, wilgoci i skrzypiących podpór.",
-        notes=_style_notes("szyby", "wózki", "pył", "obudowa"),
-    ),
-    "Ruiny_Karshold": _ruins_bank(
-        "Ruiny_Karshold",
-        history="Ruiny Karshold są pamięcią po pożarze, rozbiórce i długim opuszczeniu.",
-        collapse="Tu głównym faktem jest rozpad, a nie legenda.",
-        notes=_style_notes("gruz", "sadza", "mech", "fundament"),
-    ),
-    "Jaskinie_Wilkow": _mine_bank(
-        "Jaskinie_Wilkow",
-        history="Jaskinie Wilków są bardziej organiczne niż górnicze i trzymają ślady pazurów.",
-        depth="W podziemiu dźwięk wraca szybciej niż światło.",
-        notes=_style_notes("kości", "wilgoć", "pazury", "echo"),
-    ),
-    "Bagna_Hookri": _swamp_bank(
-        "Bagna_Hookri",
-        history="Bagna Hookri składają się z torfu, trzcin i dróg, które trzeba utrzymywać ręcznie.",
+    "nadrzeczne-mokradla": _swamp_bank(
+        "nadrzeczne-mokradla",
+        history="Nadrzeczne mokradła składają się z torfu, trzcin i dróg, które trzeba utrzymywać ręcznie.",
         wetness="Tu woda jest częścią gruntu, a nie tylko przeszkodą.",
         notes=_style_notes("torf", "trzcina", "mgła", "kładki"),
     ),

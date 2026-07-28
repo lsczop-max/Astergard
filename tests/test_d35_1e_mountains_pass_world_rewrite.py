@@ -29,7 +29,10 @@ class D351EMountainsPassWorldRewriteTests(unittest.TestCase):
         forbidden = ("czeka na ręczne opracowanie", "placeholder", "procedural")
         for room_id in D351E_RANGE:
             loc = world.locations[room_id]
-            self.assertIn(loc.zone, {"Straznica_Przeleczy", "Gory_Mekhara"})
+            if room_id in PASS_RANGE:
+                self.assertEqual(loc.zone, "polnocny-las")
+            else:
+                self.assertEqual(loc.zone, "Gory_Mekhara")
             text = f"{loc.name}\n{loc.description}".lower()
             for marker in forbidden:
                 self.assertNotIn(marker, text)
@@ -40,9 +43,9 @@ class D351EMountainsPassWorldRewriteTests(unittest.TestCase):
         exits_per_room = [len(world.locations[room_id].exits) for room_id in D351E_RANGE]
         self.assertGreaterEqual(min(exits_per_room), 1)
         self.assertLess(sum(exits_per_room) / len(exits_per_room), 4.0)
-        self.assertEqual(world.locations[0].exits["polnoc"].target_room, 125)
-        self.assertEqual(world.locations[125].exits["polnoc"].target_room, 335)
-        self.assertEqual(world.locations[129].exits["polnocny-zachod"].target_room, 335)
+        self.assertEqual(world.locations[125].exits["wschod"].target_room, 132)
+        self.assertEqual(world.locations[129].exits["wschod"].target_room, 136)
+        self.assertEqual(world.locations[134].exits["wschod"].target_room, 141)
         self.assertEqual(world.locations[334].exits["polnocny-wschod"].target_room, 335)
         self.assertEqual(world.locations[389].exits["poludniowy-wschod"].target_room, 390)
 

@@ -5,8 +5,8 @@ import unittest
 
 from astergard.npcs.manager import NPCManager
 from astergard.testing import TestGameHarness
-from astergard.world.content import make_content_pack
 from astergard.world.manager import OPPOSITE, WorldManager
+from astergard.world.region_i_content import load_region_i_cards
 
 
 TRACT_ROOM_IDS = range(135, 180)
@@ -33,23 +33,27 @@ class FixedRng:
         return seq[0]
 
 
+CARD_BY_ID = {card.id: card for card in load_region_i_cards()}
+
+
 class D351NTraktyProductionTests(unittest.TestCase):
     def test_populate_spawns_road_npcs_with_equipment_dialogues_and_schedules(self) -> None:
         world = WorldManager()
         world.generate_world()
         npcs = NPCManager(world)
         npcs.populate()
-
         for room_id in TRACT_ROOM_IDS:
             loc = world.locations[room_id]
-            self.assertEqual(loc.zone, "Trakty")
+            card = CARD_BY_ID[room_id]
+            self.assertEqual(loc.zone, card.region_id)
+            self.assertEqual(loc.name, card.name)
             self.assertIsNotNone(loc.name)
             self.assertIsNotNone(loc.description)
             self.assertGreaterEqual(len(loc.inspectables), 3)
 
         for vnum, room_id in TRACT_SPAWNS:
             npc = next(candidate for candidate in npcs.by_room(room_id) if candidate.vnum == vnum)
-            self.assertEqual(npc.zone, "Trakty", vnum)
+            self.assertEqual(npc.zone, CARD_BY_ID[room_id].region_id, vnum)
             self.assertEqual(npc.faction, "MEEKHAN", vnum)
             self.assertTrue({"default", "praca", "miejsce", "plotki"}.issubset(npc.dialogue_tree.keys()), vnum)
             self.assertTrue({"świt", "dzień", "wieczór", "noc"}.issubset(npc.daily_schedule.keys()), vnum)
@@ -73,11 +77,14 @@ class D351NTraktyProductionTests(unittest.TestCase):
 
         self.assertNotEqual(guard.room_id, start_room)
         self.assertTrue(any(event.kind in {"move", "patrol"} and event.npc_id == guard.id for event in events))
-        self.assertEqual(world.locations[guard.room_id].zone, "Trakty")
+        self.assertEqual(world.locations[guard.room_id].zone, world.locations[start_room].zone)
 
     def test_dialogues_quests_and_deliveries_work_through_real_commands(self) -> None:
         async def run() -> None:
             with TestGameHarness() as harness:
+                server = harness.require_server()
+                def current_strażnik_room() -> int:
+                    return next(npc.room_id for npc in server.services.npcs.npcs.values() if npc.vnum == "trakty_straznik")
                 char = harness.create_character("tract_production", room_id=140)
                 char.gold = 150
 
@@ -109,7 +116,7 @@ class D351NTraktyProductionTests(unittest.TestCase):
                 self.assertIn("Kończysz zadanie: Manifest karawany", finish_manifest.output)
                 self.assertIn("trakty_manifest", char.completed_quests)
 
-                char.room_id = 172
+                char.room_id = current_strażnik_room()
                 await asyncio.sleep(0.6)
                 hunter_start = await harness.execute(char, "rozmawiaj strażnik zadanie")
                 self.assertIn("Ślad myśliwego", hunter_start.output)
@@ -120,7 +127,7 @@ class D351NTraktyProductionTests(unittest.TestCase):
                 hunter_progress = await harness.execute(char, "rozmawiaj myśliwy")
                 self.assertIn("Cel osiągnięty", hunter_progress.output)
 
-                char.room_id = 172
+                char.room_id = current_strażnik_room()
                 await asyncio.sleep(0.6)
                 hunter_finish = await harness.execute(char, "rozmawiaj strażnik")
                 self.assertIn("Kończysz zadanie: Ślad myśliwego", hunter_finish.output)
@@ -159,16 +166,14 @@ class D351NTraktyProductionTests(unittest.TestCase):
     def test_region_content_and_symmetry_stay_coherent(self) -> None:
         world = WorldManager()
         world.generate_world()
-        authored = {content.room_id: content for content in make_content_pack()}
-
         for room_id in TRACT_ROOM_IDS:
-            content = authored[room_id]
-            self.assertIsNotNone(content.name)
-            self.assertIsNotNone(content.description)
-            self.assertGreaterEqual(len(content.inspectables), 3)
-            self.assertNotIn("czeka na ręczne opracowanie", f"{content.name}\n{content.description}".lower())
             loc = world.locations[room_id]
-            self.assertEqual(loc.zone, "Trakty")
+            card = CARD_BY_ID[room_id]
+            self.assertEqual(loc.zone, card.region_id)
+            self.assertIsNotNone(loc.name)
+            self.assertIsNotNone(loc.description)
+            self.assertGreaterEqual(len(loc.inspectables), 3)
+            self.assertNotIn("czeka na ręczne opracowanie", f"{loc.name}\n{loc.description}".lower())
             for direction, exit_ in loc.exits.items():
                 opposite = OPPOSITE[direction]
                 target = world.locations[exit_.target_room]

@@ -34,3 +34,4 @@ class Location:
     exit_forms: dict[str, dict[str, str]] = field(default_factory=dict)
     scene_profile: str = ""
     scene_anchor: str = ""
+    dynamic_hooks: tuple[str, ...] = ()

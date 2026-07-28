@@ -549,7 +549,7 @@ class WebProtocolV1Tests(unittest.TestCase):
             assert login.character is not None
 
             move_writer = TrackingWriter()
-            move_transport = TcpSessionTransport(cast(Any, FakeReader.from_text_lines(["poludnie"])), cast(Any, move_writer))
+            move_transport = TcpSessionTransport(cast(Any, FakeReader.from_text_lines(["ne"])), cast(Any, move_writer))
             server.clients[move_transport] = login.character
             asyncio.run(server.session_flow.command_loop(move_transport, server.make_context(login.character)))
 

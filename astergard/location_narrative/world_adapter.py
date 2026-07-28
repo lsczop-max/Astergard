@@ -254,6 +254,7 @@ class WorldNarrativeAdapter:
                 "base_description": location.description,
                 "base_name": location.name,
                 "inspectables": dict(location.inspectables),
+                "dynamic_hooks": tuple(location.dynamic_hooks),
             },
         )
         return self.apply_fingerprint_overlay(facts, location.id)
@@ -354,28 +355,22 @@ class WorldNarrativeAdapter:
 
     def _guess_terrain(self, location: Location) -> str:
         return {
-            "Centrum_Twierdza": "miejski",
-            "Podgrodzie": "przedmiejski",
-            "Haldun": "wiejski",
-            "Osada_Mysliwych": "leśny",
-            "Forteca_Dungrim": "forteczny",
-            "Straznica_Przeleczy": "górski",
-            "Trakty": "drogowy",
-            "Boczne_Drogi": "drogowy",
-            "Puszcza_Ciszy": "leśny",
-            "Knieja_Cichych_Sciezek": "leśny",
-            "Gory_Mekhara": "górski",
+            "centrum": "miejski",
+            "trakt": "drogowy",
+            "trakt-gorniczy": "górski",
+            "trakt-nadrzeczny": "nadrzeczny",
+            "polnocny-las": "leśny",
+            "nadrzeczne-mokradla": "bagienny",
             "Kopalnia_Zelaza": "podziemny",
             "Ruiny_Karshold": "ruinowy",
             "Jaskinie_Wilkow": "jaskiniowy",
-            "Bagna_Hookri": "bagienny",
         }.get(location.zone, "mieszany")
 
     def _guess_biome(self, location: Location) -> str:
         return self._guess_terrain(location)
 
     def _guess_settlement(self, location: Location) -> str:
-        return "miejska" if location.zone in {"Centrum_Twierdza", "Podgrodzie"} else "pozamiejska"
+        return "miejska" if location.zone in {"centrum"} else "pozamiejska"
 
     def _guess_function(self, location: Location) -> str:
         name = location.name.lower()
@@ -391,7 +386,7 @@ class WorldNarrativeAdapter:
         return "średnia"
 
     def _guess_enclosure(self, location: Location) -> str:
-        return "otwarta" if location.zone not in {"Kopalnia_Zelaza", "Jaskinie_Wilkow", "Forteca_Dungrim"} else "zamknięta"
+        return "otwarta" if location.zone not in {"Kopalnia_Zelaza", "Jaskinie_Wilkow"} else "zamknięta"
 
     def _guess_elevation(self, location: Location) -> str:
         if location.map_z > 1:
@@ -404,11 +399,11 @@ class WorldNarrativeAdapter:
         return "grunt"
 
     def _guess_materials(self, location: Location) -> tuple[str, ...]:
-        if location.zone in {"Centrum_Twierdza", "Forteca_Dungrim"}:
+        if location.zone == "centrum":
             return ("kamień", "drewno", "żelazo")
-        if location.zone in {"Puszcza_Ciszy", "Knieja_Cichych_Sciezek"}:
+        if location.zone == "polnocny-las":
             return ("drewno", "mech", "kora")
-        if location.zone == "Bagna_Hookri":
+        if location.zone == "nadrzeczne-mokradla":
             return ("torf", "trzcina", "drewno")
         return ("kamień", "drewno")
 
@@ -416,21 +411,21 @@ class WorldNarrativeAdapter:
         return "surowa"
 
     def _guess_vegetation(self, location: Location) -> tuple[str, ...]:
-        if location.zone in {"Puszcza_Ciszy", "Knieja_Cichych_Sciezek"}:
+        if location.zone == "polnocny-las":
             return ("buk", "sosna", "paproć")
-        if location.zone == "Bagna_Hookri":
+        if location.zone == "nadrzeczne-mokradla":
             return ("trzcina", "wierzba")
         return ()
 
     def _guess_water(self, location: Location) -> str:
-        if location.zone == "Bagna_Hookri":
+        if location.zone == "nadrzeczne-mokradla":
             return "stojąca woda"
         if "studnia" in location.name.lower():
             return "studnia"
         return ""
 
     def _guess_light(self, location: Location) -> tuple[str, ...]:
-        return ("pochodnie", "okna") if location.zone in {"Centrum_Twierdza", "Forteca_Dungrim"} else ()
+        return ("pochodnie", "okna") if location.zone == "centrum" else ()
 
     def _guess_temperature(self, location: Location) -> str:
         return "chłodno"
@@ -455,21 +450,15 @@ class WorldNarrativeAdapter:
 
     def _guess_activity(self, location: Location) -> str:
         return {
-            "Centrum_Twierdza": "handel i warta",
-            "Podgrodzie": "targ i zaplecze",
-            "Haldun": "rolnictwo",
-            "Osada_Mysliwych": "obróbka trofeów",
-            "Forteca_Dungrim": "wojsko i magazyny",
-            "Straznica_Przeleczy": "kontrola przejazdu",
-            "Trakty": "karawany",
-            "Boczne_Drogi": "objazdy i naprawy",
-            "Puszcza_Ciszy": "łowy i zbieractwo",
-            "Knieja_Cichych_Sciezek": "łowy i patrole",
-            "Gory_Mekhara": "przeprawa",
+            "centrum": "handel i warta",
+            "trakt": "ruch przybramny",
+            "trakt-gorniczy": "przejazd górniczy",
+            "trakt-nadrzeczny": "ruch nadrzeczny",
+            "polnocny-las": "łowy i zbieractwo",
+            "nadrzeczne-mokradla": "zbiory i przeprawy",
             "Kopalnia_Zelaza": "wydobycie",
             "Ruiny_Karshold": "poszukiwanie przejść",
             "Jaskinie_Wilkow": "ruch zwierząt",
-            "Bagna_Hookri": "zbiory i przeprawy",
         }.get(location.zone, "ruch lokalny")
 
     def _guess_culture(self, location: Location) -> tuple[str, ...]:
@@ -477,21 +466,15 @@ class WorldNarrativeAdapter:
 
     def _guess_history(self, location: Location) -> str:
         return {
-            "Centrum_Twierdza": "warstwy murów i ciągłe naprawy",
-            "Podgrodzie": "mokre przedmieście i łatane płoty",
-            "Haldun": "praca pól i studni",
-            "Osada_Mysliwych": "dym, skóry i tropy",
-            "Forteca_Dungrim": "żelazo, warta i zapasy",
-            "Straznica_Przeleczy": "kontrola przejazdu i wiatr",
-            "Trakty": "ruch karawan i łatanie drogi",
-            "Boczne_Drogi": "polne objazdy i rozjazdy",
-            "Puszcza_Ciszy": "tropy, popiół i cień",
-            "Knieja_Cichych_Sciezek": "gęstszy cień i starsze ścieżki",
-            "Gory_Mekhara": "osypiska i wiatr",
+            "centrum": "warstwy murów i ciągłe naprawy",
+            "trakt": "brama i codzienny ruch",
+            "trakt-gorniczy": "osypiska i wiatr",
+            "trakt-nadrzeczny": "wilgoć, rybacy i przeprawy",
+            "polnocny-las": "tropy, popiół i cień",
+            "nadrzeczne-mokradla": "torf, trzcina i kładki",
             "Kopalnia_Zelaza": "wydobycie i obudowa chodników",
             "Ruiny_Karshold": "pożar i długie opuszczenie",
             "Jaskinie_Wilkow": "pazury i echo",
-            "Bagna_Hookri": "torf, trzcina i kładki",
         }.get(location.zone, "warstwa użytkowa")
 
     def _guess_danger(self, location: Location) -> str:
@@ -508,7 +491,7 @@ class WorldNarrativeAdapter:
 
     def _forbidden_claims(self, location: Location) -> list[str]:
         claims = []
-        if location.zone == "Bagna_Hookri":
+        if location.zone == "nadrzeczne-mokradla":
             claims.append("suchy grunt")
         return claims
 
@@ -592,7 +575,7 @@ class WorldNarrativeAdapter:
                 }
             )
         )
-        if location.zone == "Bagna_Hookri":
+        if location.zone == "nadrzeczne-mokradla":
             return LocationFingerprint(
                 category="drainage_damage",
                 subject="krawędź przejścia",
@@ -606,7 +589,7 @@ class WorldNarrativeAdapter:
                 neighbouring_constraints=neighbour_constraints or ("wymaga niższej strefy lub miękkiego brzegu",),
                 subtype=self._fingerprint_subtype(location, "drainage_damage"),
             )
-        if location.zone in {"Trakty", "Boczne_Drogi"}:
+        if location.zone in {"trakt", "trakt-nadrzeczny", "trakt-gorniczy"}:
             return LocationFingerprint(
                 category="road_surface_change",
                 subject="nawierzchnia traktu",
@@ -634,7 +617,7 @@ class WorldNarrativeAdapter:
                 neighbouring_constraints=neighbour_constraints or ("powinien mieć ciągłość z sąsiednim fragmentem ruiny",),
                 subtype=self._fingerprint_subtype(location, "structural_collapse"),
             )
-        if location.zone in {"Gory_Mekhara", "Straznica_Przeleczy"}:
+        if location.zone == "trakt-gorniczy":
             return LocationFingerprint(
                 category="vertical_exposure",
                 subject="krawędź stoku",
@@ -648,7 +631,7 @@ class WorldNarrativeAdapter:
                 neighbouring_constraints=neighbour_constraints or ("musi respektować zmianę wysokości",),
                 subtype=self._fingerprint_subtype(location, "vertical_exposure"),
             )
-        if location.zone in {"Forteca_Dungrim", "Centrum_Twierdza"}:
+        if location.zone == "centrum":
             return LocationFingerprint(
                 category="maintenance_pressure",
                 subject="próg, mur albo posadzka",
@@ -662,7 +645,7 @@ class WorldNarrativeAdapter:
                 neighbouring_constraints=neighbour_constraints or ("powinna łączyć się z miejskim ruchem",),
                 subtype=self._fingerprint_subtype(location, "maintenance_pressure"),
             )
-        if location.zone in {"Puszcza_Ciszy", "Knieja_Cichych_Sciezek"}:
+        if location.zone == "polnocny-las":
             return LocationFingerprint(
                 category="vegetation_narrowing",
                 subject="prześwit między pniami",
@@ -675,20 +658,6 @@ class WorldNarrativeAdapter:
                 regional_compatibility="high",
                 neighbouring_constraints=neighbour_constraints or ("nie powinien przeczyć sąsiedniemu prześwitowi",),
                 subtype=self._fingerprint_subtype(location, "vegetation_narrowing"),
-            )
-        if location.zone == "Jaskinie_Wilkow":
-            return LocationFingerprint(
-                category="cave_contour",
-                subject="chodnik skalny",
-                physical_state="ciasny i chropawy",
-                spatial_position="przy ścianie lub w osi przejścia",
-                cause="naturalny przebieg skały",
-                visibility="partial",
-                persistence="permanent",
-                examinable=bool(location.inspectables),
-                regional_compatibility="high",
-                neighbouring_constraints=neighbour_constraints or ("powinien zachować ciągłość korytarza",),
-                subtype=self._fingerprint_subtype(location, "cave_contour"),
             )
         if location.zone == "Kopalnia_Zelaza":
             return LocationFingerprint(

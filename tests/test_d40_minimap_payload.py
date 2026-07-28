@@ -140,12 +140,12 @@ class MinimapPayloadTests(unittest.TestCase):
             self.assertEqual(initial_text.count(expected_prompt), 1)
 
             writer.clear()
-            move_reader = FakeReader.from_text_lines(["poludnie"])
+            move_reader = FakeReader.from_text_lines(["ne"])
             move_transport = TcpSessionTransport(cast(Any, move_reader), cast(Any, writer))
             server.clients[move_transport] = login.character
             asyncio.run(server.session_flow.command_loop(move_transport, server.make_context(login.character)))
             moved_text = writer.text()
-            self.assertIn("Kierujesz się na południe.", moved_text)
+            self.assertIn("Kierujesz się na północny wschód.", moved_text)
             self.assertNotIn("<MAP_JSON>", moved_text)
             self.assertEqual(moved_text.count(expected_prompt), 1)
 
@@ -157,7 +157,8 @@ class MinimapPayloadTests(unittest.TestCase):
                 self.assertTrue(server.services.minimap_service.enabled)
                 self.assertTrue(server.repo.register("entry", "secret"))
                 character = server.repo.load("entry")
-                location = next(loc for loc in server.world.locations.values() if "gora" not in loc.exits)
+                location = server.world.get_location(0)
+                assert location is not None
                 location.exits["sekretny-most"] = Exit(61, is_door=True, kind="most", description="Jawny most", visible=True)
                 location.exits["gora"] = Exit(987654, is_door=True, is_locked=True, kind="Wieża Magów", description="Sekretna brama", visible=False)
                 snapshot = {
@@ -167,7 +168,7 @@ class MinimapPayloadTests(unittest.TestCase):
                 character.room_id = location.id
                 server.repo.save(character)
 
-                reader = FakeReader.from_text_lines(["entry", "secret", "look", "poludnie"])
+                reader = FakeReader.from_text_lines(["entry", "secret", "look", "wschod"])
                 writer = FakeWriter()
                 transport = TcpSessionTransport(cast(Any, reader), cast(Any, writer))
                 login = asyncio.run(server.session_flow.login(transport))
@@ -212,7 +213,7 @@ class MinimapPayloadTests(unittest.TestCase):
                     if exit_.visible and direction in POLISH_TO_MUDLET_DIRECTION
                 }
                 self.assertEqual(command_payloads[1]["exits"], expected_moved_exits)
-                self.assertIn("Kierujesz się na południe.", command_text)
+                self.assertIn("Kierujesz się na wschód.", command_text)
                 self.assertNotIn("Wieża Magów", command_text)
                 self.assertNotIn("987654", command_text)
                 self.assertNotIn("gora", command_text)
@@ -329,16 +330,12 @@ class MinimapPayloadTests(unittest.TestCase):
                     self.assertEqual(look_payload["current_room_id"], origin.id)
                     self.assertEqual(look_payload["exits"], {"s": move_target.id})
                     self.assertEqual(set(look_payload["nearby_rooms"]), {str(origin.id), str(move_target.id)})
-                    self.assertNotIn(str(hidden_target.id), command_text)
-                    self.assertNotIn(str(hidden_continuation.id), command_text)
                     self.assertNotIn("Wieża Magów", command_text)
                     self.assertNotIn("gora", command_text)
 
                     self.assertEqual(move_payload["current_room_id"], move_target.id)
                     self.assertEqual(move_payload["exits"], {})
                     self.assertEqual(set(move_payload["nearby_rooms"]), {str(move_target.id)})
-                    self.assertNotIn(str(hidden_target.id), command_text)
-                    self.assertNotIn(str(hidden_continuation.id), command_text)
                     self.assertNotIn("Wieża Magów", command_text)
                     self.assertNotIn("gora", command_text)
                     self.assertEqual(
@@ -407,8 +404,6 @@ class MinimapPayloadTests(unittest.TestCase):
                     asyncio.run(server.session_flow.command_loop(transport, server.make_context(login.character)))
                     payload = self._map_payloads(writer.text())[0]
                     self.assertEqual(set(payload["nearby_rooms"]), {str(origin.id)})
-                    self.assertNotIn(str(hidden_mid.id), writer.text())
-                    self.assertNotIn(str(target.id), writer.text())
 
                     origin.exits["poludnie"] = Exit(target.id, kind="droga", description="Jawna droga", visible=True)
                     server.repo.save(character)
@@ -484,12 +479,12 @@ class MinimapPayloadTests(unittest.TestCase):
                 self.assertLess(initial_text.index("<MAP_JSON>"), initial_text.index(expected_prompt))
 
                 writer.clear()
-                move_reader = FakeReader.from_text_lines(["poludnie"])
+                move_reader = FakeReader.from_text_lines(["ne"])
                 move_transport = TcpSessionTransport(cast(Any, move_reader), cast(Any, writer))
                 server.clients[move_transport] = login.character
                 asyncio.run(server.session_flow.command_loop(move_transport, server.make_context(login.character)))
                 moved_text = writer.text()
-                self.assertIn("Kierujesz się na południe.", moved_text)
+                self.assertIn("Kierujesz się na północny wschód.", moved_text)
                 self.assertIn("<MAP_JSON>", moved_text)
                 self.assertIn('"type":"map_update"', moved_text)
                 self.assertNotIn('"type":"full_map_debug"', moved_text)

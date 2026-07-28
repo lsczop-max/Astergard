@@ -66,7 +66,7 @@ class D351JWorldReactionTests(unittest.TestCase):
             char = harness.create_character("reaction_guard", room_id=25)
             char.reputation["MEEKHAN"] = -600
             server = harness.require_server()
-            events = server.services.npcs.ai_tick(players=[char], combat=server.services.combat, factions=server.services.factions, hour=12)
+            events = server.services.npcs.ai_tick(players=[char], combat=server.services.combat, factions=server.services.factions)
             self.assertTrue(any(event.kind == "guard_aggression" for event in events))
             self.assertTrue(char.in_combat)
 

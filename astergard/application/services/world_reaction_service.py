@@ -7,10 +7,18 @@ from astergard.engine.events import DomainEventType, EngineEvent, EventBus
 from astergard.factions.reputation import FactionManager
 from astergard.npcs.manager import NPCManager
 from astergard.npcs.models import NPC
+from astergard.quests.manager import QUESTS
 
 
 class WorldReactionService:
-    LOCAL_ZONES = {"Centrum_Twierdza", "Podgrodzie", "Boczne_Drogi", "Straznica_Przeleczy", "Puszcza_Ciszy", "Knieja_Cichych_Sciezek", "Bagna_Hookri"}
+    LOCAL_ZONES = {
+        "centrum",
+        "trakt",
+        "trakt-gorniczy",
+        "trakt-nadrzeczny",
+        "polnocny-las",
+        "nadrzeczne-mokradla",
+    }
     HELP_REP = 5
     THEFT_REP = -2
     ATTACK_REP = -18
@@ -67,6 +75,9 @@ class WorldReactionService:
         char = self._player(event)
         if char is None:
             return
+        item_vnum = str(event.payload.get("item", ""))
+        if self._quest_item_pickup(char, item_vnum):
+            return
         room_id = event.payload.get("room_id")
         if room_id is None or self._zone(int(room_id)) not in self.LOCAL_ZONES:
             return
@@ -76,6 +87,23 @@ class WorldReactionService:
         self.factions.adjust(char, self.factions.MEEKHAN, self.THEFT_REP, zone=zone)
         self.factions.record_crime(char, "kradzież", zone=zone, detail=str(event.payload.get("item", "")))
         self._emit_reputation_changed(char, "theft")
+
+    def _quest_item_pickup(self, char: Character, item_vnum: str) -> bool:
+        if not item_vnum:
+            return False
+        for quest_id in char.active_quests:
+            quest = QUESTS.get(quest_id)
+            if quest is None:
+                continue
+            for objective in quest.objectives:
+                if objective["type"] != "give":
+                    continue
+                target = objective["target"]
+                if isinstance(target, str) and target == item_vnum:
+                    return True
+                if isinstance(target, list) and item_vnum in target:
+                    return True
+        return False
 
     def _player(self, event: EngineEvent) -> Character | None:
         character = event.payload.get("character")

@@ -23,6 +23,7 @@ class LocationContent:
     exit_forms: dict[str, dict[str, str]] = field(default_factory=dict)
     exit_kinds: dict[str, str] = field(default_factory=dict)
     scene_profile: str = ""
+    dynamic_hooks: tuple[str, ...] = ()
     items: tuple[Item, ...] = ()
     hidden_items: tuple[tuple[Item, int], ...] = ()
 
@@ -2556,9 +2557,16 @@ def make_content_pack() -> tuple[LocationContent, ...]:
     return START_CONTENT + _make_district_content() + _make_d351b_content() + _make_d351c_content() + _make_d351d_content() + _make_d351e_content() + _make_d351f_content() + _make_d351g_content() + _make_d351h_content()
 
 
-def apply_content_pack(locations: dict[int, Location], content_pack: tuple[LocationContent, ...] | None = None) -> None:
+def apply_content_pack(
+    locations: dict[int, Location],
+    content_pack: tuple[LocationContent, ...] | None = None,
+    *,
+    skip_room_ids: frozenset[int] | set[int] | None = None,
+) -> None:
     """Apply hand-authored content without changing the generated graph."""
     for content in content_pack or make_content_pack():
+        if skip_room_ids is not None and content.room_id in skip_room_ids:
+            continue
         loc = locations.get(content.room_id)
         if loc is None:
             continue
@@ -2574,6 +2582,8 @@ def apply_content_pack(locations: dict[int, Location], content_pack: tuple[Locat
                 loc.exit_forms[direction] = dict(forms)
         if content.scene_profile:
             loc.scene_profile = content.scene_profile
+        if content.dynamic_hooks:
+            loc.dynamic_hooks = content.dynamic_hooks
         for direction, kind in content.exit_kinds.items():
             if direction in loc.exits:
                 loc.exits[direction].kind = kind

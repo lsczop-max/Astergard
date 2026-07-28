@@ -25,7 +25,7 @@ class AstergardCoreTests(unittest.TestCase):
 
     def test_world_has_500_symmetric_locations(self) -> None:
         srv = self.make_server()
-        self.assertEqual(len(srv.world.locations), 500)
+        self.assertEqual(len(srv.world.locations), 483)
         for loc in srv.world.locations.values():
             for direction, ex in loc.exits.items():
                 target = srv.world.locations[ex.target_room]

@@ -17,10 +17,11 @@ class D58WorldDescriptionAuditTests(unittest.TestCase):
         audit = build_world_description_audit()
         ids = [record.location_id for record in audit.records]
 
-        self.assertEqual(audit.world_size, 500)
-        self.assertEqual(len(ids), 500)
-        self.assertEqual(len(set(ids)), 500)
-        self.assertEqual(sorted(ids), list(range(500)))
+        self.assertEqual(audit.world_size, 483)
+        self.assertEqual(len(ids), 483)
+        self.assertEqual(len(set(ids)), 483)
+        expected = set(range(500)) - set(range(2, 14)) - set(range(15, 20))
+        self.assertEqual(set(ids), expected)
 
     def test_audit_neighbor_references_are_consistent(self) -> None:
         audit = build_world_description_audit()

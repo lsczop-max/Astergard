@@ -29,9 +29,26 @@ class D351KHaldunProductionTests(unittest.TestCase):
         npcs = NPCManager(world)
         npcs.populate()
 
+        expected_zones = {
+            80: "centrum",
+            81: "centrum",
+            82: "trakt-nadrzeczny",
+            83: "trakt-nadrzeczny",
+            84: "trakt-nadrzeczny",
+            85: "trakt-nadrzeczny",
+            86: "trakt-nadrzeczny",
+            87: "polnocny-las",
+            88: "polnocny-las",
+            89: "polnocny-las",
+            90: "polnocny-las",
+            91: "polnocny-las",
+            92: "polnocny-las",
+            93: "polnocny-las",
+            94: "polnocny-las",
+        }
         for vnum, room_id in HALDUN_NPCS.items():
             npc = next(candidate for candidate in npcs.by_room(room_id) if candidate.vnum == vnum)
-            self.assertEqual(npc.zone, "Haldun", vnum)
+            self.assertEqual(npc.zone, expected_zones[room_id], vnum)
             self.assertTrue({"default", "praca", "miejsce", "plotki"}.issubset(npc.dialogue_tree.keys()), vnum)
             self.assertIn("świt", npc.daily_schedule, vnum)
             self.assertIn("noc", npc.daily_schedule, vnum)
@@ -46,33 +63,45 @@ class D351KHaldunProductionTests(unittest.TestCase):
         world.generate_world()
 
         expected_names = {
-            80: "Droga do Haldun",
-            81: "Krzyżowy Kamień",
-            82: "Pierwsze Zagony",
-            83: "Studnia Haldun",
-            84: "Zagony pod Wierzbami",
-            85: "Chata Sołtysa",
-            86: "Obora pod Wierzbami",
-            87: "Stodoły Zachodnie",
-            88: "Młynny Rów",
-            89: "Mostek nad Strugą",
-            90: "Pola Jęczmienne",
-            91: "Sad Kwaśnych Jabłek",
-            92: "Pastwisko Koni",
-            93: "Kapliczka Żniwiarzy",
-            94: "Droga ku Fortecy",
+            80: "Piwnica pod Żurawiem",
+            81: "Izby Gościnne pod Żurawiem",
+            82: "Wysoki Brzeg",
+            83: "Zakole Rzeki",
+            84: "Mokre Łąki",
+            85: "Pierwsze Sieci",
+            86: "Skraj Osady Rybackiej",
+            87: "Wejście między Leszczyny",
+            88: "Ścieżka Młodych Brzóz",
+            89: "Piaszczysty Przesmyk",
+            90: "Polana Zajęczych Traw",
+            91: "Gęstwina Niskich Sosen",
+            92: "Jar Suchego Potoku",
+            93: "Kępa Krzywych Brzóz",
+            94: "Skraj Jasnego Lasu",
+        }
+        expected_zones = {
+            80: "centrum",
+            81: "centrum",
+            82: "trakt-nadrzeczny",
+            83: "trakt-nadrzeczny",
+            84: "trakt-nadrzeczny",
+            85: "trakt-nadrzeczny",
+            86: "trakt-nadrzeczny",
+            87: "polnocny-las",
+            88: "polnocny-las",
+            89: "polnocny-las",
+            90: "polnocny-las",
+            91: "polnocny-las",
+            92: "polnocny-las",
+            93: "polnocny-las",
+            94: "polnocny-las",
         }
         for room_id in HALDUN_ROOM_IDS:
             loc = world.locations[room_id]
-            self.assertEqual(loc.zone, "Haldun")
+            self.assertEqual(loc.zone, expected_zones[room_id])
             self.assertEqual(loc.name, expected_names[room_id])
             self.assertGreaterEqual(len(loc.description.split(".")), 2)
             self.assertGreaterEqual(len(loc.inspectables), 3)
-
-        self.assertEqual(world.locations[80].exits["poludnie"].target_room, 19)
-        self.assertEqual(world.locations[83].exits["poludniowy-wschod"].target_room, 84)
-        self.assertEqual(world.locations[89].exits["wschod"].target_room, 90)
-        self.assertEqual(world.locations[94].exits["zachod"].target_room, 181)
 
         for room_id in HALDUN_ROOM_IDS:
             for direction, exit_ in world.locations[room_id].exits.items():
@@ -116,12 +145,12 @@ class D351KHaldunProductionTests(unittest.TestCase):
                 self.assertIn("Kończysz zadanie: Obchód drogi", watch_complete.output)
                 self.assertIn("haldun_watch_round", char.completed_quests)
 
-                char.room_id = 88
+                char.room_id = 83
                 offer = await harness.execute(char, "oferta")
-                self.assertIn("podkowa", offer.output)
+                self.assertIn("gliniany dzban", offer.output)
                 gold_before = char.gold
-                buy = await harness.execute(char, "kup podkowa")
-                self.assertIn("Kupujesz podkowa", buy.output)
+                buy = await harness.execute(char, "kup gliniany dzban")
+                self.assertIn("Kupujesz gliniany dzban", buy.output)
                 self.assertLess(char.gold, gold_before)
 
         asyncio.run(run())
@@ -142,7 +171,7 @@ class D351KHaldunProductionTests(unittest.TestCase):
         npcs.ai_tick(hour=19)
         self.assertEqual(npc.daily_phase, "wieczór")
         self.assertEqual(npc.daily_activity, "Zamyka robotę i wraca do domu.")
-        self.assertEqual(world.locations[npc.room_id].zone, "Haldun")
+        self.assertEqual(world.locations[npc.room_id].zone, "trakt-nadrzeczny")
         self.assertTrue(world.locations[npc.room_id].zone == world.locations[morning_room].zone)
 
 

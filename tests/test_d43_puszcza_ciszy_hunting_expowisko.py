@@ -24,9 +24,9 @@ class PuszczaCiszyHuntingExpowiskoTests(unittest.TestCase):
         npcs.populate()
 
         self.assertEqual({npc.vnum for npc in npcs.by_room(183)}, {"puszcza_szczur"})
-        self.assertEqual({npc.zone for npc in npcs.by_room(183)}, {"Boczne_Drogi"})
+        self.assertEqual({npc.zone for npc in npcs.by_room(183)}, {"nadrzeczne-mokradla"})
         self.assertEqual({npc.vnum for npc in npcs.by_room(185)}, {"puszcza_mysliwy"})
-        self.assertEqual({npc.zone for npc in npcs.by_room(185)}, {"Boczne_Drogi"})
+        self.assertEqual({npc.zone for npc in npcs.by_room(185)}, {"nadrzeczne-mokradla"})
         self.assertEqual({npc.vnum for npc in npcs.by_room(190)}, {"puszcza_zielarz"})
         self.assertEqual({npc.zone for npc in npcs.by_room(190)}, {"Boczne_Drogi"})
         self.assertEqual({npc.vnum for npc in npcs.by_room(196)}, {"puszcza_kruk"})

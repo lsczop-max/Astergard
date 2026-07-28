@@ -75,11 +75,11 @@ class ExplorationPerceptionService:
     def _smell_room(self, zone: str) -> str:
         if zone == "Gory_Mekhara":
             return "Czujesz zimny kamień, mokry pył i metaliczną nutę z głębi gór."
-        if zone == "Bagna_Hookri":
+        if zone in {"Bagna_Hookri", "nadrzeczne-mokradla"}:
             return "W powietrzu unosi się torf, stęchła woda i zapach roślin gnijących bez słońca."
-        if zone in {"Puszcza_Ciszy", "Knieja_Cichych_Sciezek"}:
+        if zone in {"Puszcza_Ciszy", "Knieja_Cichych_Sciezek", "polnocny-las"}:
             return "Pachnie żywicą, mokrą korą i liśćmi, które dawno przestały być świeże."
-        if zone in {"Centrum_Twierdza", "Podgrodzie"}:
+        if zone in {"Centrum_Twierdza", "Podgrodzie", "centrum", "trakt", "trakt-gorniczy", "trakt-nadrzeczny"}:
             return "Czujesz dym z palenisk, skórę, mokry bruk i odrobinę pieczonego chleba."
         return "Czujesz wilgoć, kurz i zapach osiadający na murach, deskach i ubraniu."
 

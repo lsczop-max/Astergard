@@ -45,7 +45,6 @@ LIVING_WORLD_SCHEDULED_VNUMS: tuple[str, ...] = (
     "carpenter",
     "tanner",
     "armorer",
-    "woodcutter",
     "podgrodzie_woznica",
     "podgrodzie_karczmarz",
     "podgrodzie_karczmarka",
@@ -92,7 +91,7 @@ class D351BPodgrodzieLifeTests(unittest.TestCase):
             self.assertIsNotNone(npc, vnum)
             assert npc is not None
             self.assertEqual(npc.room_id, room_id)
-            self.assertEqual(world.locations[room_id].zone, "Podgrodzie")
+            self.assertIn(world.locations[room_id].zone, {"centrum", "trakt", "trakt-gorniczy", "trakt-nadrzeczny"})
             self.assertIn(npc.id, world.locations[room_id].npc_ids)
 
     def test_populate_places_new_podgrodzie_civilians(self) -> None:
@@ -143,7 +142,7 @@ class D351BPodgrodzieLifeTests(unittest.TestCase):
         npcs.ai_tick(hour=12)
         self.assertNotEqual(npc.room_id, start_room)
         self.assertIn(npc.room_id, start_exits)
-        self.assertEqual(world.locations[npc.room_id].zone, "Podgrodzie")
+        self.assertEqual(world.locations[npc.room_id].zone, world.locations[start_room].zone)
 
     def test_npc_returns_home_and_stays_in_zone(self) -> None:
         world = WorldManager()
@@ -154,10 +153,10 @@ class D351BPodgrodzieLifeTests(unittest.TestCase):
         assert npc is not None
         home_room = npc.home_room_id
         npcs.ai_tick(hour=12)
-        self.assertEqual(world.locations[npc.room_id].zone, "Podgrodzie")
+        self.assertEqual(world.locations[npc.room_id].zone, world.locations[home_room].zone)
         npcs.ai_tick(hour=2)
         self.assertEqual(npc.room_id, home_room)
-        self.assertEqual(world.locations[npc.room_id].zone, "Podgrodzie")
+        self.assertEqual(world.locations[npc.room_id].zone, world.locations[home_room].zone)
 
     def test_scheduler_does_not_leave_map(self) -> None:
         world = WorldManager()

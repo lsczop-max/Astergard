@@ -20,23 +20,26 @@ class D34WorldAreaExpansionTests(unittest.TestCase):
     def test_authored_rooms_keep_world_graph_size_and_have_inspectables(self) -> None:
         world = WorldManager()
         world.generate_world()
-        self.assertEqual(len(world.locations), 500)
+        self.assertEqual(len(world.locations), 483)
         authored = [loc for loc in world.locations.values() if loc.inspectables]
         self.assertGreaterEqual(len(authored), 90)
-        self.assertEqual(world.locations[15].name, "Tyły Karczmy")
-        self.assertIn("ludzie przechodnie mieszkancy mieszkańcy", world.locations[15].inspectables)
-        self.assertTrue(world.locations[15].description.startswith("Wąskie zaplecze za kuchennym wejściem"))
+        self.assertEqual(world.locations[21].name, "Dziedziniec Suchych Studni")
+        self.assertIn("studnia", world.locations[21].inspectables)
+        self.assertIn("Pośrodku dziedzińca działa ostatnia z trzech studni", world.locations[21].description)
 
     def test_player_can_travel_into_expanded_area_and_inspect_generic_detail(self) -> None:
         async def run() -> None:
             with TestGameHarness() as harness:
                 char = harness.create_character("d34_travel")
-                char.room_id = 3
+                char.room_id = 14
+                await harness.execute(char, "wschod")
+                await asyncio.sleep(0.3)
+                await harness.execute(char, "polnoc")
                 transcript = await harness.execute(char, "spojrz")
-                self.assertIn("Boczne Uliczki Placu", transcript.output)
+                self.assertIn("Dziedziniec Suchych Studni", transcript.output)
                 self.assertNotIn("Możesz obejrzeć", transcript.output)
-                detail = await harness.execute(char, "obejrzyj okiennice")
-                self.assertIn("uchylają się", detail.output)
+                detail = await harness.execute(char, "obejrzyj studnia")
+                self.assertIn("cembrowiny", detail.output)
 
         asyncio.run(run())
 
@@ -44,22 +47,27 @@ class D34WorldAreaExpansionTests(unittest.TestCase):
         world = WorldManager()
         world.generate_world()
         for room_id, expected in {
-            21: "Studnia Miejska",
-            22: "Jatki Rzeźników",
-            23: "Targ Rybny",
-            25: "Dziedziniec Straży",
-            35: "Ogród Ziół Kapłanów",
-            41: "Pomosty",
-            48: "Warsztat Cieśli",
-            59: "Kapliczka Przydrożna",
+            21: "Dziedziniec Suchych Studni",
+            22: "Strażnica Bramy",
+            23: "Ulica Wartownicza",
+            25: "Niski Ratusz",
+            35: "Skład Podróżny",
+            41: "Magazyn Rudy",
+            48: "Nabrzeże Żurawi",
+            59: "Zakręt pod Murami",
         }.items():
             loc = world.locations[room_id]
             self.assertEqual(loc.name, expected)
             self.assertGreaterEqual(len(loc.description.split(".")), 2)
-        self.assertEqual(world.locations[25].exits["wschod"].target_room, 26)
-        self.assertEqual(world.locations[26].exits["zachod"].target_room, 25)
-        self.assertEqual(world.locations[41].exits["polnoc"].target_room, 42)
-        self.assertEqual(world.locations[42].exits["poludnie"].target_room, 41)
+        self.assertEqual(world.locations[25].exits["poludnie"].target_room, 29)
+        self.assertEqual(world.locations[29].exits["polnoc"].target_room, 25)
+        self.assertEqual(world.locations[35].exits["poludniowy-wschod"].target_room, 30)
+        self.assertEqual(world.locations[30].exits["polnocny-zachod"].target_room, 35)
+        self.assertEqual(world.locations[41].exits["dol"].target_room, 37)
+        self.assertEqual(world.locations[37].exits["gora"].target_room, 41)
+        self.assertEqual(world.locations[48].exits["polnoc"].target_room, 47)
+        self.assertEqual(world.locations[47].exits["poludnie"].target_room, 48)
+        self.assertEqual(world.locations[59].exits["zachod"].target_room, 58)
 
     def test_hidden_items_exist_in_expanded_content(self) -> None:
         world = WorldManager()

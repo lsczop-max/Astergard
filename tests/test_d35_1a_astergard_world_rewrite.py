@@ -25,12 +25,15 @@ class D351AAstergardWorldRewriteTests(unittest.TestCase):
     def test_astergard_graph_is_organic_not_full_grid(self) -> None:
         world = WorldManager()
         world.generate_world()
-        city = [world.locations[i] for i in range(60)]
-        self.assertEqual(len(city), 60)
+        city_ids = [room_id for room_id, loc in world.locations.items() if loc.zone == "centrum"]
+        city = [world.locations[i] for i in city_ids]
+        self.assertEqual(len(city), 45)
         exits_per_room = [len(loc.exits) for loc in city]
         self.assertLess(sum(exits_per_room) / len(exits_per_room), 4.0)
         self.assertTrue(any("polnocny-wschod" in loc.exits or "poludniowy-wschod" in loc.exits for loc in city))
-        self.assertEqual(world.locations[0].exits["poludnie"].target_room, 20)
+        self.assertEqual(world.locations[0].exits["wschod"].target_room, 20)
+        self.assertEqual(world.locations[1].exits["polnoc"].target_room, 21)
+        self.assertEqual(world.locations[14].exits["wschod"].target_room, 1)
 
     def test_all_generated_exits_are_symmetric_in_full_wind_rose(self) -> None:
         world = WorldManager()

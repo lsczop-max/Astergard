@@ -185,7 +185,7 @@ class MudletClientTests(unittest.TestCase):
             character.room_id = 60
             server.repo.save(character)
 
-            reader = FakeReader.from_text_lines(["entry", "secret", "poludnie"])
+            reader = FakeReader.from_text_lines(["entry", "secret", "ne"])
             writer = FakeWriter()
             transport = TcpSessionTransport(cast(Any, reader), cast(Any, writer))
             login = asyncio.run(server.session_flow.login(transport))
@@ -216,7 +216,7 @@ class MudletClientTests(unittest.TestCase):
 
             asyncio.run(server.session_flow.send_initial_view(transport, server.make_context(login.character)))
             writer.clear()
-            move_reader = FakeReader.from_text_lines(["poludnie"])
+            move_reader = FakeReader.from_text_lines(["ne"])
             move_transport = TcpSessionTransport(cast(Any, move_reader), cast(Any, writer))
             server.clients[move_transport] = login.character
             asyncio.run(server.session_flow.command_loop(move_transport, server.make_context(login.character)))

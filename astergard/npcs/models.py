@@ -270,7 +270,7 @@ class NPC:
             activity = _single_activity_clause(self.daily_schedule.get(phase, self.daily_schedule.get("dzień", "")), prefer_last=prefer_last)
         if self.vnum == "podgrodzie_kowal" and phase == "noc" and raw_activity:
             return f"Kowal {_lower_first(_single_activity_clause(raw_activity, prefer_last=False))}."
-        if self.vnum == "traveler" and (zone == "Centrum_Twierdza" or self.zone == "Centrum_Twierdza"):
+        if self.vnum == "traveler" and (zone in {"Centrum_Twierdza", "centrum"} or self.zone in {"Centrum_Twierdza", "centrum"}):
             chapel_activity = {
                 "świt": "kładzie monetę w niszy",
                 "dzień": "zapala świecę przy kapliczce",

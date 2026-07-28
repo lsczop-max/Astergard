@@ -38,15 +38,28 @@ class D351MStraznicaPrzeleczyProductionTests(unittest.TestCase):
         npcs = NPCManager(world)
         npcs.populate()
 
+        expected_names = {
+            125: "Polana Złamanej Sosny",
+            126: "Cisza pod Świerkami",
+            127: "Gęste Jeżyny",
+            128: "Wykrot przy Skale",
+            129: "Głębszy Bór",
+            130: "Ścieżka Wilczych Łap",
+            131: "Jar Czarnych Korzeni",
+            132: "Mroczny Prześwit",
+            133: "Polana Rozrzuconych Kości",
+            134: "Zbocze Starych Sosen",
+        }
         for room_id in PASS_ROOM_IDS:
             loc = world.locations[room_id]
-            self.assertEqual(loc.zone, "Straznica_Przeleczy")
+            self.assertEqual(loc.zone, "polnocny-las")
+            self.assertEqual(loc.name, expected_names[room_id])
             self.assertGreaterEqual(len(loc.description.split(".")), 2)
             self.assertGreaterEqual(len(loc.inspectables), 3)
 
         for vnum, room_id in PASS_NPCS:
             npc = next(candidate for candidate in npcs.by_room(room_id) if candidate.vnum == vnum)
-            self.assertEqual(npc.zone, "Straznica_Przeleczy", vnum)
+            self.assertEqual(npc.zone, "polnocny-las", vnum)
             self.assertEqual(npc.faction, "MEEKHAN", vnum)
             self.assertTrue({"default", "praca", "miejsce", "plotki"}.issubset(npc.dialogue_tree.keys()), vnum)
             self.assertTrue({"świt", "dzień", "wieczór", "noc"}.issubset(npc.daily_schedule.keys()), vnum)
@@ -70,7 +83,7 @@ class D351MStraznicaPrzeleczyProductionTests(unittest.TestCase):
 
         self.assertNotEqual(scout.room_id, start_room)
         self.assertTrue(any(event.kind in {"move", "patrol"} and event.npc_id == scout.id for event in events))
-        self.assertEqual(world.locations[scout.room_id].zone, "Straznica_Przeleczy")
+        self.assertEqual(world.locations[scout.room_id].zone, "polnocny-las")
 
     def test_dialogues_quests_and_shops_work_through_real_commands(self) -> None:
         async def run() -> None:
@@ -152,7 +165,7 @@ class D351MStraznicaPrzeleczyProductionTests(unittest.TestCase):
 
         for room_id in PASS_ROOM_IDS:
             loc = world.locations[room_id]
-            self.assertEqual(loc.zone, "Straznica_Przeleczy")
+            self.assertEqual(loc.zone, "polnocny-las")
             self.assertGreaterEqual(len(loc.inspectables), 3)
             self.assertNotIn("czeka na ręczne opracowanie", f"{loc.name}\n{loc.description}".lower())
             for direction, exit_ in loc.exits.items():

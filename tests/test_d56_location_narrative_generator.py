@@ -37,7 +37,7 @@ class D56LocationNarrativeGeneratorTests(unittest.TestCase):
 
     def test_compare_and_export_round_trip(self) -> None:
         left = self.generator.generate(0)
-        right = self.generator.generate(2)
+        right = self.generator.generate(21)
         comparison = compare_location_results(left, right)
         self.assertIn("similarity", comparison)
         self.assertGreaterEqual(comparison["similarity"], 0.0)
@@ -49,7 +49,7 @@ class D56LocationNarrativeGeneratorTests(unittest.TestCase):
             self.assertEqual(payload[0]["location_id"], 0)
 
     def test_pilot_review_samples_thirty_rooms(self) -> None:
-        pilot = build_pilot_review(self.world, tuple(range(30)))
+        pilot = build_pilot_review(self.world, tuple(sorted(self.world.locations)[:30]))
         self.assertEqual(len(pilot), 30)
         self.assertTrue(all(result.generator_version for result in pilot))
 
@@ -76,7 +76,7 @@ class D56LocationNarrativeGeneratorTests(unittest.TestCase):
     def test_identity_axes_are_reported_separately(self) -> None:
         adapter = WorldNarrativeAdapter(self.world)
         audit = adapter.audit_identity()
-        self.assertEqual(len(audit), 500)
+        self.assertEqual(len(audit), 483)
         self.assertTrue(any(entry.data_completeness in {DataCompleteness.COMPLETE, DataCompleteness.SUFFICIENT} for entry in audit))
         self.assertTrue(any(entry.local_distinctiveness in {LocalDistinctiveness.UNIQUE, LocalDistinctiveness.DISTINCT, LocalDistinctiveness.GENERIC} for entry in audit))
 
